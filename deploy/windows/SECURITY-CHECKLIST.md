@@ -1,0 +1,14 @@
+# Segurança Windows VPS (antes de produção)
+- [ ] Windows Update e Defender/EDR, sem serviços desnecessários
+- [ ] Backup testado: MySQL + segredos + configuração IIS, criptografado e fora da VPS
+- [ ] RDP apenas via VPN/bastion, MFA e bloqueio de tentativas; nunca expor credenciais em tickets/chats
+- [ ] WAF/rate limit na borda e DDoS conforme hospedagem
+- [ ] TLS 1.2/1.3 e certificados renovados automaticamente
+- [ ] Conta de aplicação sem privilégio de administrador e ACL de gravação restrita
+- [ ] MySQL acessível apenas por localhost/rede privada, usuário com grants mínimos e TLS se remoto
+- [ ] Credenciais injetadas por mecanismo seguro, com rotação e sem logs de tokens
+- [ ] Auth JWT real com provedor OIDC, MFA para moderadores e administração
+- [ ] CSRF, CSP, validação de upload, imagens licenciadas e antivírus
+- [ ] Revisão LGPD, política de cookies, exclusão de dados e auditoria imutável
+- [ ] Testar recuperação de desastres, monitoramento e custos Google Places
+- [ ] Desabilitar auto-publicação de conteúdo descoberto por IA
