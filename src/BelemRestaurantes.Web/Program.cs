@@ -1,10 +1,19 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using BelemRestaurantes.Web.Data;
 using BelemRestaurantes.Web.Services;
 using BelemRestaurantes.Web.Workers;
 var builder=WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews(o=>o.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute()));
-builder.Services.AddHealthChecks();
+builder.Services.AddAntiforgery(o=>o.HeaderName="X-CSRF-TOKEN");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o=>{
+ o.RequireHttpsMetadata=true;
+ o.Authority=builder.Configuration["Auth:Authority"];
+ o.Audience=builder.Configuration["Auth:Audience"];
+});
+builder.Services.AddAuthorization(o=>o.AddPolicy("RestaurantModerator",p=>p.RequireAuthenticatedUser().RequireClaim("role","restaurant_moderator","platform_admin")));
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("postgresql");
 builder.Services.AddSingleton<DbFactory>();
 builder.Services.AddScoped<RestaurantRepository>();
 builder.Services.AddScoped<DiscoveryQueue>();
@@ -17,6 +26,9 @@ var app=builder.Build();
 if(!app.Environment.IsDevelopment()){app.UseExceptionHandler("/Home/Error");app.UseHsts();}
 app.UseHttpsRedirection();
 app.Use(async(context,next)=>{context.Response.Headers["X-Content-Type-Options"]="nosniff";context.Response.Headers["Referrer-Policy"]="strict-origin-when-cross-origin";context.Response.Headers["X-Frame-Options"]="DENY";context.Response.Headers["Permissions-Policy"]="camera=(), microphone=(), geolocation=(self)";context.Response.Headers["Content-Security-Policy"]="default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";await next();});
-app.UseStaticFiles();app.UseRouting();app.UseRateLimiter();app.MapHealthChecks("/health");
+app.UseStaticFiles();app.UseRouting();app.UseRateLimiter();app.UseAuthentication();app.UseAuthorization();
+app.MapHealthChecks("/health",new HealthCheckOptions{Predicate=_=>false});
+app.MapHealthChecks("/health/ready");
+app.MapControllers().RequireRateLimiting("public");
 app.MapControllerRoute(name:"default",pattern:"{controller=Home}/{action=Index}/{id?}").RequireRateLimiting("public");
 app.Run();
