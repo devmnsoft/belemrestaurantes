@@ -17,7 +17,7 @@ public sealed class AdminReviewController(DbFactory db) : ControllerBase
     {
         await using var c = db.Open();
         var items = await c.QueryAsync(new CommandDefinition(
-            "SELECT id,name,city,category,created_source_url,google_place_id,created_at FROM public.restaurants WHERE status='pending' ORDER BY id LIMIT 100",
+            "SELECT id,name,city,category,created_source_url,google_place_id,created_at FROM restaurants WHERE status='pending' ORDER BY id LIMIT 100",
             cancellationToken: ct));
         return Ok(items);
     }
@@ -34,11 +34,11 @@ public sealed class AdminReviewController(DbFactory db) : ControllerBase
         await c.OpenAsync(ct);
         await using var tx = await c.BeginTransactionAsync(ct);
         var changed = await c.ExecuteAsync(new CommandDefinition(
-            "UPDATE public.restaurants SET status=@status,updated_at=now() WHERE id=@id AND status='pending'",
+            "UPDATE restaurants SET status=@status,updated_at=UTC_TIMESTAMP(6) WHERE id=@id AND status='pending'",
             new { id, status }, transaction: tx, cancellationToken: ct));
         if (changed == 0) { await tx.RollbackAsync(ct); return NotFound(); }
         await c.ExecuteAsync(new CommandDefinition(
-            "INSERT INTO public.audit_events(actor_subject,action,entity_type,entity_id) VALUES(@actor,@status,'restaurant',@id)",
+            "INSERT INTO audit_events(actor_subject,action,entity_type,entity_id) VALUES(@actor,@status,'restaurant',@id)",
             new { actor = User.Identity?.Name ?? "authenticated", status, id }, transaction: tx, cancellationToken: ct));
         await tx.CommitAsync(ct);
         return Ok(new { id, status });
