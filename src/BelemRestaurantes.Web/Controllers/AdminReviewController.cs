@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BelemRestaurantes.Web.Controllers;
 
-// Disabled unless a trusted OIDC identity provider is configured.
+// Requires externally-issued JWT with moderator role. Bearer tokens are not sent automatically by browsers.
 [ApiController]
+[IgnoreAntiforgeryToken]
 [Route("api/admin/review")]
 [Authorize(Policy = "RestaurantModerator")]
 public sealed class AdminReviewController(DbFactory db) : ControllerBase
@@ -22,11 +23,9 @@ public sealed class AdminReviewController(DbFactory db) : ControllerBase
     }
 
     [HttpPost("{id:long}/approve")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(long id, CancellationToken ct) => await SetStatus(id, "published", ct);
 
     [HttpPost("{id:long}/reject")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(long id, CancellationToken ct) => await SetStatus(id, "rejected", ct);
 
     private async Task<IActionResult> SetStatus(long id, string status, CancellationToken ct)
