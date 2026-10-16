@@ -1,5 +1,10 @@
--- MySQL 8+ - execute in existing database belrestaurantes
--- Review grants and backup before migration.
+-- LEGADO - NÃO APLICAR.
+-- Duplicava e divergia das migrações oficiais embutidas em
+-- src/BelemRestaurantes.Infrastructure/Migrations/Scripts (001-005): colunas e
+-- tipos diferentes (ex.: website TEXT vs VARCHAR(350), sem normalized_name).
+-- Aplicar este arquivo antes das migrações oficiais deixaria os repositórios
+-- quebrados. A fonte única de schema é o MigrationRunner, executado pelo
+-- BelemRestaurantes.Worker no startup (Database:ApplyMigrations=true).
 CREATE TABLE IF NOT EXISTS restaurants (
  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
  name VARCHAR(160) NOT NULL, city VARCHAR(100) NOT NULL, neighborhood VARCHAR(120),

@@ -1,3 +1,4 @@
+global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using BelemRestaurantes.Application.Abstractions;
 global using BelemRestaurantes.Application.Models;
