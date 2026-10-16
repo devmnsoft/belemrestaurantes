@@ -14,7 +14,7 @@ Plataforma gastronômica do Pará em ASP.NET Core 10, MVC/Razor, JavaScript e My
 ## Verificação
 
 - Testes unitários: `dotnet test tests/BelemRestaurantes.UnitTests`.
-- Suite completa em MySQL descartável, acessível apenas no loopback: `pwsh -File scripts/test-sprint03.ps1` (Docker necessário). O script cria banco `belrestaurante` isolado, executa a suite e remove o container.
+- Suite completa em MySQL descartável, acessível apenas no loopback: `pwsh -File scripts/test-sprint03.ps1` (Docker e Node.js necessários). O script cria banco `belrestaurante` isolado, executa a suite e remove o container.
 - Para MySQL de homologação dedicado, defina `BELRESTAURANTES_TEST_MYSQL`; os testes de banco falham sem essa configuração. Não há fallback para a conexão de produção.
 - Publicação Folder: `dotnet publish src/BelemRestaurantes.Web -c Release /p:PublishProfile=FolderProfile`.
 

@@ -63,3 +63,5 @@ button-link,.button-link{display:inline-block;background:#174a3b;color:#fff;bord
 
 .honeypot{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 .check-label{display:flex;gap:.6rem;align-items:flex-start}.check-label input{width:auto;margin-top:.3rem}
+
+header{flex-wrap:wrap}header nav{flex-wrap:wrap;row-gap:.6rem}.panel .check-label{display:flex}

@@ -4,7 +4,7 @@ Esta etapa adiciona cadastro, confirmação de e-mail, login de membros, recuper
 
 ## Idiomas
 
-Disponíveis: português (`pt-BR`), inglês (`en`), francês (`fr`), espanhol (`es`), russo (`ru`), alemão (`de`), japonês (`ja`) e chinês simplificado (`zh-Hans`). O seletor aparece no cabeçalho de todas as páginas e funciona sem JavaScript. A preferência fica em cookie HttpOnly/Secure, válido por um ano. Sem preferência salva, o portal considera o idioma do navegador e usa português como padrão.
+Disponíveis: português (`pt-BR`), inglês (`en`), francês (`fr`), espanhol (`es`), russo (`ru`), alemão (`de`), japonês (`ja`) e chinês simplificado (`zh-Hans`). O seletor aparece no cabeçalho de todas as páginas e funciona sem JavaScript. A preferência fica em cookie HttpOnly/Secure, válido por um ano. Sem preferência salva, o portal considera o idioma do navegador e usa português como padrão. Variantes regionais como en-US, fr-CA e zh-CN são reconhecidas; preferências com peso zero não são selecionadas.
 
 Menus, páginas públicas, formulários administrativos/de conta, mensagens de autenticação, mensagens dinâmicas do catálogo e modelos de e-mail foram traduzidos. Datas e números seguem a cultura selecionada. Os horários apresentados de atividade usam UTC−3, com formatação do idioma. Nomes de restaurantes, endereços, categorias armazenadas e conteúdo dos usuários mantêm os dados de origem; não são enviados à IA para tradução automática. As traduções precisam de revisão editorial por falantes nativos antes de publicação internacional.
 
@@ -29,7 +29,7 @@ Os textos de termos/privacidade descrevem o funcionamento atual. Exportação e 
 
 ## Configuração privada na VPS
 
-Confirme host, porta e modo TLS no painel da Locaweb; nenhum hostname SMTP foi inventado. Remetente fixo: `comercial@belemrestaurantes.com.br`.
+Use Hosting Bundle/runtime .NET 10 atualizado (10.0.13 ou posterior). Confirme host, porta e modo TLS no painel da Locaweb; nenhum hostname SMTP foi inventado. Remetente fixo: `comercial@belemrestaurantes.com.br`.
 
 | Processo | Variável | Conteúdo |
 | --- | --- | --- |
@@ -50,16 +50,25 @@ O transportador SMTP usa MailKit, valida certificado por padrão e não registra
 
 ## Outbox e limites
 
-Fila MySQL com reserva concorrente `FOR UPDATE SKIP LOCKED`, lease de dois minutos, timeout de envio de 45 segundos, recuperação de lease vencido, retry exponencial e dead-letter após seis tentativas. Payload é apagado após envio, expiração ou dead-letter; erros guardam apenas o tipo da exceção. Mensagens de recuperação expiram em trinta minutos. Entrega SMTP é **pelo menos uma vez**: uma queda após o servidor aceitar o e-mail e antes do commit pode gerar reenvio com o mesmo Message-ID. Não há promessa de entrega exatamente uma vez.
+Fila MySQL com reserva concorrente `FOR UPDATE SKIP LOCKED`, lease de dois minutos, timeout de envio de 45 segundos, recuperação de lease vencido, retry exponencial e dead-letter após seis tentativas. Durante o processamento, o payload é apagado após envio, expiração ou dead-letter; erros guardam apenas o tipo da exceção. Mensagens de recuperação expiram em trinta minutos. Entrega SMTP é **pelo menos uma vez**: uma queda após o servidor aceitar o e-mail e antes do commit pode gerar reenvio com o mesmo Message-ID. Não há promessa de entrega exatamente uma vez.
 
 O prazo do token é aplicado independentemente do estado do e-mail. Uma conta não ganha acesso por a mensagem ter sido aceita pelo SMTP. O cooldown limita reenvios de confirmação/recuperação; registro duplicado não produz nova mensagem. Cadastros adicionais e publicação de conteúdo ainda exigem controles de reputação/moderação previstos no restante da sprint.
 
 ## Verificação e limites de homologação
 
-O script `scripts/test-sprint03.ps1` usa MySQL descartável no loopback e executa toda a suite, sem credenciais da VPS. Foram adicionados testes HTTP dos oito idiomas, cookie de preferência, cultura do navegador, CSRF, redirecionamento local e igualdade das chaves de tradução; testes reais de cadastro/duplicidade, confirmação concorrente/expiração, login, recuperação/replay, revogação, isolamento administrativo, outbox/retry e apagamento do payload.
+O script `scripts/test-sprint03.ps1` requer Docker e Node.js, usa MySQL descartável no loopback e executa toda a suite, sem credenciais da VPS. Foram adicionados testes HTTP dos oito idiomas, cookie de preferência, cultura do navegador, CSRF, redirecionamento local e igualdade das chaves de tradução; testes reais de cadastro/duplicidade, confirmação concorrente/expiração, login, recuperação/replay, revogação, isolamento administrativo, outbox/retry e apagamento do payload.
 
 O teste SMTP abre um servidor de teste TLS **somente no loopback**, verifica certificado com CA própria exclusivamente no teste e recebe uma mensagem MIME real localizada. Nenhum certificado foi instalado no sistema e não há bypass de certificado no transportador de produção. Isso valida o transporte local, **não a entrega pela conta Locaweb ou chegada à caixa do destinatário**. As credenciais reais e o teste externo autorizado continuam necessários.
 
 MailKit foi adicionado e dependências .NET/criptográficas foram alinhadas à versão de manutenção 10.0.13 após o NuGet apontar vulnerabilidades nas versões transitivas iniciais. Os analisadores e verificações de vulnerabilidade permanecem habilitados.
 
 A etapa não implementa ainda experiências com fotos, feed, compartilhamento/OG, denúncias, reputação/Selo Cuia, todos os painéis, backup/restauração, validação Google real ou deploy na VPS. Consulte também o relatório histórico [SPRINT03-REPORT.md](SPRINT03-REPORT.md).
+
+## Resultado desta execução
+
+- Build da Solution em Debug e Release: sucesso, sem avisos ou erros.
+- Testes: **91 aprovados, zero falhas e zero ignorados** — 46 unitários .NET, 41 de integração .NET e quatro testes JavaScript.
+- Evidências .NET: `artifacts/test-results/sprint03_net10.0_20261016172656.trx` e `artifacts/test-results/sprint03_net10.0_20261016172716.trx`. Os quatro testes frontend integram o mesmo script de validação.
+- Consulta de vulnerabilidades NuGet, incluindo transitivas: nenhum pacote vulnerável nas fontes consultadas após atualização.
+- Publicação Release da Web com os oito assemblies de recursos e publicação win-x64 do Worker verificadas em `artifacts/publish`; nenhuma publicação na VPS.
+- Sintaxe dos scripts JavaScript e do script PowerShell de ACL validada. O script de ACL não foi executado no servidor.

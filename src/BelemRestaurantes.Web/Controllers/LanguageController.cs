@@ -17,8 +17,12 @@ public sealed class LanguageController : Controller
             CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
             new CookieOptions
             {
-                Expires = DateTimeOffset.UtcNow.AddYears(1), HttpOnly = true, Secure = true,
-                SameSite = SameSiteMode.Lax, IsEssential = true, Path = "/"
+                Expires = DateTimeOffset.UtcNow.AddYears(1),
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax,
+                IsEssential = true,
+                Path = "/"
             });
         return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
     }

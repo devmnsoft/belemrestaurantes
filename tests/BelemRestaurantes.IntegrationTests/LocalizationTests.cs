@@ -40,6 +40,20 @@ public sealed class LocalizationTests : IDisposable
         Assert.Contains(culture, response.Content.Headers.ContentLanguage);
     }
 
+    [Theory]
+    [InlineData("zh-CN", "zh-Hans")]
+    [InlineData("zh-SG", "zh-Hans")]
+    [InlineData("fr-CA", "fr")]
+    [InlineData("en-US", "en")]
+    [InlineData("pt-PT", "pt-BR")]
+    [InlineData("en;q=0,fr;q=0.8", "fr")]
+    public async Task Regional_browser_preferences_and_quality_are_respected(string preference, string culture)
+    {
+        using var client = Client();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd(preference);
+        Assert.Contains($"<html lang=\"{culture}\">", await client.GetStringAsync("/"));
+    }
+
     [Fact]
     public async Task Choice_persists_and_takes_precedence_over_browser_language()
     {
