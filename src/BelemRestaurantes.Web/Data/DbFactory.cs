@@ -1,5 +1,9 @@
-using Npgsql;
+using MySqlConnector;
 namespace BelemRestaurantes.Web.Data;
 public sealed class DbFactory(IConfiguration config) {
- public NpgsqlConnection Open() {var cs=config.GetConnectionString("Postgres");if(string.IsNullOrWhiteSpace(cs))throw new InvalidOperationException("Configure ConnectionStrings__Postgres via secret store");return new NpgsqlConnection(cs);}
+ public MySqlConnection Open(){
+ var cs=config.GetConnectionString("MySql");
+ if(string.IsNullOrWhiteSpace(cs))throw new InvalidOperationException("Configure ConnectionStrings__MySql securely on the server");
+ return new MySqlConnection(cs);
+ }
 }
