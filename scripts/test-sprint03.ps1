@@ -23,6 +23,9 @@ try {
     $env:BELRESTAURANTES_TEST_MYSQL = "Server=127.0.0.1;Port=$port;Database=belrestaurante;User ID=sprint_test;Password=$env:MYSQL_PASSWORD;SslMode=Required"
     dotnet test BelemRestaurantes.sln -c Debug --nologo --logger 'trx;LogFilePrefix=sprint03' --results-directory artifacts/test-results
     if ($LASTEXITCODE -ne 0) { throw 'Há falhas nos testes; consulte artifacts/test-results.' }
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'Node.js é obrigatório para validar o JavaScript.' }
+    node --test tests/frontend/account.test.cjs tests/frontend/site.test.cjs
+    if ($LASTEXITCODE -ne 0) { throw 'Há falhas nos testes JavaScript.' }
 }
 finally {
     docker rm --force $name 2>$null | Out-Null

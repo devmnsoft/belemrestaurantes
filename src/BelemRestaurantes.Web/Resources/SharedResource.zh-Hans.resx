@@ -1,0 +1,321 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Language" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>应用</value>
+  </data>
+  <data name="Explore" xml:space="preserve">
+    <value>探索</value>
+  </data>
+  <data name="Mobility" xml:space="preserve">
+    <value>交通路线</value>
+  </data>
+  <data name="Suggest" xml:space="preserve">
+    <value>推荐餐厅</value>
+  </data>
+  <data name="Tagline" xml:space="preserve">
+    <value>探索帕拉州风味</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Belém Restaurantes：帕拉州风味与美食体验</value>
+  </data>
+  <data name="Contact" xml:space="preserve">
+    <value>联系我们</value>
+  </data>
+  <data name="ExternalNotice" xml:space="preserve">
+    <value>第三方信息可能已过时，请在到访前确认。</value>
+  </data>
+  <data name="Guide" xml:space="preserve">
+    <value>帕拉州美食指南</value>
+  </data>
+  <data name="HeroTitle" xml:space="preserve">
+    <value>用风味讲述我们的故事。</value>
+  </data>
+  <data name="HeroText" xml:space="preserve">
+    <value>探索帕拉州的餐厅、巴西莓、塔卡卡汤、披萨店及美食体验。</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>餐厅、菜品或特色美食…</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>搜索</value>
+  </data>
+  <data name="ExploreState" xml:space="preserve">
+    <value>探索帕拉州</value>
+  </data>
+  <data name="WhereToEat" xml:space="preserve">
+    <value>今天去哪里吃？</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>城市</value>
+  </data>
+  <data name="AllCities" xml:space="preserve">
+    <value>所有城市</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>正在加载餐厅…</value>
+  </data>
+  <data name="CatalogLoading" xml:space="preserve">
+    <value>正在查询目录…</value>
+  </data>
+  <data name="CatalogUnavailable" xml:space="preserve">
+    <value>目录暂时不可用，请稍后重试。</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>找到的餐厅：{0}</value>
+  </data>
+  <data name="ChooseRestaurant" xml:space="preserve">
+    <value>请选择餐厅</value>
+  </data>
+  <data name="AuthorizedPhoto" xml:space="preserve">
+    <value>已获授权的照片：{0}</value>
+  </data>
+  <data name="NoPhoto" xml:space="preserve">
+    <value>暂无照片</value>
+  </data>
+  <data name="AddressChecking" xml:space="preserve">
+    <value>地址核实中</value>
+  </data>
+  <data name="Website" xml:space="preserve">
+    <value>官方网站</value>
+  </data>
+  <data name="RouteTitle" xml:space="preserve">
+    <value>前往下一站美味</value>
+  </data>
+  <data name="RouteIntro" xml:space="preserve">
+    <value>选择餐厅，即可在 Google 地图查看公共交通路线。</value>
+  </data>
+  <data name="Start" xml:space="preserve">
+    <value>出发地</value>
+  </data>
+  <data name="StartPlaceholder" xml:space="preserve">
+    <value>地址或地标</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>目的地</value>
+  </data>
+  <data name="BusRoute" xml:space="preserve">
+    <value>查看公交路线 ↗</value>
+  </data>
+  <data name="RouteNotice" xml:space="preserve">
+    <value>路线和票价由导航服务提供，并非由 Belém Restaurantes 提供。</value>
+  </data>
+  <data name="Join" xml:space="preserve">
+    <value>一起参与</value>
+  </data>
+  <data name="SuggestTitle" xml:space="preserve">
+    <value>知道一家很棒的店？</value>
+  </data>
+  <data name="SuggestIntro" xml:space="preserve">
+    <value>帮助我们发现帕拉州的商家。所有推荐均须经过审核。</value>
+  </data>
+  <data name="RestaurantName" xml:space="preserve">
+    <value>餐厅名称</value>
+  </data>
+  <data name="OptionalWebsite" xml:space="preserve">
+    <value>官方网站（选填）</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>备注</value>
+  </data>
+  <data name="SendSuggestion" xml:space="preserve">
+    <value>提交推荐</value>
+  </data>
+  <data name="Sending" xml:space="preserve">
+    <value>正在发送…</value>
+  </data>
+  <data name="SuggestionReceived" xml:space="preserve">
+    <value>推荐已收到，等待审核。</value>
+  </data>
+  <data name="SendFailed" xml:space="preserve">
+    <value>发送失败，请重试。</value>
+  </data>
+  <data name="SupportTitle" xml:space="preserve">
+    <value>支持帕拉州美食指南</value>
+  </data>
+  <data name="SupportIntro" xml:space="preserve">
+    <value>已标明的广告和捐款支持项目发展。赞助不能购买评价。</value>
+  </data>
+  <data name="CopyPix" xml:space="preserve">
+    <value>复制 PIX 支付密钥</value>
+  </data>
+  <data name="PixCopied" xml:space="preserve">
+    <value>PIX 支付密钥已复制</value>
+  </data>
+  <data name="PixNotice" xml:space="preserve">
+    <value>请在银行应用中核实收款人。</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>信息</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>地址</value>
+  </data>
+  <data name="UpdatedAt" xml:space="preserve">
+    <value>最后更新</value>
+  </data>
+  <data name="OfficialLinks" xml:space="preserve">
+    <value>官方链接</value>
+  </data>
+  <data name="OpenMaps" xml:space="preserve">
+    <value>在 Google 地图中打开</value>
+  </data>
+  <data name="AdminTitle" xml:space="preserve">
+    <value>管理后台</value>
+  </data>
+  <data name="AdminIntro" xml:space="preserve">
+    <value>使用用户名、密码和双重验证（TOTP）登录。</value>
+  </data>
+  <data name="UserName" xml:space="preserve">
+    <value>用户名</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>登录</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>退出登录</value>
+  </data>
+  <data name="SessionExpired" xml:space="preserve">
+    <value>账户已停用或会话已过期。</value>
+  </data>
+  <data name="SecondFactor" xml:space="preserve">
+    <value>双重验证</value>
+  </data>
+  <data name="TotpIntro" xml:space="preserve">
+    <value>请输入身份验证应用中的六位验证码。</value>
+  </data>
+  <data name="TotpCode" xml:space="preserve">
+    <value>TOTP 验证码</value>
+  </data>
+  <data name="Verify" xml:space="preserve">
+    <value>验证</value>
+  </data>
+  <data name="EnrollTitle" xml:space="preserve">
+    <value>设置双重验证</value>
+  </data>
+  <data name="EnrollIntro" xml:space="preserve">
+    <value>使用下方密钥将账户添加到身份验证应用，然后确认生成的验证码。</value>
+  </data>
+  <data name="Activate" xml:space="preserve">
+    <value>确认并启用</value>
+  </data>
+  <data name="PendingRestaurants" xml:space="preserve">
+    <value>待审核的餐厅</value>
+  </data>
+  <data name="Health" xml:space="preserve">
+    <value>系统状态</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>登录凭据无效。</value>
+  </data>
+  <data name="InvalidCode" xml:space="preserve">
+    <value>验证码无效。</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>访问被拒绝。</value>
+  </data>
+  <data name="MyAccount" xml:space="preserve">
+    <value>我的账户</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>创建账户</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>姓名</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>电子邮箱</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>确认密码</value>
+  </data>
+  <data name="Remember" xml:space="preserve">
+    <value>在此设备上保持登录</value>
+  </data>
+  <data name="AcceptTerms" xml:space="preserve">
+    <value>我已阅读并同意条款和隐私政策。</value>
+  </data>
+  <data name="Terms" xml:space="preserve">
+    <value>使用条款</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>隐私</value>
+  </data>
+  <data name="PasswordRules" xml:space="preserve">
+    <value>请使用12至256个字符，包含大小写字母、数字和符号。避免常见词语，并确认密码。</value>
+  </data>
+  <data name="RegistrationInvalid" xml:space="preserve">
+    <value>请检查字段、密码要求、确认密码和条款同意。</value>
+  </data>
+  <data name="CheckEmail" xml:space="preserve">
+    <value>如果符合条件，我们将发送确认链接。请检查收件箱和垃圾邮件。</value>
+  </data>
+  <data name="MemberLoginFailed" xml:space="preserve">
+    <value>无法登录。请检查邮箱和密码、确认邮箱，或在多次尝试后稍候重试。</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>忘记密码</value>
+  </data>
+  <data name="ResendEmail" xml:space="preserve">
+    <value>重新发送确认邮件</value>
+  </data>
+  <data name="RecoveryNeutral" xml:space="preserve">
+    <value>如果存在符合条件的账户，我们将发送恢复链接。请检查收件箱和垃圾邮件。</value>
+  </data>
+  <data name="ConfirmEmail" xml:space="preserve">
+    <value>确认邮箱</value>
+  </data>
+  <data name="EmailConfirmed" xml:space="preserve">
+    <value>邮箱已确认，您现在可以登录。</value>
+  </data>
+  <data name="InvalidLink" xml:space="preserve">
+    <value>链接无效、已过期或已使用。请申请新链接。</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>设置新密码</value>
+  </data>
+  <data name="PasswordReset" xml:space="preserve">
+    <value>密码已更改，之前的会话已撤销。请使用新密码登录。</value>
+  </data>
+  <data name="Sessions" xml:space="preserve">
+    <value>活跃会话</value>
+  </data>
+  <data name="CurrentSession" xml:space="preserve">
+    <value>当前会话</value>
+  </data>
+  <data name="RevokeOthers" xml:space="preserve">
+    <value>结束其他会话</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>创建时间</value>
+  </data>
+  <data name="ExpiresAt" xml:space="preserve">
+    <value>到期时间</value>
+  </data>
+  <data name="NoCpf" xml:space="preserve">
+    <value>我们不要求提供巴西CPF税号。姓名和邮箱用于账户；请在发布前确认邮箱。</value>
+  </data>
+  <data name="TermsText" xml:space="preserve">
+    <value>请负责任地使用本平台。不得泄露他人个人信息、发布冒犯内容或虚假评价。推荐均须审核。到访前请核实第三方信息。</value>
+  </data>
+  <data name="PrivacyText" xml:space="preserve">
+    <value>我们处理姓名、邮箱、密码哈希和安全记录以运营账户。令牌及待发送邮件受到保护。如需申请访问、导出或删除数据，请联系comercial@belemrestaurantes.com.br。目前由人工处理申请。</value>
+  </data>
+</root>

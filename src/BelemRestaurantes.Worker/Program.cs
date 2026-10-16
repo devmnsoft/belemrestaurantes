@@ -20,6 +20,7 @@ public class Program
                 services.AddInfrastructure(hostContext.Configuration);
                 services.AddHostedService<MigrationHostedService>();
                 services.AddHostedService<DiscoveryHostedService>();
+                services.AddHostedService<EmailHostedService>();
             })
             .ConfigureLogging(logging => logging.AddConsole())
             .Build()

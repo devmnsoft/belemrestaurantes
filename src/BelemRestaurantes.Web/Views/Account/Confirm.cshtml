@@ -1,0 +1,8 @@
+@{ ViewData["Title"] = T["ConfirmEmail"].Value; }
+<section class="shell section narrow"><h1>@T["ConfirmEmail"]</h1>
+<form method="post" action="/account/confirm" class="panel" data-token-form>
+  @Html.AntiForgeryToken()<input name="token" type="hidden" data-account-token />
+  <button type="submit" disabled>@T["ConfirmEmail"]</button>
+  <noscript>@T["InvalidLink"]</noscript>
+</form></section>
+@section Scripts { <script src="~/js/account.js" asp-append-version="true"></script> }

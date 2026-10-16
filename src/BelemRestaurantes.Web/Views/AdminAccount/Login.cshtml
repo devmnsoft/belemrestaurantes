@@ -1,17 +1,17 @@
-@{ Layout = "_AdminLayout"; ViewData["Title"] = "Entrar"; }
+@{ Layout = "_AdminLayout"; ViewData["Title"] = T["SignIn"].Value; }
 <section class="shell section narrow">
-  <h1>Painel administrativo</h1>
-  <p class="muted">Acesso com usuário, senha e segundo fator (TOTP).</p>
+  <h1>@T["AdminTitle"]</h1>
+  <p class="muted">@T["AdminIntro"]</p>
   @if (Context.Request.Query.ContainsKey("expired"))
   {
-      <p class="flash">Sessão encerrada: a conta foi desativada ou a sessão expirou.</p>
+      <p class="flash">@T["SessionExpired"]</p>
   }
   <form method="post" action="@Url.Action("LoginSubmit","AdminAccount")" class="panel">
     @Html.AntiForgeryToken()
     <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]"/>
-    <label>Usuário <input name="userName" required maxlength="100" autocomplete="username"/></label>
-    <label>Senha <input name="password" type="password" required maxlength="256" autocomplete="current-password"/></label>
-    <button type="submit">Entrar</button>
+    <label>@T["UserName"] <input name="userName" required maxlength="100" autocomplete="username"/></label>
+    <label>@T["Password"] <input name="password" type="password" required maxlength="256" autocomplete="current-password"/></label>
+    <button type="submit">@T["SignIn"]</button>
     @Html.ValidationSummary()
   </form>
 

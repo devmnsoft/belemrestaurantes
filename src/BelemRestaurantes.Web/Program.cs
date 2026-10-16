@@ -22,10 +22,30 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services
     .AddAuthentication(AdminAuthDefaults.Scheme)
+    .AddCookie(MemberAuth.Scheme, options =>
+    {
+        options.Cookie.Name = ".BelRest.Member";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.LoginPath = "/account/login";
+        options.AccessDeniedPath = "/account/login";
+        options.SlidingExpiration = false;
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var token = context.Principal?.FindFirst("sid")?.Value;
+            var session = token is null ? null : await context.HttpContext.RequestServices.GetRequiredService<IMemberAccounts>()
+                .ValidateSessionAsync(token, context.HttpContext.RequestAborted);
+            if (session is null || session.UserId != context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)
+                context.RejectPrincipal();
+        };
+    })
     .AddCookie(AdminAuthDefaults.Scheme, options =>
     {
         options.Cookie.Name = ".BelRest.AdminAuth";
@@ -53,6 +73,7 @@ builder.Services
 
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy(MemberAuth.Policy, p => p.AddAuthenticationSchemes(MemberAuth.Scheme).RequireAuthenticatedUser().RequireClaim("email_verified", "true"));
     options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     options.AddPolicy("RestaurantModerator",
         p => p.RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.Moderator, AdminRoles.PlatformAdmin));
@@ -81,6 +102,12 @@ builder.Services.AddRateLimiter(options =>
         QueueLimit = 0,
         AutoReplenishment = true
     }));
+    options.AddPolicy("account", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+        { PermitLimit = 30, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
+    options.AddPolicy("registration", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+        { PermitLimit = 5, Window = TimeSpan.FromHours(1), QueueLimit = 0 }));
     options.AddPolicy("admin", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
     {
@@ -104,6 +131,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseRequestLocalization(BelemRestaurantes.Web.Localization.SupportedLanguages.Options());
 app.UseHttpsRedirection();
 app.Use(async (context, next) =>
 {

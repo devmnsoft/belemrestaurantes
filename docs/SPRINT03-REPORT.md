@@ -1,6 +1,8 @@
 # Sprint 03 — relatório técnico (16/10/2026)
 
-**Status: entrega parcial de estabilização e segurança; sprint não homologada.** Os dois pedidos originais abrangem também módulos ainda ausentes. Este relatório não representa aceite integral nem validação da VPS.
+**Relatório histórico da entrega de estabilização (commit 29e26a0).** A evolução posterior de contas, e-mail e idiomas está em [MEMBERS-EMAIL-I18N.md](MEMBERS-EMAIL-I18N.md).
+
+**Status nesta entrega histórica: sprint não homologada.** Os dois pedidos originais abrangem também módulos ainda ausentes. Este relatório não representa aceite integral nem validação da VPS.
 
 ## Preservado
 

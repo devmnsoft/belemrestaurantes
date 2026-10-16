@@ -73,6 +73,13 @@ public static class InfrastructureServiceCollectionExtensions
             breakDuration: TimeSpan.FromMinutes(2)));
         services.AddSingleton<ResilientExecutor>();
 
+        services.AddSingleton<Members.MailPayloadProtector>();
+        services.AddSingleton<IPasswordVerifier, Pbkdf2PasswordVerifier>();
+        services.AddScoped<IMemberAccounts, Members.MySqlMemberAccounts>();
+        services.AddSingleton<Members.ISmtpTransportFactory, Members.DefaultSmtpTransportFactory>();
+        services.AddScoped<ITransactionalMailSender, Members.SmtpTransactionalMailSender>();
+        services.AddScoped<IEmailDispatcher, Members.MySqlEmailDispatcher>();
+
         // Persistência.
         services.AddSingleton(_ =>
         {

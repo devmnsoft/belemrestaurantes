@@ -1,13 +1,12 @@
-@{ ViewData["Title"] = "Painel administrativo"; }
+@{ ViewData["Title"] = T["AdminTitle"].Value; }
 <section class="shell section">
-  <h1>Painel MNSOFT — Belém Restaurantes</h1>
+  <h1>@T["AdminTitle"] · MNSOFT</h1>
   <ul>
-    <li><a href="/api/admin/review/pending">Restaurantes pendentes de aprovação</a></li>
-    <li>Edição de cidades, bairros e categorias: tabelas DiscoveryTarget e administradores via SQL/seed.</li>
-    <li>Health do sistema: <a href="/health/ready">/health/ready</a></li>
+    <li><a href="/api/admin/review/pending">@T["PendingRestaurants"]</a></li>
+    <li>@T["Health"]: <a href="/health/ready">/health/ready</a></li>
   </ul>
   <form method="post" action="@Url.Action("Logout","AdminAccount")">
     @Html.AntiForgeryToken()
-    <button type="submit">Sair</button>
+    <button type="submit">@T["SignOut"]</button>
   </form>
 </section>

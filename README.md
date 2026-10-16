@@ -18,4 +18,4 @@ Plataforma gastronômica do Pará em ASP.NET Core 10, MVC/Razor, JavaScript e My
 - Para MySQL de homologação dedicado, defina `BELRESTAURANTES_TEST_MYSQL`; os testes de banco falham sem essa configuração. Não há fallback para a conexão de produção.
 - Publicação Folder: `dotnet publish src/BelemRestaurantes.Web -c Release /p:PublishProfile=FolderProfile`.
 
-Consulte [publicação Windows](deploy/windows/README.md) e o [relatório da Sprint 03](docs/SPRINT03-REPORT.md). A sprint ainda não está homologada: cadastro público, experiências com fotos e e-mail transacional não foram implementados nesta entrega; integrações externas e VPS não foram validadas.
+Consulte [publicação Windows](deploy/windows/README.md) e o [relatório da Sprint 03](docs/SPRINT03-REPORT.md). Consulte também [contas, e-mail e oito idiomas](docs/MEMBERS-EMAIL-I18N.md). Cadastro público, confirmação, recuperação e fila de e-mail foram adicionados; configure o keyring privado e o SMTP do Worker para entrega real. A sprint ainda não está homologada: experiências com fotos, integrações externas e VPS continuam pendentes.

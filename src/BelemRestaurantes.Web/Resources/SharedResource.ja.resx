@@ -1,0 +1,321 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Language" xml:space="preserve">
+    <value>言語</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>適用</value>
+  </data>
+  <data name="Explore" xml:space="preserve">
+    <value>探す</value>
+  </data>
+  <data name="Mobility" xml:space="preserve">
+    <value>アクセス</value>
+  </data>
+  <data name="Suggest" xml:space="preserve">
+    <value>お店を推薦</value>
+  </data>
+  <data name="Tagline" xml:space="preserve">
+    <value>パラー州の味を発見</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Belém Restaurantes：パラー州の味と食体験</value>
+  </data>
+  <data name="Contact" xml:space="preserve">
+    <value>お問い合わせ</value>
+  </data>
+  <data name="ExternalNotice" xml:space="preserve">
+    <value>外部の情報は古い場合があります。訪問前にご確認ください。</value>
+  </data>
+  <data name="Guide" xml:space="preserve">
+    <value>パラー州のグルメガイド</value>
+  </data>
+  <data name="HeroTitle" xml:space="preserve">
+    <value>私たちの物語を伝える味。</value>
+  </data>
+  <data name="HeroText" xml:space="preserve">
+    <value>パラー州のレストラン、アサイー、タカカー、ピザ店や食体験を探しましょう。</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>レストラン、料理、名物…</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>検索</value>
+  </data>
+  <data name="ExploreState" xml:space="preserve">
+    <value>パラー州を探そう</value>
+  </data>
+  <data name="WhereToEat" xml:space="preserve">
+    <value>今日はどこで食べますか？</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>都市</value>
+  </data>
+  <data name="AllCities" xml:space="preserve">
+    <value>すべての都市</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>お店を読み込み中…</value>
+  </data>
+  <data name="CatalogLoading" xml:space="preserve">
+    <value>カタログを検索中…</value>
+  </data>
+  <data name="CatalogUnavailable" xml:space="preserve">
+    <value>カタログは一時的に利用できません。後でもう一度お試しください。</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>見つかったお店：{0}</value>
+  </data>
+  <data name="ChooseRestaurant" xml:space="preserve">
+    <value>お店を選んでください</value>
+  </data>
+  <data name="AuthorizedPhoto" xml:space="preserve">
+    <value>使用許可済みの写真：{0}</value>
+  </data>
+  <data name="NoPhoto" xml:space="preserve">
+    <value>写真はまだありません</value>
+  </data>
+  <data name="AddressChecking" xml:space="preserve">
+    <value>住所を確認中</value>
+  </data>
+  <data name="Website" xml:space="preserve">
+    <value>公式サイト</value>
+  </data>
+  <data name="RouteTitle" xml:space="preserve">
+    <value>次のおいしさへの道</value>
+  </data>
+  <data name="RouteIntro" xml:space="preserve">
+    <value>お店を選ぶと、Google マップで公共交通機関の経路を確認できます。</value>
+  </data>
+  <data name="Start" xml:space="preserve">
+    <value>出発地</value>
+  </data>
+  <data name="StartPlaceholder" xml:space="preserve">
+    <value>住所または目印</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>目的地</value>
+  </data>
+  <data name="BusRoute" xml:space="preserve">
+    <value>バスの経路を見る ↗</value>
+  </data>
+  <data name="RouteNotice" xml:space="preserve">
+    <value>経路と運賃はナビゲーションサービスが提供するもので、Belém Restaurantes によるものではありません。</value>
+  </data>
+  <data name="Join" xml:space="preserve">
+    <value>参加しよう</value>
+  </data>
+  <data name="SuggestTitle" xml:space="preserve">
+    <value>素敵なお店を知っていますか？</value>
+  </data>
+  <data name="SuggestIntro" xml:space="preserve">
+    <value>パラー州のお店を紹介してください。すべての推薦は審査されます。</value>
+  </data>
+  <data name="RestaurantName" xml:space="preserve">
+    <value>お店の名前</value>
+  </data>
+  <data name="OptionalWebsite" xml:space="preserve">
+    <value>公式サイト（任意）</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>備考</value>
+  </data>
+  <data name="SendSuggestion" xml:space="preserve">
+    <value>推薦を送信</value>
+  </data>
+  <data name="Sending" xml:space="preserve">
+    <value>送信中…</value>
+  </data>
+  <data name="SuggestionReceived" xml:space="preserve">
+    <value>推薦を受け付けました。審査をお待ちください。</value>
+  </data>
+  <data name="SendFailed" xml:space="preserve">
+    <value>送信できませんでした。もう一度お試しください。</value>
+  </data>
+  <data name="SupportTitle" xml:space="preserve">
+    <value>パラー州グルメガイドを応援</value>
+  </data>
+  <data name="SupportIntro" xml:space="preserve">
+    <value>広告表示と寄付が運営を支えます。スポンサーによる評価の購入はできません。</value>
+  </data>
+  <data name="CopyPix" xml:space="preserve">
+    <value>PIX キーをコピー</value>
+  </data>
+  <data name="PixCopied" xml:space="preserve">
+    <value>PIX キーをコピーしました</value>
+  </data>
+  <data name="PixNotice" xml:space="preserve">
+    <value>銀行アプリで受取人をご確認ください。</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>情報</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>住所</value>
+  </data>
+  <data name="UpdatedAt" xml:space="preserve">
+    <value>最終更新</value>
+  </data>
+  <data name="OfficialLinks" xml:space="preserve">
+    <value>公式リンク</value>
+  </data>
+  <data name="OpenMaps" xml:space="preserve">
+    <value>Google マップで開く</value>
+  </data>
+  <data name="AdminTitle" xml:space="preserve">
+    <value>管理画面</value>
+  </data>
+  <data name="AdminIntro" xml:space="preserve">
+    <value>ユーザー名、パスワード、二要素認証（TOTP）でログインします。</value>
+  </data>
+  <data name="UserName" xml:space="preserve">
+    <value>ユーザー名</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>パスワード</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>ログイン</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>ログアウト</value>
+  </data>
+  <data name="SessionExpired" xml:space="preserve">
+    <value>アカウントが無効になったか、セッションの有効期限が切れました。</value>
+  </data>
+  <data name="SecondFactor" xml:space="preserve">
+    <value>二要素認証</value>
+  </data>
+  <data name="TotpIntro" xml:space="preserve">
+    <value>認証アプリの6桁のコードを入力してください。</value>
+  </data>
+  <data name="TotpCode" xml:space="preserve">
+    <value>TOTP コード</value>
+  </data>
+  <data name="Verify" xml:space="preserve">
+    <value>確認</value>
+  </data>
+  <data name="EnrollTitle" xml:space="preserve">
+    <value>二要素認証を設定</value>
+  </data>
+  <data name="EnrollIntro" xml:space="preserve">
+    <value>下のキーを使って認証アプリにアカウントを追加し、生成されたコードを入力してください。</value>
+  </data>
+  <data name="Activate" xml:space="preserve">
+    <value>確認して有効化</value>
+  </data>
+  <data name="PendingRestaurants" xml:space="preserve">
+    <value>承認待ちのお店</value>
+  </data>
+  <data name="Health" xml:space="preserve">
+    <value>システムの状態</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>ログイン情報が正しくありません。</value>
+  </data>
+  <data name="InvalidCode" xml:space="preserve">
+    <value>コードが正しくありません。</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>アクセスが拒否されました。</value>
+  </data>
+  <data name="MyAccount" xml:space="preserve">
+    <value>マイアカウント</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>アカウント作成</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>氏名</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>メールアドレス</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>パスワードの確認</value>
+  </data>
+  <data name="Remember" xml:space="preserve">
+    <value>この端末でログインを保持</value>
+  </data>
+  <data name="AcceptTerms" xml:space="preserve">
+    <value>利用規約とプライバシーポリシーを読み、同意します。</value>
+  </data>
+  <data name="Terms" xml:space="preserve">
+    <value>利用規約</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>プライバシー</value>
+  </data>
+  <data name="PasswordRules" xml:space="preserve">
+    <value>12〜256文字で、大文字、小文字、数字、記号を使用してください。よく使われる単語を避け、パスワードを確認してください。</value>
+  </data>
+  <data name="RegistrationInvalid" xml:space="preserve">
+    <value>入力欄、パスワードの条件、確認欄、規約への同意をご確認ください。</value>
+  </data>
+  <data name="CheckEmail" xml:space="preserve">
+    <value>条件を満たす場合、確認リンクを送信します。受信箱と迷惑メールをご確認ください。</value>
+  </data>
+  <data name="MemberLoginFailed" xml:space="preserve">
+    <value>ログインできませんでした。入力内容とメール確認をご確認ください。連続して試した場合はお待ちください。</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>パスワードを忘れた場合</value>
+  </data>
+  <data name="ResendEmail" xml:space="preserve">
+    <value>確認メールを再送</value>
+  </data>
+  <data name="RecoveryNeutral" xml:space="preserve">
+    <value>対象のアカウントがある場合、再設定リンクを送信します。受信箱と迷惑メールをご確認ください。</value>
+  </data>
+  <data name="ConfirmEmail" xml:space="preserve">
+    <value>メールアドレスを確認</value>
+  </data>
+  <data name="EmailConfirmed" xml:space="preserve">
+    <value>メールアドレスを確認しました。ログインできます。</value>
+  </data>
+  <data name="InvalidLink" xml:space="preserve">
+    <value>リンクが無効、期限切れ、または使用済みです。新しいリンクをリクエストしてください。</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>新しいパスワードを設定</value>
+  </data>
+  <data name="PasswordReset" xml:space="preserve">
+    <value>パスワードを変更し、以前のセッションを終了しました。新しいパスワードでログインしてください。</value>
+  </data>
+  <data name="Sessions" xml:space="preserve">
+    <value>有効なセッション</value>
+  </data>
+  <data name="CurrentSession" xml:space="preserve">
+    <value>現在のセッション</value>
+  </data>
+  <data name="RevokeOthers" xml:space="preserve">
+    <value>他のセッションを終了</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>作成日時</value>
+  </data>
+  <data name="ExpiresAt" xml:space="preserve">
+    <value>有効期限</value>
+  </data>
+  <data name="NoCpf" xml:space="preserve">
+    <value>ブラジルのCPF番号は不要です。氏名とメールアドレスをアカウントに使用します。投稿前にメールを確認してください。</value>
+  </data>
+  <data name="TermsText" xml:space="preserve">
+    <value>責任を持って利用してください。他人の個人情報、不快な内容、不正な評価を投稿しないでください。推薦は審査されます。訪問前に外部情報をご確認ください。</value>
+  </data>
+  <data name="PrivacyText" xml:space="preserve">
+    <value>アカウント運営のため氏名、メール、パスワードのハッシュ、セキュリティ記録を処理します。トークンと送信待ちメールは保護されます。データの確認、出力、削除はcomercial@belemrestaurantes.com.brへご連絡ください。現在は手動で対応しています。</value>
+  </data>
+</root>

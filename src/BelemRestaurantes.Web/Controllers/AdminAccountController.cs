@@ -16,7 +16,8 @@ public sealed class AdminAccountController(
     IPasswordVerifier passwordVerifier,
     ITotpProvider totp,
     Microsoft.AspNetCore.DataProtection.IDataProtectionProvider protection,
-    IAuditWriter audit) : Controller
+    IAuditWriter audit,
+    Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> text) : Controller
 {
     [AllowAnonymous]
     [HttpGet("login")]
@@ -33,7 +34,7 @@ public sealed class AdminAccountController(
     {
         if (string.IsNullOrWhiteSpace(userName) || userName.Length > 100 || string.IsNullOrEmpty(password) || password.Length > 1024)
         {
-            ModelState.AddModelError(string.Empty, "Credenciais inválidas.");
+            ModelState.AddModelError(string.Empty, text["InvalidCredentials"].Value);
             return View("Login");
         }
         var user = await users.FindByNameAsync(userName, ct);
@@ -43,7 +44,7 @@ public sealed class AdminAccountController(
             if (user is not null)
                 await users.IncrementFailuresAsync(user.Id, DateTimeOffset.UtcNow.AddMinutes(15), ct);
             await audit.WriteAsync("login_failed", "admin_user", null, null, ct);
-            ModelState.AddModelError(string.Empty, "Credenciais inválidas.");
+            ModelState.AddModelError(string.Empty, text["InvalidCredentials"].Value);
             return View("Login");
         }
 
@@ -99,7 +100,7 @@ public sealed class AdminAccountController(
         if (!totp.Validate(code, secret, DateTimeOffset.UtcNow))
         {
             await users.IncrementFailuresAsync(user.Id, DateTimeOffset.UtcNow.AddMinutes(15), ct);
-            ModelState.AddModelError(string.Empty, "Código TOTP inválido.");
+            ModelState.AddModelError(string.Empty, text["InvalidCode"].Value);
             return View("VerifyMfa");
         }
 
@@ -140,7 +141,7 @@ public sealed class AdminAccountController(
             TempData["PendingEnrollmentSecret"] = secret;
             TempData["PendingEnrollmentUser"] = userId;
             ViewData["Secret"] = secret;
-            ModelState.AddModelError(string.Empty, "Código inválido.");
+            ModelState.AddModelError(string.Empty, text["InvalidCode"].Value);
             return View("Enrol");
         }
 
@@ -160,7 +161,7 @@ public sealed class AdminAccountController(
 
     [AllowAnonymous]
     [HttpGet("access-denied")]
-    public IActionResult AccessDenied() => Problem(statusCode: 403, title: "Acesso não autorizado.");
+    public IActionResult AccessDenied() => Problem(statusCode: 403, title: text["AccessDenied"].Value);
 
     [HttpPost("logout")]
     [ValidateAntiForgeryToken]

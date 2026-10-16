@@ -11,6 +11,8 @@ namespace BelemRestaurantes.IntegrationTests;
 
 public class DatabaseEnvironment
 {
+    public static string MailKeys => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "belemrestaurantes-test-mail", Environment.ProcessId.ToString());
+
     public static string? ConnectionString() =>
         Environment.GetEnvironmentVariable("BELRESTAURANTES_TEST_MYSQL");
 }
@@ -28,7 +30,8 @@ public static class ServiceContainer
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:MySql"] = cs
+                ["ConnectionStrings:MySql"] = cs,
+                ["MailEncryption:KeyRingPath"] = DatabaseEnvironment.MailKeys
             })
             .Build();
 

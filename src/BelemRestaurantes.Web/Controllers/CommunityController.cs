@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BelemRestaurantes.Web.Controllers;
 
-[Authorize]
+[Authorize(Policy = MemberAuth.Policy)]
 [Route("community")]
 public sealed class CommunityController(
     IFavoriteRepository favorites,
@@ -36,7 +36,7 @@ public sealed class CommunityController(
     [HttpPost("rate/{id:long}")]
     public async Task<IActionResult> Rate(long id, [FromBody] RatingInput input, CancellationToken ct)
     {
-        if (input.Stars is < 1 or > 5)
+        if (input.Stars is < 1 or > 5 || input.Review?.Length > 3000)
         {
             return BadRequest(new { message = "Nota inválida" });
         }

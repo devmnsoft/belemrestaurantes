@@ -1,0 +1,321 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Language" xml:space="preserve">
+    <value>Язык</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Применить</value>
+  </data>
+  <data name="Explore" xml:space="preserve">
+    <value>Обзор</value>
+  </data>
+  <data name="Mobility" xml:space="preserve">
+    <value>Как добраться</value>
+  </data>
+  <data name="Suggest" xml:space="preserve">
+    <value>Предложить ресторан</value>
+  </data>
+  <data name="Tagline" xml:space="preserve">
+    <value>Откройте вкусы Пара</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Belém Restaurantes: вкусы и гастрономия Пара</value>
+  </data>
+  <data name="Contact" xml:space="preserve">
+    <value>Контакты</value>
+  </data>
+  <data name="ExternalNotice" xml:space="preserve">
+    <value>Информация третьих сторон может устареть. Уточните перед посещением.</value>
+  </data>
+  <data name="Guide" xml:space="preserve">
+    <value>Гастрономический гид по Пара</value>
+  </data>
+  <data name="HeroTitle" xml:space="preserve">
+    <value>Вкусы, рассказывающие нашу историю.</value>
+  </data>
+  <data name="HeroText" xml:space="preserve">
+    <value>Рестораны, асаи, такака, пиццерии и гастрономические впечатления в Пара.</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Ресторан, блюдо или кухня…</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Поиск</value>
+  </data>
+  <data name="ExploreState" xml:space="preserve">
+    <value>ИССЛЕДУЙТЕ ПАРА</value>
+  </data>
+  <data name="WhereToEat" xml:space="preserve">
+    <value>Где поедим сегодня?</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>Город</value>
+  </data>
+  <data name="AllCities" xml:space="preserve">
+    <value>Все города</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Загрузка ресторанов…</value>
+  </data>
+  <data name="CatalogLoading" xml:space="preserve">
+    <value>Поиск в каталоге…</value>
+  </data>
+  <data name="CatalogUnavailable" xml:space="preserve">
+    <value>Каталог временно недоступен. Попробуйте позже.</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>Найдено заведений: {0}</value>
+  </data>
+  <data name="ChooseRestaurant" xml:space="preserve">
+    <value>Выберите ресторан</value>
+  </data>
+  <data name="AuthorizedPhoto" xml:space="preserve">
+    <value>Разрешённое фото: {0}</value>
+  </data>
+  <data name="NoPhoto" xml:space="preserve">
+    <value>Фото пока недоступно</value>
+  </data>
+  <data name="AddressChecking" xml:space="preserve">
+    <value>Адрес проверяется</value>
+  </data>
+  <data name="Website" xml:space="preserve">
+    <value>Официальный сайт</value>
+  </data>
+  <data name="RouteTitle" xml:space="preserve">
+    <value>Новый вкус на вашем пути</value>
+  </data>
+  <data name="RouteIntro" xml:space="preserve">
+    <value>Выберите ресторан и посмотрите маршрут общественного транспорта в Google Maps.</value>
+  </data>
+  <data name="Start" xml:space="preserve">
+    <value>Откуда</value>
+  </data>
+  <data name="StartPlaceholder" xml:space="preserve">
+    <value>Адрес или ориентир</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>Куда</value>
+  </data>
+  <data name="BusRoute" xml:space="preserve">
+    <value>Маршрут на автобусе ↗</value>
+  </data>
+  <data name="RouteNotice" xml:space="preserve">
+    <value>Маршруты и тарифы предоставляет навигационный сервис, а не Belém Restaurantes.</value>
+  </data>
+  <data name="Join" xml:space="preserve">
+    <value>ПРИСОЕДИНЯЙТЕСЬ</value>
+  </data>
+  <data name="SuggestTitle" xml:space="preserve">
+    <value>Знаете замечательное место?</value>
+  </data>
+  <data name="SuggestIntro" xml:space="preserve">
+    <value>Помогите открыть заведения Пара. Все предложения проверяются.</value>
+  </data>
+  <data name="RestaurantName" xml:space="preserve">
+    <value>Название заведения</value>
+  </data>
+  <data name="OptionalWebsite" xml:space="preserve">
+    <value>Официальный сайт (необязательно)</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Примечания</value>
+  </data>
+  <data name="SendSuggestion" xml:space="preserve">
+    <value>Отправить предложение</value>
+  </data>
+  <data name="Sending" xml:space="preserve">
+    <value>Отправка…</value>
+  </data>
+  <data name="SuggestionReceived" xml:space="preserve">
+    <value>Предложение получено и ожидает проверки.</value>
+  </data>
+  <data name="SendFailed" xml:space="preserve">
+    <value>Не удалось отправить. Попробуйте снова.</value>
+  </data>
+  <data name="SupportTitle" xml:space="preserve">
+    <value>Поддержите гастрономический гид Пара</value>
+  </data>
+  <data name="SupportIntro" xml:space="preserve">
+    <value>Помеченная реклама и пожертвования поддерживают проект. Спонсорство не покупает отзывы.</value>
+  </data>
+  <data name="CopyPix" xml:space="preserve">
+    <value>Скопировать ключ PIX</value>
+  </data>
+  <data name="PixCopied" xml:space="preserve">
+    <value>Ключ PIX скопирован</value>
+  </data>
+  <data name="PixNotice" xml:space="preserve">
+    <value>Проверьте получателя в приложении банка.</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Информация</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Адрес</value>
+  </data>
+  <data name="UpdatedAt" xml:space="preserve">
+    <value>Последнее обновление</value>
+  </data>
+  <data name="OfficialLinks" xml:space="preserve">
+    <value>Официальные ссылки</value>
+  </data>
+  <data name="OpenMaps" xml:space="preserve">
+    <value>Открыть в Google Maps</value>
+  </data>
+  <data name="AdminTitle" xml:space="preserve">
+    <value>Администрирование</value>
+  </data>
+  <data name="AdminIntro" xml:space="preserve">
+    <value>Вход по имени, паролю и коду двухфакторной аутентификации (TOTP).</value>
+  </data>
+  <data name="UserName" xml:space="preserve">
+    <value>Имя пользователя</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Пароль</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Войти</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>Выйти</value>
+  </data>
+  <data name="SessionExpired" xml:space="preserve">
+    <value>Аккаунт отключён или срок сеанса истёк.</value>
+  </data>
+  <data name="SecondFactor" xml:space="preserve">
+    <value>Второй фактор</value>
+  </data>
+  <data name="TotpIntro" xml:space="preserve">
+    <value>Введите шестизначный код из приложения-аутентификатора.</value>
+  </data>
+  <data name="TotpCode" xml:space="preserve">
+    <value>Код TOTP</value>
+  </data>
+  <data name="Verify" xml:space="preserve">
+    <value>Проверить</value>
+  </data>
+  <data name="EnrollTitle" xml:space="preserve">
+    <value>Настроить двухфакторную аутентификацию</value>
+  </data>
+  <data name="EnrollIntro" xml:space="preserve">
+    <value>Добавьте аккаунт в приложение с помощью ключа ниже и подтвердите созданный код.</value>
+  </data>
+  <data name="Activate" xml:space="preserve">
+    <value>Подтвердить и включить</value>
+  </data>
+  <data name="PendingRestaurants" xml:space="preserve">
+    <value>Рестораны, ожидающие одобрения</value>
+  </data>
+  <data name="Health" xml:space="preserve">
+    <value>Состояние системы</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Неверные учётные данные.</value>
+  </data>
+  <data name="InvalidCode" xml:space="preserve">
+    <value>Неверный код.</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>Доступ запрещён.</value>
+  </data>
+  <data name="MyAccount" xml:space="preserve">
+    <value>Мой аккаунт</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>Создать аккаунт</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>Полное имя</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Электронная почта</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>Подтвердите пароль</value>
+  </data>
+  <data name="Remember" xml:space="preserve">
+    <value>Оставаться в системе на этом устройстве</value>
+  </data>
+  <data name="AcceptTerms" xml:space="preserve">
+    <value>Я прочитал(а) и принимаю условия и политику конфиденциальности.</value>
+  </data>
+  <data name="Terms" xml:space="preserve">
+    <value>Условия использования</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>Конфиденциальность</value>
+  </data>
+  <data name="PasswordRules" xml:space="preserve">
+    <value>Используйте 12–256 символов: заглавные и строчные буквы, цифру и знак. Избегайте распространённых слов и подтвердите пароль.</value>
+  </data>
+  <data name="RegistrationInvalid" xml:space="preserve">
+    <value>Проверьте поля, требования к паролю, подтверждение и принятие условий.</value>
+  </data>
+  <data name="CheckEmail" xml:space="preserve">
+    <value>Если данные подходят, мы отправим ссылку подтверждения. Проверьте почту и папку «Спам».</value>
+  </data>
+  <data name="MemberLoginFailed" xml:space="preserve">
+    <value>Не удалось войти. Проверьте почту и пароль, подтвердите адрес или подождите после нескольких попыток.</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>Забыли пароль</value>
+  </data>
+  <data name="ResendEmail" xml:space="preserve">
+    <value>Отправить подтверждение повторно</value>
+  </data>
+  <data name="RecoveryNeutral" xml:space="preserve">
+    <value>Если подходящий аккаунт существует, мы отправим ссылку восстановления. Проверьте почту и спам.</value>
+  </data>
+  <data name="ConfirmEmail" xml:space="preserve">
+    <value>Подтвердить почту</value>
+  </data>
+  <data name="EmailConfirmed" xml:space="preserve">
+    <value>Почта подтверждена. Теперь можно войти.</value>
+  </data>
+  <data name="InvalidLink" xml:space="preserve">
+    <value>Ссылка недействительна, истекла или уже использована. Запросите новую.</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>Задать новый пароль</value>
+  </data>
+  <data name="PasswordReset" xml:space="preserve">
+    <value>Пароль изменён. Предыдущие сеансы завершены. Войдите с новым паролем.</value>
+  </data>
+  <data name="Sessions" xml:space="preserve">
+    <value>Активные сеансы</value>
+  </data>
+  <data name="CurrentSession" xml:space="preserve">
+    <value>Текущий сеанс</value>
+  </data>
+  <data name="RevokeOthers" xml:space="preserve">
+    <value>Завершить другие сеансы</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>Создан</value>
+  </data>
+  <data name="ExpiresAt" xml:space="preserve">
+    <value>Истекает</value>
+  </data>
+  <data name="NoCpf" xml:space="preserve">
+    <value>Мы не запрашиваем бразильский CPF. Имя и почта нужны для аккаунта; подтвердите почту перед публикацией.</value>
+  </data>
+  <data name="TermsText" xml:space="preserve">
+    <value>Используйте портал ответственно. Не публикуйте чужие данные, оскорбления и поддельные отзывы. Предложения проверяются. Уточняйте стороннюю информацию перед посещением.</value>
+  </data>
+  <data name="PrivacyText" xml:space="preserve">
+    <value>Для работы аккаунта обрабатываются имя, почта, хеш пароля и записи безопасности. Токены и письма в очереди защищены. Для доступа, экспорта или удаления данных пишите на comercial@belemrestaurantes.com.br. Запросы пока обрабатываются вручную.</value>
+  </data>
+</root>

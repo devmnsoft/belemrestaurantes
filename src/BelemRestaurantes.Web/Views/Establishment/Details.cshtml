@@ -5,7 +5,7 @@
 <section class="shell section">
   <div class="heading">
     <div>
-      <span class="overline dark">@Model.City · @(Model.Neighborhood ?? "bairro em atualização")</span>
+      <span class="overline dark">@Model.City · @(Model.Neighborhood ?? T["AddressChecking"].Value)</span>
       <h1>@Model.Name</h1>
       <p class="muted">@Model.Category</p>
     </div>
@@ -14,19 +14,19 @@
   @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
   {
       <div class="photo" style="height:320px;margin:18px 0;">
-        <img src="@Model.PhotoUrl" alt="Foto autorizada do @Model.Name" style="width:100%;height:100%;object-fit:cover;" loading="lazy" referrerpolicy="no-referrer" />
+        <img src="@Model.PhotoUrl" alt="@T["AuthorizedPhoto", Model.Name]" style="width:100%;height:100%;object-fit:cover;" loading="lazy" referrerpolicy="no-referrer" />
       </div>
   }
 
   <div class="split">
     <div>
-      <h2>Informações</h2>
-      <p><b>Endereço:</b> @(Model.Address ?? "em verificação")</p>
-      <p><b>Cidade:</b> @Model.City</p>
-      <p><b>Última atualização:</b> @Model.UpdatedAt.LocalDateTime.ToString("dd/MM/yyyy HH:mm")</p>
-      <h3>Links oficiais</h3>
+      <h2>@T["Information"]</h2>
+      <p><b>@T["Address"]:</b> @(Model.Address ?? T["AddressChecking"].Value)</p>
+      <p><b>@T["City"]:</b> @Model.City</p>
+      <p><b>@T["UpdatedAt"]:</b> @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")</p>
+      <h3>@T["OfficialLinks"]</h3>
       <div class="actions">
-        @if (Model.Website is not null) { <a href="@Model.Website" target="_blank" rel="noopener noreferrer">Site oficial</a> }
+        @if (Model.Website is not null) { <a href="@Model.Website" target="_blank" rel="noopener noreferrer">@T["Website"]</a> }
         @if (Model.Instagram is not null) { <a href="@Model.Instagram" target="_blank" rel="noopener noreferrer">Instagram</a> }
         @if (Model.Facebook is not null) { <a href="@Model.Facebook" target="_blank" rel="noopener noreferrer">Facebook</a> }
         @if (Model.TikTok is not null) { <a href="@Model.TikTok" target="_blank" rel="noopener noreferrer">TikTok</a> }
@@ -34,9 +34,9 @@
       </div>
     </div>
     <div class="panel">
-      <h3>Como chegar</h3>
-      <p>Rotas e tarifas vêm do serviço de navegação, não do Guia Belém Restaurantes.</p>
-      <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer">Abrir no Google Maps</a>
+      <h3>@T["Mobility"]</h3>
+      <p>@T["RouteNotice"]</p>
+      <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer">@T["OpenMaps"]</a>
     </div>
   </div>
 </section>

@@ -1,0 +1,11 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.MemberSessionView>
+@{ ViewData["Title"] = T["MyAccount"].Value; }
+<section class="shell section narrow"><h1>@T["MyAccount"]</h1><p>@User.Identity?.Name</p>
+<div class="panel"><h2>@T["Sessions"]</h2><ul>
+@foreach (var session in Model)
+{
+ <li>@T["CreatedAt"]: @session.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g") · @T["ExpiresAt"]: @session.ExpiresAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g") @(session.Current ? T["CurrentSession"].Value : "")</li>
+}
+</ul>
+<form method="post" action="/account/sessions/revoke-others">@Html.AntiForgeryToken()<button type="submit">@T["RevokeOthers"]</button></form>
+<form method="post" action="/account/logout">@Html.AntiForgeryToken()<button type="submit">@T["SignOut"]</button></form></div></section>
