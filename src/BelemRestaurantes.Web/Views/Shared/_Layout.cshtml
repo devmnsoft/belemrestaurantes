@@ -5,15 +5,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="@T["Description"]" />
+  <meta name="description" content="@(ViewData["MetaDescription"] ?? T["Description"].Value)" />
   <title>@(ViewData["Title"] ?? T["Tagline"].Value) | Belém Restaurantes</title>
+
+  @if (ViewData["OgTitle"] is not null)
+  {
+      <meta property="og:title" content="@ViewData["OgTitle"]" />
+      <meta property="og:description" content="@(ViewData["OgDescription"] ?? T["Description"].Value)" />
+      <meta property="og:url" content="@ViewData["OgUrl"]" />
+      <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
+      @if (ViewData["OgImage"] is not null)
+      {
+          <meta property="og:image" content="@ViewData["OgImage"]" />
+      }
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="@ViewData["OgTitle"]" />
+      <meta name="twitter:description" content="@(ViewData["OgDescription"] ?? T["Description"].Value)" />
+  }
+
   <link rel="stylesheet" asp-append-version="true" href="~/css/site.css" />
+  @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
 <header>
   <a asp-controller="Home" asp-action="Index" class="brand"><span class="mark">✦</span> belém <strong>restaurantes</strong></a>
   <nav aria-label="@T["Explore"]">
     <a href="/#catalogo">@T["Explore"]</a>
+    <a href="/community">@T["CommunityFeedTitle"]</a>
     <a href="/#mobilidade">@T["Mobility"]</a>
     <a href="/#indicacao">@T["Suggest"]</a>
     <a href="/account">@T["MyAccount"]</a>

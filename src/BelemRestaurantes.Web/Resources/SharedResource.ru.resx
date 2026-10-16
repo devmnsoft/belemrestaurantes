@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -317,5 +317,230 @@
   </data>
   <data name="PrivacyText" xml:space="preserve">
     <value>Для работы аккаунта обрабатываются имя, почта, хеш пароля и записи безопасности. Токены и письма в очереди защищены. Для доступа, экспорта или удаления данных пишите на comercial@belemrestaurantes.com.br. Запросы пока обрабатываются вручную.</value>
+  </data>
+  <data name="TellYourExperience" xml:space="preserve">
+    <value>Поделитесь впечатлениями</value>
+  </data>
+  <data name="OverallRating" xml:space="preserve">
+    <value>Общая оценка</value>
+  </data>
+  <data name="ServiceRating" xml:space="preserve">
+    <value>Обслуживание</value>
+  </data>
+  <data name="FlavorRating" xml:space="preserve">
+    <value>Вкус</value>
+  </data>
+  <data name="AmbianceRating" xml:space="preserve">
+    <value>Атмосфера</value>
+  </data>
+  <data name="CostBenefitRating" xml:space="preserve">
+    <value>Цена и качество</value>
+  </data>
+  <data name="ReviewComment" xml:space="preserve">
+    <value>Ваш отзыв / комментарий</value>
+  </data>
+  <data name="DishesConsumed" xml:space="preserve">
+    <value>Заказанные блюда</value>
+  </data>
+  <data name="PricePaid" xml:space="preserve">
+    <value>Стоимость (необязательно)</value>
+  </data>
+  <data name="AddPhotos" xml:space="preserve">
+    <value>Добавить фото</value>
+  </data>
+  <data name="PhotoPreview" xml:space="preserve">
+    <value>Предпросмотр</value>
+  </data>
+  <data name="PublishVisibility" xml:space="preserve">
+    <value>Видимость</value>
+  </data>
+  <data name="VisibilityPublic" xml:space="preserve">
+    <value>Публично (после модерации)</value>
+  </data>
+  <data name="VisibilityPrivate" xml:space="preserve">
+    <value>Приватно (только для вас)</value>
+  </data>
+  <data name="VisibilityUnlisted" xml:space="preserve">
+    <value>По ссылке (только по секретной ссылке)</value>
+  </data>
+  <data name="SubmitExperience" xml:space="preserve">
+    <value>Отправить отзыв</value>
+  </data>
+  <data name="ExperienceInvalidScores" xml:space="preserve">
+    <value>Пожалуйста, поставьте оценки от 1 до 5 звезд.</value>
+  </data>
+  <data name="EditExperience" xml:space="preserve">
+    <value>Редактировать отзыв</value>
+  </data>
+  <data name="DeleteExperience" xml:space="preserve">
+    <value>Удалить отзыв</value>
+  </data>
+  <data name="PendingModerationNotice" xml:space="preserve">
+    <value>Ожидает модерации</value>
+  </data>
+  <data name="RejectedNotice" xml:space="preserve">
+    <value>Публикация отклонена</value>
+  </data>
+  <data name="SubmitAppeal" xml:space="preserve">
+    <value>Обжаловать решение</value>
+  </data>
+  <data name="AppealText" xml:space="preserve">
+    <value>Причина апелляции</value>
+  </data>
+  <data name="AppealSubmitted" xml:space="preserve">
+    <value>Апелляция отправлена на рассмотрение модераторам.</value>
+  </data>
+  <data name="AppealFailed" xml:space="preserve">
+    <value>Не удалось отправить апелляцию.</value>
+  </data>
+  <data name="OfficialPhotos" xml:space="preserve">
+    <value>Официальные фото</value>
+  </data>
+  <data name="CommunityPhotos" xml:space="preserve">
+    <value>Фото сообщества</value>
+  </data>
+  <data name="IllustrativePhotos" xml:space="preserve">
+    <value>Иллюстративные фото</value>
+  </data>
+  <data name="NoPhotosYet" xml:space="preserve">
+    <value>В этой категории пока нет фотографий.</value>
+  </data>
+  <data name="CommunityFeedTitle" xml:space="preserve">
+    <value>Вкусы Сообщества</value>
+  </data>
+  <data name="CommunityFeedSubtitle" xml:space="preserve">
+    <value>Реальные впечатления и фотографии от гостей</value>
+  </data>
+  <data name="Like" xml:space="preserve">
+    <value>Нравится</value>
+  </data>
+  <data name="Unlike" xml:space="preserve">
+    <value>Не нравится</value>
+  </data>
+  <data name="Comments" xml:space="preserve">
+    <value>Комментарии</value>
+  </data>
+  <data name="AddComment" xml:space="preserve">
+    <value>Оставить комментарий</value>
+  </data>
+  <data name="SendComment" xml:space="preserve">
+    <value>Отправить комментарий</value>
+  </data>
+  <data name="ReportContent" xml:space="preserve">
+    <value>Пожаловаться на контент</value>
+  </data>
+  <data name="ReportReason" xml:space="preserve">
+    <value>Причина жалобы</value>
+  </data>
+  <data name="ReportNotes" xml:space="preserve">
+    <value>Дополнительные детали</value>
+  </data>
+  <data name="ReportReceived" xml:space="preserve">
+    <value>Жалоба принята. Наша команда проверит её.</value>
+  </data>
+  <data name="SortRecent" xml:space="preserve">
+    <value>Сначала новые</value>
+  </data>
+  <data name="SortTop" xml:space="preserve">
+    <value>Популярные</value>
+  </data>
+  <data name="ShareExperience" xml:space="preserve">
+    <value>Поделиться</value>
+  </data>
+  <data name="ShareWhatsApp" xml:space="preserve">
+    <value>WhatsApp</value>
+  </data>
+  <data name="ShareFacebook" xml:space="preserve">
+    <value>Facebook</value>
+  </data>
+  <data name="ShareInstagram" xml:space="preserve">
+    <value>Instagram</value>
+  </data>
+  <data name="ShareTikTok" xml:space="preserve">
+    <value>TikTok</value>
+  </data>
+  <data name="CopyLink" xml:space="preserve">
+    <value>Скопировать ссылку</value>
+  </data>
+  <data name="LinkCopied" xml:space="preserve">
+    <value>Ссылка скопирована!</value>
+  </data>
+  <data name="ShareNative" xml:space="preserve">
+    <value>Поделиться на устройстве</value>
+  </data>
+  <data name="CuiaBadge" xml:space="preserve">
+    <value>Знак Куйя</value>
+  </data>
+  <data name="CuiaMethodology" xml:space="preserve">
+    <value>Прозрачная методология</value>
+  </data>
+  <data name="CuiaRankPosition" xml:space="preserve">
+    <value>Позиция в рейтинге</value>
+  </data>
+  <data name="CuiaScore" xml:space="preserve">
+    <value>Балл Куйя</value>
+  </data>
+  <data name="ProfileUpdated" xml:space="preserve">
+    <value>Профиль успешно обновлен.</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Изменить пароль</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>Текущий пароль</value>
+  </data>
+  <data name="ChangeEmail" xml:space="preserve">
+    <value>Изменить e-mail</value>
+  </data>
+  <data name="NewEmail" xml:space="preserve">
+    <value>Новый e-mail</value>
+  </data>
+  <data name="Bio" xml:space="preserve">
+    <value>О себе</value>
+  </data>
+  <data name="ExportMyData" xml:space="preserve">
+    <value>Экспорт данных (LGPD)</value>
+  </data>
+  <data name="DeleteMyAccount" xml:space="preserve">
+    <value>Удалить / Анонимизировать аккаунт</value>
+  </data>
+  <data name="LgpdRequestReceived" xml:space="preserve">
+    <value>Запрос LGPD успешно зарегистрирован.</value>
+  </data>
+  <data name="MyExperiences" xml:space="preserve">
+    <value>Мои отзывы</value>
+  </data>
+  <data name="ItemApproved" xml:space="preserve">
+    <value>Элемент успешно одобрен.</value>
+  </data>
+  <data name="ItemRejected" xml:space="preserve">
+    <value>Элемент успешно отклонен.</value>
+  </data>
+  <data name="PhotoApproved" xml:space="preserve">
+    <value>Фото одобрено.</value>
+  </data>
+  <data name="PhotoRejected" xml:space="preserve">
+    <value>Фото отклонено.</value>
+  </data>
+  <data name="ReportUpheld" xml:space="preserve">
+    <value>Жалоба подтверждена. Контент скрыт.</value>
+  </data>
+  <data name="ReportDismissed" xml:space="preserve">
+    <value>Жалоба отклонена.</value>
+  </data>
+  <data name="MemberLocked" xml:space="preserve">
+    <value>Пользователь заблокирован.</value>
+  </data>
+  <data name="MemberUnlocked" xml:space="preserve">
+    <value>Пользователь разблокирован.</value>
+  </data>
+  <data name="AccountAnonymized" xml:space="preserve">
+    <value>Аккаунт анонимизирован в соответствии с LGPD.</value>
+  </data>
+  <data name="LgpdCompleted" xml:space="preserve">
+    <value>Запрос LGPD выполнен.</value>
+  </data>
+  <data name="CuiaRecalculated" xml:space="preserve">
+    <value>Рейтинги Знака Куйя успешно пересчитаны.</value>
   </data>
 </root>

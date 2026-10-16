@@ -1,0 +1,60 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.ExperiencePhoto>
+@{
+    ViewData["Title"] = "Moderação de Fotografias";
+}
+<section class="shell section">
+  @if (TempData["Flash"] is string flash)
+  {
+      <div class="flash">@flash</div>
+  }
+
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ Painel Administrativo MNSOFT</span>
+      <h1>Moderação de Fotografias</h1>
+      <p class="muted">Varredura e autorização de fotos enviadas pela comunidade.</p>
+    </div>
+    <div>
+      <a href="/admin/dashboard" class="button-link ghost">← Voltar ao painel</a>
+    </div>
+  </div>
+
+  @if (Model.Count == 0)
+  {
+      <div class="panel" style="text-align:center;padding:40px;">
+        <p class="muted">Nenhuma fotografia pendente de moderação no momento.</p>
+      </div>
+  }
+  else
+  {
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:20px;">
+        @foreach (var photo in Model)
+        {
+            <div class="panel" style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+              <a href="/media/photo/@photo.FileName" target="_blank" style="height:200px;border-radius:10px;overflow:hidden;display:block;border:1px solid #dce7dc;">
+                <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width:100%;height:100%;object-fit:cover;" />
+              </a>
+
+              <div style="font-size:13px;color:#547062;">
+                <div>Original: <code>@photo.OriginalName</code></div>
+                <div>Dimensões: @photo.Width x @photo.Height px · Formato: WebP</div>
+                <div>Restaurante ID: <b>@photo.RestaurantId</b></div>
+                <div>Usuário: <code>@photo.UserId</code></div>
+              </div>
+
+              <div style="display:flex;gap:8px;margin-top:auto;">
+                <form method="post" action="/admin/photos/@photo.Id/approve" style="flex:1;">
+                  @Html.AntiForgeryToken()
+                  <button type="submit" style="width:100%;background:#1e8449;padding:8px;">✓ Aprovar</button>
+                </form>
+
+                <form method="post" action="/admin/photos/@photo.Id/reject" style="flex:1;">
+                  @Html.AntiForgeryToken()
+                  <button type="submit" class="danger" style="width:100%;padding:8px;">Rejeitar</button>
+                </form>
+              </div>
+            </div>
+        }
+      </div>
+  }
+</section>

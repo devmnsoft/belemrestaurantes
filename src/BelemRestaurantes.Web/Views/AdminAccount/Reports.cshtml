@@ -1,0 +1,68 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.CommunityReport>
+@{
+    ViewData["Title"] = "Denúncias da Comunidade";
+}
+<section class="shell section">
+  @if (TempData["Flash"] is string flash)
+  {
+      <div class="flash">@flash</div>
+  }
+
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ Painel Administrativo MNSOFT</span>
+      <h1>Denúncias da Comunidade</h1>
+      <p class="muted">Triagem de conteúdos denunciados por visitantes (ofensas, difamação, fake, PII ou spam).</p>
+    </div>
+    <div>
+      <a href="/admin/dashboard" class="button-link ghost">← Voltar ao painel</a>
+    </div>
+  </div>
+
+  @if (Model.Count == 0)
+  {
+      <div class="panel" style="text-align:center;padding:40px;">
+        <p class="muted">Nenhuma denúncia pendente de análise.</p>
+      </div>
+  }
+  else
+  {
+      <div style="display:grid;gap:16px;margin-top:20px;">
+        @foreach (var report in Model)
+        {
+            <div class="panel" style="display:grid;gap:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span class="badge red">Motivo: @report.Reason</span>
+                <small class="muted">Denunciado em @report.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")</small>
+              </div>
+
+              <div>
+                <b>Alvo:</b> Tipo: <code>@report.TargetType</code> · ID: <b>@report.TargetId</b>
+                <a href="/experience/@report.TargetId" target="_blank" style="margin-left:8px;font-size:13px;">[Abrir alvo]</a>
+              </div>
+
+              @if (!string.IsNullOrWhiteSpace(report.Notes))
+              {
+                  <p style="background:#fdf3f2;border:1px solid #f9d5d3;padding:10px;border-radius:8px;margin:4px 0;font-size:14px;">
+                    <b>Detalhes do denunciante:</b> @report.Notes
+                  </p>
+              }
+
+              <div style="display:flex;gap:12px;margin-top:8px;">
+                <form method="post" action="/admin/reports/@report.Id/review">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="uphold" value="true" />
+                  <button type="submit" class="danger" style="padding:8px 16px;">✓ Procedente (Remover/Moderar conteúdo)</button>
+                </form>
+
+                <form method="post" action="/admin/reports/@report.Id/review">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="uphold" value="false" />
+                  <button type="submit" class="ghost" style="padding:8px 16px;">Arquivar (Improcedente)</button>
+                </form>
+              </div>
+            </div>
+        }
+      </div>
+  }
+</section>

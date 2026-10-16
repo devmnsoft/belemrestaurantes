@@ -1,0 +1,132 @@
+@model BelemRestaurantes.Web.Models.ExperienceInputModel
+@{
+    var restaurant = ViewData["Restaurant"] as BelemRestaurantes.Application.Models.RestaurantView;
+    ViewData["Title"] = T["TellYourExperience"].Value + " · " + (restaurant?.Name ?? "");
+}
+<section class="shell section narrow">
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ @T["TellYourExperience"]</span>
+      <h1>@(restaurant?.Name ?? "Restaurante")</h1>
+      <p class="muted">@(restaurant?.City) · @(restaurant?.Category)</p>
+    </div>
+  </div>
+
+  @if (!ViewData.ModelState.IsValid)
+  {
+      <div class="panel warn" style="margin-bottom:20px;">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p style="color:#b03a2e;margin:0;">• @error.ErrorMessage</p>
+        }
+      </div>
+  }
+
+  <form method="post" action="/experience/create" enctype="multipart/form-data" class="panel">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="RestaurantId" value="@Model.RestaurantId" />
+
+    <div>
+      <label><b>@T["OverallRating"] (1 a 5 estrelas)</b></label>
+      <select name="Stars" style="font-size:16px;">
+        <option value="5" selected="@(Model.Stars == 5)">★★★★★ (5 estrelas - Excelente)</option>
+        <option value="4" selected="@(Model.Stars == 4)">★★★★☆ (4 estrelas - Muito bom)</option>
+        <option value="3" selected="@(Model.Stars == 3)">★★★☆☆ (3 estrelas - Regular)</option>
+        <option value="2" selected="@(Model.Stars == 2)">★★☆☆☆ (2 estrelas - Ruim)</option>
+        <option value="1" selected="@(Model.Stars == 1)">★☆☆☆☆ (1 estrela - Péssimo)</option>
+      </select>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label><b>@T["ServiceRating"]</b></label>
+        <select name="ServiceStars">
+          <option value="5">5 estrelas</option><option value="4">4 estrelas</option>
+          <option value="3">3 estrelas</option><option value="2">2 estrelas</option><option value="1">1 estrela</option>
+        </select>
+      </div>
+      <div>
+        <label><b>@T["FlavorRating"]</b></label>
+        <select name="FlavorStars">
+          <option value="5">5 estrelas</option><option value="4">4 estrelas</option>
+          <option value="3">3 estrelas</option><option value="2">2 estrelas</option><option value="1">1 estrela</option>
+        </select>
+      </div>
+      <div>
+        <label><b>@T["AmbianceRating"]</b></label>
+        <select name="AmbianceStars">
+          <option value="5">5 estrelas</option><option value="4">4 estrelas</option>
+          <option value="3">3 estrelas</option><option value="2">2 estrelas</option><option value="1">1 estrela</option>
+        </select>
+      </div>
+      <div>
+        <label><b>@T["CostBenefitRating"]</b></label>
+        <select name="CostBenefitStars">
+          <option value="5">5 estrelas</option><option value="4">4 estrelas</option>
+          <option value="3">3 estrelas</option><option value="2">2 estrelas</option><option value="1">1 estrela</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label><b>@T["DishesConsumed"]</b></label>
+      <input name="DishesConsumed" value="@Model.DishesConsumed" placeholder="Ex: Tacacá com camarão, Unha de caranguejo, Açaí" maxlength="500" />
+    </div>
+
+    <div>
+      <label><b>@T["PricePaid"]</b></label>
+      <input name="PricePaid" type="number" step="0.01" min="0" value="@Model.PricePaid" placeholder="R$ 0,00" />
+    </div>
+
+    <div>
+      <label><b>@T["ReviewComment"]</b></label>
+      <textarea name="ReviewText" rows="5" maxlength="3000" style="width:100%;padding:12px;border:1px solid #cddccf;border-radius:10px;font-family:inherit;" placeholder="Conte detalhes sobre o atendimento, os sabores paraenses, o ambiente e o que mais gostou...">@Model.ReviewText</textarea>
+      <small class="muted">Evite dados pessoais (como CPF ou telefones) e linguagem ofensiva para aprovação rápida pela moderação.</small>
+    </div>
+
+    <div>
+      <label><b>📷 @T["AddPhotos"] (até 5 fotos)</b></label>
+      <input type="file" id="photoInput" name="photos" multiple accept="image/jpeg,image/png,image/webp" style="padding:10px;border:1px dashed #276e53;border-radius:10px;width:100%;cursor:pointer;" />
+      <small class="muted">Aceita fotos da câmera do celular ou arquivos (JPEG, PNG, WebP) de até 8MB. Os metadados EXIF e localização GPS são removidos automaticamente para sua privacidade.</small>
+      <div id="previewContainer" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;"></div>
+    </div>
+
+    <div>
+      <label><b>🔒 @T["PublishVisibility"]</b></label>
+      <select name="Visibility">
+        <option value="public" selected="@(Model.Visibility == "public")">🌐 @T["VisibilityPublic"]</option>
+        <option value="private" selected="@(Model.Visibility == "private")">🔒 @T["VisibilityPrivate"]</option>
+        <option value="unlisted" selected="@(Model.Visibility == "unlisted")">🔗 @T["VisibilityUnlisted"]</option>
+      </select>
+    </div>
+
+    <div style="margin-top:10px;">
+      <button type="submit" style="width:100%;font-size:16px;padding:15px;">✦ @T["SubmitExperience"]</button>
+    </div>
+  </form>
+</section>
+
+@section Scripts {
+<script>
+  const photoInput = document.getElementById('photoInput');
+  const preview = document.getElementById('previewContainer');
+  if (photoInput && preview) {
+    photoInput.addEventListener('change', () => {
+      preview.innerHTML = '';
+      const files = Array.from(photoInput.files).slice(0, 5);
+      files.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          img.style.width = '80px';
+          img.style.height = '80px';
+          img.style.objectFit = 'cover';
+          img.style.borderRadius = '8px';
+          img.style.border = '1px solid #dce7dc';
+          preview.appendChild(img);
+        }
+      });
+    });
+  }
+</script>
+}

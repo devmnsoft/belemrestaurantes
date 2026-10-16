@@ -1,11 +1,179 @@
 @model IReadOnlyList<BelemRestaurantes.Application.Abstractions.MemberSessionView>
-@{ ViewData["Title"] = T["MyAccount"].Value; }
-<section class="shell section narrow"><h1>@T["MyAccount"]</h1><p>@User.Identity?.Name</p>
-<div class="panel"><h2>@T["Sessions"]</h2><ul>
-@foreach (var session in Model)
-{
- <li>@T["CreatedAt"]: @session.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g") · @T["ExpiresAt"]: @session.ExpiresAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g") @(session.Current ? T["CurrentSession"].Value : "")</li>
+@using BelemRestaurantes.Application.Abstractions
+@{
+    ViewData["Title"] = T["MyAccount"].Value;
+    var profile = ViewData["Profile"] as MemberProfile;
+    var myExperiences = ViewData["MyExperiences"] as IReadOnlyList<ExperienceView> ?? [];
 }
-</ul>
-<form method="post" action="/account/sessions/revoke-others">@Html.AntiForgeryToken()<button type="submit">@T["RevokeOthers"]</button></form>
-<form method="post" action="/account/logout">@Html.AntiForgeryToken()<button type="submit">@T["SignOut"]</button></form></div></section>
+
+<section class="shell section narrow">
+  @if (TempData["Flash"] is string flash)
+  {
+      <div class="flash">@flash</div>
+  }
+  @if (TempData["SuccessMessage"] is string success)
+  {
+      <div class="flash">@success</div>
+  }
+  @if (TempData["ErrorMessage"] is string error)
+  {
+      <div class="panel warn"><p style="color:#b03a2e;margin:0;">@error</p></div>
+  }
+
+  <div class="heading" style="margin-bottom:20px;">
+    <div>
+      <span class="overline dark">✦ Identidade & Comunidade</span>
+      <h1>@T["MyAccount"]</h1>
+      <p class="muted">Gerencie suas experiências gastronômicas, privacidade e dados pessoais.</p>
+    </div>
+
+    <div>
+      <form method="post" action="/account/logout">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="ghost">@T["SignOut"]</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 1. Dados do Perfil -->
+  <div class="panel" style="margin-bottom:24px;">
+    <h2>Perfil do Visitante</h2>
+    <form method="post" action="/account/profile" style="display:grid;gap:12px;">
+      @Html.AntiForgeryToken()
+      <div>
+        <label><b>@T["FullName"]</b></label>
+        <input name="fullName" value="@(profile?.FullName ?? User.Identity?.Name)" required minlength="2" maxlength="160" />
+      </div>
+
+      <div>
+        <label><b>@T["Email"]</b></label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input value="@profile?.Email" disabled style="background:#f4f7f4;color:#547062;" />
+          @if (profile?.EmailConfirmed == true)
+          {
+              <span class="badge green" title="E-mail verificado">✓ Verificado</span>
+          }
+        </div>
+      </div>
+
+      <div>
+        <label><b>@T["Bio"]</b></label>
+        <textarea name="bio" rows="2" maxlength="300" placeholder="Conte um pouco sobre suas preferências culinárias no Pará..." style="width:100%;padding:10px;border:1px solid #cddccf;border-radius:10px;">@profile?.Bio</textarea>
+      </div>
+
+      <div>
+        <button type="submit">Salvar perfil</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 2. Minhas Experiências Gastronômicas -->
+  <div class="panel" style="margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <h2>@T["MyExperiences"] (@myExperiences.Count)</h2>
+      <a href="/#catalogo" class="button-link" style="padding:6px 14px;font-size:13px;">Avaliar novo restaurante</a>
+    </div>
+
+    @if (myExperiences.Count == 0)
+    {
+        <p class="muted" style="margin:14px 0 0;">Você ainda não registrou nenhuma experiência. Escolha um restaurante no catálogo e conte sua história!</p>
+    }
+    else
+    {
+        <div style="display:grid;gap:14px;margin-top:14px;">
+          @foreach (var exp in myExperiences)
+          {
+              <div style="border:1px solid #e0e8e1;border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#fafcfb;">
+                <div>
+                  <h4 style="margin:0 0 4px;">
+                    <a href="/establishment/@exp.RestaurantId" style="color:#174b3c;text-decoration:none;">@exp.RestaurantName</a>
+                    <span style="color:#e67e22;font-size:14px;margin-left:6px;">@string.Concat(Enumerable.Repeat("★", exp.Stars))</span>
+                  </h4>
+                  <small class="muted">
+                    @exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("d") · 
+                    @if (exp.Status == "approved") { <span class="badge green">Publicada</span> }
+                    else if (exp.Status == "pending") { <span class="badge" style="background:#fef9e7;color:#d35400;">Aguardando moderação</span> }
+                    else if (exp.Status == "rejected") { <span class="badge red">Rejeitada</span> }
+                    · <span style="color:#547062;">Visibilidade: @exp.Visibility</span>
+                  </small>
+                </div>
+
+                <div style="display:flex;gap:8px;">
+                  <a href="/experience/@exp.Id" class="button-link ghost" style="padding:5px 10px;font-size:12px;">Visualizar</a>
+                  <a href="/experience/edit/@exp.Id" class="button-link" style="padding:5px 10px;font-size:12px;">@T["EditExperience"]</a>
+                </div>
+              </div>
+          }
+        </div>
+    }
+  </div>
+
+  <!-- 3. Alteração de Senha & E-mail -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;">
+    <div class="panel">
+      <h3>@T["ChangePassword"]</h3>
+      <form method="post" action="/account/change-password" style="display:grid;gap:10px;">
+        @Html.AntiForgeryToken()
+        <label>@T["CurrentPassword"]<input type="password" name="currentPassword" required autocomplete="current-password" /></label>
+        <label>@T["NewPassword"]<input type="password" name="newPassword" required autocomplete="new-password" /></label>
+        <label>@T["ConfirmPassword"]<input type="password" name="confirmPassword" required autocomplete="new-password" /></label>
+        <button type="submit">@T["ChangePassword"]</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h3>@T["ChangeEmail"]</h3>
+      <p class="muted" style="font-size:13px;margin:0;">Para sua segurança, enviaremos um link de confirmação para o novo endereço antes de atualizar.</p>
+      <form method="post" action="/account/change-email" style="display:grid;gap:10px;margin-top:10px;">
+        @Html.AntiForgeryToken()
+        <label>@T["NewEmail"]<input type="email" name="newEmail" required maxlength="200" placeholder="novo@exemplo.com" /></label>
+        <button type="submit">@T["ChangeEmail"]</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Sessões Ativas -->
+  <div class="panel" style="margin-bottom:24px;">
+    <h2>@T["Sessions"]</h2>
+    <ul style="padding-left:20px;margin:10px 0;">
+      @foreach (var session in Model)
+      {
+          <li style="margin-bottom:6px;font-size:14px;">
+            @T["CreatedAt"]: @session.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g") · 
+            @T["ExpiresAt"]: @session.ExpiresAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")
+            @if (session.Current)
+            {
+                <span class="badge green">@T["CurrentSession"]</span>
+            }
+          </li>
+      }
+    </ul>
+    <div style="margin-top:10px;">
+      <form method="post" action="/account/sessions/revoke-others" style="display:inline;">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="ghost">@T["RevokeOthers"]</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Central de Privacidade e LGPD -->
+  <div class="panel" style="border-color:#bfe3c9;background:#fbfefb;">
+    <h2 style="color:#174b3c;">🔒 Privacidade & Governança LGPD</h2>
+    <p style="font-size:14px;color:#547062;margin:4px 0 14px;">
+      Você tem total controle sobre seus dados pessoais no Belém Restaurantes, em conformidade com a LGPD (Lei 13.709/2018).
+    </p>
+
+    <div style="display:flex;gap:14px;flex-wrap:wrap;">
+      <a href="/account/lgpd/export" class="button-link" style="background:#1e8449;">
+        📥 @T["ExportMyData"]
+      </a>
+
+      <form method="post" action="/account/lgpd/delete" onsubmit="return confirm('Tem certeza de que deseja solicitar a anonimização e exclusão da sua conta? Suas sessões serão encerradas e seus dados de identidade desvinculados.');" style="display:inline;">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="danger">
+          🗑️ @T["DeleteMyAccount"]
+        </button>
+      </form>
+    </div>
+  </div>
+</section>

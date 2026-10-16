@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -317,5 +317,230 @@
   </data>
   <data name="PrivacyText" xml:space="preserve">
     <value>Tratamos nome, e-mail, hash de senha e registros de segurança para operar a conta. Tokens e mensagens da fila de e-mail são protegidos. Para solicitar acesso, exportação ou exclusão dos seus dados, contate comercial@belemrestaurantes.com.br. O atendimento dessas solicitações ainda é operacional.</value>
+  </data>
+  <data name="TellYourExperience" xml:space="preserve">
+    <value>Conte como foi sua experiência</value>
+  </data>
+  <data name="OverallRating" xml:space="preserve">
+    <value>Avaliação geral</value>
+  </data>
+  <data name="ServiceRating" xml:space="preserve">
+    <value>Atendimento</value>
+  </data>
+  <data name="FlavorRating" xml:space="preserve">
+    <value>Sabor</value>
+  </data>
+  <data name="AmbianceRating" xml:space="preserve">
+    <value>Ambiente</value>
+  </data>
+  <data name="CostBenefitRating" xml:space="preserve">
+    <value>Custo-Benefício</value>
+  </data>
+  <data name="ReviewComment" xml:space="preserve">
+    <value>Seu relato / comentário</value>
+  </data>
+  <data name="DishesConsumed" xml:space="preserve">
+    <value>Pratos consumidos</value>
+  </data>
+  <data name="PricePaid" xml:space="preserve">
+    <value>Preço pago (opcional)</value>
+  </data>
+  <data name="AddPhotos" xml:space="preserve">
+    <value>Adicionar fotografias</value>
+  </data>
+  <data name="PhotoPreview" xml:space="preserve">
+    <value>Pré-visualização</value>
+  </data>
+  <data name="PublishVisibility" xml:space="preserve">
+    <value>Visibilidade</value>
+  </data>
+  <data name="VisibilityPublic" xml:space="preserve">
+    <value>Pública (visível após moderação)</value>
+  </data>
+  <data name="VisibilityPrivate" xml:space="preserve">
+    <value>Privada (somente você)</value>
+  </data>
+  <data name="VisibilityUnlisted" xml:space="preserve">
+    <value>Não listada (somente com link secreto)</value>
+  </data>
+  <data name="SubmitExperience" xml:space="preserve">
+    <value>Enviar experiência</value>
+  </data>
+  <data name="ExperienceInvalidScores" xml:space="preserve">
+    <value>Por favor preencha notas válidas de 1 a 5 estrelas.</value>
+  </data>
+  <data name="EditExperience" xml:space="preserve">
+    <value>Editar experiência</value>
+  </data>
+  <data name="DeleteExperience" xml:space="preserve">
+    <value>Excluir experiência</value>
+  </data>
+  <data name="PendingModerationNotice" xml:space="preserve">
+    <value>Aguardando moderação</value>
+  </data>
+  <data name="RejectedNotice" xml:space="preserve">
+    <value>Publicação rejeitada</value>
+  </data>
+  <data name="SubmitAppeal" xml:space="preserve">
+    <value>Contestar decisão (Recurso)</value>
+  </data>
+  <data name="AppealText" xml:space="preserve">
+    <value>Motivo do recurso</value>
+  </data>
+  <data name="AppealSubmitted" xml:space="preserve">
+    <value>Recurso enviado para análise dos moderadores.</value>
+  </data>
+  <data name="AppealFailed" xml:space="preserve">
+    <value>Não foi possível enviar o recurso.</value>
+  </data>
+  <data name="OfficialPhotos" xml:space="preserve">
+    <value>Fotos oficiais</value>
+  </data>
+  <data name="CommunityPhotos" xml:space="preserve">
+    <value>Fotos da comunidade</value>
+  </data>
+  <data name="IllustrativePhotos" xml:space="preserve">
+    <value>Fotos ilustrativas</value>
+  </data>
+  <data name="NoPhotosYet" xml:space="preserve">
+    <value>Nenhuma foto nesta categoria.</value>
+  </data>
+  <data name="CommunityFeedTitle" xml:space="preserve">
+    <value>Sabores da Comunidade</value>
+  </data>
+  <data name="CommunityFeedSubtitle" xml:space="preserve">
+    <value>Experiências e fotos reais compartilhadas pelos visitantes</value>
+  </data>
+  <data name="Like" xml:space="preserve">
+    <value>Curtir</value>
+  </data>
+  <data name="Unlike" xml:space="preserve">
+    <value>Descurtir</value>
+  </data>
+  <data name="Comments" xml:space="preserve">
+    <value>Comentários</value>
+  </data>
+  <data name="AddComment" xml:space="preserve">
+    <value>Adicionar comentário</value>
+  </data>
+  <data name="SendComment" xml:space="preserve">
+    <value>Enviar comentário</value>
+  </data>
+  <data name="ReportContent" xml:space="preserve">
+    <value>Denunciar conteúdo</value>
+  </data>
+  <data name="ReportReason" xml:space="preserve">
+    <value>Motivo da denúncia</value>
+  </data>
+  <data name="ReportNotes" xml:space="preserve">
+    <value>Detalhes adicionais</value>
+  </data>
+  <data name="ReportReceived" xml:space="preserve">
+    <value>Denúncia recebida. Nossa equipe irá analisar.</value>
+  </data>
+  <data name="SortRecent" xml:space="preserve">
+    <value>Mais recentes</value>
+  </data>
+  <data name="SortTop" xml:space="preserve">
+    <value>Mais curtidas</value>
+  </data>
+  <data name="ShareExperience" xml:space="preserve">
+    <value>Compartilhar</value>
+  </data>
+  <data name="ShareWhatsApp" xml:space="preserve">
+    <value>WhatsApp</value>
+  </data>
+  <data name="ShareFacebook" xml:space="preserve">
+    <value>Facebook</value>
+  </data>
+  <data name="ShareInstagram" xml:space="preserve">
+    <value>Instagram</value>
+  </data>
+  <data name="ShareTikTok" xml:space="preserve">
+    <value>TikTok</value>
+  </data>
+  <data name="CopyLink" xml:space="preserve">
+    <value>Copiar link</value>
+  </data>
+  <data name="LinkCopied" xml:space="preserve">
+    <value>Link copiado!</value>
+  </data>
+  <data name="ShareNative" xml:space="preserve">
+    <value>Compartilhar no dispositivo</value>
+  </data>
+  <data name="CuiaBadge" xml:space="preserve">
+    <value>Selo Cuia</value>
+  </data>
+  <data name="CuiaMethodology" xml:space="preserve">
+    <value>Metodologia transparente</value>
+  </data>
+  <data name="CuiaRankPosition" xml:space="preserve">
+    <value>Posição no ranking</value>
+  </data>
+  <data name="CuiaScore" xml:space="preserve">
+    <value>Pontuação Cuia</value>
+  </data>
+  <data name="ProfileUpdated" xml:space="preserve">
+    <value>Perfil atualizado com sucesso.</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Alterar senha</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>Senha atual</value>
+  </data>
+  <data name="ChangeEmail" xml:space="preserve">
+    <value>Alterar e-mail</value>
+  </data>
+  <data name="NewEmail" xml:space="preserve">
+    <value>Novo e-mail</value>
+  </data>
+  <data name="Bio" xml:space="preserve">
+    <value>Apresentação / Bio</value>
+  </data>
+  <data name="ExportMyData" xml:space="preserve">
+    <value>Exportar meus dados (LGPD)</value>
+  </data>
+  <data name="DeleteMyAccount" xml:space="preserve">
+    <value>Excluir / Anonimizar conta</value>
+  </data>
+  <data name="LgpdRequestReceived" xml:space="preserve">
+    <value>Solicitação LGPD registrada com sucesso.</value>
+  </data>
+  <data name="MyExperiences" xml:space="preserve">
+    <value>Minhas experiências</value>
+  </data>
+  <data name="ItemApproved" xml:space="preserve">
+    <value>Item aprovado com sucesso.</value>
+  </data>
+  <data name="ItemRejected" xml:space="preserve">
+    <value>Item rejeitado com sucesso.</value>
+  </data>
+  <data name="PhotoApproved" xml:space="preserve">
+    <value>Fotografia aprovada.</value>
+  </data>
+  <data name="PhotoRejected" xml:space="preserve">
+    <value>Fotografia rejeitada.</value>
+  </data>
+  <data name="ReportUpheld" xml:space="preserve">
+    <value>Denúncia procedente. Conteúdo moderado.</value>
+  </data>
+  <data name="ReportDismissed" xml:space="preserve">
+    <value>Denúncia arquivada como improcedente.</value>
+  </data>
+  <data name="MemberLocked" xml:space="preserve">
+    <value>Membro bloqueado com sucesso.</value>
+  </data>
+  <data name="MemberUnlocked" xml:space="preserve">
+    <value>Membro desbloqueado com sucesso.</value>
+  </data>
+  <data name="AccountAnonymized" xml:space="preserve">
+    <value>Conta anonimizada conforme LGPD.</value>
+  </data>
+  <data name="LgpdCompleted" xml:space="preserve">
+    <value>Solicitação LGPD concluída.</value>
+  </data>
+  <data name="CuiaRecalculated" xml:space="preserve">
+    <value>Rankings do Selo Cuia recalculados com sucesso.</value>
   </data>
 </root>

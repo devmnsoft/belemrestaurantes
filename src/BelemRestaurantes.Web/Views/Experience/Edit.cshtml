@@ -1,0 +1,117 @@
+@model BelemRestaurantes.Web.Models.ExperienceInputModel
+@{
+    var restaurant = ViewData["Restaurant"] as BelemRestaurantes.Application.Models.RestaurantView;
+    var photos = ViewData["Photos"] as IReadOnlyList<BelemRestaurantes.Application.Abstractions.ExperiencePhotoView> ?? [];
+    ViewData["Title"] = T["EditExperience"].Value + " · " + (restaurant?.Name ?? "");
+}
+<section class="shell section narrow">
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ @T["EditExperience"]</span>
+      <h1>@(restaurant?.Name ?? "Restaurante")</h1>
+    </div>
+  </div>
+
+  <form method="post" action="/experience/edit/@Model.Id" class="panel">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="RestaurantId" value="@Model.RestaurantId" />
+
+    <div>
+      <label><b>@T["OverallRating"]</b></label>
+      <select name="Stars" style="font-size:16px;">
+        <option value="5" selected="@(Model.Stars == 5)">★★★★★ (5 estrelas)</option>
+        <option value="4" selected="@(Model.Stars == 4)">★★★★☆ (4 estrelas)</option>
+        <option value="3" selected="@(Model.Stars == 3)">★★★☆☆ (3 estrelas)</option>
+        <option value="2" selected="@(Model.Stars == 2)">★★☆☆☆ (2 estrelas)</option>
+        <option value="1" selected="@(Model.Stars == 1)">★☆☆☆☆ (1 estrela)</option>
+      </select>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label><b>@T["ServiceRating"]</b></label>
+        <select name="ServiceStars">
+          <option value="5" selected="@(Model.ServiceStars == 5)">5 estrelas</option>
+          <option value="4" selected="@(Model.ServiceStars == 4)">4 estrelas</option>
+          <option value="3" selected="@(Model.ServiceStars == 3)">3 estrelas</option>
+          <option value="2" selected="@(Model.ServiceStars == 2)">2 estrelas</option>
+          <option value="1" selected="@(Model.ServiceStars == 1)">1 estrela</option>
+        </select>
+      </div>
+      <div>
+        <label><b>@T["FlavorRating"]</b></label>
+        <select name="FlavorStars">
+          <option value="5" selected="@(Model.FlavorStars == 5)">5 estrelas</option>
+          <option value="4" selected="@(Model.FlavorStars == 4)">4 estrelas</option>
+          <option value="3" selected="@(Model.FlavorStars == 3)">3 estrelas</option>
+          <option value="2" selected="@(Model.FlavorStars == 2)">2 estrelas</option>
+          <option value="1" selected="@(Model.FlavorStars == 1)">1 estrela</option>
+        </select>
+      </div>
+      <div>
+        <label><b>@T["AmbianceRating"]</b></label>
+        <select name="AmbianceStars">
+          <option value="5" selected="@(Model.AmbianceStars == 5)">5 estrelas</option>
+          <option value="4" selected="@(Model.AmbianceStars == 4)">4 estrelas</option>
+          <option value="3" selected="@(Model.AmbianceStars == 3)">3 estrelas</option>
+          <option value="2" selected="@(Model.AmbianceStars == 2)">2 estrelas</option>
+          <option value="1" selected="@(Model.AmbianceStars == 1)">1 estrela</option>
+        </select>
+      </div>
+      <div>
+        <label><b>@T["CostBenefitRating"]</b></label>
+        <select name="CostBenefitStars">
+          <option value="5" selected="@(Model.CostBenefitStars == 5)">5 estrelas</option>
+          <option value="4" selected="@(Model.CostBenefitStars == 4)">4 estrelas</option>
+          <option value="3" selected="@(Model.CostBenefitStars == 3)">3 estrelas</option>
+          <option value="2" selected="@(Model.CostBenefitStars == 2)">2 estrelas</option>
+          <option value="1" selected="@(Model.CostBenefitStars == 1)">1 estrela</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label><b>@T["DishesConsumed"]</b></label>
+      <input name="DishesConsumed" value="@Model.DishesConsumed" maxlength="500" />
+    </div>
+
+    <div>
+      <label><b>@T["PricePaid"]</b></label>
+      <input name="PricePaid" type="number" step="0.01" min="0" value="@Model.PricePaid" />
+    </div>
+
+    <div>
+      <label><b>@T["ReviewComment"]</b></label>
+      <textarea name="ReviewText" rows="5" maxlength="3000" style="width:100%;padding:12px;border:1px solid #cddccf;border-radius:10px;font-family:inherit;">@Model.ReviewText</textarea>
+    </div>
+
+    <div>
+      <label><b>🔒 @T["PublishVisibility"]</b></label>
+      <select name="Visibility">
+        <option value="public" selected="@(Model.Visibility == "public")">🌐 @T["VisibilityPublic"]</option>
+        <option value="private" selected="@(Model.Visibility == "private")">🔒 @T["VisibilityPrivate"]</option>
+        <option value="unlisted" selected="@(Model.Visibility == "unlisted")">🔗 @T["VisibilityUnlisted"]</option>
+      </select>
+    </div>
+
+    @if (photos.Count > 0)
+    {
+        <div>
+          <label><b>Fotografias vinculadas:</b></label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+            @foreach (var p in photos)
+            {
+                <div style="width:90px;height:70px;border-radius:8px;overflow:hidden;border:1px solid #dce7dc;">
+                  <img src="/media/thumb/@p.ThumbnailName" alt="" style="width:100%;height:100%;object-fit:cover;" />
+                </div>
+            }
+          </div>
+        </div>
+    }
+
+    <div style="display:flex;gap:12px;margin-top:14px;">
+      <button type="submit" style="flex:1;">Salvar alterações</button>
+      <a href="/experience/@Model.Id" class="button-link ghost" style="text-align:center;">Cancelar</a>
+    </div>
+  </form>
+</section>

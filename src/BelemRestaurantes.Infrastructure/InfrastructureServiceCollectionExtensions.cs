@@ -101,6 +101,12 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IAuditWriter, MySqlAuditWriter>();
         services.AddScoped<MigrationRunner>();
 
+        // Sprint 04 - Módulos Sociais, Fotos, Selo Cuia e Governança LGPD
+        services.AddScoped<IExperienceService, Social.MySqlExperienceService>();
+        services.AddScoped<IPhotoStorageService, Social.DiskPhotoStorageService>();
+        services.AddScoped<ICuiaService, Social.MySqlCuiaService>();
+        services.AddScoped<ILgpdService, Social.MySqlLgpdService>();
+
         services.AddHttpClient("googleplaces", client =>
         {
             client.Timeout = googleOptions.Timeout;

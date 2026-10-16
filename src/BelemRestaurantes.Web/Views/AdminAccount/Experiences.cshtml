@@ -1,0 +1,125 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.ExperienceView>
+@{
+    ViewData["Title"] = "Moderação de Experiências";
+}
+<section class="shell section">
+  @if (TempData["Flash"] is string flash)
+  {
+      <div class="flash">@flash</div>
+  }
+
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ Painel Administrativo MNSOFT</span>
+      <h1>Moderação de Experiências</h1>
+      <p class="muted">Revisão de avaliações, relatos comunitários e recursos de contestação.</p>
+    </div>
+    <div>
+      <a href="/admin/dashboard" class="button-link ghost">← Voltar ao painel</a>
+    </div>
+  </div>
+
+  @if (Model.Count == 0)
+  {
+      <div class="panel" style="text-align:center;padding:40px;">
+        <p class="muted">Nenhuma experiência pendente de moderação no momento.</p>
+      </div>
+  }
+  else
+  {
+      <div style="display:grid;gap:18px;margin-top:20px;">
+        @foreach (var exp in Model)
+        {
+            <div class="panel moderation">
+              <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px;">
+                <div>
+                  <h3 style="margin:0 0 4px;">
+                    <a href="/establishment/@exp.RestaurantId" target="_blank" style="color:#174b3c;">@exp.RestaurantName</a>
+                    <span style="font-size:14px;color:#547062;">(@exp.RestaurantCity)</span>
+                  </h3>
+                  <p style="margin:0;font-size:13px;color:#547062;">
+                    Autor: <b>@exp.AuthorName</b> (ID: <code>@exp.UserId</code>) · Criada em: @exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")
+                    · Visibilidade: <b>@exp.Visibility</b>
+                    @if (exp.AppealStatus == "pending")
+                    {
+                        <span class="badge" style="background:#fdebd0;color:#b9770e;">⚖️ Recurso pendente</span>
+                    }
+                  </p>
+                </div>
+
+                <div style="color:#e67e22;font-size:18px;">
+                  @string.Concat(Enumerable.Repeat("★", exp.Stars)) (@exp.Stars / 5)
+                </div>
+              </div>
+
+              <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;background:#f4f7f4;padding:8px 12px;border-radius:8px;margin:8px 0;">
+                <span>Atendimento: @exp.ServiceStars★</span>
+                <span>Sabor: @exp.FlavorStars★</span>
+                <span>Ambiente: @exp.AmbianceStars★</span>
+                <span>Custo-Benefício: @exp.CostBenefitStars★</span>
+                @if (exp.PricePaid.HasValue)
+                {
+                    <span>Preço: R$ @exp.PricePaid.Value.ToString("N2")</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(exp.DishesConsumed))
+                {
+                    <span>Pratos: <b>@exp.DishesConsumed</b></span>
+                }
+              </div>
+
+              @if (!string.IsNullOrWhiteSpace(exp.ReviewText))
+              {
+                  <p style="font-size:15px;line-height:1.5;margin:6px 0;background:#fff;padding:10px;border:1px solid #edf2ec;border-radius:8px;">
+                    @exp.ReviewText
+                  </p>
+              }
+
+              @if (exp.Photos.Count > 0)
+              {
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;">
+                    @foreach (var photo in exp.Photos)
+                    {
+                        <a href="/media/photo/@photo.FileName" target="_blank" style="width:100px;height:75px;border-radius:8px;overflow:hidden;border:1px solid #dce7dc;">
+                          <img src="/media/thumb/@photo.ThumbnailName" alt="" style="width:100%;height:100%;object-fit:cover;" />
+                        </a>
+                    }
+                  </div>
+              }
+
+              @if (exp.AppealStatus == "pending")
+              {
+                  <div class="panel warn" style="margin:10px 0;padding:12px;">
+                    <b>Recurso de Contestação do Autor:</b>
+                    <p style="margin:4px 0;">@exp.AppealText</p>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                      <form method="post" action="/admin/experiences/@exp.Id/appeal-decision">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="accept" value="true" />
+                        <button type="submit" style="background:#1e8449;padding:6px 12px;font-size:13px;">Aceitar recurso (Aprovar)</button>
+                      </form>
+                      <form method="post" action="/admin/experiences/@exp.Id/appeal-decision">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="accept" value="false" />
+                        <button type="submit" class="danger" style="padding:6px 12px;font-size:13px;">Recusar recurso (Manter rejeição)</button>
+                      </form>
+                    </div>
+                  </div>
+              }
+
+              <div class="actions" style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <form method="post" action="/admin/experiences/@exp.Id/approve">
+                  @Html.AntiForgeryToken()
+                  <button type="submit" style="background:#1e8449;">✓ Aprovar publicação</button>
+                </form>
+
+                <form method="post" action="/admin/experiences/@exp.Id/reject" style="display:flex;gap:8px;">
+                  @Html.AntiForgeryToken()
+                  <input name="reason" placeholder="Motivo da rejeição..." required style="padding:10px;border:1px solid #cddccf;border-radius:8px;min-width:280px;" />
+                  <button type="submit" class="danger">Rejeitar</button>
+                </form>
+              </div>
+            </div>
+        }
+      </div>
+  }
+</section>

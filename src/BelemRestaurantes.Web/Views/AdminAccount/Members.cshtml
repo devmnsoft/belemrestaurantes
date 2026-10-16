@@ -1,0 +1,76 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.MemberAdminView>
+@{
+    ViewData["Title"] = "Gestão de Membros";
+    var search = ViewData["Search"] as string;
+}
+<section class="shell section">
+  @if (TempData["Flash"] is string flash)
+  {
+      <div class="flash">@flash</div>
+  }
+
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ Painel Administrativo MNSOFT</span>
+      <h1>Gestão de Membros</h1>
+      <p class="muted">Gerenciamento de contas de visitantes da comunidade gastronômica.</p>
+    </div>
+    <div>
+      <a href="/admin/dashboard" class="button-link ghost">← Voltar ao painel</a>
+    </div>
+  </div>
+
+  <form method="get" action="/admin/members" style="display:flex;gap:10px;margin:20px 0;">
+    <input name="search" value="@search" placeholder="Buscar por nome ou e-mail..." style="flex:1;padding:12px;border:1px solid #cddccf;border-radius:10px;" />
+    <button type="submit">Buscar</button>
+  </form>
+
+  <div style="overflow-x:auto;">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Status</th>
+          <th>Falhas</th>
+          <th>Criado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var m in Model)
+        {
+            <tr>
+              <td><b>@m.FullName</b></td>
+              <td><code>@m.Email</code></td>
+              <td>
+                @if (m.IsBlocked) { <span class="badge red">Bloqueado</span> }
+                else if (m.LockoutUntil.HasValue && m.LockoutUntil > DateTimeOffset.UtcNow) { <span class="badge warn">Lockout</span> }
+                else if (m.EmailConfirmed) { <span class="badge green">Ativo / Confirmado</span> }
+                else { <span class="badge">Aguardando e-mail</span> }
+              </td>
+              <td>@m.FailedAttempts</td>
+              <td>@m.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("d")</td>
+              <td>
+                @if (m.IsBlocked)
+                {
+                    <form method="post" action="/admin/members/@m.Id/unlock" style="display:inline;">
+                      @Html.AntiForgeryToken()
+                      <button type="submit" class="ghost" style="padding:4px 8px;font-size:12px;">Desbloquear</button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post" action="/admin/members/@m.Id/lock" onsubmit="return confirm('Deseja realmente bloquear este usuário? Todas as sessões dele serão revogadas.');" style="display:inline;">
+                      @Html.AntiForgeryToken()
+                      <input type="hidden" name="reason" value="administrativo" />
+                      <button type="submit" class="danger" style="padding:4px 8px;font-size:12px;">Bloquear</button>
+                    </form>
+                }
+              </td>
+            </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

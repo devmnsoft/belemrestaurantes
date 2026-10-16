@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -317,5 +317,230 @@
   </data>
   <data name="PrivacyText" xml:space="preserve">
     <value>アカウント運営のため氏名、メール、パスワードのハッシュ、セキュリティ記録を処理します。トークンと送信待ちメールは保護されます。データの確認、出力、削除はcomercial@belemrestaurantes.com.brへご連絡ください。現在は手動で対応しています。</value>
+  </data>
+  <data name="TellYourExperience" xml:space="preserve">
+    <value>体験をシェアする</value>
+  </data>
+  <data name="OverallRating" xml:space="preserve">
+    <value>総合評価</value>
+  </data>
+  <data name="ServiceRating" xml:space="preserve">
+    <value>サービス</value>
+  </data>
+  <data name="FlavorRating" xml:space="preserve">
+    <value>味</value>
+  </data>
+  <data name="AmbianceRating" xml:space="preserve">
+    <value>雰囲気</value>
+  </data>
+  <data name="CostBenefitRating" xml:space="preserve">
+    <value>コストパフォーマンス</value>
+  </data>
+  <data name="ReviewComment" xml:space="preserve">
+    <value>レビュー・コメント</value>
+  </data>
+  <data name="DishesConsumed" xml:space="preserve">
+    <value>食べた料理</value>
+  </data>
+  <data name="PricePaid" xml:space="preserve">
+    <value>支払金額（任意）</value>
+  </data>
+  <data name="AddPhotos" xml:space="preserve">
+    <value>写真を追加</value>
+  </data>
+  <data name="PhotoPreview" xml:space="preserve">
+    <value>プレビュー</value>
+  </data>
+  <data name="PublishVisibility" xml:space="preserve">
+    <value>公開設定</value>
+  </data>
+  <data name="VisibilityPublic" xml:space="preserve">
+    <value>公開（承認後に表示）</value>
+  </data>
+  <data name="VisibilityPrivate" xml:space="preserve">
+    <value>非公開（自分のみ）</value>
+  </data>
+  <data name="VisibilityUnlisted" xml:space="preserve">
+    <value>限定公開（リンクを知っている人のみ）</value>
+  </data>
+  <data name="SubmitExperience" xml:space="preserve">
+    <value>体験を送信する</value>
+  </data>
+  <data name="ExperienceInvalidScores" xml:space="preserve">
+    <value>1から5つ星の間で有効な評価を入力してください。</value>
+  </data>
+  <data name="EditExperience" xml:space="preserve">
+    <value>体験を編集する</value>
+  </data>
+  <data name="DeleteExperience" xml:space="preserve">
+    <value>体験を削除する</value>
+  </data>
+  <data name="PendingModerationNotice" xml:space="preserve">
+    <value>モデレーション待ち</value>
+  </data>
+  <data name="RejectedNotice" xml:space="preserve">
+    <value>掲載が却下されました</value>
+  </data>
+  <data name="SubmitAppeal" xml:space="preserve">
+    <value>異議を申し立てる</value>
+  </data>
+  <data name="AppealText" xml:space="preserve">
+    <value>異議申し立ての理由</value>
+  </data>
+  <data name="AppealSubmitted" xml:space="preserve">
+    <value>異議申し立てがモデレーターに送信されました。</value>
+  </data>
+  <data name="AppealFailed" xml:space="preserve">
+    <value>異議申し立てを送信できませんでした。</value>
+  </data>
+  <data name="OfficialPhotos" xml:space="preserve">
+    <value>公式写真</value>
+  </data>
+  <data name="CommunityPhotos" xml:space="preserve">
+    <value>コミュニティの写真</value>
+  </data>
+  <data name="IllustrativePhotos" xml:space="preserve">
+    <value>イメージ写真</value>
+  </data>
+  <data name="NoPhotosYet" xml:space="preserve">
+    <value>このカテゴリにはまだ写真がありません。</value>
+  </data>
+  <data name="CommunityFeedTitle" xml:space="preserve">
+    <value>コミュニティの味</value>
+  </data>
+  <data name="CommunityFeedSubtitle" xml:space="preserve">
+    <value>訪問者が共有した実際の体験と写真</value>
+  </data>
+  <data name="Like" xml:space="preserve">
+    <value>いいね</value>
+  </data>
+  <data name="Unlike" xml:space="preserve">
+    <value>いいねを取り消す</value>
+  </data>
+  <data name="Comments" xml:space="preserve">
+    <value>コメント</value>
+  </data>
+  <data name="AddComment" xml:space="preserve">
+    <value>コメントを追加</value>
+  </data>
+  <data name="SendComment" xml:space="preserve">
+    <value>コメントを送信</value>
+  </data>
+  <data name="ReportContent" xml:space="preserve">
+    <value>コンテンツを通報</value>
+  </data>
+  <data name="ReportReason" xml:space="preserve">
+    <value>通報の理由</value>
+  </data>
+  <data name="ReportNotes" xml:space="preserve">
+    <value>追加の詳細</value>
+  </data>
+  <data name="ReportReceived" xml:space="preserve">
+    <value>通報を受け付けました。チームが確認いたします。</value>
+  </data>
+  <data name="SortRecent" xml:space="preserve">
+    <value>新しい順</value>
+  </data>
+  <data name="SortTop" xml:space="preserve">
+    <value>高評価順</value>
+  </data>
+  <data name="ShareExperience" xml:space="preserve">
+    <value>シェア</value>
+  </data>
+  <data name="ShareWhatsApp" xml:space="preserve">
+    <value>WhatsApp</value>
+  </data>
+  <data name="ShareFacebook" xml:space="preserve">
+    <value>Facebook</value>
+  </data>
+  <data name="ShareInstagram" xml:space="preserve">
+    <value>Instagram</value>
+  </data>
+  <data name="ShareTikTok" xml:space="preserve">
+    <value>TikTok</value>
+  </data>
+  <data name="CopyLink" xml:space="preserve">
+    <value>リンクをコピー</value>
+  </data>
+  <data name="LinkCopied" xml:space="preserve">
+    <value>リンクをコピーしました！</value>
+  </data>
+  <data name="ShareNative" xml:space="preserve">
+    <value>端末でシェア</value>
+  </data>
+  <data name="CuiaBadge" xml:space="preserve">
+    <value>クイア認定バッジ</value>
+  </data>
+  <data name="CuiaMethodology" xml:space="preserve">
+    <value>透明性の高い選定基準</value>
+  </data>
+  <data name="CuiaRankPosition" xml:space="preserve">
+    <value>ランキング順位</value>
+  </data>
+  <data name="CuiaScore" xml:space="preserve">
+    <value>クイアスコア</value>
+  </data>
+  <data name="ProfileUpdated" xml:space="preserve">
+    <value>プロフィールが更新されました。</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>パスワードを変更</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>現在のパスワード</value>
+  </data>
+  <data name="ChangeEmail" xml:space="preserve">
+    <value>メールアドレスを変更</value>
+  </data>
+  <data name="NewEmail" xml:space="preserve">
+    <value>新しいメールアドレス</value>
+  </data>
+  <data name="Bio" xml:space="preserve">
+    <value>自己紹介</value>
+  </data>
+  <data name="ExportMyData" xml:space="preserve">
+    <value>個人データをエクスポート (LGPD)</value>
+  </data>
+  <data name="DeleteMyAccount" xml:space="preserve">
+    <value>アカウントの削除・匿名化</value>
+  </data>
+  <data name="LgpdRequestReceived" xml:space="preserve">
+    <value>LGPDリクエストが正常に登録されました。</value>
+  </data>
+  <data name="MyExperiences" xml:space="preserve">
+    <value>マイレビュー・体験</value>
+  </data>
+  <data name="ItemApproved" xml:space="preserve">
+    <value>アイテムが承認されました。</value>
+  </data>
+  <data name="ItemRejected" xml:space="preserve">
+    <value>アイテムが却下されました。</value>
+  </data>
+  <data name="PhotoApproved" xml:space="preserve">
+    <value>写真が承認されました。</value>
+  </data>
+  <data name="PhotoRejected" xml:space="preserve">
+    <value>写真が却下されました。</value>
+  </data>
+  <data name="ReportUpheld" xml:space="preserve">
+    <value>通報を承認しました。コンテンツは非公開になりました。</value>
+  </data>
+  <data name="ReportDismissed" xml:space="preserve">
+    <value>通報は却下されました。</value>
+  </data>
+  <data name="MemberLocked" xml:space="preserve">
+    <value>ユーザーをロックしました。</value>
+  </data>
+  <data name="MemberUnlocked" xml:space="preserve">
+    <value>ユーザーのロックを解除しました。</value>
+  </data>
+  <data name="AccountAnonymized" xml:space="preserve">
+    <value>LGPDに基づいてアカウントを匿名化しました。</value>
+  </data>
+  <data name="LgpdCompleted" xml:space="preserve">
+    <value>LGPDリクエストが完了しました。</value>
+  </data>
+  <data name="CuiaRecalculated" xml:space="preserve">
+    <value>クイア認定バッジのランキングが再計算されました。</value>
   </data>
 </root>

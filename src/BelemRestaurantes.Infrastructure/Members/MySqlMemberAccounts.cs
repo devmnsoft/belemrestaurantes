@@ -160,6 +160,166 @@ public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswor
         await AuditAsync(connection, tx, owner, "member." + purpose, ct); await tx.CommitAsync(ct); return true;
     }
 
+    public async Task<MemberProfile?> GetProfileAsync(string userId, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        var row = await connection.QuerySingleOrDefaultAsync<ProfileRow>(new CommandDefinition("""
+            SELECT id, full_name, email, email_confirmed, bio, is_blocked, created_at
+            FROM member_users WHERE id = @userId
+            """, new { userId }, cancellationToken: ct));
+        return row is null ? null : new MemberProfile(row.id, row.full_name, row.email, row.email_confirmed, row.bio, row.is_blocked, row.created_at);
+    }
+
+    public async Task<bool> UpdateProfileAsync(string userId, string fullName, string? bio, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(fullName) || fullName.Trim().Length is < 2 or > 160 || (bio?.Length > 300))
+            return false;
+        await using var connection = await factory.OpenAsync(ct);
+        await using var tx = await connection.BeginTransactionAsync(ct);
+        var affected = await connection.ExecuteAsync(new CommandDefinition("""
+            UPDATE member_users SET full_name = @fullName, bio = @bio
+            WHERE id = @userId AND is_blocked = FALSE
+            """, new { userId, fullName = fullName.Trim(), bio = bio?.Trim() }, tx, cancellationToken: ct));
+        await AuditAsync(connection, tx, userId, "member.update_profile", ct);
+        await tx.CommitAsync(ct);
+        return affected > 0;
+    }
+
+    public async Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(currentPassword) || AdminPasswordPolicy.Validate(newPassword).Count > 0)
+            return false;
+        await using var connection = await factory.OpenAsync(ct);
+        await using var tx = await connection.BeginTransactionAsync(ct);
+        var user = await connection.QuerySingleOrDefaultAsync<UserRow>(new CommandDefinition("SELECT * FROM member_users WHERE id = @userId FOR UPDATE", new { userId }, tx, cancellationToken: ct));
+        if (user is null || user.is_blocked || !passwords.Verify(currentPassword, user.password_hash))
+            return false;
+
+        var newHash = passwords.Hash(newPassword);
+        var newStamp = Guid.NewGuid().ToString("N");
+        var now = clock.UtcNow;
+        await connection.ExecuteAsync(new CommandDefinition("""
+            UPDATE member_users SET password_hash = @newHash, security_stamp = @newStamp, failed_attempts = 0, lockout_until = NULL
+            WHERE id = @userId
+            """, new { userId, newHash, newStamp }, tx, cancellationToken: ct));
+        await connection.ExecuteAsync(new CommandDefinition("UPDATE member_sessions SET revoked_at = @now WHERE user_id = @userId AND revoked_at IS NULL", new { userId, now }, tx, cancellationToken: ct));
+        await EnqueueAsync(connection, tx, new(user.email, user.full_name, "password_changed", null, user.preferred_culture), ct);
+        await AuditAsync(connection, tx, userId, "member.change_password", ct);
+        await tx.CommitAsync(ct);
+        return true;
+    }
+
+    public async Task RequestEmailChangeAsync(string userId, string newEmail, string culture, CancellationToken ct)
+    {
+        if (!ValidEmail(newEmail)) return;
+        await using var connection = await factory.OpenAsync(ct);
+        await using var tx = await connection.BeginTransactionAsync(ct);
+        var user = await connection.QuerySingleOrDefaultAsync<UserRow>(new CommandDefinition("SELECT * FROM member_users WHERE id = @userId FOR UPDATE", new { userId }, tx, cancellationToken: ct));
+        if (user is null || user.is_blocked) return;
+
+        var normalized = Normalize(newEmail);
+        var exists = await connection.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM member_users WHERE normalized_email = @normalized AND id <> @userId", new { normalized, userId }, tx, cancellationToken: ct));
+        if (exists > 0) return;
+
+        var token = NewToken();
+        var now = clock.UtcNow;
+        var expires = now.AddHours(24);
+        var hash = HashToken(token);
+
+        await connection.ExecuteAsync(new CommandDefinition("""
+            UPDATE member_users SET email_change_new = @newEmail, email_change_token_hash = @hash, email_change_expires_at = @expires
+            WHERE id = @userId
+            """, new { userId, newEmail = newEmail.Trim(), hash, expires }, tx, cancellationToken: ct));
+
+        var origin = configuration["MemberAccounts:PublicOrigin"] ?? "https://belemrestaurantes.com.br";
+        var uri = new Uri(origin);
+        var link = uri.GetLeftPart(UriPartial.Authority) + "/account/confirm-email-change#token=" + token;
+        await EnqueueAsync(connection, tx, new(newEmail.Trim(), user.full_name, "email_change", link, Culture(culture)), ct);
+        await AuditAsync(connection, tx, userId, "member.request_email_change", ct);
+        await tx.CommitAsync(ct);
+    }
+
+    public async Task<bool> ConfirmEmailChangeAsync(string token, CancellationToken ct)
+    {
+        if (!TokenFormat(token)) return false;
+        var hash = HashToken(token);
+        await using var connection = await factory.OpenAsync(ct);
+        await using var tx = await connection.BeginTransactionAsync(ct);
+        var user = await connection.QuerySingleOrDefaultAsync<UserRow>(new CommandDefinition("""
+            SELECT * FROM member_users WHERE email_change_token_hash = @hash FOR UPDATE
+            """, new { hash }, tx, cancellationToken: ct));
+
+        if (user is null || user.is_blocked || user.email_change_expires_at < clock.UtcNow || string.IsNullOrWhiteSpace(user.email_change_new))
+            return false;
+
+        var newEmail = user.email_change_new.Trim();
+        var normalized = Normalize(newEmail);
+        var newStamp = Guid.NewGuid().ToString("N");
+        var now = clock.UtcNow;
+
+        await connection.ExecuteAsync(new CommandDefinition("""
+            UPDATE member_users SET email = @newEmail, normalized_email = @normalized,
+                                    email_change_new = NULL, email_change_token_hash = NULL, email_change_expires_at = NULL,
+                                    security_stamp = @newStamp
+            WHERE id = @id
+            """, new { id = user.id, newEmail, normalized, newStamp }, tx, cancellationToken: ct));
+
+        await connection.ExecuteAsync(new CommandDefinition("UPDATE member_sessions SET revoked_at = @now WHERE user_id = @id AND revoked_at IS NULL", new { id = user.id, now }, tx, cancellationToken: ct));
+        await AuditAsync(connection, tx, user.id, "member.confirm_email_change", ct);
+        await tx.CommitAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> LockAccountAsync(string userId, string reason, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        await using var tx = await connection.BeginTransactionAsync(ct);
+        var now = clock.UtcNow;
+        var affected = await connection.ExecuteAsync(new CommandDefinition("UPDATE member_users SET is_blocked = TRUE WHERE id = @userId", new { userId }, tx, cancellationToken: ct));
+        await connection.ExecuteAsync(new CommandDefinition("UPDATE member_sessions SET revoked_at = @now WHERE user_id = @userId AND revoked_at IS NULL", new { userId, now }, tx, cancellationToken: ct));
+        await AuditAsync(connection, tx, userId, "member.admin_lock:" + reason, ct);
+        await tx.CommitAsync(ct);
+        return affected > 0;
+    }
+
+    public async Task<bool> UnlockAccountAsync(string userId, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        await using var tx = await connection.BeginTransactionAsync(ct);
+        var affected = await connection.ExecuteAsync(new CommandDefinition("UPDATE member_users SET is_blocked = FALSE, failed_attempts = 0, lockout_until = NULL WHERE id = @userId", new { userId }, tx, cancellationToken: ct));
+        await AuditAsync(connection, tx, userId, "member.admin_unlock", ct);
+        await tx.CommitAsync(ct);
+        return affected > 0;
+    }
+
+    public async Task<IReadOnlyList<MemberAdminView>> ListMembersAdminAsync(int page, int pageSize, string? search, CancellationToken ct)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        var offset = (page - 1) * pageSize;
+        await using var connection = await factory.OpenAsync(ct);
+        var query = string.IsNullOrWhiteSpace(search)
+            ? "SELECT id, full_name, email, email_confirmed, is_blocked, failed_attempts, lockout_until, created_at FROM member_users ORDER BY created_at DESC LIMIT @limit OFFSET @offset"
+            : "SELECT id, full_name, email, email_confirmed, is_blocked, failed_attempts, lockout_until, created_at FROM member_users WHERE full_name LIKE @s OR email LIKE @s ORDER BY created_at DESC LIMIT @limit OFFSET @offset";
+
+        var rows = await connection.QueryAsync<MemberAdminView>(new CommandDefinition(
+            query,
+            new { s = $"%{search?.Trim()}%", limit = pageSize, offset },
+            cancellationToken: ct));
+        return rows.AsList();
+    }
+
+    private sealed class ProfileRow
+    {
+        public string id { get; set; } = "";
+        public string full_name { get; set; } = "";
+        public string email { get; set; } = "";
+        public bool email_confirmed { get; set; }
+        public string? bio { get; set; }
+        public bool is_blocked { get; set; }
+        public DateTimeOffset created_at { get; set; }
+    }
+
     private async Task CreateTokenAsync(MySqlConnection connection, MySqlTransaction tx, UserRow user, string purpose, string culture, CancellationToken ct)
     {
         var origin = configuration["MemberAccounts:PublicOrigin"] ?? "https://belemrestaurantes.com.br";
@@ -189,6 +349,8 @@ public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswor
         public bool email_confirmed { get; set; }
         public int failed_attempts { get; set; }
         public DateTimeOffset? lockout_until { get; set; }
+        public string? email_change_new { get; set; }
+        public DateTimeOffset? email_change_expires_at { get; set; }
     }
     private sealed class SessionRow
     {

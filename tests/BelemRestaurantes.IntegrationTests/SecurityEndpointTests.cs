@@ -26,6 +26,15 @@ public sealed class SecurityEndpointTests : IDisposable
     [InlineData("/admin/dashboard")]
     [InlineData("/api/admin/review/pending")]
     [InlineData("/community/favorite/1")]
+    [InlineData("/account")]
+    [InlineData("/experience/create")]
+    [InlineData("/admin/community/experiences")]
+    [InlineData("/admin/community/photos")]
+    [InlineData("/admin/community/reports")]
+    [InlineData("/admin/community/members")]
+    [InlineData("/admin/community/lgpd")]
+    [InlineData("/admin/community/cuia")]
+    [InlineData("/admin/community/smtp")]
     public async Task Protected_routes_challenge_anonymous_clients(string path)
     {
         using var client = Client();
