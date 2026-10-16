@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.0" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BelemRestaurantes.Domain\BelemRestaurantes.Domain.csproj" />
+    <ProjectReference Include="..\..\src\BelemRestaurantes.Application\BelemRestaurantes.Application.csproj" />
+    <ProjectReference Include="..\..\src\BelemRestaurantes.Infrastructure\BelemRestaurantes.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!--
+    Testes unitários: sem banco, sem rede, sem sistema de arquivos.
+    Regras de domínio, deduplicação, resiliência e parsing de respostas.
+  -->
+
+</Project>

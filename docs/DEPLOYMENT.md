@@ -1,7 +1,7 @@
 # Implantação controlada
 
 ## Pré-requisitos
-.NET 10 SDK, PostgreSQL 16+, HTTPS e proxy reverso de confiança.
+.NET 10 SDK, MySQL 16+, HTTPS e proxy reverso de confiança.
 
 1. Execute `sql/001_initial.sql` e depois `sql/002_discovery_queue.sql` no banco em ambiente protegido.
 2. Crie um usuário de aplicação de menor privilégio; ele precisa de INSERT/SELECT/UPDATE nas tabelas de descoberta e SELECT nas tabelas públicas, com grants explícitos.

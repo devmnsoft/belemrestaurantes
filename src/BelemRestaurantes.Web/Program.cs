@@ -1,34 +1,117 @@
-using System.Threading.RateLimiting;
+using BelemRestaurantes.Infrastructure;
+using BelemRestaurantes.Application;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using BelemRestaurantes.Web.Data;
-using BelemRestaurantes.Web.Services;
-using BelemRestaurantes.Web.Workers;
-var builder=WebApplication.CreateBuilder(args);
-builder.Services.AddControllersWithViews(o=>o.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute()));
-builder.Services.AddAntiforgery(o=>o.HeaderName="X-CSRF-TOKEN");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o=>{
- o.RequireHttpsMetadata=true;
- o.Authority=builder.Configuration["Auth:Authority"];
- o.Audience=builder.Configuration["Auth:Audience"];
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
 });
-builder.Services.AddAuthorization(o=>o.AddPolicy("RestaurantModerator",p=>p.RequireAuthenticatedUser().RequireClaim("role","restaurant_moderator","platform_admin")));
-builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("postgresql");
-builder.Services.AddSingleton<DbFactory>();
-builder.Services.AddScoped<RestaurantRepository>();
-builder.Services.AddScoped<DiscoveryQueue>();
-builder.Services.AddScoped<ProviderSync>();
-builder.Services.AddSingleton<ProviderRegistry>();
-builder.Services.AddHostedService<DiscoveryWorker>();
-builder.Services.AddHttpClient("googleplaces",c=>c.Timeout=TimeSpan.FromSeconds(15));
-builder.Services.AddRateLimiter(o=>{o.RejectionStatusCode=429;o.AddPolicy("public",ctx=>RateLimitPartition.GetFixedWindowLimiter(ctx.Connection.RemoteIpAddress?.ToString()??"unknown",_=>new FixedWindowRateLimiterOptions{PermitLimit=60,Window=TimeSpan.FromMinutes(1),QueueLimit=0,AutoReplenishment=true}));});
-var app=builder.Build();
-if(!app.Environment.IsDevelopment()){app.UseExceptionHandler("/Home/Error");app.UseHsts();}
+builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
+
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
+
+builder.Services
+    .AddAuthentication("MNSOSTIdentity")
+    .AddCookie("MNSOSTIdentity", options =>
+    {
+        options.Cookie.Name = ".BelRest.AdminAuth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.LoginPath = "/admin/login";
+        options.AccessDeniedPath = "/admin/access-denied";
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RestaurantModerator",
+        p => p.RequireAuthenticatedUser().RequireRole(AdminRoles.Moderator, AdminRoles.PlatformAdmin));
+    options.AddPolicy("PlatformOperator",
+        p => p.RequireAuthenticatedUser().RequireRole(AdminRoles.Operator, AdminRoles.PlatformAdmin));
+    options.AddPolicy("PlatformAdmin",
+        p => p.RequireAuthenticatedUser().RequireRole(AdminRoles.PlatformAdmin));
+});
+
+// JWT continua aceito como API de servidor para integrações machine-to-machine.
+builder.Services.AddAuthentication()
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        options.RequireHttpsMetadata = true;
+        options.Authority = builder.Configuration["Auth:Authority"];
+        options.Audience = builder.Configuration["Auth:Audience"];
+    });
+
+builder.Services.AddHealthChecks().AddCheck<MySqlHealthCheck>("mysql");
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddAdminAuth();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("public", o =>
+    {
+        o.PermitLimit = 60;
+        o.Window = TimeSpan.FromMinutes(1);
+        o.QueueLimit = 0;
+        o.AutoReplenishment = true;
+    });
+    options.AddFixedWindowLimiter("admin", o =>
+    {
+        o.PermitLimit = 20;
+        o.Window = TimeSpan.FromMinutes(1);
+        o.QueueLimit = 0;
+        o.AutoReplenishment = true;
+    });
+});
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
-app.Use(async(context,next)=>{context.Response.Headers["X-Content-Type-Options"]="nosniff";context.Response.Headers["Referrer-Policy"]="strict-origin-when-cross-origin";context.Response.Headers["X-Frame-Options"]="DENY";context.Response.Headers["Permissions-Policy"]="camera=(), microphone=(), geolocation=(self)";context.Response.Headers["Content-Security-Policy"]="default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";await next();});
-app.UseStaticFiles();app.UseRouting();app.UseRateLimiter();app.UseAuthentication();app.UseAuthorization();
-app.MapHealthChecks("/health",new HealthCheckOptions{Predicate=_=>false});
-app.MapHealthChecks("/health/ready");
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)";
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
+    await next();
+});
+app.UseStaticFiles();
+app.UseRouting();
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = check => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    ResponseWriter = static async (ctx, report) =>
+    {
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new { name = e.Key, status = e.Value.Status.ToString(), description = e.Value.Description })
+        }));
+    }
+});
 app.MapControllers().RequireRateLimiting("public");
-app.MapControllerRoute(name:"default",pattern:"{controller=Home}/{action=Index}/{id?}").RequireRateLimiting("public");
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}").RequireRateLimiting("public");
+
 app.Run();

@@ -1,0 +1,12 @@
+@{ ViewData["Title"] = "Enrolar segundo fator"; }
+<section class="shell section">
+  <h1>Enrolar MFA</h1>
+  <p>Registre este segredo no app autenticador:</p>
+  <p class="muted"><code>@ViewData["Secret"]</code></p>
+  <form method="post" action="@Url.Action("EnrolSubmit","AdminAccount")" class="panel">
+    @Html.AntiForgeryToken()
+    <label>Código gerado <input name="code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" /></label>
+    <button type="submit">Confirmar</button>
+    @Html.ValidationSummary()
+  </form>
+</section>

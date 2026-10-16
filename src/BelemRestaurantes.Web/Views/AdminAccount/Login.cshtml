@@ -1,0 +1,13 @@
+@model dynamic
+@{ ViewData["Title"] = "Login administrativo"; }
+<section class="shell section">
+  <h1>Login — Painel MNSOFT</h1>
+  <form method="post" action="@Url.Action("LoginSubmit","AdminAccount")" class="panel">
+    @Html.AntiForgeryToken()
+    <label>Usuário <input name="userName" required maxlength="100" autocomplete="username" /></label>
+    <label>Senha <input name="password" type="password" required maxlength="256" autocomplete="current-password" /></label>
+    <button type="submit">Entrar</button>
+    @Html.ValidationSummary()
+    <p class="muted">Criar o primeiro administrador: POST /admin/bootstrap (somente se não existir nenhum).</p>
+  </form>
+</section>

@@ -1,0 +1,155 @@
+using Dapper;
+using BelemRestaurantes.Application.Abstractions;
+using System.Text.Json;
+
+namespace BelemRestaurantes.Infrastructure.MySql;
+
+public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : IAdminUserRepository
+{
+    public async Task<AdminUserRecord?> FindByNameAsync(string userName, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        var row = await connection.QueryFirstOrDefaultAsync<AdminRow>(new CommandDefinition(
+            """
+            SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
+                   two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
+                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt
+            FROM admin_users WHERE user_name = @userName LIMIT 1
+            """,
+            new { userName },
+            cancellationToken: ct));
+        return row is null ? null : Map(row);
+    }
+
+    public async Task<AdminUserRecord?> FindByIdAsync(string id, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        var row = await connection.QueryFirstOrDefaultAsync<AdminRow>(new CommandDefinition(
+            """
+            SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
+                   two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
+                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt
+            FROM admin_users WHERE id = @id LIMIT 1
+            """,
+            new { id },
+            cancellationToken: ct));
+        return row is null ? null : Map(row);
+    }
+
+    public async Task<bool> CreateAsync(AdminUserRecord user, string[] roles, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+
+        var inserted = await connection.ExecuteAsync(new CommandDefinition(
+            """
+            INSERT INTO admin_users (id, user_name, email, password_hash, two_factor_enabled, two_factor_secret)
+            VALUES (@Id, @UserName, @Email, @PasswordHash, @TwoFactorEnabled, @Secret)
+            """,
+            new
+            {
+                user.Id,
+                user.UserName,
+                user.Email,
+                user.PasswordHash,
+                user.TwoFactorEnabled,
+                Secret = user.TwoFactorSecret
+            },
+            transaction,
+            cancellationToken: ct));
+
+        foreach (var role in roles)
+        {
+            var roleId = await connection.ExecuteScalarAsync<string?>(new CommandDefinition(
+                "SELECT id FROM admin_roles WHERE name = @name LIMIT 1",
+                new { name = role },
+                transaction,
+                cancellationToken: ct));
+
+            if (roleId is not null)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "INSERT IGNORE INTO admin_user_roles (user_id, role_id) VALUES (@userId, @roleId)",
+                    new { userId = user.Id, roleId },
+                    transaction,
+                    cancellationToken: ct));
+            }
+        }
+
+        await transaction.CommitAsync(ct);
+        return inserted > 0;
+    }
+
+    public async Task<string[]> GetRolesAsync(string id, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        var rows = await connection.QueryAsync<string>(new CommandDefinition(
+            """
+            SELECT r.name FROM admin_roles r
+            JOIN admin_user_roles ur ON ur.role_id = r.id
+            WHERE ur.user_id = @id
+            """,
+            new { id },
+            cancellationToken: ct));
+        return rows.AsList().ToArray();
+    }
+
+    public async Task IncrementFailuresAsync(string id, DateTimeOffset until, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            """
+            UPDATE admin_users
+            SET access_failed_count = access_failed_count + 1,
+                lockout_end_at = CASE WHEN access_failed_count + 1 >= 5 THEN @until ELSE lockout_end_at END
+            WHERE id = @id
+            """,
+            new { id, until },
+            cancellationToken: ct));
+    }
+
+    public async Task ResetFailuresAsync(string id, DateTimeOffset lastLogin, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            """
+            UPDATE admin_users
+            SET access_failed_count = 0, lockout_end_at = NULL, last_login_at = @lastLogin
+            WHERE id = @id
+            """,
+            new { id, lastLogin },
+            cancellationToken: ct));
+    }
+
+    public async Task EnableTwoFactorAsync(string id, byte[] encryptedSecret, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE admin_users SET two_factor_enabled = TRUE, two_factor_secret = @secret WHERE id = @id",
+            new { id, secret = encryptedSecret },
+            cancellationToken: ct));
+    }
+
+    private static AdminUserRecord Map(AdminRow row) => new(
+        row.Id,
+        row.UserName,
+        row.Email,
+        row.PasswordHash,
+        row.TwoFactorEnabled,
+        row.Secret,
+        row.AccessFailedCount,
+        row.LockoutEndAt,
+        null);
+
+    private sealed record AdminRow(
+        string Id, string UserName, string? Email, string PasswordHash,
+        bool TwoFactorEnabled, byte[]? Secret, int AccessFailedCount,
+        DateTimeOffset? LockoutEndAt);
+}
