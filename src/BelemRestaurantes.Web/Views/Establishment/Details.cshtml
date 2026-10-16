@@ -1,0 +1,42 @@
+@model BelemRestaurantes.Application.Models.RestaurantView
+@{
+    ViewData["Title"] = Model.Name;
+}
+<section class="shell section">
+  <div class="heading">
+    <div>
+      <span class="overline dark">@Model.City · @(Model.Neighborhood ?? "bairro em atualização")</span>
+      <h1>@Model.Name</h1>
+      <p class="muted">@Model.Category</p>
+    </div>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
+  {
+      <div class="photo" style="height:320px;margin:18px 0;">
+        <img src="@Model.PhotoUrl" alt="Foto autorizada do @Model.Name" style="width:100%;height:100%;object-fit:cover;" loading="lazy" referrerpolicy="no-referrer" />
+      </div>
+  }
+
+  <div class="split">
+    <div>
+      <h2>Informações</h2>
+      <p><b>Endereço:</b> @(Model.Address ?? "em verificação")</p>
+      <p><b>Cidade:</b> @Model.City</p>
+      <p><b>Última atualização:</b> @Model.UpdatedAt.LocalDateTime.ToString("dd/MM/yyyy HH:mm")</p>
+      <h3>Links oficiais</h3>
+      <div class="actions">
+        @if (Model.Website is not null) { <a href="@Model.Website" target="_blank" rel="noopener noreferrer">Site oficial</a> }
+        @if (Model.Instagram is not null) { <a href="@Model.Instagram" target="_blank" rel="noopener noreferrer">Instagram</a> }
+        @if (Model.Facebook is not null) { <a href="@Model.Facebook" target="_blank" rel="noopener noreferrer">Facebook</a> }
+        @if (Model.TikTok is not null) { <a href="@Model.TikTok" target="_blank" rel="noopener noreferrer">TikTok</a> }
+        @if (Model.YouTube is not null) { <a href="@Model.YouTube" target="_blank" rel="noopener noreferrer">YouTube</a> }
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Como chegar</h3>
+      <p>Rotas e tarifas vêm do serviço de navegação, não do Guia Belém Restaurantes.</p>
+      <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer">Abrir no Google Maps</a>
+    </div>
+  </div>
+</section>

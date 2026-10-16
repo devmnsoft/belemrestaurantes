@@ -1,33 +1,40 @@
-using System.Net.NetworkInformation;
+using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+namespace BelemRestaurantes.Infrastructure;
 
-namespace BelemRestaurantes.Infrastructure.Security;
-
-/// <summary>Hash de senha via PBKDF2 (RFC 2898), sem dependência de pacote.</summary>
 public sealed class Pbkdf2PasswordVerifier : IPasswordVerifier
 {
-    private readonly int Iterations = 150_000;
-    private const int SaltSize = 16;
-    private const int HashSize = 32;
-
     public string Hash(string password)
     {
-        var salt = new byte[SaltSize];
+        var salt = new byte[16];
         RandomNumberGenerator.Fill(salt);
-
-        var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, HashAlgorithmName.SHA256, HashSize);
-
-        return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
+        var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, 150_000, HashAlgorithmName.SHA256, 32);
+        return $"150000.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
     }
 
     public bool Verify(string password, string stored)
     {
         var parts = stored.Split('.', 3);
-        if (parts.Length != 3 ||
-            !int.TryParse(parts[0], out var iterations) ||
-            !TryBase64(parts[1], out var salt) ||
-            !TryBase64(parts[2], out var expected))
+        if (parts.Length != 3 || !int.TryParse(parts[0], out var iterations) || iterations <= 0)
+        {
+            return false;
+        }
+
+        byte[] salt;
+        byte[] expected;
+        try
+        {
+            salt = Convert.FromBase64String(parts[1]);
+            expected = Convert.FromBase64String(parts[2]);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        if (salt.Length == 0 || expected.Length == 0)
         {
             return false;
         }
@@ -35,28 +42,10 @@ public sealed class Pbkdf2PasswordVerifier : IPasswordVerifier
         var actual = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, expected.Length);
         return CryptographicOperations.FixedTimeEquals(actual, expected);
     }
-
-    private static bool TryBase64(string value, out byte[] output)
-    {
-        try
-        {
-            output = Convert.FromBase64String(value);
-            return output.Length > 0;
-        }
-        catch (FormatException)
-        {
-            output = [];
-            return false;
-        }
-    }
 }
 
-/// <summary>TOTP (RFC 6238) sobre SHA1, com janela de ±1 período de 30 s.</summary>
 public sealed class TotpProvider : ITotpProvider
 {
-    private const int StepSeconds = 30;
-    private const int CodeDigits = 6;
-
     public string GenerateSecret()
     {
         var bytes = new byte[20];
@@ -66,21 +55,21 @@ public sealed class TotpProvider : ITotpProvider
 
     public string GenerateFor(DateTimeOffset instant, string base32Secret)
     {
-        var counter = instant.ToUnixTimeSeconds() / StepSeconds;
+        var counter = instant.ToUnixTimeSeconds() / 30;
         return Compute(counter, base32Secret);
     }
 
     public bool Validate(string code, string base32Secret, DateTimeOffset now)
     {
-        if (string.IsNullOrWhiteSpace(code) || code.Length != CodeDigits || !code.All(char.IsDigit))
+        if (string.IsNullOrWhiteSpace(code) || code.Length != 6 || !code.All(char.IsDigit))
         {
             return false;
         }
 
+        var counter = now.ToUnixTimeSeconds() / 30;
         for (var offset = -1; offset <= 1; offset++)
         {
-            var counter = (now.ToUnixTimeSeconds() / StepSeconds) + offset;
-            if (string.Equals(Compute(counter, base32Secret), code, StringComparison.Ordinal))
+            if (string.Equals(Compute(counter + offset, base32Secret), code, StringComparison.Ordinal))
             {
                 return true;
             }
@@ -102,14 +91,13 @@ public sealed class TotpProvider : ITotpProvider
         var hash = hmac.ComputeHash(message);
 
         var offset = hash[^1] & 0x0F;
-        var binary =
-            ((hash[offset] & 0x7F) << 24) |
-            ((hash[offset + 1] & 0xFF) << 16) |
-            ((hash[offset + 2] & 0xFF) << 8) |
-            (hash[offset + 3] & 0xFF);
+        var binary = ((hash[offset] & 0x7F) << 24) |
+                     ((hash[offset + 1] & 0xFF) << 16) |
+                     ((hash[offset + 2] & 0xFF) << 8) |
+                     (hash[offset + 3] & 0xFF);
 
-        var otp = binary % (int)Math.Pow(10, CodeDigits);
-        return otp.ToString($"D{CodeDigits}");
+        var otp = binary % 1_000_000;
+        return otp.ToString("D6");
     }
 
     private static string Base32Encode(ReadOnlySpan<byte> data)
@@ -153,12 +141,11 @@ public sealed class TotpProvider : ITotpProvider
             var index = alphabet.IndexOf(ch);
             if (index < 0)
             {
-                throw new FormatException("Segredo TOTP em base32 inválido.");
+                throw new FormatException("Segredo TOTP inválido.");
             }
 
             buffer = (buffer << 5) | index;
             bitsLeft += 5;
-
             if (bitsLeft >= 8)
             {
                 bitsLeft -= 8;

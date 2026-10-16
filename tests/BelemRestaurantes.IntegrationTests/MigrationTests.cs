@@ -24,7 +24,7 @@ public class MigrationTests
         var result = await runner.ApplyAsync(default);
 
         Assert.NotNull(result);
-        Assert.Equal(5, result.Applied + result.AlreadyCurrent.Count);
+        Assert.Equal(7, result.Applied + result.AlreadyCurrent.Count);
     }
 
     [Fact]
@@ -45,6 +45,6 @@ public class MigrationTests
         var second = await runner.ApplyAsync(default);
 
         Assert.Equal(0, second.Applied);
-        Assert.Equal(5, second.AlreadyCurrent.Count);
+        Assert.Equal(7, second.AlreadyCurrent.Count);
     }
 }

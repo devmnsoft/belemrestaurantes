@@ -1,6 +1,7 @@
+using System.Text.Json;
 using Dapper;
 using BelemRestaurantes.Application.Abstractions;
-using System.Text.Json;
+using BelemRestaurantes.Domain.Identity;
 
 namespace BelemRestaurantes.Infrastructure.MySql;
 
@@ -83,21 +84,6 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
         return inserted > 0;
     }
 
-    public async Task<string[]> GetRolesAsync(string id, CancellationToken ct)
-    {
-        using var connection = factory.Create();
-        await connection.OpenAsync(ct);
-        var rows = await connection.QueryAsync<string>(new CommandDefinition(
-            """
-            SELECT r.name FROM admin_roles r
-            JOIN admin_user_roles ur ON ur.role_id = r.id
-            WHERE ur.user_id = @id
-            """,
-            new { id },
-            cancellationToken: ct));
-        return rows.AsList().ToArray();
-    }
-
     public async Task IncrementFailuresAsync(string id, DateTimeOffset until, CancellationToken ct)
     {
         using var connection = factory.Create();
@@ -135,6 +121,21 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             "UPDATE admin_users SET two_factor_enabled = TRUE, two_factor_secret = @secret WHERE id = @id",
             new { id, secret = encryptedSecret },
             cancellationToken: ct));
+    }
+
+    public async Task<string[]> GetRolesAsync(string id, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        var rows = await connection.QueryAsync<string>(new CommandDefinition(
+            """
+            SELECT r.name FROM admin_roles r
+            JOIN admin_user_roles ur ON ur.role_id = r.id
+            WHERE ur.user_id = @id
+            """,
+            new { id },
+            cancellationToken: ct));
+        return rows.AsList().ToArray();
     }
 
     private static AdminUserRecord Map(AdminRow row) => new(

@@ -19,3 +19,21 @@ public interface IPasswordVerifier
 
     bool Verify(string password, string hash);
 }
+
+/// <summary>
+/// Cifra segredos sensíveis em repouso (TOTP). O segredo TOTP em texto puro só
+/// existe em memória durante o login/enrolamento — nunca no banco.
+/// </summary>
+public interface IAdminSecretProtector
+{
+    byte[] Protect(string plainText);
+
+    /// <summary>Lança exceção se os bytes não forem um valor cifrado válido.</summary>
+    string Unprotect(byte[] protectedBytes);
+}
+
+/// <summary>Esquema de autenticação de cookie administrativo (nome único, sem "mágica").</summary>
+public static class AdminAuthDefaults
+{
+    public const string Scheme = "MNSOSTIdentity";
+}

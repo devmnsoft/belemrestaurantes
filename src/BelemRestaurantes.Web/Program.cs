@@ -1,6 +1,5 @@
 using BelemRestaurantes.Infrastructure;
 using BelemRestaurantes.Application;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
@@ -10,14 +9,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+    // Revalida conta (ativa/bloqueada/papéis) a cada acesso por cookie admin.
 });
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services
-    .AddAuthentication("MNSOSTIdentity")
-    .AddCookie("MNSOSTIdentity", options =>
+    .AddAuthentication(AdminAuthDefaults.Scheme)
+    .AddCookie(AdminAuthDefaults.Scheme, options =>
     {
         options.Cookie.Name = ".BelRest.AdminAuth";
         options.Cookie.HttpOnly = true;
@@ -39,19 +39,13 @@ builder.Services.AddAuthorization(options =>
         p => p.RequireAuthenticatedUser().RequireRole(AdminRoles.PlatformAdmin));
 });
 
-// JWT continua aceito como API de servidor para integrações machine-to-machine.
-builder.Services.AddAuthentication()
-    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-    {
-        options.RequireHttpsMetadata = true;
-        options.Authority = builder.Configuration["Auth:Authority"];
-        options.Audience = builder.Configuration["Auth:Audience"];
-    });
+// JWT provisório removido (Sprint 02): não havia emissor configurado e a
+// autenticação administrativa agora é cookie + MFA auditado.
 
 builder.Services.AddHealthChecks().AddCheck<MySqlHealthCheck>("mysql");
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddAdminAuth();
+builder.Services.AddAdminAuth(builder.Configuration);
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;

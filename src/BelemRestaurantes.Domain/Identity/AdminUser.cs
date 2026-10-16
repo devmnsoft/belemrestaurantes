@@ -12,10 +12,19 @@ public static class AdminRoles
     /// <summary>Tudo, inclusive gestão de contas.</summary>
     public const string PlatformAdmin = "platform_admin";
 
-    public static readonly IReadOnlyList<string> All = [Moderator, Operator, PlatformAdmin];
+    /// <summary>Edita e publica conteúdo coletado (notícias/eventos), sem tocar no catálogo.</summary>
+    public const string Editor = "content_editor";
+
+    /// <summary>Anunciante: acesso apenas às suas campanhas (Sprint 03).</summary>
+    public const string Advertiser = "advertiser";
+
+    public static readonly IReadOnlyList<string> All = [Moderator, Operator, PlatformAdmin, Editor, Advertiser];
 
     /// <summary>Papéis que podem aprovar conteúdo para publicação.</summary>
     public static readonly IReadOnlyList<string> CanModerate = [Moderator, PlatformAdmin];
+
+    /// <summary>Papéis que podem editar/publicar conteúdo editorial.</summary>
+    public static readonly IReadOnlyList<string> CanPublishContent = [Editor, Moderator, PlatformAdmin];
 
     /// <summary>Papéis que podem alterar configuração de integrações e limites.</summary>
     public static readonly IReadOnlyList<string> CanConfigure = [Operator, PlatformAdmin];

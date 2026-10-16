@@ -1,6 +1,5 @@
 namespace BelemRestaurantes.Application.Abstractions;
 
-/// <summary>Repositório de contas administrativas, sobre a tabela admin_users.</summary>
 public interface IAdminUserRepository
 {
     Task<AdminUserRecord?> FindByNameAsync(string userName, CancellationToken ct);
@@ -27,4 +26,8 @@ public sealed record AdminUserRecord(
     byte[]? TwoFactorSecret,
     int AccessFailedCount,
     DateTimeOffset? LockoutEndAt,
-    DateTimeOffset? LastLoginAt);
+    DateTimeOffset? LastLoginAt)
+{
+    /// <summary>Bloqueio por tentativas falhas vigente.</summary>
+    public bool IsLockedOut(DateTimeOffset now) => LockoutEndAt is not null && LockoutEndAt > now;
+}

@@ -19,7 +19,7 @@ public sealed class AdminAccountController(
     public IActionResult Login(string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
-        return View();
+        return View("Login");
     }
 
     [AllowAnonymous]
@@ -30,22 +30,18 @@ public sealed class AdminAccountController(
         var user = await users.FindByNameAsync(userName, ct);
         if (user is null || !passwordVerifier.Verify(password, user.PasswordHash))
         {
-            ModelState.AddModelError(string.Empty, "Credenciais inválidas ou bloqueadas por força bruta.");
+            ModelState.AddModelError(string.Empty, "Credenciais inválidas.");
             return View("Login");
         }
 
-        // Bloqueado pelo operador ou por tentativas falhas anteriores.
-        var lockUntil = user.LockoutEndAt;
-        if (lockUntil is not null && lockUntil > DateTimeOffset.UtcNow)
+        if (user.LockoutEndAt is { } until && until > DateTimeOffset.UtcNow)
         {
             ModelState.AddModelError(string.Empty, "Conta temporariamente bloqueada.");
             return View("Login");
         }
 
-        // Enrolamento inicial: TOTP não configurado → precisa vincular.
-        if (string.IsNullOrEmpty(user.TwoFactorSecret?.Length > 0 ? "x" : null) && !user.TwoFactorEnabled)
+        if (user.TwoFactorSecret is { Length: > 0 } && !user.TwoFactorEnabled)
         {
-            // Primeira configuração: gera segredo e pede para enrolar.
             var secret = totp.GenerateSecret();
             TempData["PendingEnrollmentSecret"] = secret;
             TempData["PendingEnrollmentUser"] = user.Id;
@@ -80,21 +76,21 @@ public sealed class AdminAccountController(
         }
 
         var user = await users.FindByIdAsync(userId, ct);
-        if (user is null || user.TwoFactorSecret is null)
+        if (user is null || user.TwoFactorSecret is null or { Length: 0 })
         {
             return RedirectToAction("Login");
         }
 
-        var secret = System.Text.Encoding.UTF8.GetString(user.TwoFactorSecret); // armazenado cifrado em produção; dev texto
+        var secret = System.Text.Encoding.UTF8.GetString(user.TwoFactorSecret);
         if (!totp.Validate(code, secret, DateTimeOffset.UtcNow))
         {
             await users.IncrementFailuresAsync(user.Id, DateTimeOffset.UtcNow.AddMinutes(15), ct);
-            ModelState.AddModelError(string.Empty, "Código TOTP inválido ou fora da janela.");
+            ModelState.AddModelError(string.Empty, "Código TOTP inválido.");
             return View("VerifyMfa");
         }
 
         await users.ResetFailuresAsync(user.Id, DateTimeOffset.UtcNow, ct);
-        await IssueCookieAsync(user, ct, returnUrl);
+        await IssueCookieAsync(user, ct);
         return RedirectSafe(returnUrl);
     }
 
@@ -107,7 +103,7 @@ public sealed class AdminAccountController(
             return RedirectToAction("Login");
         }
 
-        TempData["PendingEnrollmentSecret"] = secret; // re-expect
+        TempData["PendingEnrollmentSecret"] = secret;
         ViewData["Secret"] = secret;
         return View("Enrol");
     }
@@ -126,7 +122,7 @@ public sealed class AdminAccountController(
         {
             TempData["PendingEnrollmentSecret"] = secret;
             TempData["PendingEnrollmentUser"] = userId;
-            ModelState.AddModelError(string.Empty, "Código inválido. Tente de novo.");
+            ModelState.AddModelError(string.Empty, "Código inválido.");
             return View("Enrol");
         }
 
@@ -134,10 +130,10 @@ public sealed class AdminAccountController(
         var user = await users.FindByIdAsync(userId, ct);
         if (user is not null)
         {
-            await IssueCookieAsync(user, ct, null);
+            await IssueCookieAsync(user, ct);
         }
 
-        return RedirectToAction("Index", "AdminDashboard");
+        return RedirectToAction("Dashboard");
     }
 
     [AllowAnonymous]
@@ -145,18 +141,12 @@ public sealed class AdminAccountController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Bootstrap([FromForm] string userName, [FromForm] string password, [FromForm] string email, CancellationToken ct)
     {
-        // Criação do primeiro administrador: permitida apenas quando não houver
-        // nenhum usuário administrativo no banco. Impode re-criação forçada.
-        var sentinel = await users.FindByNameAsync("platform_admin", ct);
-        var anyExisting = sentinel is not null ||
-                          (await users.FindByNameAsync(userName, ct)) is not null;
-
-        if (anyExisting)
+        var existing = await users.FindByNameAsync(userName, ct);
+        if (existing is not null)
         {
             return Forbid();
         }
 
-        var roles = new[] { AdminRoles.PlatformAdmin };
         var validation = AdminPasswordPolicy.Validate(password);
         if (validation.Count > 0)
         {
@@ -175,34 +165,29 @@ public sealed class AdminAccountController(
             null,
             null);
 
-        await users.CreateAsync(record, roles, ct);
+        await users.CreateAsync(record, new[] { AdminRoles.PlatformAdmin }, ct);
 
         return Ok(new
         {
-            message = "Administrador criado. Guarde o segredo abaixo no app TOTP agora.",
+            message = "Administrador criado. Guarde o segredo do app autenticador agora.",
             userName,
             totpSecret = secret
         });
     }
 
-    [Authorize]
     [HttpPost("logout")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return Redirect("/admin/login");
     }
 
-    [Authorize(Policy = "PlatformAdmin")]
+    [Authorize]
     [HttpGet("dashboard")]
-    public async Task<IActionResult> Dashboard(CancellationToken ct)
-    {
-        var countPending = 0;
-        ViewBag.PendingCount = countPending;
-        return View("Dashboard");
-    }
+    public IActionResult Dashboard() => View("Dashboard");
 
-    private async Task IssueCookieAsync(AdminUserRecord user, CancellationToken ct, string? returnUrl)
+    private async Task IssueCookieAsync(AdminUserRecord user, CancellationToken ct)
     {
         var roles = await users.GetRolesAsync(user.Id, ct);
         var claims = new List<Claim>
@@ -221,11 +206,7 @@ public sealed class AdminAccountController(
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity),
-            new AuthenticationProperties
-            {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
-            });
+            new AuthenticationProperties { IsPersistent = true, ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8) });
     }
 
     private IActionResult RedirectSafe(string? returnUrl)

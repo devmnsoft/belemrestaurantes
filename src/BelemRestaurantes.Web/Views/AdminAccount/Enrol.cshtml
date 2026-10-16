@@ -1,12 +1,17 @@
-@{ ViewData["Title"] = "Enrolar segundo fator"; }
-<section class="shell section">
-  <h1>Enrolar MFA</h1>
-  <p>Registre este segredo no app autenticador:</p>
-  <p class="muted"><code>@ViewData["Secret"]</code></p>
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Configurar MFA"; }
+<section class="shell section narrow">
+  <h1>Configurar o segundo fator</h1>
+  <p>Adicione a conta no seu app autenticador (Google Authenticator, Aegis, Microsoft Authenticator…):</p>
+  <ol>
+    <li>Escolha “adicionar conta” e “inserir chave manualmente”.</li>
+    <li>Cole o segredo abaixo.</li>
+    <li>Confirme com o código de 6 dígitos que o app gerar.</li>
+  </ol>
+  <p><code class="secret">@ViewData["Secret"]</code></p>
   <form method="post" action="@Url.Action("EnrolSubmit","AdminAccount")" class="panel">
     @Html.AntiForgeryToken()
-    <label>Código gerado <input name="code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" /></label>
-    <button type="submit">Confirmar</button>
+    <label>Código do app <input name="code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"/></label>
+    <button type="submit">Confirmar e ativar</button>
     @Html.ValidationSummary()
   </form>
 </section>

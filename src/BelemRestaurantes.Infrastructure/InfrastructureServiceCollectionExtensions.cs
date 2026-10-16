@@ -85,6 +85,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IModerationRepository, MySqlModerationRepository>();
         services.AddScoped<IDiscoveryQueue, MySqlDiscoveryQueue>();
         services.AddScoped<IDiscoveryTargetRepository, MySqlDiscoveryTargetRepository>();
+        services.AddScoped<IFavoriteRepository, MySqlFavoriteRepository>();
+        services.AddScoped<IRatingRepository, MySqlRatingRepository>();
+        services.AddScoped<IDeletionRequestRepository, MySqlDeletionRequestRepository>();
         services.AddScoped<ICycleTelemetryRepository, MySqlCycleTelemetryRepository>();
         services.AddSingleton<ICostLedger, MySqlCostLedger>();
         services.AddScoped<IAuditWriter, MySqlAuditWriter>();
