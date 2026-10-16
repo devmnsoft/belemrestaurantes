@@ -14,3 +14,8 @@ Aplicar `sql/mysql/001_schema.sql` usando ferramenta SQL do painel, depois backu
 O IP da hospedagem foi informado como compartilhado; não transferir o domínio nem modificar registros MX sem confirmar servidor efetivo e certificado SSL. Nunca publicar chaves em GitHub, HTML, ou arquivos acessíveis por FTP.
 ## Notas operacionais
 Depois de ativar, verificar `/health/ready`, tabelas `sync_runs` e `discovery_targets`, custos do Google Places, e se a moderação mantém todo novo registro pendente. Dados do Google devem seguir termos de licenciamento, especialmente retenção e atribuição.
+
+## Decisão de arquitetura — VPS externa (16/10/2026)
+A política da Locaweb para Hospedagem de Sites informa que bancos MySQL/PostgreSQL/SQL Server deste plano **não podem ser usados por sites ou aplicações hospedados fora da Locaweb**. Referência: https://www.locaweb.com.br/politicas/ . Portanto, **não** configurar a aplicação ASP.NET Core na VPS externa para utilizar o MySQL do plano Hospedagem I Linux em produção. O acesso externo restrito (até uma conexão) não autoriza uso permanente da aplicação externa.
+
+Arquitetura recomendada: domínio/DNS na Locaweb; ASP.NET Core MVC + worker + MySQL `belrestaurante` instalados na VPS com firewall, TLS, backups e acesso privado. Para migração de conteúdo existente, verificar exportação autorizada pelo phpMyAdmin e importar no MySQL da VPS. Não apontar o DNS para a VPS antes de validar HTTPS e deploy.
