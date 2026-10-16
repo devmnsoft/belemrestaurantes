@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using BelemRestaurantes.Application.Abstractions;
 using BelemRestaurantes.Application.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BelemRestaurantes.Web.Controllers;
 
 [Route("api/restaurants")]
+[AllowAnonymous]
 public sealed class RestaurantsController(
     IRestaurantReadRepository repo,
     ISuggestionRepository suggestions,
@@ -58,7 +60,8 @@ public sealed class RestaurantsController(
         return Ok(new { message = "Sugestão recebida para verificação", id });
     }
 
-    public sealed class SuggestInput
+    [AllowAnonymous]
+public sealed class SuggestInput
     {
         [System.ComponentModel.DataAnnotations.Required]
         [System.ComponentModel.DataAnnotations.StringLength(160, MinimumLength = 2)]

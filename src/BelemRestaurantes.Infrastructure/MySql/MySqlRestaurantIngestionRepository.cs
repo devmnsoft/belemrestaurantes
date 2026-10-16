@@ -58,7 +58,6 @@ public sealed class MySqlRestaurantIngestionRepository(MySqlConnectionFactory fa
         var normalizedCity = NameNormalizer.Normalize(place.ResolvedCity);
 
         await using var connection = await factory.OpenAsync(ct);
-        await connection.OpenAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
 
         // Chave de deduplicação: Place ID quando existe, senão nome normalizado
@@ -190,7 +189,7 @@ public sealed class MySqlRestaurantIngestionRepository(MySqlConnectionFactory fa
     {
         if (string.IsNullOrEmpty(normalizedName))
         {
-            return " impossivel";
+            return "\0impossivel";
         }
 
         var tokens = normalizedName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -201,9 +200,24 @@ public sealed class MySqlRestaurantIngestionRepository(MySqlConnectionFactory fa
     private static string? Truncate(string? value, int max) =>
         value is null || value.Length <= max ? value : value[..max];
 
-    private sealed record CandidateRow(long Id, string NormalizedName, string NormalizedCity, string? GooglePlaceId);
+    private sealed class CandidateRow
+    {
+        public long Id { get; set; } = default!;
+        public string NormalizedName { get; set; } = default!;
+        public string NormalizedCity { get; set; } = default!;
+        public string? GooglePlaceId { get; set; } = default!;
+    }
 
-    private sealed record ObservationRow(
-        long Id, long RestaurantId, string Provider, string ExternalId, string? SourceUrl,
-        DateTimeOffset FirstSeenAt, DateTimeOffset LastSeenAt, string DataQuality, string? PayloadHash);
+    private sealed class ObservationRow
+    {
+        public long Id { get; set; } = default!;
+        public long RestaurantId { get; set; } = default!;
+        public string Provider { get; set; } = default!;
+        public string ExternalId { get; set; } = default!;
+        public string? SourceUrl { get; set; } = default!;
+        public DateTimeOffset FirstSeenAt { get; set; } = default!;
+        public DateTimeOffset LastSeenAt { get; set; } = default!;
+        public string DataQuality { get; set; } = default!;
+        public string? PayloadHash { get; set; } = default!;
+    }
 }

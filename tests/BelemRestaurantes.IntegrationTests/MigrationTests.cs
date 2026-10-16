@@ -5,18 +5,14 @@ using BelemRestaurantes.Infrastructure.Migrations;
 
 namespace BelemRestaurantes.IntegrationTests;
 
+[Collection("MySql")]
 public class MigrationTests
 {
     [Fact]
     public async Task Apply_Migrations_To_MySql()
     {
         var connection = DatabaseEnvironment.ConnectionString();
-        if (string.IsNullOrWhiteSpace(connection))
-        {
-            // Teste de integração opcional: sem banco disponível o critério fica pendente.
-            Assert.True(true);
-            return;
-        }
+        Assert.False(string.IsNullOrWhiteSpace(connection), "BELRESTAURANTES_TEST_MYSQL obrigatório: integração não foi homologada.");
 
         var provider = ServiceContainer.Build();
         var runner = provider.GetRequiredService<MigrationRunner>();
@@ -24,18 +20,14 @@ public class MigrationTests
         var result = await runner.ApplyAsync(default);
 
         Assert.NotNull(result);
-        Assert.Equal(7, result.Applied + result.AlreadyCurrent.Count);
+        Assert.Equal(MigrationRunner.LoadScripts().Count, result.Applied + result.AlreadyCurrent.Count);
     }
 
     [Fact]
     public async Task Apply_Migrations_Idempotent()
     {
         var connection = DatabaseEnvironment.ConnectionString();
-        if (string.IsNullOrWhiteSpace(connection))
-        {
-            Assert.True(true);
-            return;
-        }
+        Assert.False(string.IsNullOrWhiteSpace(connection), "BELRESTAURANTES_TEST_MYSQL obrigatório: integração não foi homologada.");
 
         var provider = ServiceContainer.Build();
         var runner = provider.GetRequiredService<MigrationRunner>();
@@ -45,6 +37,6 @@ public class MigrationTests
         var second = await runner.ApplyAsync(default);
 
         Assert.Equal(0, second.Applied);
-        Assert.Equal(7, second.AlreadyCurrent.Count);
+        Assert.Equal(MigrationRunner.LoadScripts().Count, second.AlreadyCurrent.Count);
     }
 }

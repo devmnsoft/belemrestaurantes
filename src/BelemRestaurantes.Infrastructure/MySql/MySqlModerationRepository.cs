@@ -91,7 +91,6 @@ public sealed class MySqlModerationRepository(
         var now = clock.UtcNow;
 
         await using var connection = await factory.OpenAsync(ct);
-        await connection.OpenAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
 
         // A condição `status = @from` na própria cláusula WHERE torna a operação

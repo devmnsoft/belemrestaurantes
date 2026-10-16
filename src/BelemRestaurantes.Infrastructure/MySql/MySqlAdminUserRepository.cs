@@ -16,7 +16,7 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
                    two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
                    access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt
-            FROM admin_users WHERE user_name = @userName LIMIT 1
+            FROM admin_users WHERE user_name = @userName AND is_disabled = FALSE AND disabled = FALSE LIMIT 1
             """,
             new { userName },
             cancellationToken: ct));
@@ -32,7 +32,7 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
                    two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
                    access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt
-            FROM admin_users WHERE id = @id LIMIT 1
+            FROM admin_users WHERE id = @id AND is_disabled = FALSE AND disabled = FALSE LIMIT 1
             """,
             new { id },
             cancellationToken: ct));
@@ -91,8 +91,8 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
         await connection.ExecuteAsync(new CommandDefinition(
             """
             UPDATE admin_users
-            SET access_failed_count = access_failed_count + 1,
-                lockout_end_at = CASE WHEN access_failed_count + 1 >= 5 THEN @until ELSE lockout_end_at END
+            SET lockout_end_at = CASE WHEN access_failed_count + 1 >= 5 THEN @until ELSE lockout_end_at END,
+                access_failed_count = access_failed_count + 1
             WHERE id = @id
             """,
             new { id, until },
@@ -113,14 +113,22 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             cancellationToken: ct));
     }
 
-    public async Task EnableTwoFactorAsync(string id, byte[] encryptedSecret, CancellationToken ct)
+    public async Task<bool> EnableTwoFactorAsync(string id, byte[] encryptedSecret, CancellationToken ct)
     {
         using var connection = factory.Create();
         await connection.OpenAsync(ct);
-        await connection.ExecuteAsync(new CommandDefinition(
-            "UPDATE admin_users SET two_factor_enabled = TRUE, two_factor_secret = @secret WHERE id = @id",
+        return await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE admin_users SET two_factor_enabled = TRUE, two_factor_secret = @secret WHERE id = @id AND two_factor_enabled = FALSE AND disabled = FALSE AND is_disabled = FALSE AND (lockout_end_at IS NULL OR lockout_end_at <= UTC_TIMESTAMP(6))",
             new { id, secret = encryptedSecret },
-            cancellationToken: ct));
+            cancellationToken: ct)) == 1;
+    }
+
+    public async Task<bool> ConsumeTotpAsync(string id, long counter, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        return await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE admin_users SET last_totp_counter = @counter WHERE id = @id AND last_totp_counter < @counter AND two_factor_enabled = TRUE AND disabled = FALSE AND is_disabled = FALSE AND (lockout_end_at IS NULL OR lockout_end_at <= UTC_TIMESTAMP(6))",
+            new { id, counter }, cancellationToken: ct)) == 1;
     }
 
     public async Task<string[]> GetRolesAsync(string id, CancellationToken ct)
@@ -149,8 +157,15 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
         row.LockoutEndAt,
         null);
 
-    private sealed record AdminRow(
-        string Id, string UserName, string? Email, string PasswordHash,
-        bool TwoFactorEnabled, byte[]? Secret, int AccessFailedCount,
-        DateTimeOffset? LockoutEndAt);
+    private sealed class AdminRow
+    {
+        public string Id { get; set; } = default!;
+        public string UserName { get; set; } = default!;
+        public string? Email { get; set; } = default!;
+        public string PasswordHash { get; set; } = default!;
+        public bool TwoFactorEnabled { get; set; } = default!;
+        public byte[]? Secret { get; set; } = default!;
+        public int AccessFailedCount { get; set; } = default!;
+        public DateTimeOffset? LockoutEndAt { get; set; } = default!;
+    }
 }

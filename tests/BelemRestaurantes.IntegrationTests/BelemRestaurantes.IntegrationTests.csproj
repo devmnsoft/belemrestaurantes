@@ -29,8 +29,8 @@
 
   <!--
     Testes de integração: migrations MySQL, repositórios e API.
-    Exigem BELRESTAURANTES_TEST_MYSQL. Sem essa variável os testes são
-    marcados como ignorados em vez de falharem (CI sem segredos continua verde).
+    Testes MySQL exigem BELRESTAURANTES_TEST_MYSQL e falham sem configuração.
+    SecurityEndpointTests executa sem banco nem credenciais.
   -->
 
 </Project>

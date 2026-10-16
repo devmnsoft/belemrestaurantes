@@ -40,51 +40,81 @@ public sealed class MigrationRunner(MySqlConnectionFactory connectionFactory, IL
     {
         await using var connection = await connectionFactory.OpenAsync(ct);
 
-        await EnsureHistoryTableAsync(connection, ct);
-
-        var applied = await connection.QueryAsync<AppliedMigration>(
-            new CommandDefinition("SELECT id, checksum FROM schema_migrations", cancellationToken: ct));
-
-        var appliedById = applied.ToDictionary(a => a.id, a => a.checksum, StringComparer.OrdinalIgnoreCase);
-        var scripts = LoadScripts();
-
-        var newlyApplied = new List<string>();
-        var current = new List<string>();
-
-        foreach (var script in scripts)
+        var locked = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+            "SELECT GET_LOCK('belrestaurante:migrations', 30)", cancellationToken: ct));
+        if (locked != 1) throw new InvalidOperationException("Outra execução de migrações está ativa.");
+        try
         {
-            var checksum = script.ComputeChecksum();
+            await EnsureHistoryTableAsync(connection, ct);
+            await connection.ExecuteAsync(new CommandDefinition("""
+                CREATE TABLE IF NOT EXISTS schema_migration_attempts (
+                  id VARCHAR(64) PRIMARY KEY, checksum CHAR(64) NOT NULL,
+                  started_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+                  completed_at DATETIME(6) NULL
+                ) ENGINE=InnoDB
+                """, cancellationToken: ct));
 
-            if (appliedById.TryGetValue(script.Id, out var existing))
+            var applied = await connection.QueryAsync<AppliedMigration>(
+                new CommandDefinition("SELECT id, checksum FROM schema_migrations", cancellationToken: ct));
+
+            var appliedById = applied.ToDictionary(a => a.id, a => a.checksum, StringComparer.OrdinalIgnoreCase);
+            var scripts = LoadScripts();
+
+            var newlyApplied = new List<string>();
+            var current = new List<string>();
+
+            foreach (var script in scripts)
             {
-                if (!string.Equals(existing, checksum, StringComparison.OrdinalIgnoreCase))
+                var checksum = script.ComputeChecksum();
+
+                if (appliedById.TryGetValue(script.Id, out var existing))
                 {
-                    throw new MigrationChecksumMismatchException(script.Id, existing, checksum);
+                    if (!string.Equals(existing, checksum, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new MigrationChecksumMismatchException(script.Id, existing, checksum);
+                    }
+
+                    current.Add(script.Id);
+                    continue;
                 }
 
-                current.Add(script.Id);
-                continue;
+                // DDL no MySQL faz commit implícito; por isso não há transação aqui.
+                var interrupted = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+                    "SELECT COUNT(*) FROM schema_migration_attempts WHERE id = @id AND completed_at IS NULL",
+                    new { id = script.Id }, cancellationToken: ct));
+                if (interrupted > 0)
+                    throw new InvalidOperationException($"Migração {script.Id} interrompida. Restaure backup ou reconcilie o DDL antes de liberar a tentativa.");
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "INSERT INTO schema_migration_attempts (id, checksum) VALUES (@id, @checksum)",
+                    new { id = script.Id, checksum }, cancellationToken: ct));
+
+                foreach (var statement in SqlScriptSplitter.Split(script.Sql))
+                {
+                    await using var command = connection.CreateCommand();
+                    command.CommandText = statement;
+                    command.CommandTimeout = 120;
+                    await command.ExecuteNonQueryAsync(ct);
+                }
+
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "INSERT INTO schema_migrations (id, name, checksum, applied_at) VALUES (@id, @name, @checksum, UTC_TIMESTAMP(6))",
+                    new { id = script.Id, name = script.Name, checksum },
+                    cancellationToken: ct));
+
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "UPDATE schema_migration_attempts SET completed_at = UTC_TIMESTAMP(6) WHERE id = @id",
+                    new { id = script.Id }, cancellationToken: ct));
+                newlyApplied.Add(script.Id);
+                logger.LogInformation("Migração {Id} ({Name}) aplicada.", script.Id, script.Name);
             }
 
-            // DDL no MySQL faz commit implícito; por isso não há transação aqui.
-            foreach (var statement in SqlScriptSplitter.Split(script.Sql))
-            {
-                await using var command = connection.CreateCommand();
-                command.CommandText = statement;
-                command.CommandTimeout = 120;
-                await command.ExecuteNonQueryAsync(ct);
-            }
-
-            await connection.ExecuteAsync(new CommandDefinition(
-                "INSERT INTO schema_migrations (id, name, checksum, applied_at) VALUES (@id, @name, @checksum, UTC_TIMESTAMP(6))",
-                new { id = script.Id, name = script.Name, checksum },
-                cancellationToken: ct));
-
-            newlyApplied.Add(script.Id);
-            logger.LogInformation("Migração {Id} ({Name}) aplicada.", script.Id, script.Name);
+            return new MigrationResult(newlyApplied.Count, newlyApplied, current);
         }
-
-        return new MigrationResult(newlyApplied.Count, newlyApplied, current);
+        finally
+        {
+            await connection.ExecuteScalarAsync<int?>(new CommandDefinition(
+                "SELECT RELEASE_LOCK('belrestaurante:migrations')", cancellationToken: CancellationToken.None));
+        }
     }
 
     private static async Task EnsureHistoryTableAsync(MySqlConnection connection, CancellationToken ct)

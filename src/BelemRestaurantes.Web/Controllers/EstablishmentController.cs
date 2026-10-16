@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using BelemRestaurantes.Application.Abstractions;
 using BelemRestaurantes.Application.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BelemRestaurantes.Web.Controllers;
 
 [Route("establishment")]
+[AllowAnonymous]
 public sealed class EstablishmentController(
     IRestaurantReadRepository repo) : Controller
 {

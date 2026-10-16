@@ -21,6 +21,7 @@ public static class InfrastructureServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        Dapper.SqlMapper.AddTypeHandler(new MySql.UtcDateTimeOffsetHandler());
         services.Configure<GooglePlacesOptions>(configuration.GetSection(GooglePlacesOptions.SectionName));
 
         var googleOptions = configuration

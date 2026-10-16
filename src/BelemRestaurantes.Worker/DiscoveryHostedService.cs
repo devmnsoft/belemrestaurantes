@@ -90,16 +90,23 @@ public sealed class DiscoveryHostedService(
             }
 
             // 3. Reservar lote.
-            var jobs = await queue.ClaimDueAsync(batchSize, InstanceId, TimeSpan.FromMinutes(4), ct);
+            var processedJobs = 0;
 
             var metricsTotal = new AggregateMetrics();
 
-            foreach (var job in jobs)
+            for (var index = 0; index < batchSize; index++)
             {
+                var claimed = await queue.ClaimDueAsync(1, InstanceId, TimeSpan.FromMinutes(4), ct);
+                if (claimed.Count == 0) break;
+                var job = claimed[0];
+                processedJobs++;
                 try
                 {
-                    var discovered = await ProcessOneAsync(scope, job, ct);
+                    using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    timeout.CancelAfter(TimeSpan.FromMinutes(3));
+                    var discovered = await ProcessOneAsync(scope, job, timeout.Token);
                     metricsTotal.Add(discovered);
+                    if (discovered.JobsFailed > 0) throw new InvalidOperationException("O processamento teve falhas; reagendado para nova tentativa.");
 
                     await queue.CompleteAsync(job.JobId, ct);
                 }
@@ -111,7 +118,7 @@ public sealed class DiscoveryHostedService(
                 {
                     logger.LogError(ex, "Job {JobId} ({City}/{Category}) falhou.", job.JobId, job.City, job.Category);
 
-                    await queue.FailAsync(job.JobId, ex.Message, TimeSpan.FromMinutes(1 * (job.Attempt + 1)), maxAttempts, ct);
+                    await queue.FailAsync(job.JobId, ex.Message, TimeSpan.FromMinutes(Math.Pow(2, Math.Min(job.Attempt, 6))), maxAttempts, ct);
                 }
             }
 
@@ -119,7 +126,7 @@ public sealed class DiscoveryHostedService(
 
             await teleportory.CompleteCycleAsync(
                 cycleId,
-                jobs.Count,
+                processedJobs,
                 metricsTotal.Discovered,
                 metricsTotal.Created,
                 metricsTotal.Updated,
@@ -130,7 +137,7 @@ public sealed class DiscoveryHostedService(
 
             logger.LogInformation(
                 "Ciclo concluído: lote={Jobs} {Metrics} tempo={Duration:F1}s",
-                jobs.Count, metricsTotal.ToString(), duration.TotalSeconds);
+                processedJobs, metricsTotal.ToString(), duration.TotalSeconds);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {

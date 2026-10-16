@@ -10,14 +10,15 @@ public sealed class Pbkdf2PasswordVerifier : IPasswordVerifier
     {
         var salt = new byte[16];
         RandomNumberGenerator.Fill(salt);
-        var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, 150_000, HashAlgorithmName.SHA256, 32);
-        return $"150000.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
+        var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, 600_000, HashAlgorithmName.SHA256, 32);
+        return $"600000.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
     }
 
     public bool Verify(string password, string stored)
     {
+        if (string.IsNullOrWhiteSpace(stored) || string.IsNullOrEmpty(password) || password.Length > 1024) return false;
         var parts = stored.Split('.', 3);
-        if (parts.Length != 3 || !int.TryParse(parts[0], out var iterations) || iterations <= 0)
+        if (parts.Length != 3 || !int.TryParse(parts[0], out var iterations) || iterations < 100_000 || iterations > 2_000_000)
         {
             return false;
         }
@@ -34,7 +35,7 @@ public sealed class Pbkdf2PasswordVerifier : IPasswordVerifier
             return false;
         }
 
-        if (salt.Length == 0 || expected.Length == 0)
+        if (salt.Length != 16 || expected.Length != 32)
         {
             return false;
         }

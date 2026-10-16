@@ -12,7 +12,9 @@ public interface IAdminUserRepository
 
     Task ResetFailuresAsync(string id, DateTimeOffset lastLogin, CancellationToken ct);
 
-    Task EnableTwoFactorAsync(string id, byte[] encryptedSecret, CancellationToken ct);
+    Task<bool> EnableTwoFactorAsync(string id, byte[] encryptedSecret, CancellationToken ct);
+
+    Task<bool> ConsumeTotpAsync(string id, long counter, CancellationToken ct);
 
     Task<string[]> GetRolesAsync(string id, CancellationToken ct);
 }

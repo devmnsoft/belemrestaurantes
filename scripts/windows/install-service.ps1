@@ -1,24 +1,23 @@
-# install-service.ps1 — registra o Cuia Discovery como Windows Service.
-# Executar em PowerShell elevado (Administrador).
-
-$serviceName = "BelemRestauranteCuiaDiscovery"
-$displayName  = "Belém Restaurantes — Cuia Discovery"
-$description  = "Descoberta gastronômica automática (cuia) a cada 10 minutos."
-$exePath      = (Resolve-Path ".\publish\BelemRestaurantes.Worker.exe").Path
-
-if (-not (Test-Path $exePath)) {
-    Write-Error "Publicação não encontrada em $exePath. Rode publish.ps1 antes."
-    exit 1
+param(
+    [Parameter(Mandatory = $true)][string]$WorkerDirectory
+)
+$ErrorActionPreference = 'Stop'
+$serviceName = 'BelemRestauranteCuiaDiscovery'
+$workerRoot = (Resolve-Path -LiteralPath $WorkerDirectory).Path
+$iisRoot = [IO.Path]::GetFullPath((Join-Path $env:SystemDrive 'inetpub'))
+if ($workerRoot.StartsWith($iisRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'O Worker deve ficar fora da pasta IIS.'
 }
-
-$existing = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
-if ($existing) {
-    Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
-    sc.exe delete $serviceName | Out-Null
-    Start-Sleep -Seconds 2
+$exePath = Join-Path $workerRoot 'BelemRestaurantes.Worker.exe'
+if (-not (Test-Path -LiteralPath $exePath -PathType Leaf)) { throw 'Executável do Worker não encontrado.' }
+if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
+    throw 'Serviço já instalado. Pare o serviço e atualize os arquivos; não recriar automaticamente.'
 }
-
-New-Service -Name $serviceName -BinaryPathName "`"$exePath`"" -DisplayName $displayName -Description $description -StartupType Automatic
-sc.exe failure $serviceName reset= 86400 actions= restart/60000/restart/60000/restart/120000 | Out-Null
-Start-Service -Name $serviceName
-Write-Host "Service $serviceName instalado e iniciado."
+New-Service -Name $serviceName -BinaryPathName ('"' + $exePath + '"') -DisplayName 'Belém Restaurantes — Cuia Discovery' -StartupType Automatic
+sc.exe config $serviceName obj= "NT SERVICE\$serviceName" | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Falha ao configurar identidade dedicada. Não iniciar o serviço.' }
+sc.exe failure $serviceName reset= 86400 actions= restart/60000/restart/120000/restart/300000 | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Falha ao configurar recuperação.' }
+Write-Host "Serviço instalado com identidade NT SERVICE\$serviceName."
+Write-Host 'Conceda leitura/execução na pasta do Worker, configure segredos privados e Database:ApplyMigrations=false antes de iniciar.'
+Write-Host "Após validar as permissões, execute Start-Service $serviceName."
