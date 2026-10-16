@@ -2,7 +2,7 @@
 Plataforma gastronômica do Pará, ASP.NET Core MVC/Razor + JavaScript + MySQL.
 
 ## Ambiente
-Domínio belemrestaurantes.com.br, Locaweb Hospedagem I Linux, banco MySQL belrestaurantes.
+Domínio belemrestaurantes.com.br, Locaweb Hospedagem I Linux, banco MySQL belrestaurante.
 
 O plano compartilhado não foi confirmado como compatível com processos persistentes ASP.NET Core. Para frontend dinâmico e worker contínuo, usar hospedagem com suporte a .NET (VPS/container). Aproveitar MySQL da Locaweb apenas se o acesso seguro externo for suportado.
 
