@@ -11,6 +11,11 @@ namespace BelemRestaurantes.Infrastructure.MySql;
 /// </summary>
 public sealed class MySqlConnectionFactory
 {
+    static MySqlConnectionFactory()
+    {
+        Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+    }
+
     private readonly string _connectionString;
     private readonly MySqlConnectionStringBuilder _builder;
 

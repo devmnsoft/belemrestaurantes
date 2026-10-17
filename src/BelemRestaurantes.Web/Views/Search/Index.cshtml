@@ -1,6 +1,6 @@
 @model BelemRestaurantes.Application.Models.PagedResult<BelemRestaurantes.Application.Models.RestaurantView>
 @{
-    ViewData["Title"] = "Busca Gastronômica - Belém Restaurantes";
+    ViewData["Title"] = "Busca Gastronômica — Belém Restaurantes";
     var filters = (BelemRestaurantes.Application.Abstractions.SearchFilterOptions?)ViewBag.FilterOptions;
     var searchTerm = (string?)ViewBag.SearchTerm;
     var selectedCity = (string?)ViewBag.SelectedCity;
@@ -8,27 +8,27 @@
     var selectedNeighborhood = (string?)ViewBag.SelectedNeighborhood;
 }
 
-<div class="container-v3 section-v3">
-    <!-- Cabeçalho da Busca -->
+<div class="cuia-container cuia-section">
+    <!-- Cabeçalho da Busca V5 -->
     <div style="margin-bottom: 32px;">
-        <span class="tagline-badge mb-2">Busca Gastronômica</span>
-        <h1 class="title-section mb-1">Restaurantes e Sabores do Pará</h1>
-        <p class="subtitle-v3">
+        <span class="cuia-tag cuia-tag-floresta" style="margin-bottom: 8px;">✦ Catálogo Gastronômico</span>
+        <h1 class="cuia-section-title" style="margin-top: 8px;">Restaurantes e Sabores do Pará</h1>
+        <p class="cuia-section-subtitle">
             Encontre pratos típicos, restaurantes tradicionais, açaí, tacacá e especialidades paraenses em todo o estado.
         </p>
     </div>
 
-    <!-- Barra de Filtros Combinados -->
-    <form method="get" action="/busca" class="p-3 bg-white rounded-4 border mb-4 shadow-sm" style="background:#fff;border:1px solid #e2e8df;border-radius:18px;padding:20px;">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;align-items:end;">
+    <!-- Barra de Filtros Combinados V5 -->
+    <form method="get" action="/busca" class="cuia-card" style="margin-bottom: 32px; padding: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
             <div>
-                <label class="small fw-bold text-muted mb-1" style="display:block;font-size:13px;font-weight:700;color:#567064;">Termo ou Prato</label>
-                <input type="text" name="q" value="@searchTerm" placeholder="Ex: Filhote, Açaí, Tacacá..." class="form-control" style="width:100%;padding:10px 14px;border:1px solid #cddccf;border-radius:10px;" />
+                <label for="searchQuery" style="display: block; font-size: 13px; font-weight: 700; color: var(--texto-secundario, #4b635a); margin-bottom: 6px;">Termo ou Prato</label>
+                <input id="searchQuery" type="text" name="q" value="@searchTerm" placeholder="Ex: Filhote, Açaí, Tacacá..." class="cuia-input" style="width: 100%;" />
             </div>
 
             <div>
-                <label class="small fw-bold text-muted mb-1" style="display:block;font-size:13px;font-weight:700;color:#567064;">Cidade</label>
-                <select name="city" class="form-select" style="width:100%;padding:10px 14px;border:1px solid #cddccf;border-radius:10px;">
+                <label for="searchCity" style="display: block; font-size: 13px; font-weight: 700; color: var(--texto-secundario, #4b635a); margin-bottom: 6px;">Cidade</label>
+                <select id="searchCity" name="city" class="cuia-input" style="width: 100%;">
                     <option value="">Todas as Cidades</option>
                     @if (filters?.Cities != null)
                     {
@@ -41,8 +41,8 @@
             </div>
 
             <div>
-                <label class="small fw-bold text-muted mb-1" style="display:block;font-size:13px;font-weight:700;color:#567064;">Categoria</label>
-                <select name="category" class="form-select" style="width:100%;padding:10px 14px;border:1px solid #cddccf;border-radius:10px;">
+                <label for="searchCategory" style="display: block; font-size: 13px; font-weight: 700; color: var(--texto-secundario, #4b635a); margin-bottom: 6px;">Categoria</label>
+                <select id="searchCategory" name="category" class="cuia-input" style="width: 100%;">
                     <option value="">Todas as Categorias</option>
                     @if (filters?.Categories != null)
                     {
@@ -54,18 +54,18 @@
                 </select>
             </div>
 
-            <div style="display:flex;gap:8px;">
-                <button type="submit" class="btn-v3 btn-v3-forest" style="flex:1;">
-                    <i class="bi bi-search"></i> Filtrar
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="cuia-btn cuia-btn-secondary" style="flex: 1;">
+                    Filtrar
                 </button>
-                <a href="/busca" class="btn-v3 btn-v3-outline" title="Limpar Filtros">Limpar</a>
+                <a href="/busca" class="cuia-btn cuia-btn-outline" title="Limpar Filtros">Limpar</a>
             </div>
         </div>
     </form>
 
     <!-- Resumo dos Resultados -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-        <p style="margin:0;color:#567064;font-size:15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <p style="margin: 0; color: var(--texto-secundario, #4b635a); font-size: 15px;">
             Exibindo <strong>@Model.Items.Count</strong> de <strong>@Model.TotalCount</strong> estabelecimentos encontrados.
         </p>
     </div>
@@ -73,65 +73,67 @@
     <!-- Resultados -->
     @if (Model.Items.Count == 0)
     {
-        <div style="text-align:center;padding:60px 20px;background:#fff;border:1px solid #e2e8df;border-radius:20px;margin:20px 0;">
-            <div style="font-size:42px;margin-bottom:12px;">🍽️</div>
-            <h3 style="font-weight:800;color:#0d3826;margin-bottom:8px;">Nenhum restaurante encontrado</h3>
-            <p style="color:#567064;max-width:500px;margin:auto;">
+        <div class="cuia-card" style="text-align: center; padding: 60px 20px; margin: 20px 0;">
+            <div style="font-size: 36px; margin-bottom: 12px; color: var(--tucupi-600, #c48b28);">✦</div>
+            <h3 style="font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 8px; font-size: 20px;">Nenhum restaurante encontrado</h3>
+            <p style="color: var(--texto-secundario, #4b635a); max-width: 500px; margin: auto; font-size: 14px;">
                 Tente ajustar os termos da busca, selecionar outra cidade ou limpar os filtros para ver mais opções da culinária paraense.
             </p>
-            <div style="margin-top:20px;">
-                <a href="/busca" class="btn-v3 btn-v3-forest">Ver Todos os Restaurantes</a>
+            <div style="margin-top: 24px;">
+                <a href="/busca" class="cuia-btn cuia-btn-secondary">Ver Todos os Restaurantes</a>
             </div>
         </div>
     }
     else
     {
-        <div class="grid-cards-v3">
+        <div class="cuia-grid-cards">
             @foreach (var res in Model.Items)
             {
-                <article class="card-restaurant-v3">
-                    <div class="card-media-v3">
+                <article class="cuia-establishment-card">
+                    <div class="cuia-establishment-media">
                         @if (!string.IsNullOrEmpty(res.PhotoUrl))
                         {
                             <img src="@res.PhotoUrl" alt="@res.Name" loading="lazy" />
                         }
                         else
                         {
-                            <div style="height:100%;display:grid;place-items:center;color:#e5a93b;font-size:32px;">✦</div>
+                            <div style="height: 100%; display: grid; place-items: center; color: var(--tucupi-500, #e8ad46); font-size: 32px; background: linear-gradient(135deg, #113F32, #1b5e4b);">
+                                ✦
+                            </div>
                         }
 
-                        <div class="card-badge-top">
+                        <div class="cuia-card-badge-top">
                             @if (!string.IsNullOrEmpty(res.Category))
                             {
-                                <span class="badge-category">@res.Category</span>
+                                <span class="cuia-tag cuia-tag-floresta">@res.Category</span>
                             }
                         </div>
                     </div>
 
-                    <div class="card-content-v3">
+                    <div class="cuia-establishment-content">
                         <div>
-                            <h3 style="margin:0 0 6px;">
-                                <a href="/estabelecimento/@res.Id" class="card-title-link">@res.Name</a>
+                            <h3 class="cuia-establishment-name">
+                                <a href="/estabelecimento/@res.Id" class="cuia-establishment-link">@res.Name</a>
                             </h3>
 
-                            <div class="card-info-row">
-                                <span><i class="bi bi-geo-alt text-danger"></i> @res.Neighborhood, @res.City</span>
+                            <div class="cuia-establishment-meta">
+                                <span>@res.Neighborhood, @res.City</span>
                             </div>
 
                             @if (!string.IsNullOrEmpty(res.Address))
                             {
-                                <div style="font-size:13px;color:#7a9488;margin-top:4px;">
+                                <div style="font-size: 13px; color: var(--texto-secundario, #4b635a); margin-top: 4px;">
                                     @res.Address
                                 </div>
                             }
                         </div>
 
-                        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #edf2ec;display:flex;justify-content:space-between;align-items:center;">
-                            <a href="/cardapio/@res.Id" class="btn-v3 btn-v3-tucupi btn-v3-sm">
-                                📖 Cardápio
+                        <div class="cuia-establishment-actions">
+                            <a href="/cardapio/@res.Id" class="cuia-btn cuia-btn-primary cuia-btn-sm">
+                                Cardápio
                             </a>
-                            <a href="/estabelecimento/@res.Id" class="btn-v3 btn-v3-outline btn-v3-sm">
-                                Detalhes ➔
+                            <a href="/estabelecimento/@res.Id" class="cuia-btn cuia-btn-outline cuia-btn-sm">
+                                Detalhes →
                             </a>
                         </div>
                     </div>
@@ -139,25 +141,25 @@
             }
         </div>
 
-        <!-- Paginação -->
+        <!-- Paginação V5 -->
         @if (Model.TotalPages > 1)
         {
-            <div style="display:flex;justify-content:center;gap:8px;margin-top:40px;align-items:center;">
+            <div style="display: flex; justify-content: center; gap: 8px; margin-top: 40px; align-items: center;">
                 @if (Model.Page > 1)
                 {
-                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&page=@(Model.Page - 1)" class="btn-v3 btn-v3-outline btn-v3-sm">
-                        Anterior
+                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&page=@(Model.Page - 1)" class="cuia-btn cuia-btn-outline cuia-btn-sm">
+                        ← Anterior
                     </a>
                 }
 
-                <span style="font-size:14px;color:#567064;padding:0 12px;">
+                <span style="font-size: 14px; color: var(--texto-secundario, #4b635a); padding: 0 12px;">
                     Página <strong>@Model.Page</strong> de <strong>@Model.TotalPages</strong>
                 </span>
 
                 @if (Model.Page < Model.TotalPages)
                 {
-                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&page=@(Model.Page + 1)" class="btn-v3 btn-v3-outline btn-v3-sm">
-                        Próxima
+                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&page=@(Model.Page + 1)" class="cuia-btn cuia-btn-outline cuia-btn-sm">
+                        Próxima →
                     </a>
                 }
             </div>

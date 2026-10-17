@@ -1,9 +1,11 @@
 using BelemRestaurantes.Application.Abstractions;
+using BelemRestaurantes.Application.Services;
 using BelemRestaurantes.Infrastructure.MySql;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BelemRestaurantes.Web.Controllers;
 
@@ -14,7 +16,8 @@ public sealed class AdminOperationsController(
     IRestaurantReadRepository restaurantRepo,
     IMonetizationService monetizationService,
     MySqlConnectionFactory factory,
-    IConfiguration config) : Controller
+    IConfiguration config,
+    IServiceProvider serviceProvider) : Controller
 {
     private string Actor() => User.Identity?.Name ?? "admin";
 
@@ -300,6 +303,187 @@ public sealed class AdminOperationsController(
         ViewData["Plans"] = plans;
         return View("~/Views/AdminAccount/Monetization.cshtml", orders);
     }
+
+    // 5. Diagnóstico Administrativo Cuia Discovery & Inatividade
+    [HttpGet("diagnostics")]
+    public async Task<IActionResult> Diagnostics(CancellationToken ct)
+    {
+        var model = new AdminDiscoveryDiagnosticsViewModel();
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        try
+        {
+            await using var connection = await factory.OpenAsync(ct);
+            sw.Stop();
+            model.MySqlConnected = true;
+            model.MySqlDatabase = factory.Database;
+            model.MySqlPingMs = sw.ElapsedMilliseconds;
+
+            // Alvos de descoberta
+            const string targetsSql = """
+                SELECT 
+                    COUNT(*) AS Total,
+                    SUM(CASE WHEN enabled = 1 THEN 1 ELSE 0 END) AS EnabledCount,
+                    SUM(CASE WHEN enabled = 1 AND normalized_city = 'belem' THEN 1 ELSE 0 END) AS BelemEnabled
+                FROM discovery_targets;
+                """;
+            var targetStats = await connection.QueryFirstOrDefaultAsync<(int Total, int? EnabledCount, int? BelemEnabled)>(new CommandDefinition(targetsSql, cancellationToken: ct));
+            model.TotalDiscoveryTargets = targetStats.Total;
+            model.EnabledDiscoveryTargets = targetStats.EnabledCount ?? 0;
+            model.BelemTargetsEnabled = targetStats.BelemEnabled ?? 0;
+
+            // Fila de jobs
+            const string jobsSql = """
+                SELECT 
+                    SUM(CASE WHEN state = 'pending' THEN 1 ELSE 0 END) AS PendingJobs,
+                    SUM(CASE WHEN state = 'failed' THEN 1 ELSE 0 END) AS FailedJobs,
+                    SUM(CASE WHEN state = 'dead_lettered' THEN 1 ELSE 0 END) AS DeadJobs
+                FROM discovery_jobs;
+                """;
+            var jobStats = await connection.QueryFirstOrDefaultAsync<(int? PendingJobs, int? FailedJobs, int? DeadJobs)>(new CommandDefinition(jobsSql, cancellationToken: ct));
+            model.DiscoveryPendingJobs = jobStats.PendingJobs ?? 0;
+            model.DiscoveryFailedJobs = jobStats.FailedJobs ?? 0;
+            model.DiscoveryDeadLetteredJobs = jobStats.DeadJobs ?? 0;
+
+            // Crawler
+            const string crawlerSql = """
+                SELECT 
+                    (SELECT COUNT(*) FROM crawler_sources WHERE status = 'active') AS ActiveSources,
+                    (SELECT COUNT(*) FROM crawler_tasks WHERE state = 'pending') AS PendingTasks;
+                """;
+            var crawlerStats = await connection.QueryFirstOrDefaultAsync<(int ActiveSources, int PendingTasks)>(new CommandDefinition(crawlerSql, cancellationToken: ct));
+            model.CrawlerActiveSources = crawlerStats.ActiveSources;
+            model.CrawlerPendingTasks = crawlerStats.PendingTasks;
+
+            // Último ciclo do worker
+            const string workerSql = """
+                SELECT started_at, completed_at, jobs_claimed, places_discovered, jobs_failed
+                FROM discovery_cycle_runs
+                ORDER BY id DESC
+                LIMIT 1;
+                """;
+            model.LastWorkerCycle = await connection.QueryFirstOrDefaultAsync<CycleRunRow>(new CommandDefinition(workerSql, cancellationToken: ct));
+            model.TotalPendingModeration = await moderationRepo.CountPendingAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            model.MySqlConnected = false;
+            model.MySqlErrorMessage = ex.Message;
+        }
+
+        // Diagnóstico Google Places
+        var googleKey = config["GooglePlaces:ApiKey"];
+        model.GooglePlacesBaseUrl = config["GooglePlaces:BaseUrl"] ?? "https://places.googleapis.com/v1/";
+        model.GooglePlacesConfigured = !string.IsNullOrWhiteSpace(googleKey);
+
+        if (!model.GooglePlacesConfigured)
+        {
+            model.GooglePlacesStatusMessage = "Chave de API não informada no ambiente (GooglePlaces:ApiKey ou GOOGLEPLACES__APIKEY).";
+            model.InactivityReasons.Add("Google Places API inativa: Chave ausente nas configurações da VPS. O robô não pode fazer buscas diretas na API do Google sem chave de API.");
+        }
+        else
+        {
+            model.GooglePlacesStatusMessage = "Chave configurada e ativa.";
+        }
+
+        if (model.MySqlConnected)
+        {
+            if (model.BelemTargetsEnabled == 0)
+            {
+                model.InactivityReasons.Add("Nenhum alvo de descoberta habilitado para Belém. É necessário ativar os alvos de Belém para o robô processar a capital.");
+            }
+            if (model.DiscoveryPendingJobs == 0 && model.CrawlerPendingTasks == 0)
+            {
+                model.InactivityReasons.Add("A fila de tarefas e alvos está vazia no momento. Use 'Ativar Alvos de Belém' para enfileirar novos trabalhos.");
+            }
+            if (model.LastWorkerCycle == null)
+            {
+                model.InactivityReasons.Add("Nenhum ciclo do Windows Worker BelemRestauranteCuiaDiscovery foi registrado no banco. Verifique se o serviço está em execução.");
+            }
+            else if (model.LastWorkerCycle.completed_at.HasValue && model.LastWorkerCycle.completed_at.Value < DateTimeOffset.UtcNow.AddMinutes(-30))
+            {
+                model.InactivityReasons.Add($"O último ciclo do Worker foi concluído há mais de 30 minutos ({model.LastWorkerCycle.completed_at:dd/MM/yyyy HH:mm}). O intervalo padrão é de 10 minutos.");
+            }
+        }
+        else
+        {
+            model.InactivityReasons.Add($"Conexão MySQL indisponível: {model.MySqlErrorMessage}");
+        }
+
+        return View("~/Views/AdminAccount/Diagnostics.cshtml", model);
+    }
+
+    [HttpPost("diagnostics/activate-belem")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ActivateBelemTargets(CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        const string updateSql = """
+            UPDATE discovery_targets 
+            SET enabled = TRUE, next_run_at = CURRENT_TIMESTAMP(6)
+            WHERE normalized_city = 'belem';
+
+            UPDATE api_budgets 
+            SET paused = FALSE, monthly_limit_requests = 1000
+            WHERE provider IN ('GooglePlaces', 'Gemini');
+
+            INSERT IGNORE INTO crawler_tasks (source_id, url, city, category, state, next_attempt_at)
+            SELECT id, base_url, 'Belém', default_category, 'pending', CURRENT_TIMESTAMP(6)
+            FROM crawler_sources
+            WHERE target_city = 'Belém' AND status = 'active';
+            """;
+        var affected = await connection.ExecuteAsync(new CommandDefinition(updateSql, cancellationToken: ct));
+
+        var queue = serviceProvider.GetService<IDiscoveryQueue>();
+        int enqueued = 0;
+        if (queue != null)
+        {
+            enqueued = await queue.EnqueueDueTargetsAsync(DateTimeOffset.UtcNow, ct);
+        }
+
+        TempData["Flash"] = $"Alvos e fontes de Belém ativados com sucesso! {enqueued} novos jobs de descoberta enfileirados na fila durável.";
+        return RedirectToAction(nameof(Diagnostics));
+    }
+
+    [HttpPost("diagnostics/run-belem-now")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RunBelemDiscoveryNow(CancellationToken ct)
+    {
+        var placeProvider = serviceProvider.GetService<IPlaceDiscoveryProvider>();
+        var orchestrator = serviceProvider.GetService<DiscoveryOrchestrator>();
+
+        if (placeProvider == null || orchestrator == null)
+        {
+            TempData["ErrorMessage"] = "Serviços de descoberta não registrados no contêiner de injeção de dependência.";
+            return RedirectToAction(nameof(Diagnostics));
+        }
+
+        if (!placeProvider.IsConfigured)
+        {
+            TempData["ErrorMessage"] = "Google Places não configurado. Defina a variável GooglePlaces:ApiKey ou GOOGLEPLACES__APIKEY nas configurações de ambiente da VPS.";
+            return RedirectToAction(nameof(Diagnostics));
+        }
+
+        try
+        {
+            var workItem = new DiscoveryWorkItem(0, 1, "Belém", "Restaurante", 1);
+
+            var metrics = await orchestrator.RunTargetAsync(workItem, ct);
+
+            TempData["Flash"] = $"Descoberta em Belém executada com sucesso! " +
+                                $"Descobertos: {metrics.PlacesDiscovered}, " +
+                                $"Novos na Moderação: {metrics.RestaurantsCreated}, " +
+                                $"Atualizados: {metrics.RestaurantsUpdated}, " +
+                                $"Ignorados: {metrics.PlacesSkipped}, " +
+                                $"Falhas: {metrics.JobsFailed}.";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"Erro ao executar descoberta de Belém: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Diagnostics));
+    }
 }
 
 public sealed class RestaurantAdminRow
@@ -375,4 +559,32 @@ public sealed class ConnectorStatusItem
     public decimal? CostUsd { get; init; }
     public int PendingModerationCount { get; init; }
     public IReadOnlyList<string> AllowedActions { get; init; } = [];
+}
+
+public sealed class AdminDiscoveryDiagnosticsViewModel
+{
+    public bool MySqlConnected { get; set; }
+    public string MySqlDatabase { get; set; } = "";
+    public string MySqlErrorMessage { get; set; } = "";
+    public long MySqlPingMs { get; set; }
+
+    public bool GooglePlacesConfigured { get; set; }
+    public string GooglePlacesBaseUrl { get; set; } = "";
+    public string GooglePlacesStatusMessage { get; set; } = "";
+
+    public int TotalDiscoveryTargets { get; set; }
+    public int EnabledDiscoveryTargets { get; set; }
+    public int BelemTargetsEnabled { get; set; }
+
+    public int DiscoveryPendingJobs { get; set; }
+    public int DiscoveryFailedJobs { get; set; }
+    public int DiscoveryDeadLetteredJobs { get; set; }
+
+    public int CrawlerActiveSources { get; set; }
+    public int CrawlerPendingTasks { get; set; }
+
+    public CycleRunRow? LastWorkerCycle { get; set; }
+    public int TotalPendingModeration { get; set; }
+
+    public List<string> InactivityReasons { get; set; } = [];
 }
