@@ -22,7 +22,8 @@ public sealed class AdminDiscovery360Controller(
     ILogger<AdminDiscovery360Controller> logger,
     IDiscoveryIntelligenceQueue? intelligenceQueue = null,
     ICommercialMonetizationRepository? monetizationRepo = null,
-    IDiscoveryIntelligenceOrchestrator? orchestrator = null) : Controller
+    IDiscoveryIntelligenceOrchestrator? orchestrator = null,
+    IDiscoveryTelemetryRepository? telemetryRepo = null) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct)
@@ -40,12 +41,22 @@ public sealed class AdminDiscovery360Controller(
             ? await monetizationRepo.ListRecentInvoicesAsync(15, ct)
             : Array.Empty<CommercialInvoice>();
 
+        var telemetrySummary = telemetryRepo != null
+            ? await telemetryRepo.GetSummaryAsync(ct)
+            : new DiscoveryTelemetrySummary();
+
+        var recentTelemetry = telemetryRepo != null
+            ? await telemetryRepo.ListRecentTelemetryAsync(15, ct)
+            : Array.Empty<DiscoveryTelemetryRecord>();
+
         ViewData["CoverageStats"] = coverage;
         ViewData["PendingEnrichments"] = pendingEnrichments;
         ViewData["RecentChanges"] = recentChanges;
         ViewData["PendingMedias"] = pendingMedias;
         ViewData["IntelligenceStats"] = intelligenceStats;
         ViewData["RecentInvoices"] = recentInvoices;
+        ViewData["TelemetrySummary"] = telemetrySummary;
+        ViewData["RecentTelemetry"] = recentTelemetry;
 
         return View("~/Views/AdminAccount/Discovery360.cshtml");
     }

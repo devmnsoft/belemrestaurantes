@@ -8,19 +8,21 @@
     var pendingMedias = ViewData["PendingMedias"] as IReadOnlyList<RestaurantMedia> ?? [];
     var intelligenceStats = ViewData["IntelligenceStats"] as Dictionary<string, int> ?? new Dictionary<string, int>();
     var recentInvoices = ViewData["RecentInvoices"] as IReadOnlyList<CommercialInvoice> ?? Array.Empty<CommercialInvoice>();
+    var telemetrySummary = ViewData["TelemetrySummary"] as DiscoveryTelemetrySummary ?? new DiscoveryTelemetrySummary();
+    var recentTelemetry = ViewData["RecentTelemetry"] as IReadOnlyList<DiscoveryTelemetryRecord> ?? Array.Empty<DiscoveryTelemetryRecord>();
     var totalIntelligencePending = intelligenceStats.TryGetValue("pending", out var pCount) ? pCount : 0;
 }
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
   <div>
     <span class="badge-tag-v3" style="background: rgba(30,122,84,0.15); color: var(--forest-800); border: 1px solid rgba(30,122,84,0.3); margin-bottom: 8px;">
-      🌐 SPRINT 10 · OPERAÇÃO GASTRONÔMICA 360 & DESIGN V4
+      🌐 SPRINT 11 · HOMOLOGAÇÃO INTEGRAL & SEGURANÇA AVANÇADA
     </span>
     <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
       Central de Operações Gastronômicas 360
     </h1>
     <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
-      Cobertura oficial de municípios e ilhas do Pará, fila central de 8 tarefas de inteligência, mídias autorizadas e monetização PIX MNSOFT.
+      Cobertura estadual integral de 144 municípios do Pará (IBGE), fila central de 8 tarefas, telemetria em tempo real e qualidade do catálogo.
     </p>
   </div>
   
@@ -28,7 +30,7 @@
     <form method="post" action="/admin/discovery360/intelligence-batch" style="margin: 0;">
       @Html.AntiForgeryToken()
       <button type="submit" class="btn-v4 btn-v4-tucupi" style="display: flex; align-items: center; gap: 8px;">
-        <span>⚡</span> Processar Fila de Inteligência (@totalIntelligencePending)
+        <span>⚡</span> Fila de Inteligência (@totalIntelligencePending)
       </button>
     </form>
     <form method="post" action="/admin/discovery360/enrich-batch" style="margin: 0;">
@@ -40,6 +42,47 @@
     <a href="/admin/crawler" class="btn-v3 btn-v3-outline">
       🕷️ Painel Crawler
     </a>
+  </div>
+</div>
+
+<!-- Painel de Telemetria Unificada do Discovery, Crawler e IA (FASE 3) -->
+<div class="card-restaurant-v3" style="padding: 20px; margin-bottom: 24px; background: linear-gradient(135deg, rgba(30,122,84,0.04) 0%, rgba(229,169,59,0.06) 100%); border-left: 4px solid var(--forest-700);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 20px;">⏱️</span>
+      <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--forest-950); margin: 0;">
+        Telemetria em Tempo Real do Worker (Ciclo de 10 min)
+      </h3>
+    </div>
+    <span class="badge-v4" style="background: rgba(30,122,84,0.12); color: var(--forest-900); font-size: 11px;">
+      Último Ciclo: @(telemetrySummary.LastExecutionAt?.ToString("dd/MM/yyyy HH:mm:ss") ?? "Aguardando primeira execução")
+    </span>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
+    <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+      <div style="font-size: 10.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Fonte Consultada</div>
+      <div style="font-size: 13px; font-weight: 700; color: var(--forest-950); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        @telemetrySummary.LastSourceQueried
+      </div>
+    </div>
+    <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+      <div style="font-size: 10.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Tempo de Resposta</div>
+      <div style="font-size: 14px; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
+        @telemetrySummary.LastDurationMs ms
+      </div>
+    </div>
+    <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+      <div style="font-size: 10.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Criados / Atualizados Hoje</div>
+      <div style="font-size: 14px; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
+        @telemetrySummary.TotalRecordsDiscoveredToday / @telemetrySummary.TotalRecordsUpdatedToday
+      </div>
+    </div>
+    <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+      <div style="font-size: 10.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Ciclos Executados Hoje</div>
+      <div style="font-size: 14px; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
+        @telemetrySummary.TotalCyclesToday <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(@telemetrySummary.FailedCyclesToday falhas)</span>
+      </div>
+    </div>
   </div>
 </div>
 
