@@ -21,6 +21,7 @@ public class Program
                 services.AddHostedService<MigrationHostedService>();
                 services.AddHostedService<DiscoveryHostedService>();
                 services.AddHostedService<EmailHostedService>();
+                services.AddHostedService<CrawlerHostedService>();
             })
             .ConfigureLogging(logging => logging.AddConsole())
             .Build()

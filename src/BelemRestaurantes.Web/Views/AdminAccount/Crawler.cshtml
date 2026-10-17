@@ -1,0 +1,254 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.CrawlerSource>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Cuia Crawler — Rastreamento Autônomo";
+    var stats = ViewData["Stats"] as BelemRestaurantes.Application.Abstractions.CrawlerSummaryStats 
+                ?? new BelemRestaurantes.Application.Abstractions.CrawlerSummaryStats(0, 0, 0, 0, 0, 0, 0, 0);
+    var recentRuns = ViewData["RecentRuns"] as IReadOnlyList<BelemRestaurantes.Domain.Entities.CrawlerRunLog> ?? [];
+}
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <span class="badge-tag-v3" style="margin-bottom: 8px;">✦ Pesquisa Autônoma & Descoberta Web</span>
+    <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
+      Cuia Crawler · Gestão de Rastreamento
+    </h1>
+    <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
+      Descoberta autônoma no Pará via Sitemaps, Feeds RSS e Schema.org Restaurant. Estrito respeito a robots.txt e proteção SSRF.
+    </p>
+  </div>
+  <div style="display: flex; gap: 10px;">
+    <form method="post" action="/admin/crawler/run-cycle" style="margin: 0;">
+      @Html.AntiForgeryToken()
+      <button type="submit" class="btn-v3 btn-v3-primary btn-v3-sm">
+        ⚡ Executar Ciclo Agora
+      </button>
+    </form>
+    <a href="/admin/dashboard" class="btn-v3 btn-v3-outline btn-v3-sm">← Voltar ao Painel</a>
+  </div>
+</div>
+
+<!-- Grid de Indicadores Reais -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px;">
+  <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm);">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Fontes Autorizadas</div>
+    <div style="font-size: 28px; font-weight: 850; color: var(--forest-900); margin-top: 4px;">@stats.ActiveSources / @stats.TotalSources</div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">@stats.BlockedSources bloqueadas</div>
+  </div>
+
+  <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm);">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Fila de Tarefas Pendentes</div>
+    <div style="font-size: 28px; font-weight: 850; color: var(--forest-900); margin-top: 4px;">@stats.TotalTasksPending</div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">URLs aguardando ciclo</div>
+  </div>
+
+  <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm);">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Descobertas Hoje</div>
+    <div style="font-size: 28px; font-weight: 850; color: #166534; margin-top: 4px;">+@stats.TotalDiscoveredToday</div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">@stats.TotalIngestedToday enviadas para moderação</div>
+  </div>
+
+  <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm);">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Execuções & Erros Hoje</div>
+    <div style="font-size: 28px; font-weight: 850; color: @(stats.TotalErrorsToday > 0 ? "var(--urucum-600)" : "var(--forest-900)"); margin-top: 4px;">
+      @stats.TotalRunsToday runs / @stats.TotalErrorsToday falhas
+    </div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Resiliência automática ativa</div>
+  </div>
+</div>
+
+<!-- Cadastro de Nova Fonte Autorizada -->
+<div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 22px; margin-bottom: 32px; box-shadow: var(--shadow-sm);">
+  <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 16px 0;">
+    ➕ Cadastrar Nova Fonte Autorizada de Rastreamento
+  </h3>
+
+  <form method="post" action="/admin/crawler/sources/create" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; align-items: end;">
+    @Html.AntiForgeryToken()
+    <div>
+      <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Nome da Fonte</label>
+      <input type="text" name="name" required placeholder="Ex: Portal Gastronômico de Santarém" class="input-v3" style="width: 100%;" />
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">URL Base / Sitemap / Feed</label>
+      <input type="url" name="baseUrl" required placeholder="https://exemplo.com.br/sitemap.xml" class="input-v3" style="width: 100%;" />
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Tipo de Fonte</label>
+      <select name="sourceType" class="input-v3" style="width: 100%;">
+        <option value="sitemap_xml">Sitemap XML</option>
+        <option value="rss_feed">Feed RSS / Atom</option>
+        <option value="structured_data">Página com Schema.org</option>
+        <option value="html_directory">Diretório Público HTML</option>
+      </select>
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Município Alvo</label>
+      <input type="text" name="targetCity" placeholder="Ex: Belém, Santarém, Castanhal..." class="input-v3" style="width: 100%;" />
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Categoria Padrão</label>
+      <input type="text" name="defaultCategory" placeholder="Ex: Regional, Peixaria, Tacacazeira..." class="input-v3" style="width: 100%;" />
+    </div>
+
+    <div>
+      <button type="submit" class="btn-v3 btn-v3-primary" style="width: 100%;">
+        Adicionar e Validar SSRF
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Tabela de Fontes de Rastreamento -->
+<div style="margin-bottom: 36px;">
+  <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-950); margin: 0 0 14px 0;">
+    Fontes de Rastreamento Cadastradas (@Model.Count)
+  </h2>
+
+  <div class="table-v3-wrapper">
+    <table class="table-v3">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome / URL Base</th>
+          <th>Tipo</th>
+          <th>Município Alvo</th>
+          <th>Robots.txt</th>
+          <th>Delay</th>
+          <th>Última Execução</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var s in Model)
+        {
+          <tr>
+            <td style="font-size: 12px; color: var(--text-muted);">#@s.Id</td>
+            <td>
+              <strong style="color: var(--forest-950);">@s.Name</strong>
+              <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;">@s.BaseUrl</div>
+              @if (!string.IsNullOrEmpty(s.LastError))
+              {
+                <div style="font-size: 11px; color: var(--urucum-600); margin-top: 2px;">⚠️ @s.LastError</div>
+              }
+            </td>
+            <td><span class="badge-tag-v3" style="font-size: 11px;">@s.SourceType</span></td>
+            <td>@(s.TargetCity ?? "Múltiplos")</td>
+            <td>
+              @if (s.RobotsTxtStatus == "allowed")
+              {
+                <span style="color: #166534; font-weight: 700; font-size: 12px;">✓ Permitido</span>
+              }
+              else if (s.RobotsTxtStatus == "disallowed")
+              {
+                <span style="color: var(--urucum-600); font-weight: 700; font-size: 12px;">✕ Bloqueado</span>
+              }
+              else
+              {
+                <span style="color: var(--text-muted); font-size: 12px;">○ Não verificado</span>
+              }
+            </td>
+            <td style="font-size: 12px;">@s.CrawlDelaySeconds s</td>
+            <td style="font-size: 12px; color: var(--text-muted);">
+              @(s.LastCrawledAt?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca")
+            </td>
+            <td>
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; @(s.Status == "active" ? "color: #166534; background: #dcfce7;" : s.Status == "paused" ? "color: #854d0e; background: #fef9c3;" : "color: #991b1b; background: #fee2e2;")">
+                @s.Status
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 6px;">
+                @if (s.Status == "active")
+                {
+                  <form method="post" action="/admin/crawler/sources/@s.Id/status" style="margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="status" value="paused" />
+                    <button type="submit" class="btn-v3 btn-v3-outline btn-v3-sm" style="font-size: 11px; padding: 4px 8px;">Pausar</button>
+                  </form>
+                }
+                else
+                {
+                  <form method="post" action="/admin/crawler/sources/@s.Id/status" style="margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="status" value="active" />
+                    <button type="submit" class="btn-v3 btn-v3-primary btn-v3-sm" style="font-size: 11px; padding: 4px 8px;">Ativar</button>
+                  </form>
+                }
+                @if (s.Status != "blocked")
+                {
+                  <form method="post" action="/admin/crawler/sources/@s.Id/status" style="margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="status" value="blocked" />
+                    <button type="submit" class="btn-v3 btn-v3-sm" style="font-size: 11px; padding: 4px 8px; background: rgba(200,75,49,0.15); color: var(--urucum-700); border: 1px solid rgba(200,75,49,0.3);">Bloquear</button>
+                  </form>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Tabela de Execuções Recentes -->
+<div>
+  <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-950); margin: 0 0 14px 0;">
+    Histórico de Consultas Executadas Recentes (@recentRuns.Count)
+  </h2>
+
+  <div class="table-v3-wrapper">
+    <table class="table-v3">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>URL Consultada</th>
+          <th>Status HTTP</th>
+          <th>Duração</th>
+          <th>Descobertas</th>
+          <th>Ingestões</th>
+          <th>Horário</th>
+          <th>Mensagem / Erro</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (recentRuns.Count == 0)
+        {
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 28px; color: var(--text-muted);">
+              Nenhuma execução recente de rastreamento registrada.
+            </td>
+          </tr>
+        }
+        else
+        {
+          @foreach (var r in recentRuns)
+          {
+            <tr>
+              <td style="font-size: 12px; color: var(--text-muted);">#@r.Id</td>
+              <td style="font-size: 12px; max-width: 320px; word-break: break-all;">@r.Url</td>
+              <td>
+                <span style="font-weight: 700; font-size: 12px; color: @(r.StatusCode >= 200 && r.StatusCode < 300 ? "#166534" : "var(--urucum-600)");">
+                  @r.StatusCode
+                </span>
+              </td>
+              <td style="font-size: 12px;">@r.DurationMs ms</td>
+              <td style="font-weight: 700; color: var(--forest-900);">@r.ItemsDiscovered</td>
+              <td style="font-weight: 700; color: #166534;">@r.ItemsIngested</td>
+              <td style="font-size: 12px; color: var(--text-muted);">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+              <td style="font-size: 11px; color: @(string.IsNullOrEmpty(r.ErrorMessage) ? "#166534" : "var(--urucum-600)");">
+                @(string.IsNullOrEmpty(r.ErrorMessage) ? "✓ Sucesso" : r.ErrorMessage)
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
