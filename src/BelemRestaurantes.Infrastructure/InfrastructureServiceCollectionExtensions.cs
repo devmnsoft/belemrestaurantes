@@ -117,6 +117,15 @@ public static class InfrastructureServiceCollectionExtensions
         // Sprint 06 - Busca Gastronômica Inteligente e Autocomplete
         services.AddScoped<ISearchService, Search.MySqlSearchService>();
 
+        // Sprint 08 - Cuia Crawler: Pesquisa autônoma na internet e enriquecimento seguro do catálogo
+        services.AddSingleton<ISafeHttpClient, Crawler.SafeHttpClient>();
+        services.AddSingleton<IRobotsTxtService, Crawler.RobotsTxtService>();
+        services.AddSingleton<ICrawlerParser, Crawler.CrawlerParser>();
+        services.AddScoped<ICrawlerSourceRepository, Crawler.MySqlCrawlerSourceRepository>();
+        services.AddScoped<ICrawlerTaskQueue, Crawler.MySqlCrawlerTaskQueue>();
+        services.AddScoped<ICrawlerTelemetryRepository, Crawler.MySqlCrawlerTelemetryRepository>();
+        services.AddScoped<ICrawlerOrchestrator, Application.Services.CrawlerOrchestrator>();
+
         services.AddHttpClient("googleplaces", client =>
         {
             client.Timeout = googleOptions.Timeout;

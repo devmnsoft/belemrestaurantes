@@ -6,7 +6,7 @@ Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10
 
 ---
 
-## 🌟 Principais Módulos da Plataforma (Sprint 06)
+## 🌟 Principais Módulos da Plataforma (Sprints 06 e 08)
 
 1. **Design System Belém Restaurantes V3 (`~/css/design-v3.css`):**
    - Cores representativas: Verde Floresta, Tucupi Dourado, Urucum e Creme Amazônico.
@@ -21,6 +21,11 @@ Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10
    - Reivindicação segura de estabelecimento, edição de cardápio digital, envio de fotografias e contratação de planos comerciais.
 6. **Painel Administrativo MNSOFT (`/admin`):**
    - Layout dedicado com sidebar lateral fixa (`_AdminLayout.cshtml`), triagem visual de descobertas do worker, catálogo, moderação de fotos e relatos, e status em tempo real de 8 conectores e Cuia IA (Google Places, Gemini, Groq, DeepSeek, redes sociais).
+7. **Cuia Crawler — Rastreamento Autônomo e Descoberta Web (`/admin/crawler`):**
+   - Rastreamento autônomo e gentil via Sitemaps XML, feeds RSS e Schema.org (`Restaurant`, `FoodEstablishment`).
+   - Proteção rigorosa contra **SSRF e DNS Rebinding** (bloqueio de IPs privados, loopback e metadados de nuvem 169.254.169.254).
+   - Respeito integral a `robots.txt` e `Crawl-delay`.
+   - Execução em background a cada 10 minutos via Windows Service com usuário restrito.
 
 ---
 
@@ -46,11 +51,15 @@ Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10
    ```powershell
    dotnet test tests/BelemRestaurantes.UnitTests
    ```
-   *(95 testes unitários cobrindo regras de catálogo, IA, autenticação, moderação, planos comerciais e busca).*
+   *(114 testes unitários cobrindo regras de catálogo, IA, autenticação, moderação, planos comerciais, busca, SSRF guard e crawler parser).*
 
-6. **Publicação para IIS (Windows VPS):**
+6. **Publicação para IIS e Windows Service (Windows VPS):**
    ```powershell
+   # Publicação do Portal Web
    dotnet publish src/BelemRestaurantes.Web/BelemRestaurantes.Web.csproj -c Release -o bin/Publish/Release
+
+   # Publicação do Worker de Descoberta e Crawler
+   dotnet publish src/BelemRestaurantes.Worker/BelemRestaurantes.Worker.csproj -c Release -o bin/Publish/WorkerRelease
    ```
    *Ou execute a publicação diretamente pelo Visual Studio 2026 utilizando o perfil FolderProfile.*
 
@@ -58,6 +67,7 @@ Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10
 
 ## 📄 Documentação e Sprints Anteriores
 
+- [Relatório da Sprint 08 (Cuia Crawler: Pesquisa Autônoma e Segurança SSRF)](docs/SPRINT08-REPORT.md)
 - [Relatório da Sprint 06 (Redesign Completo, Jornada Gastronômica e Homologação)](docs/SPRINT06-REPORT.md)
 - [Relatório da Sprint 05 (Portal do Parceiro, Cardápio e Monetização)](docs/SPRINT05-REPORT.md)
 - [Relatório da Sprint 04 (Comunidade, Fotos e Selo Cuia)](docs/SPRINT04-REPORT.md)
