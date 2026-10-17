@@ -127,7 +127,7 @@ public sealed class MySqlCuiaService(MySqlConnectionFactory factory, ILogger<MyS
             """;
 
         var rows = await connection.QueryAsync<CuiaBadgeDbRow>(new CommandDefinition(sql, new { categoryKey, limit }, cancellationToken: ct));
-        return rows.AsList();
+        return rows.Select(MapBadge).ToList();
     }
 
     public async Task<IReadOnlyDictionary<string, IReadOnlyList<CuiaBadgeView>>> GetAllHighlightsAsync(CancellationToken ct)
