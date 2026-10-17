@@ -169,7 +169,7 @@ CREATE TABLE IF NOT EXISTS restaurant_social_media (
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   KEY ix_social_restaurant (restaurant_id),
-  CONSTRAINT fk_social_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE
+  CONSTRAINT fk_restaurant_social_media_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 12. Planos comerciais e monetizacao
