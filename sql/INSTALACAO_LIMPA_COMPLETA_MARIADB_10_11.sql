@@ -10,6 +10,19 @@
 CREATE DATABASE IF NOT EXISTS belrestaurante CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE belrestaurante;
 
+-- BLOQUEIO DE SEGURANCA: aborta se ja existir QUALQUER tabela no schema.
+-- HeidiSQL: executar o arquivo inteiro (nao apenas uma selecao de comandos).
+DELIMITER $
+CREATE PROCEDURE belrestaurante_assert_empty_schema()
+BEGIN
+ IF (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='belrestaurante') > 0 THEN
+  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='INSTALACAO CANCELADA: banco belrestaurante nao esta vazio. Faça backup e use um banco novo.';
+ END IF;
+END$
+DELIMITER ;
+CALL belrestaurante_assert_empty_schema();
+DROP PROCEDURE belrestaurante_assert_empty_schema;
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
  id VARCHAR(64) NOT NULL PRIMARY KEY, name VARCHAR(160) NOT NULL,
  checksum CHAR(64) NOT NULL, applied_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
