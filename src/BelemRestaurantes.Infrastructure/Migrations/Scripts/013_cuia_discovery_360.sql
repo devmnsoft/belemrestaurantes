@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS restaurant_media (
   license_type VARCHAR(80) NOT NULL DEFAULT 'with_permission',
   status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  CONSTRAINT fk_media_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE,
+  CONSTRAINT fk_restaurant_media_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE,
   KEY ix_media_restaurant_priority (restaurant_id, priority_tier, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
