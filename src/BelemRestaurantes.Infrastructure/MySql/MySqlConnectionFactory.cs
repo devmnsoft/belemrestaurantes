@@ -1,4 +1,6 @@
 using MySqlConnector;
+using System.Net;
+using System.Net.Sockets;
 
 namespace BelemRestaurantes.Infrastructure.MySql;
 
@@ -26,15 +28,17 @@ public sealed class MySqlConnectionFactory
         if (!string.Equals(_builder.Database, "belrestaurante", StringComparison.Ordinal))
             throw new InvalidOperationException("Somente o banco belrestaurante é autorizado.");
         var local = _builder.Server is "localhost" or "127.0.0.1" or "::1";
+        var development = string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.Ordinal);
+        var allowLocalPlaintext = local && development && _builder.SslMode == MySqlSslMode.None;
         if (!local && _builder.SslMode != MySqlSslMode.VerifyFull)
             throw new InvalidOperationException("MySQL remoto exige SslMode=VerifyFull e certificado confiável.");
 
         // Salvaguardas aplicadas no cliente: conexões não caem para modo inseguro
         // por engano de digitação, e não ficam penduradas indefinidamente.
-        if (_builder.SslMode is not (MySqlSslMode.Required or MySqlSslMode.VerifyCA or MySqlSslMode.VerifyFull))
+        if (!allowLocalPlaintext && _builder.SslMode is not (MySqlSslMode.Required or MySqlSslMode.VerifyCA or MySqlSslMode.VerifyFull))
         {
             throw new InvalidOperationException(
-                $"SslMode={_builder.SslMode} não é aceitável em produção. Use Required, VerifyCA ou VerifyFull.");
+                $"SslMode={_builder.SslMode} não é aceitável. Apenas loopback em Development pode usar None; nos demais ambientes use TLS.");
         }
 
         // Tempo máximo de espera por resposta do servidor. Sem isso, uma queda
