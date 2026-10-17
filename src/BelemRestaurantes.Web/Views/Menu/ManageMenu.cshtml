@@ -1,0 +1,265 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.MenuCategory>
+@{
+    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    ViewData["Title"] = $"Cardápio Digital - {restaurant.Name}";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="/partner/dashboard" class="text-forest text-decoration-none">Portal do Parceiro</a></li>
+                    <li class="breadcrumb-item"><a href="/partner/@restaurant.Id" class="text-forest text-decoration-none">@restaurant.Name</a></li>
+                    <li class="breadcrumb-item active">Cardápio Digital</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold text-forest mb-0">Cardápio Digital Inteligente</h1>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/cardapio/@restaurant.Id" target="_blank" class="btn btn-warning text-dark btn-sm fw-bold">
+                <i class="bi bi-qr-code me-1"></i>Ver Cardápio Público
+            </a>
+            <a href="/partner/@restaurant.Id" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Voltar ao Painel
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Coluna Esquerda: Formulários de Nova Categoria e Novo Item -->
+        <div class="col-lg-5">
+            <!-- Adicionar Categoria -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h6 class="fw-bold text-forest mb-3">
+                    <i class="bi bi-folder-plus me-2 text-warning"></i>Nova Categoria do Cardápio
+                </h6>
+                <form method="post" action="/partner/@restaurant.Id/menu/category">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nome da Categoria *</label>
+                        <input type="text" name="name" class="form-control form-control-sm" placeholder="Ex: Entradas, Pratos Principais, Peixes, Sobremesas" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Ordem de Exibição</label>
+                        <input type="number" name="displayOrder" class="form-control form-control-sm" value="@(Model.Count + 1)" />
+                    </div>
+                    <button type="submit" class="btn btn-forest btn-sm w-100">
+                        <i class="bi bi-plus-circle me-1"></i>Adicionar Categoria
+                    </button>
+                </form>
+            </div>
+
+            <!-- Adicionar Item com Assistente Cuia IA -->
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h6 class="fw-bold text-forest mb-3">
+                    <i class="bi bi-plus-circle-dotted me-2 text-warning"></i>Adicionar Prato / Produto
+                </h6>
+
+                @if (Model.Count == 0)
+                {
+                    <p class="text-muted small mb-0">Adicione primeiro uma categoria acima antes de cadastrar itens.</p>
+                }
+                else
+                {
+                    <form method="post" action="/partner/@restaurant.Id/menu/item">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Categoria *</label>
+                            <select name="CategoryId" class="form-select form-select-sm" required>
+                                @foreach (var cat in Model)
+                                {
+                                    <option value="@cat.Id">@cat.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Nome do Prato / Item *</label>
+                            <input type="text" name="Name" id="dishNameInput" class="form-control form-control-sm" placeholder="Ex: Filhote ao Molho de Tucupi com Jambu" required />
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Preço (R$) *</label>
+                                <input type="number" step="0.01" name="Price" class="form-control form-control-sm" placeholder="0.00" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Ordem</label>
+                                <input type="number" name="DisplayOrder" class="form-control form-control-sm" value="1" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Ingredientes Declarados</label>
+                            <input type="text" name="Ingredients" id="dishIngredientsInput" class="form-control form-control-sm" placeholder="Filhote fresco, tucupi amarelo, jambu, farinha de Bragança" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Alérgenos (Glúten, Lactose, Crustáceos...)</label>
+                            <input type="text" name="Allergens" class="form-control form-control-sm" placeholder="Contém glúten, camarão, lactose" />
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-bold mb-0">Descrição do Prato</label>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-forest small" id="btnCuiaAi">
+                                    <i class="bi bi-stars text-warning me-1"></i>Sugerir com Cuia IA
+                                </button>
+                            </div>
+                            <textarea name="Description" id="dishDescriptionInput" class="form-control form-control-sm" rows="3" placeholder="Descrição gastronômica..."></textarea>
+                            <div id="aiLoading" class="text-muted small mt-1 d-none">
+                                <span class="spinner-border spinner-border-sm me-1 text-warning"></span>Consultando a Cuia IA...
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="IsAvailable" value="true" checked id="chkAvailable" />
+                            <label class="form-check-label small" for="chkAvailable">Item disponível para pedidos</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-forest btn-sm w-100">
+                            <i class="bi bi-save me-1"></i>Salvar Prato no Cardápio
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Categorias e Itens Existentes -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold text-forest mb-3">Estrutura Atual do Cardápio</h5>
+
+                @if (Model.Count == 0)
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-journal-x mb-2" style="font-size: 2.5rem;"></i>
+                        <p class="mb-0">Seu cardápio ainda está vazio. Comece criando categorias ao lado.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-4">
+                        @foreach (var cat in Model)
+                        {
+                            <div class="border rounded-4 p-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold text-forest mb-0">
+                                        <i class="bi bi-tag-fill text-warning me-2"></i>@cat.Name
+                                        <span class="badge bg-secondary-subtle text-secondary ms-2 small">@cat.Items.Count itens</span>
+                                    </h6>
+                                    <form method="post" action="/partner/@restaurant.Id/menu/category/@cat.Id/delete" onsubmit="return confirm('Deseja excluir esta categoria e todos os seus itens?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Excluir Categoria">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+
+                                @if (cat.Items.Count == 0)
+                                {
+                                    <p class="text-muted small mb-0">Nenhum item cadastrado nesta categoria ainda.</p>
+                                }
+                                else
+                                {
+                                    <div class="list-group list-group-flush">
+                                        @foreach (var item in cat.Items)
+                                        {
+                                            <div class="list-group-item bg-transparent px-0 py-2 d-flex justify-content-between align-items-start gap-2">
+                                                <div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <strong class="text-forest">@item.Name</strong>
+                                                        @if (item.IsRegionalDish)
+                                                        {
+                                                            <span class="badge bg-warning text-dark small" title="Prato típico paraense reconhecido">Regional</span>
+                                                        }
+                                                        @if (!item.IsAvailable)
+                                                        {
+                                                            <span class="badge bg-danger-subtle text-danger small">Indisponível</span>
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(item.Description))
+                                                    {
+                                                        <p class="small text-muted mb-1">@item.Description</p>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(item.Allergens))
+                                                    {
+                                                        <span class="badge bg-info-subtle text-info small">Alergênicos: @item.Allergens</span>
+                                                    }
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="fw-bold text-forest text-nowrap">R$ @item.Price.ToString("F2")</span>
+                                                    <form method="post" action="/partner/@restaurant.Id/menu/item/@item.Id/delete" onsubmit="return confirm('Excluir este item?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('btnCuiaAi')?.addEventListener('click', async function () {
+    const dishName = document.getElementById('dishNameInput').value.trim();
+    const ingredients = document.getElementById('dishIngredientsInput').value.trim();
+    if (!dishName) {
+        alert('Informe o nome do prato antes de pedir a sugestão da Cuia IA.');
+        return;
+    }
+
+    const loading = document.getElementById('aiLoading');
+    loading.classList.remove('d-none');
+
+    try {
+        const formData = new FormData();
+        formData.append('dishName', dishName);
+        formData.append('ingredients', ingredients);
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        formData.append('__RequestVerificationToken', token);
+
+        const response = await fetch('/partner/@restaurant.Id/menu/suggest-ai', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        if (data.success && data.suggestion) {
+            document.getElementById('dishDescriptionInput').value = data.suggestion;
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Erro ao consultar a Cuia IA.');
+    } finally {
+        loading.classList.add('d-none');
+    }
+});
+</script>

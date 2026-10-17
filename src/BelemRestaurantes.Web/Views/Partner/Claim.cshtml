@@ -1,0 +1,94 @@
+@model BelemRestaurantes.Domain.Entities.RestaurantClaimRequest
+@{
+    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var existingClaim = (BelemRestaurantes.Domain.Entities.RestaurantClaimRequest?)ViewBag.ExistingClaim;
+    ViewData["Title"] = $"Reivindicar {restaurant.Name} - Belém Restaurantes";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-3">
+                <a href="/estabelecimento/@restaurant.Id" class="text-decoration-none text-muted">
+                    <i class="bi bi-arrow-left me-1"></i>Voltar para o estabelecimento
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill mb-2">Comerciante Parceiro</span>
+                    <h2 class="fw-bold text-forest">Reivindicar @restaurant.Name</h2>
+                    <p class="text-muted">
+                        Assuma a gestão deste perfil, atualize horários, publique o cardápio digital, adicione fotos oficiais e responda às avaliações dos clientes.
+                    </p>
+                </div>
+
+                @if (existingClaim != null)
+                {
+                    <div class="alert @(existingClaim.Status == "pending" ? "alert-warning" : (existingClaim.Status == "approved" ? "alert-success" : "alert-danger")) rounded-3 mb-4">
+                        <h6 class="fw-bold mb-1">
+                            <i class="bi bi-info-circle-fill me-1"></i>Status da sua solicitação:
+                            <span class="text-uppercase">@existingClaim.Status</span>
+                        </h6>
+                        @if (existingClaim.Status == "pending")
+                        {
+                            <p class="small mb-0">Sua solicitação de vínculo enviada em @existingClaim.CreatedAt.ToString("dd/MM/yyyy HH:mm") está em análise pela equipe MNSOFT.</p>
+                        }
+                        else if (existingClaim.Status == "approved")
+                        {
+                            <p class="small mb-0">Parabéns! Sua reivindicação foi aprovada. Acesse o <a href="/partner/dashboard" class="alert-link">Painel do Parceiro</a> para gerenciar este restaurante.</p>
+                        }
+                        else
+                        {
+                            <p class="small mb-0">Sua solicitação foi recusada: <em>@(existingClaim.RejectionReason ?? "Documentação insuficiente")</em>. Você pode enviar uma nova solicitação abaixo com evidências complementares.</p>
+                        }
+                    </div>
+                }
+
+                <form method="post" action="/partner/claim/@restaurant.Id">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Razão Social ou Nome Empresarial *</label>
+                        <input type="text" name="BusinessName" class="form-control" placeholder="Ex: Restaurante e Peixaria Silva Ltda" value="@Model.BusinessName" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">CNPJ ou Documento do Responsável</label>
+                            <input type="text" name="TaxId" class="form-control" placeholder="00.000.000/0001-00" value="@Model.TaxId">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Telefone / WhatsApp Comercial *</label>
+                            <input type="text" name="ContactPhone" class="form-control" placeholder="(91) 98888-0000" value="@Model.ContactPhone" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">E-mail Comercial Oficial *</label>
+                        <input type="email" name="ContactEmail" class="form-control" placeholder="contato@seurestaurante.com.br" value="@(string.IsNullOrEmpty(Model.ContactEmail) ? User.Identity?.Name : Model.ContactEmail)" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Canais Oficiais (Instagram, Site, Google Maps)</label>
+                        <input type="text" name="OfficialChannels" class="form-control" placeholder="https://instagram.com/seurestaurante" value="@Model.OfficialChannels">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Comprovação de Vínculo com o Estabelecimento *</label>
+                        <textarea name="VerificationEvidence" class="form-control" rows="4" placeholder="Descreva seu papel no restaurante (proprietário, sócio, gerente) e indique meios de verificação rápida (ex: link do Instagram onde podemos enviar uma DM de confirmação, número do contrato social, ou telefone comercial cadastrado na Receita)." required>@Model.VerificationEvidence</textarea>
+                        <div class="form-text small">
+                            A MNSOFT valoriza a segurança dos restaurantes e realiza verificação humana prévia para garantir que apenas responsáveis legítimos gerenciem a página.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-forest py-2 fw-bold">
+                            <i class="bi bi-send-check me-2"></i>Enviar Solicitação de Reivindicação
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

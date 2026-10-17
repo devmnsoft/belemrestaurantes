@@ -1,0 +1,97 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantStat>
+@{
+    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    ViewData["Title"] = $"Estatísticas - {restaurant.Name}";
+
+    var totalPageViews = Model.Sum(s => s.PageViews);
+    var totalWhatsappClicks = Model.Sum(s => s.WhatsappClicks);
+    var totalRouteClicks = Model.Sum(s => s.RouteClicks);
+    var totalMenuViews = Model.Sum(s => s.MenuViews);
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="/partner/dashboard" class="text-forest text-decoration-none">Portal do Parceiro</a></li>
+                    <li class="breadcrumb-item"><a href="/partner/@restaurant.Id" class="text-forest text-decoration-none">@restaurant.Name</a></li>
+                    <li class="breadcrumb-item active">Estatísticas</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold text-forest mb-0">Estatísticas & Engajamento</h1>
+        </div>
+        <a href="/partner/@restaurant.Id" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao Painel
+        </a>
+    </div>
+
+    <!-- Cards de Resumo dos Últimos 30 Dias -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-light text-center">
+                <i class="bi bi-eye text-primary mb-1" style="font-size: 1.8rem;"></i>
+                <h3 class="fw-bold mb-0 text-forest">@totalPageViews</h3>
+                <span class="text-muted small">Visualizações de Perfil</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-light text-center">
+                <i class="bi bi-whatsapp text-success mb-1" style="font-size: 1.8rem;"></i>
+                <h3 class="fw-bold mb-0 text-forest">@totalWhatsappClicks</h3>
+                <span class="text-muted small">Cliques no WhatsApp</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-light text-center">
+                <i class="bi bi-map text-danger mb-1" style="font-size: 1.8rem;"></i>
+                <h3 class="fw-bold mb-0 text-forest">@totalRouteClicks</h3>
+                <span class="text-muted small">Cliques em Rotas / Como Chegar</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-light text-center">
+                <i class="bi bi-journal-text text-warning mb-1" style="font-size: 1.8rem;"></i>
+                <h3 class="fw-bold mb-0 text-forest">@totalMenuViews</h3>
+                <span class="text-muted small">Acessos ao Cardápio</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela Detalhada por Data -->
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h5 class="fw-bold text-forest mb-3">Histórico Recente (Últimos 30 Dias)</h5>
+        @if (Model.Count == 0)
+        {
+            <p class="text-muted mb-0">Nenhuma métrica registrada ainda no período selecionado.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th class="text-center">Visualizações</th>
+                            <th class="text-center">Cliques WhatsApp</th>
+                            <th class="text-center">Cliques Rotas</th>
+                            <th class="text-center">Cardápio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Model.OrderByDescending(s => s.StatDate))
+                        {
+                            <tr>
+                                <td class="fw-bold">@s.StatDate.ToString("dd/MM/yyyy")</td>
+                                <td class="text-center">@s.PageViews</td>
+                                <td class="text-center text-success fw-bold">@s.WhatsappClicks</td>
+                                <td class="text-center text-danger">@s.RouteClicks</td>
+                                <td class="text-center text-warning">@s.MenuViews</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

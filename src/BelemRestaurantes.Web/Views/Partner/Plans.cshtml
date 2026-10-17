@@ -1,0 +1,101 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.CommercialPlan>
+@{
+    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var currentSub = (BelemRestaurantes.Domain.Entities.RestaurantSubscription?)ViewBag.CurrentSubscription;
+    ViewData["Title"] = $"Planos & Monetização - {restaurant.Name}";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="/partner/dashboard" class="text-forest text-decoration-none">Portal do Parceiro</a></li>
+                    <li class="breadcrumb-item"><a href="/partner/@restaurant.Id" class="text-forest text-decoration-none">@restaurant.Name</a></li>
+                    <li class="breadcrumb-item active">Planos Comerciais</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold text-forest mb-0">Planos & Soluções Comerciais</h1>
+        </div>
+        <a href="/partner/@restaurant.Id" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao Painel
+        </a>
+    </div>
+
+    <div class="text-center max-w-700 mx-auto mb-5">
+        <h4 class="fw-bold text-forest">Destaque sua Gastronomia no Pará</h4>
+        <p class="text-muted">
+            Escolha o plano ideal para aumentar sua visibilidade, gerenciar cardápios digitais interativos, criar campanhas promocionais e atrair turistas e moradores locais.
+        </p>
+        <div class="p-3 bg-light rounded-4 border d-inline-block small">
+            <i class="bi bi-shield-check text-success me-1"></i>Apoio e Pagamento Oficial via PIX MNSOFT: <strong>CNPJ 18.160.057/0001-13</strong>
+        </div>
+    </div>
+
+    <!-- Grid dos 4 Planos -->
+    <div class="row g-4 justify-content-center">
+        @foreach (var plan in Model)
+        {
+            var isCurrent = (currentSub == null && plan.Code == "free") || (currentSub?.PlanCode == plan.Code);
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 position-relative d-flex flex-column justify-content-between @(plan.BadgeHighlight ? "border-warning border-2" : "")">
+                    @if (plan.BadgeHighlight)
+                    {
+                        <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-warning text-dark px-3 py-1 shadow-sm">
+                            MAIS POPULAR
+                        </span>
+                    }
+
+                    <div>
+                        <h5 class="fw-bold text-forest mb-1">@plan.Name</h5>
+                        <p class="text-muted small mb-3">@plan.Description</p>
+
+                        <div class="mb-4">
+                            <span class="h2 fw-bold text-forest">R$ @plan.MonthlyPrice.ToString("F2")</span>
+                            <span class="text-muted small">/mês</span>
+                        </div>
+
+                        <ul class="list-unstyled small mb-4 d-flex flex-column gap-2">
+                            <li class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>Perfil básico verificado
+                            </li>
+                            <li class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>Horários & Feriados
+                            </li>
+                            <li class="d-flex align-items-center">
+                                <i class="bi @(plan.MenuEnabled ? "bi-check-circle-fill text-success" : "bi-x-circle text-muted") me-2"></i>Cardápio Digital com Cuia IA
+                            </li>
+                            <li class="d-flex align-items-center">
+                                <i class="bi @(plan.BadgeHighlight ? "bi-check-circle-fill text-success" : "bi-x-circle text-muted") me-2"></i>Estatísticas Avançadas
+                            </li>
+                            <li class="d-flex align-items-center">
+                                <i class="bi @(plan.SponsoredExposure ? "bi-check-circle-fill text-success" : "bi-x-circle text-muted") me-2"></i>Exposição Patrocinada
+                            </li>
+                            <li class="d-flex align-items-center">
+                                <i class="bi @(plan.MultiBranch ? "bi-check-circle-fill text-success" : "bi-x-circle text-muted") me-2"></i>Gestão de Múltiplas Filiais
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        @if (isCurrent)
+                        {
+                            <button class="btn btn-secondary w-100 disabled" disabled>Plano Atual</button>
+                        }
+                        else
+                        {
+                            <form method="post" action="/partner/@restaurant.Id/plans/checkout">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="planCode" value="@plan.Code" />
+                                <button type="submit" class="btn @(plan.BadgeHighlight ? "btn-warning fw-bold text-dark" : "btn-forest") w-100">
+                                    Contratar Plano
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

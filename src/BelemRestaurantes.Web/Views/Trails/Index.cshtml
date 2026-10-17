@@ -1,0 +1,48 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.GastronomicTrail>
+@{
+    ViewData["Title"] = "Roteiros Gastronômicos & Turismo no Pará - Belém Restaurantes";
+}
+
+<div class="container py-4">
+    <div class="text-center max-w-700 mx-auto mb-5">
+        <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2">Mobilidade & Turismo</span>
+        <h1 class="display-5 fw-bold text-forest">Roteiros Gastronômicos do Pará</h1>
+        <p class="text-muted">
+            Descubra os melhores circuitos culinários em Belém, nas ilhas ribeirinhas e pelo interior paraense, com dicas práticas de como chegar, transporte público e paradas imperdíveis.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var trail in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="p-4 bg-forest text-white position-relative" style="min-height: 140px;">
+                            <span class="badge bg-warning text-dark mb-2">@trail.Region</span>
+                            <h4 class="fw-bold mb-0 text-white">@trail.Title</h4>
+                        </div>
+                        <div class="p-4">
+                            <p class="text-muted small mb-3">@trail.Description</p>
+                            <div class="d-flex align-items-center gap-3 text-muted small mb-3">
+                                <span><i class="bi bi-clock me-1 text-warning"></i>Duração: ~@trail.EstimatedDurationHours h</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(trail.TransportTips))
+                            {
+                                <div class="bg-light p-3 rounded-3 small text-muted border">
+                                    <strong class="text-forest"><i class="bi bi-bus-front me-1"></i>Como chegar:</strong>
+                                    <div>@trail.TransportTips</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0">
+                        <a href="/roteiros/@trail.Slug" class="btn btn-outline-forest w-100 btn-sm">
+                            <i class="bi bi-signpost-split me-1"></i>Ver Roteiro Completo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

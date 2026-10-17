@@ -107,6 +107,13 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ICuiaService, Social.MySqlCuiaService>();
         services.AddScoped<ILgpdService, Social.MySqlLgpdService>();
 
+        // Sprint 05 - Portal do Restaurante Parceiro, Cardápio Digital Inteligente, Monetização e Roteiros
+        services.AddScoped<IPartnerAuthorizationService, Partner.MySqlPartnerAuthorizationService>();
+        services.AddScoped<IPartnerPortalService, Partner.MySqlPartnerPortalService>();
+        services.AddScoped<IMenuService, Partner.MySqlMenuService>();
+        services.AddScoped<IMonetizationService, Partner.MySqlMonetizationService>();
+        services.AddScoped<IMobilityTrailService, Partner.MySqlMobilityTrailService>();
+
         services.AddHttpClient("googleplaces", client =>
         {
             client.Timeout = googleOptions.Timeout;

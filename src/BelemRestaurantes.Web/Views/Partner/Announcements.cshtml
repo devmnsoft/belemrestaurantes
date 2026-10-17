@@ -1,0 +1,120 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantAnnouncement>
+@{
+    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    ViewData["Title"] = $"Eventos e Novidades - {restaurant.Name}";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="/partner/dashboard" class="text-forest text-decoration-none">Portal do Parceiro</a></li>
+                    <li class="breadcrumb-item"><a href="/partner/@restaurant.Id" class="text-forest text-decoration-none">@restaurant.Name</a></li>
+                    <li class="breadcrumb-item active">Eventos & Novidades</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold text-forest mb-0">Eventos & Novidades da Casa</h1>
+        </div>
+        <a href="/partner/@restaurant.Id" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao Painel
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Formulário de Publicação -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold text-forest mb-3">
+                    <i class="bi bi-megaphone me-2 text-warning"></i>Nova Publicação
+                </h5>
+                <p class="text-muted small mb-3">
+                    Divulgue festivais gastronômicos, pratos sazonais (ex: temporada de filhote), música ao vivo ou promoções especiais.
+                </p>
+
+                <form method="post" action="/partner/@restaurant.Id/announcements">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Título da Novidade *</label>
+                        <input type="text" name="Title" class="form-control form-control-sm" placeholder="Ex: Festival de Caldeirada Paraense" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Data do Evento (Opcional)</label>
+                        <input type="datetime-local" name="EventDate" class="form-control form-control-sm" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Descrição Completa *</label>
+                        <textarea name="Description" class="form-control form-control-sm" rows="4" placeholder="Descreva os detalhes da atração, horários e condições..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Link de Imagem / Cartaz (Opcional)</label>
+                        <input type="url" name="ImageUrl" class="form-control form-control-sm" placeholder="https://..." />
+                    </div>
+
+                    <button type="submit" class="btn btn-forest btn-sm w-100">
+                        <i class="bi bi-send me-1"></i>Publicar Novidade
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de Publicações -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold text-forest mb-3">
+                    <i class="bi bi-journal-check me-2 text-warning"></i>Publicações Ativas
+                </h5>
+
+                @if (Model.Count == 0)
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-calendar-x mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0">Nenhum evento ou novidade cadastrado no momento.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var a in Model)
+                        {
+                            <div class="border rounded-3 p-3 position-relative">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold text-forest mb-0">@a.Title</h6>
+                                    <form method="post" action="/partner/@restaurant.Id/announcements/@a.Id/delete" onsubmit="return confirm('Deseja excluir este anúncio?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <p class="small text-muted mb-2">@a.Description</p>
+                                <div class="d-flex justify-content-between align-items-center text-muted small">
+                                    <span>
+                                        @if (a.EventDate.HasValue)
+                                        {
+                                            <i class="bi bi-calendar-event me-1 text-warning"></i>
+                                            @a.EventDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                        }
+                                    </span>
+                                    <span>Publicado em @a.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

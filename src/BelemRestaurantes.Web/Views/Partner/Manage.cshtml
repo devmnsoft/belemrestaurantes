@@ -1,0 +1,249 @@
+@model BelemRestaurantes.Domain.Entities.RestaurantProfile
+@{
+    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var sub = (BelemRestaurantes.Domain.Entities.RestaurantSubscription?)ViewBag.Subscription;
+    var social = (IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantSocialMedia>?)ViewBag.Social ?? new List<BelemRestaurantes.Domain.Entities.RestaurantSocialMedia>();
+    ViewData["Title"] = $"Gerenciar {restaurant.Name} - Portal do Parceiro";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb e Topo -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="/partner/dashboard" class="text-forest text-decoration-none">Portal do Parceiro</a></li>
+                    <li class="breadcrumb-item active">@restaurant.Name</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold text-forest mb-0">@restaurant.Name</h1>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/cardapio/@restaurant.Id" target="_blank" class="btn btn-outline-forest btn-sm">
+                <i class="bi bi-qr-code me-1"></i>Ver Cardápio Público
+            </a>
+            <a href="/estabelecimento/@restaurant.Id" target="_blank" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Ver Página no Portal
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Menu de Navegação do Estabelecimento -->
+    <ul class="nav nav-pills bg-light p-2 rounded-4 mb-4 flex-wrap gap-1">
+        <li class="nav-item">
+            <a class="nav-link active bg-forest" href="/partner/@restaurant.Id">
+                <i class="bi bi-sliders me-1"></i>Meu Estabelecimento
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-forest" href="/partner/@restaurant.Id/menu">
+                <i class="bi bi-journal-text me-1"></i>Cardápio Digital
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-forest" href="/partner/@restaurant.Id/schedule">
+                <i class="bi bi-clock me-1"></i>Horários & Feriados
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-forest" href="/partner/@restaurant.Id/announcements">
+                <i class="bi bi-megaphone me-1"></i>Eventos & Novidades
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-forest" href="/partner/@restaurant.Id/stats">
+                <i class="bi bi-graph-up me-1"></i>Estatísticas
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-forest" href="/partner/@restaurant.Id/plans">
+                <i class="bi bi-gem me-1"></i>Planos & Monetização
+            </a>
+        </li>
+    </ul>
+
+    <div class="row g-4">
+        <!-- Coluna Esquerda: Dados Comerciais & Perfil -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h5 class="fw-bold text-forest mb-3">
+                    <i class="bi bi-pencil-square me-2 text-warning"></i>Identidade e Dados Comerciais
+                </h5>
+
+                <form method="post" action="/partner/@restaurant.Id/profile">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Slogan ou Frase de Destaque</label>
+                        <input type="text" name="Slogan" class="form-control" placeholder="Ex: O autêntico sabor paraense à beira do rio" value="@Model.Slogan">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Descrição Oficial do Estabelecimento</label>
+                        <textarea name="OfficialDescription" class="form-control" rows="4" placeholder="Conte aos visitantes sobre sua gastronomia, ambiente, especialidades e tradição...">@Model.OfficialDescription</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">História e Origem da Casa (Opcional)</label>
+                        <textarea name="History" class="form-control" rows="3" placeholder="Desde quando atua em Belém, raízes familiares, inspiração das receitas...">@Model.History</textarea>
+                    </div>
+
+                    <h6 class="fw-bold text-forest mt-4 mb-3">
+                        <i class="bi bi-telephone me-2 text-warning"></i>Canais de Atendimento e Delivery
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Telefone Fixo / Comercial</label>
+                            <input type="text" name="CommercialPhone" class="form-control" placeholder="(91) 3222-0000" value="@Model.CommercialPhone">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">WhatsApp Comercial</label>
+                            <input type="text" name="CommercialWhatsapp" class="form-control" placeholder="(91) 98888-0000" value="@Model.CommercialWhatsapp">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">WhatsApp para Pedidos / Delivery</label>
+                            <input type="text" name="DeliveryWhatsapp" class="form-control" placeholder="(91) 98888-0000" value="@Model.DeliveryWhatsapp">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">E-mail Comercial</label>
+                            <input type="email" name="CommercialEmail" class="form-control" placeholder="comercial@restaurante.com.br" value="@Model.CommercialEmail">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Link da Loja no iFood</label>
+                            <input type="url" name="DeliveryIfoodUrl" class="form-control" placeholder="https://www.ifood.com.br/delivery/..." value="@Model.DeliveryIfoodUrl">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Link de Delivery Próprio / Site</label>
+                            <input type="url" name="DeliveryCustomUrl" class="form-control" placeholder="https://pedidos.seurestaurante.com.br" value="@Model.DeliveryCustomUrl">
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-forest mt-4 mb-3">
+                        <i class="bi bi-check2-circle me-2 text-warning"></i>Comodidades e Estrutura
+                    </h6>
+
+                    <div class="row g-2 mb-4">
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="HasWifi" value="true" @(Model.HasWifi ? "checked" : "") id="chkWifi">
+                                <label class="form-check-label small" for="chkWifi">Wi-Fi Gratuito</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="HasParking" value="true" @(Model.HasParking ? "checked" : "") id="chkParking">
+                                <label class="form-check-label small" for="chkParking">Estacionamento</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="HasOutdoorSeating" value="true" @(Model.HasOutdoorSeating ? "checked" : "") id="chkOutdoor">
+                                <label class="form-check-label small" for="chkOutdoor">Área ao ar livre</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="IsPetFriendly" value="true" @(Model.IsPetFriendly ? "checked" : "") id="chkPet">
+                                <label class="form-check-label small" for="chkPet">Pet Friendly</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="IsAccessible" value="true" @(Model.IsAccessible ? "checked" : "") id="chkAccess">
+                                <label class="form-check-label small" for="chkAccess">Acessibilidade PCD</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="IsAcceptingOrders" value="true" @(Model.IsAcceptingOrders ? "checked" : "") id="chkOrders">
+                                <label class="form-check-label small" for="chkOrders">Aceitando Pedidos</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-forest px-4">
+                            <i class="bi bi-save me-1"></i>Salvar Alterações do Perfil
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Redes Sociais Oficiais & Plano -->
+        <div class="col-lg-4">
+            <!-- Card de Plano Atual -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
+                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2 w-auto align-self-start">Assinatura Ativa</span>
+                <h5 class="fw-bold text-forest mb-1">
+                    @(sub?.PlanCode == "cuia_pro" ? "Plano Cuia Pro" : (sub?.PlanCode == "cuia_highlight" ? "Plano Cuia Destaque" : (sub?.PlanCode == "cuia_networks" ? "Plano Cuia Redes" : "Plano Gratuito")))
+                </h5>
+                <p class="text-muted small mb-3">
+                    @(sub?.ExpiresAt.HasValue == true ? $"Válido até {sub.ExpiresAt.Value:dd/MM/yyyy}" : "Acesso vitalício gratuito.")
+                </p>
+                <a href="/partner/@restaurant.Id/plans" class="btn btn-outline-forest btn-sm w-100">
+                    <i class="bi bi-arrow-up-circle me-1"></i>Ver Planos & Benefícios
+                </a>
+            </div>
+
+            <!-- Card de Redes Sociais Oficiais -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h6 class="fw-bold text-forest mb-3">
+                    <i class="bi bi-share me-2 text-warning"></i>Redes Sociais Oficiais
+                </h6>
+
+                <form method="post" action="/partner/@restaurant.Id/social">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Plataforma</label>
+                        <select name="Platform" class="form-select form-select-sm" required>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="youtube">YouTube</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Link do Perfil ou Canal Oficial</label>
+                        <input type="url" name="ProfileUrl" class="form-control form-control-sm" placeholder="https://instagram.com/..." required>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-forest w-100">
+                        <i class="bi bi-plus-circle me-1"></i>Adicionar Rede Social
+                    </button>
+                </form>
+
+                @if (social.Count > 0)
+                {
+                    <hr class="my-3">
+                    <div class="list-group list-group-flush">
+                        @foreach (var s in social)
+                        {
+                            <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-@(s.Platform == "instagram" ? "instagram text-danger" : (s.Platform == "facebook" ? "facebook text-primary" : (s.Platform == "tiktok" ? "tiktok" : "youtube text-danger"))) me-2"></i>
+                                    <a href="@s.ProfileUrl" target="_blank" class="small text-truncate text-decoration-none">@s.ProfileUrl</a>
+                                </div>
+                                <span class="badge bg-success-subtle text-success small">Oficial</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

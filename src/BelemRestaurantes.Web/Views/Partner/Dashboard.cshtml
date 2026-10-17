@@ -1,0 +1,102 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.Restaurant>
+@{
+    ViewData["Title"] = "Portal do Restaurante Parceiro - Belém Restaurantes";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h2 text-forest fw-bold mb-1">
+                <i class="bi bi-shop me-2 text-warning"></i>Portal do Restaurante Parceiro
+            </h1>
+            <p class="text-muted mb-0">Gerencie seus estabelecimentos, cardápios digitais, horários e interaja com os clientes.</p>
+        </div>
+        <div>
+            <a href="/" class="btn btn-outline-forest">
+                <i class="bi bi-search me-1"></i>Encontrar e Reivindicar Restaurante
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+            <div class="mb-3">
+                <i class="bi bi-buildings text-muted" style="font-size: 3.5rem;"></i>
+            </div>
+            <h4 class="fw-bold text-forest">Você ainda não possui estabelecimentos vinculados</h4>
+            <p class="text-muted mx-auto" style="max-width: 500px;">
+                Se você é proprietário ou gestor de um restaurante, pesquise seu estabelecimento no catálogo e clique em <strong>"Reivindicar Restaurante"</strong> para comprovar seu vínculo e começar a gerenciar.
+            </p>
+            <div class="mt-3">
+                <a href="/" class="btn btn-forest px-4 py-2">
+                    <i class="bi bi-search me-2"></i>Buscar meu restaurante agora
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var res in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="position-relative" style="height: 160px; background-color: #0b2f1f;">
+                            @if (!string.IsNullOrEmpty(res.PhotoUrl))
+                            {
+                                <img src="@res.PhotoUrl" alt="@res.Name" class="w-100 h-100 object-fit-cover opacity-75">
+                            }
+                            <div class="position-absolute bottom-0 start-0 p-3 text-white">
+                                <span class="badge bg-warning text-dark mb-1">@res.Category</span>
+                                <h5 class="fw-bold mb-0 text-white">@res.Name</h5>
+                            </div>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column justify-content-between">
+                            <div>
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-geo-alt me-1 text-danger"></i>@res.Neighborhood, @res.City
+                                </p>
+                                <p class="text-muted small mb-3">
+                                    <i class="bi bi-tag me-1 text-success"></i>@res.Category • @res.Status
+                                </p>
+                            </div>
+                            <div class="d-grid gap-2 mt-2">
+                                <a href="/partner/@res.Id" class="btn btn-forest btn-sm">
+                                    <i class="bi bi-gear me-1"></i>Gerenciar Dados & Perfil
+                                </a>
+                                <div class="btn-group">
+                                    <a href="/partner/@res.Id/menu" class="btn btn-outline-forest btn-sm">
+                                        <i class="bi bi-journal-text me-1"></i>Cardápio
+                                    </a>
+                                    <a href="/partner/@res.Id/schedule" class="btn btn-outline-forest btn-sm">
+                                        <i class="bi bi-clock me-1"></i>Horários
+                                    </a>
+                                    <a href="/partner/@res.Id/stats" class="btn btn-outline-forest btn-sm">
+                                        <i class="bi bi-graph-up me-1"></i>Métricas
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
