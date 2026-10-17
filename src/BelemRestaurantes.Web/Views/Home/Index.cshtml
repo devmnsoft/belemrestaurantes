@@ -32,9 +32,7 @@
           }
         </select>
 
-        <button type="submit" class="btn-v3 btn-v3-tucupi">
-          <i class="bi bi-search"></i> Buscar
-        </button>
+        <button type="submit" class="btn-v3 btn-v3-tucupi" id="go">@T["Search"]</button>
 
         <!-- Dropdown de Autocomplete -->
         <div id="heroAutocomplete" class="autocomplete-dropdown-v3" role="listbox"></div>
@@ -445,3 +443,8 @@
   }
 })();
 </script>
+
+<div id="client-text" hidden data-loading="@T["CatalogLoading"]" data-unavailable="@T["CatalogUnavailable"]"
+     data-results="@T["Results"]" data-choose="@T["ChooseRestaurant"]" data-photo="@T["AuthorizedPhoto"]"
+     data-no-photo="@T["NoPhoto"]" data-address="@T["AddressChecking"]" data-website="@T["Website"]"
+     data-pix-copied="@T["PixCopied"]" data-sending="@T["Sending"]" data-received="@T["SuggestionReceived"]" data-send-failed="@T["SendFailed"]"></div>

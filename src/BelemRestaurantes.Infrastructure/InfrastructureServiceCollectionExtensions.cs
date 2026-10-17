@@ -133,6 +133,12 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IRestaurantMediaRepository, MySql.MySqlRestaurantMediaRepository>();
         services.AddScoped<IEnrichmentService, Crawler.EnrichmentService>();
 
+        // Sprint 10 - Cuia Discovery Intelligence, Distritos e Monetização Real
+        services.AddScoped<IGeoDistrictLocalityRepository, MySql.MySqlDistrictLocalityRepository>();
+        services.AddScoped<IDiscoveryIntelligenceQueue, MySql.MySqlDiscoveryIntelligenceQueue>();
+        services.AddScoped<ICommercialMonetizationRepository, MySql.MySqlCommercialMonetizationRepository>();
+        services.AddScoped<IDiscoveryIntelligenceOrchestrator, Crawler.DiscoveryIntelligenceOrchestrator>();
+
         services.AddHttpClient("googleplaces", client =>
         {
             client.Timeout = googleOptions.Timeout;
