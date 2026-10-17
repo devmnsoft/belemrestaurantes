@@ -1,5 +1,177 @@
-@{ Layout = "_Layout"; }
-@RenderBody()
-@section Scripts {
-    @await RenderSectionAsync("Scripts", required: false)
-}
+@inject Microsoft.Extensions.Localization.IStringLocalizer<BelemRestaurantes.Web.SharedResource> T
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"] · Painel MNSOFT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="~/css/design-v3.css" asp-append-version="true" />
+</head>
+<body style="background-color: var(--creme-bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;">
+
+  <!-- Topbar Administrativa MNSOFT -->
+  <header style="background-color: var(--forest-950); border-bottom: 2px solid var(--tucupi-500); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <a href="/admin/dashboard" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff;">
+        <span style="font-size: 24px;">🍲</span>
+        <div style="line-height: 1.1;">
+          <div style="font-family: var(--font-display); font-size: 16px; font-weight: 800; letter-spacing: 0.5px; color: #fff;">BELÉM RESTAURANTES</div>
+          <div style="font-size: 11px; font-weight: 600; color: var(--tucupi-400); text-transform: uppercase; letter-spacing: 1px;">Gestão Administrativa · MNSOFT</div>
+        </div>
+      </a>
+      <span class="badge-tag-v3" style="background: rgba(229,169,59,0.2); color: var(--tucupi-300); border: 1px solid rgba(229,169,59,0.4); font-size: 11px;">
+        🛡️ Ambiente Seguro
+      </span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <a href="/" target="_blank" class="btn-v3 btn-v3-outline" style="border-color: rgba(255,255,255,0.25); color: #fff; padding: 6px 14px; font-size: 12px;">
+        🌐 Ver Portal Público ↗
+      </a>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 13px; color: #c9dbd1;">
+          👤 <strong>@(User.Identity?.Name ?? "Administrador")</strong>
+        </span>
+        <form method="post" action="/admin/logout" style="margin: 0;">
+          @Html.AntiForgeryToken()
+          <button type="submit" class="btn-v3 btn-v3-sm" style="background: rgba(200,75,49,0.2); border: 1px solid rgba(200,75,49,0.5); color: #fca5a5; padding: 6px 12px; font-size: 12px;">
+            🚪 Sair
+          </button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <!-- Shell com Sidebar Lateral e Área de Trabalho -->
+  <div class="admin-shell-v3" style="flex: 1;">
+    <!-- Sidebar de Navegação MNSOFT -->
+    <aside class="admin-sidebar-v3" aria-label="Menu Administrativo">
+      <div class="admin-sidebar-header">
+        ✦ NAVEGAÇÃO OPERACIONAL
+      </div>
+      <nav>
+        <ul class="admin-nav-v3">
+          <li>
+            <a href="/admin/dashboard" class="admin-nav-item-v3">
+              <span>📊</span> Visão Geral
+            </a>
+          </li>
+          <li>
+            <a href="/admin/restaurants" class="admin-nav-item-v3">
+              <span>🍽️</span> Restaurantes
+            </a>
+          </li>
+          <li>
+            <a href="/admin/discovery" class="admin-nav-item-v3">
+              <span>🔍</span> Descoberta Automática
+            </a>
+          </li>
+        </ul>
+
+        <div class="admin-sidebar-header" style="margin-top: 24px;">
+          ✦ COMUNIDADE & SELO CUIA
+        </div>
+        <ul class="admin-nav-v3">
+          <li>
+            <a href="/admin/experiences" class="admin-nav-item-v3">
+              <span>💬</span> Moderação de Relatos
+            </a>
+          </li>
+          <li>
+            <a href="/admin/photos" class="admin-nav-item-v3">
+              <span>📷</span> Moderação de Fotos
+            </a>
+          </li>
+          <li>
+            <a href="/admin/reports" class="admin-nav-item-v3">
+              <span>🚩</span> Denúncias
+            </a>
+          </li>
+          <li>
+            <a href="/admin/cuia" class="admin-nav-item-v3">
+              <span>🏆</span> Selo Cuia & Rankings
+            </a>
+          </li>
+        </ul>
+
+        <div class="admin-sidebar-header" style="margin-top: 24px;">
+          ✦ COMERCIAL & MEMBROS
+        </div>
+        <ul class="admin-nav-v3">
+          <li>
+            <a href="/admin/partner/claims" class="admin-nav-item-v3">
+              <span>🏪</span> Reivindicações Parceiro
+            </a>
+          </li>
+          <li>
+            <a href="/admin/monetization" class="admin-nav-item-v3">
+              <span>💳</span> Planos & Apoio PIX
+            </a>
+          </li>
+          <li>
+            <a href="/admin/members" class="admin-nav-item-v3">
+              <span>👥</span> Gestão de Usuários
+            </a>
+          </li>
+        </ul>
+
+        <div class="admin-sidebar-header" style="margin-top: 24px;">
+          ✦ TECNOLOGIA, IA & AUDITORIA
+        </div>
+        <ul class="admin-nav-v3">
+          <li>
+            <a href="/admin/connectors" class="admin-nav-item-v3">
+              <span>🤖</span> Cuia IA & Conectores
+            </a>
+          </li>
+          <li>
+            <a href="/admin/smtp" class="admin-nav-item-v3">
+              <span>✉️</span> Fila SMTP (E-mails)
+            </a>
+          </li>
+          <li>
+            <a href="/admin/lgpd" class="admin-nav-item-v3">
+              <span>🔒</span> Privacidade & LGPD
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div style="margin-top: 36px; padding: 14px; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; color: #a4b8ad;">
+        <strong style="color: var(--tucupi-400);">MNSOFT Soluções</strong><br />
+        Belém Restaurantes V3.6<br />
+        ASP.NET Core 10 · MySQL
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="admin-content-v3" role="main">
+      @if (TempData["Flash"] is string flash)
+      {
+        <div style="background: rgba(13,56,38,0.1); border: 1px solid var(--forest-600); border-left: 5px solid var(--forest-600); padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; font-weight: 600; color: var(--forest-900);">
+          ✓ @flash
+        </div>
+      }
+      @if (TempData["SuccessMessage"] is string success)
+      {
+        <div style="background: rgba(13,56,38,0.1); border: 1px solid var(--forest-600); border-left: 5px solid var(--forest-600); padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; font-weight: 600; color: var(--forest-900);">
+          ✓ @success
+        </div>
+      }
+      @if (TempData["ErrorMessage"] is string error)
+      {
+        <div style="background: rgba(200,75,49,0.1); border: 1px solid var(--urucum-600); border-left: 5px solid var(--urucum-600); padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; font-weight: 600; color: var(--urucum-700);">
+          ⚠️ @error
+        </div>
+      }
+
+      @RenderBody()
+    </main>
+  </div>
+
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

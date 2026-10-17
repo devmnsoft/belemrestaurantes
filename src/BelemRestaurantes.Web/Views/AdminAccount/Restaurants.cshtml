@@ -1,0 +1,118 @@
+@model IReadOnlyList<BelemRestaurantes.Web.Controllers.RestaurantAdminRow>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Gestão do Catálogo de Restaurantes";
+    var query = ViewData["Query"] as string ?? "";
+    var selectedCity = ViewData["City"] as string ?? "";
+    var total = ViewData["Total"] as int? ?? Model.Count;
+    var cities = ViewData["Cities"] as IReadOnlyList<string> ?? [];
+    var page = ViewData["Page"] as int? ?? 1;
+}
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <span class="badge-tag-v3" style="margin-bottom: 8px;">✦ Catálogo Gastronômico Oficial</span>
+    <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
+      Restaurantes & Estabelecimentos
+    </h1>
+    <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
+      Total de <strong>@total</strong> estabelecimentos mapeados no ecossistema gastronômico do Pará.
+    </p>
+  </div>
+  <a href="/admin/dashboard" class="btn-v3 btn-v3-outline btn-v3-sm">← Voltar ao Painel</a>
+</div>
+
+<!-- Filtros e Busca -->
+<div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+  <form method="get" action="/admin/restaurants" style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 240px;">
+      <input type="text" name="query" value="@query" placeholder="Buscar por nome do restaurante..." class="input-v3" style="width: 100%;" />
+    </div>
+
+    <div style="min-width: 180px;">
+      <select name="city" class="input-v3" style="width: 100%;">
+        <option value="">Todas as Cidades</option>
+        @foreach (var c in cities)
+        {
+          <option value="@c" selected="@(c == selectedCity)">@c</option>
+        }
+      </select>
+    </div>
+
+    <button type="submit" class="btn-v3 btn-v3-primary">Filtrar</button>
+    @if (!string.IsNullOrEmpty(query) || !string.IsNullOrEmpty(selectedCity))
+    {
+      <a href="/admin/restaurants" class="btn-v3 btn-v3-outline">Limpar</a>
+    }
+  </form>
+</div>
+
+<!-- Tabela de Restaurantes V3 -->
+<div class="table-v3-wrapper">
+  <table class="table-v3">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome do Estabelecimento</th>
+        <th>Município / Bairro</th>
+        <th>Categoria</th>
+        <th>Faixa</th>
+        <th>Nota Cuia</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model.Count == 0)
+      {
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);">
+            Nenhum restaurante encontrado para os critérios de busca informados.
+          </td>
+        </tr>
+      }
+      else
+      {
+        @foreach (var r in Model)
+        {
+          <tr>
+            <td style="font-size: 12px; color: var(--text-muted);">#@r.id</td>
+            <td>
+              <strong style="color: var(--forest-950);">@r.name</strong>
+              @if (!string.IsNullOrWhiteSpace(r.address))
+              {
+                <div style="font-size: 11px; color: var(--text-muted);">@r.address</div>
+              }
+            </td>
+            <td>
+              @r.city
+              @if (!string.IsNullOrWhiteSpace(r.neighborhood))
+              {
+                <span style="font-size: 12px; color: var(--text-muted);">(@r.neighborhood)</span>
+              }
+            </td>
+            <td>
+              <span class="badge-tag-v3" style="font-size: 11px;">@(r.category ?? "Geral")</span>
+            </td>
+            <td>@(r.price_range ?? "—")</td>
+            <td>
+              <span style="font-weight: 800; color: var(--forest-900);">
+                ⭐ @(r.cuia_score > 0 ? r.cuia_score.ToString("F1") : "—")
+              </span>
+            </td>
+            <td>
+              <span style="display: inline-flex; align-items: center; gap: 4px; color: #166534; background: #dcfce7; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;">
+                @r.state
+              </span>
+            </td>
+            <td>
+              <a href="/restaurante/@r.id" target="_blank" class="btn-v3 btn-v3-outline btn-v3-sm" style="font-size: 11px; padding: 4px 10px;">
+                Visualizar ↗
+              </a>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

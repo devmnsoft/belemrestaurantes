@@ -1,50 +1,447 @@
-<section class="hero">
-  <div class="shell">
-    <span class="overline">✦ @T["Guide"]</span><h1>@T["HeroTitle"]</h1><p>@T["HeroText"]</p>
-    <div class="search">
-      <input id="query" type="search" maxlength="100" placeholder="@T["SearchPlaceholder"]" aria-label="@T["Search"]" list="autosuggest" />
-      <datalist id="autosuggest"></datalist><button type="button" id="go">@T["Search"]</button>
+@model BelemRestaurantes.Web.Models.HomeViewModel
+@{
+    ViewData["Title"] = "Belém Restaurantes — O Pará tem sabor";
+    ViewData["MetaDescription"] = "Guia gastronômico completo do Pará: descubra os melhores restaurantes, açaí tradicional, tacacá, cardápios digitais e experiências reais da comunidade.";
+}
+
+<!-- 1. Hero Gastronômico com Busca Inteligente -->
+<section class="hero-v3">
+  <div class="container-v3">
+    <span class="tagline-badge" style="background: rgba(229,169,59,0.2); color: #f3be5d; border: 1px solid rgba(229,169,59,0.4);">
+      ✦ Guia Gastronômico Oficial do Pará
+    </span>
+    
+    <h1 class="title-display" style="max-width: 820px; margin-top: 20px;">
+      Descubra onde comer o melhor da culinária <em>paraense</em>.
+    </h1>
+    
+    <p class="subtitle-v3" style="color: #d2e4db; max-width: 680px;">
+      Do tacacá na cuia ao açaí com peixe frito, encontre pratos autênticos, cardápios digitais com preços reais e recomendações da comunidade.
+    </p>
+
+    <!-- Barra de Busca Inteligente com Autocomplete -->
+    <div class="hero-search-box">
+      <form action="/busca" method="get" style="display:flex;width:100%;gap:8px;position:relative;" id="homeSearchForm">
+        <input id="heroQuery" name="q" type="search" placeholder="Buscar restaurante, prato (ex: Filhote, Tacacá, Açaí) ou bairro..." autocomplete="off" aria-label="Buscar restaurantes e pratos" />
+        
+        <select name="city" aria-label="Filtrar por cidade" style="min-width: 140px;">
+          <option value="">Todo o Pará</option>
+          @foreach (var city in Model.Cities)
+          {
+            <option value="@city">@city</option>
+          }
+        </select>
+
+        <button type="submit" class="btn-v3 btn-v3-tucupi">
+          <i class="bi bi-search"></i> Buscar
+        </button>
+
+        <!-- Dropdown de Autocomplete -->
+        <div id="heroAutocomplete" class="autocomplete-dropdown-v3" role="listbox"></div>
+      </form>
+    </div>
+
+    <!-- Chips Rápidos -->
+    <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:13px;color:#a2c4b5;font-weight:700;">Populares:</span>
+      <a href="/busca?q=Tacac%C3%A1" class="chip-item-v3" style="padding:6px 14px;font-size:13px;background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2);">Tacacá</a>
+      <a href="/busca?q=A%C3%A7a%C3%AD" class="chip-item-v3" style="padding:6px 14px;font-size:13px;background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2);">Açaí</a>
+      <a href="/busca?q=Filhote" class="chip-item-v3" style="padding:6px 14px;font-size:13px;background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2);">Peixe Filhote</a>
+      <a href="/busca?q=Mani%C3%A7oba" class="chip-item-v3" style="padding:6px 14px;font-size:13px;background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.2);">Maniçoba</a>
     </div>
   </div>
 </section>
-<section class="shell section" id="catalogo">
-  <div class="heading">
-    <div><span class="overline dark">@T["ExploreState"]</span><h2>@T["WhereToEat"]</h2></div>
-    <select id="city" aria-label="@T["City"]">
-      <option value="">@T["AllCities"]</option><option>Belém</option><option>Ananindeua</option><option>Marabá</option>
-      <option>Salinópolis</option><option>Santarém</option><option>Castanhal</option><option>Paragominas</option>
-    </select>
-  </div>
-  <p class="muted" id="status" aria-live="polite">@T["Loading"]</p><div class="cards" id="cards"></div>
-</section>
-<section class="stripe" id="mobilidade">
-  <div class="shell split">
-    <div><span class="overline dark">@T["Mobility"]</span><h2>@T["RouteTitle"]</h2><p>@T["RouteIntro"]</p></div>
-    <div class="panel">
-      <label for="start">@T["Start"]</label><input id="start" placeholder="@T["StartPlaceholder"]" maxlength="200" />
-      <label for="destination">@T["Destination"]</label><select id="destination"><option value="">@T["ChooseRestaurant"]</option></select>
-      <button type="button" id="route">@T["BusRoute"]</button><small>@T["RouteNotice"]</small>
+
+<!-- 2. Categorias Gastronômicas Populares -->
+<section class="section-v3" style="background:#fff;border-bottom:1px solid #e2e8df;">
+  <div class="container-v3">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <span class="tagline-badge">Categorias em Destaque</span>
+        <h2 class="title-section" style="margin-top:8px;">O que você quer saborear hoje?</h2>
+      </div>
+      <a href="/busca" class="btn-v3 btn-v3-outline btn-v3-sm">Ver todas as categorias ➔</a>
+    </div>
+
+    <div class="chips-container-v3">
+      <a href="/busca?category=Restaurante" class="chip-item-v3">🍽️ Restaurantes</a>
+      <a href="/busca?q=A%C3%A7a%C3%AD" class="chip-item-v3">🥣 Açaí & Tapioca</a>
+      <a href="/busca?q=Tacac%C3%A1" class="chip-item-v3">🍲 Tacacá & Tucupi</a>
+      <a href="/busca?category=Pizzaria" class="chip-item-v3">🍕 Pizzarias</a>
+      <a href="/busca?category=Lanchonete" class="chip-item-v3">🍔 Lanches & Burgers</a>
+      <a href="/busca?category=Cafeteria" class="chip-item-v3">☕ Cafés & Bistrôs</a>
+      <a href="/busca?category=Sorveteria" class="chip-item-v3">🍨 Sorvetes Regionais</a>
+      <a href="/busca?q=Peixe" class="chip-item-v3">🐟 Peixarias & Frutos do Mar</a>
     </div>
   </div>
 </section>
-<section class="shell section split" id="indicacao">
-  <div><span class="overline dark">@T["Join"]</span><h2>@T["SuggestTitle"]</h2><p>@T["SuggestIntro"]</p></div>
-  <form id="suggestForm" class="panel">
-    @Html.AntiForgeryToken()
-    <label>@T["RestaurantName"]<input name="Name" required maxlength="160" minlength="2" /></label>
-    <label>@T["City"]<input name="City" required maxlength="100" /></label>
-    <label>@T["OptionalWebsite"]<input name="Website" type="url" maxlength="350" /></label>
-    <label>@T["Notes"]<input name="Notes" maxlength="500" /></label>
-    <button type="submit">@T["SendSuggestion"]</button><p id="suggestStatus" class="muted" role="status"></p>
-  </form>
-</section>
-<section class="stripe">
-  <div class="shell split">
-    <div><h2>@T["SupportTitle"]</h2><p>@T["SupportIntro"]</p></div>
-    <div class="panel"><b>PIX MNSOFT · CNPJ</b><p id="pix">18.160.057/0001-13</p><button type="button" id="copyPix">@T["CopyPix"]</button><small>@T["PixNotice"]</small></div>
+
+<!-- 3. Descubra Perto de Você (Geolocalização Consentida) -->
+<section class="section-v3" id="perto-de-voce" style="background:var(--creme-bg);">
+  <div class="container-v3">
+    <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:32px;box-shadow:var(--shadow-sm);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+        <div>
+          <span class="tagline-badge" style="background:#e6f4ea;color:#1e7145;">Localização em Tempo Real</span>
+          <h2 class="title-section" style="margin:8px 0 4px;">Descubra restaurantes perto de você</h2>
+          <p class="subtitle-v3" style="font-size:15px;">
+            Permita o acesso à localização do seu dispositivo para encontrar opções abertas no seu bairro neste momento.
+          </p>
+        </div>
+        <button type="button" class="btn-v3 btn-v3-forest" id="btnGeolocalizacao">
+          <i class="bi bi-geo-alt-fill text-warning"></i> Ativar Minha Localização
+        </button>
+      </div>
+      <div id="geoStatus" style="margin-top:14px;font-size:14px;color:#567064;display:none;"></div>
+    </div>
   </div>
 </section>
-<div id="client-text" hidden data-loading="@T["CatalogLoading"]" data-unavailable="@T["CatalogUnavailable"]"
-     data-results="@T["Results"]" data-choose="@T["ChooseRestaurant"]" data-photo="@T["AuthorizedPhoto"]"
-     data-no-photo="@T["NoPhoto"]" data-address="@T["AddressChecking"]" data-website="@T["Website"]"
-     data-pix-copied="@T["PixCopied"]" data-sending="@T["Sending"]" data-received="@T["SuggestionReceived"]" data-send-failed="@T["SendFailed"]"></div>
+
+<!-- 4. Selo Cuia: Classificação Gastronômica Própria -->
+@if (Model.CuiaHighlights.Count > 0)
+{
+  <section class="section-v3" style="background:#fff;border-top:1px solid #e2e8df;border-bottom:1px solid #e2e8df;">
+    <div class="container-v3">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <span class="tagline-badge" style="background:var(--tucupi-100);color:var(--tucupi-600);">Reconhecimento Gastronômico</span>
+          <h2 class="title-section" style="margin-top:8px;">Melhores Avaliados pelo Selo Cuia</h2>
+          <p class="subtitle-v3">Classificação bayesiana transparente avaliando sabor, atendimento, ambiente e custo-benefício.</p>
+        </div>
+        <a href="/admin/cuia" class="btn-v3 btn-v3-outline btn-v3-sm">Conhecer a Metodologia ➔</a>
+      </div>
+
+      <div class="grid-cards-v3">
+        @foreach (var item in Model.CuiaHighlights)
+        {
+          <article class="card-restaurant-v3">
+            <div class="card-media-v3">
+              <div style="height:100%;display:grid;place-items:center;background:linear-gradient(135deg,#0d3826,#165338);color:#e5a93b;font-size:36px;">🍲</div>
+              <div class="card-badge-top">
+                <span class="badge-cuia-gold">🏆 Selo Cuia @item.Score.ToString("F1")</span>
+                <span class="badge-category">#@item.RankPosition</span>
+              </div>
+            </div>
+            <div class="card-content-v3">
+              <div>
+                <h3 style="margin:0 0 6px;">
+                  <a href="/estabelecimento/@item.RestaurantId" class="card-title-link">@item.RestaurantName</a>
+                </h3>
+                <div class="card-info-row">
+                  <span><i class="bi bi-geo-alt text-danger"></i> @item.RestaurantCity</span>
+                  <span>• @item.ApprovedReviewsCount avaliações</span>
+                </div>
+              </div>
+              <div style="margin-top:16px;padding-top:14px;border-top:1px solid #edf2ec;display:flex;justify-content:space-between;align-items:center;">
+                <a href="/cardapio/@item.RestaurantId" class="btn-v3 btn-v3-tucupi btn-v3-sm">Cardápio</a>
+                <a href="/estabelecimento/@item.RestaurantId" class="btn-v3 btn-v3-outline btn-v3-sm">Ver Perfil</a>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+}
+
+<!-- 5. Sabores da Comunidade (Avaliações Públicas e Fotos Reais) -->
+@if (Model.RecentExperiences.Count > 0)
+{
+  <section class="section-v3" style="background:var(--creme-bg);">
+    <div class="container-v3">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <span class="tagline-badge">Voz dos Visitantes</span>
+          <h2 class="title-section" style="margin-top:8px;">Sabores da Comunidade</h2>
+          <p class="subtitle-v3">Relatos espontâneos, fotos reais e experiências gastronômicas compartilhadas.</p>
+        </div>
+        <a href="/community" class="btn-v3 btn-v3-outline btn-v3-sm">Ver Feed da Comunidade ➔</a>
+      </div>
+
+      <div class="grid-cards-v3">
+        @foreach (var exp in Model.RecentExperiences)
+        {
+          <div style="background:#fff;border:1px solid #e2e8df;border-radius:18px;padding:24px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow-sm);">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div class="star-rating-v3">
+                  @for (int i = 1; i <= 5; i++)
+                  {
+                    <span style="color:@(i <= exp.Stars ? "#e5a93b" : "#dce7dc");">★</span>
+                  }
+                </div>
+                <span style="font-size:12px;color:#7a9488;">@exp.CreatedAt.ToString("dd/MM/yyyy")</span>
+              </div>
+
+              @if (!string.IsNullOrEmpty(exp.DishesConsumed))
+              {
+                <div style="font-size:13px;font-weight:750;color:#0d3826;margin-bottom:6px;">
+                  🍴 @exp.DishesConsumed
+                </div>
+              }
+
+              <p style="font-size:14px;color:#355d4c;margin:0 0 14px;line-height:1.5;">
+                "@(exp.ReviewText?.Length > 140 ? exp.ReviewText[..140] + "..." : exp.ReviewText)"
+              </p>
+            </div>
+
+            <div style="padding-top:12px;border-top:1px solid #edf2ec;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+              <span style="color:#567064;font-weight:650;">Por @exp.AuthorName</span>
+              <a href="/experience/@exp.Id" style="color:#0d3826;font-weight:750;text-decoration:none;">Ler relato ➔</a>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+}
+
+<!-- 6. Sabores do Pará: Cultura e Tradições Gastronômicas -->
+<section class="section-v3" style="background:#fff;border-top:1px solid #e2e8df;border-bottom:1px solid #e2e8df;">
+  <div class="container-v3">
+    <div style="text-align:center;max-width:700px;margin:auto;margin-bottom:40px;">
+      <span class="tagline-badge">Herança Ancestral</span>
+      <h2 class="title-section" style="margin-top:8px;">Sabores que só o Pará tem</h2>
+      <p class="subtitle-v3" style="margin:auto;">
+        A culinária paraense é uma celebração viva da floresta, dos rios e das tradições indígenas amazônicas.
+      </p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px;">
+      <div style="background:var(--creme-bg);border:1px solid #e2e8df;border-radius:18px;padding:24px;">
+        <div style="font-size:32px;margin-bottom:12px;">🍲</div>
+        <h4 style="color:#0d3826;font-weight:800;margin-bottom:8px;">O Ritual do Tacacá</h4>
+        <p style="color:#567064;font-size:14px;line-height:1.6;margin:0;">
+          Servido fervendo nas tradicionais cuias, o tucupi temperado com jambu amortece a boca enquanto o camarão seco traz crocância e sabor marcante ao fim de tarde.
+        </p>
+      </div>
+
+      <div style="background:var(--creme-bg);border:1px solid #e2e8df;border-radius:18px;padding:24px;">
+        <div style="font-size:32px;margin-bottom:12px;">🥣</div>
+        <h4 style="color:#0d3826;font-weight:800;margin-bottom:8px;">Açaí Puro com Peixe</h4>
+        <p style="color:#567064;font-size:14px;line-height:1.6;margin:0;">
+          O verdadeiro açaí paraense é espesso, consumido como refeição principal salgada, acompanhado de peixe frito crocante e farinha d'água de Bragança.
+        </p>
+      </div>
+
+      <div style="background:var(--creme-bg);border:1px solid #e2e8df;border-radius:18px;padding:24px;">
+        <div style="font-size:32px;margin-bottom:12px;">🌿</div>
+        <h4 style="color:#0d3826;font-weight:800;margin-bottom:8px;">A Sagrada Maniçoba</h4>
+        <p style="color:#567064;font-size:14px;line-height:1.6;margin:0;">
+          Feita com folhas de maniva moídas e cozidas pacientemente por sete dias para neutralizar o ácido cianídrico, cozida com carnes nobres de porco e charque.
+        </p>
+      </div>
+
+      <div style="background:var(--creme-bg);border:1px solid #e2e8df;border-radius:18px;padding:24px;">
+        <div style="font-size:32px;margin-bottom:12px;">🐟</div>
+        <h4 style="color:#0d3826;font-weight:800;margin-bottom:8px;">Filhote & Peixes Amazônicos</h4>
+        <p style="color:#567064;font-size:14px;line-height:1.6;margin:0;">
+          O nobre filhote, a pescada amarela e o pirarucu com carnes brancas e suculentas, grelhados na brasa ou servidos em caldeiradas perfumadas com chicória do Pará.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Explore o Interior do Pará -->
+<section class="section-v3" style="background:var(--creme-bg);">
+  <div class="container-v3">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <span class="tagline-badge">Turismo & Território</span>
+        <h2 class="title-section" style="margin-top:8px;">Gastronomia em Todo o Pará</h2>
+        <p class="subtitle-v3">Navegue pelas cidades com estabelecimentos e roteiros mapeados.</p>
+      </div>
+      <a href="/roteiros" class="btn-v3 btn-v3-outline btn-v3-sm">Ver Roteiros Turísticos ➔</a>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+      @foreach (var city in Model.Cities)
+      {
+        <a href="/busca?city=@Uri.EscapeDataString(city)" style="background:#fff;border:1px solid #e2e8df;border-radius:14px;padding:16px;text-align:center;text-decoration:none;color:#0d3826;font-weight:750;box-shadow:var(--shadow-sm);transition:all .15s ease;" onmouseover="this.style.borderColor='#e5a93b'" onmouseout="this.style.borderColor='#e2e8df'">
+          <div style="font-size:22px;margin-bottom:6px;">📍</div>
+          @city
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- 8. Mobilidade e Como Chegar -->
+<section class="section-v3" id="mobilidade" style="background:#fff;border-top:1px solid #e2e8df;">
+  <div class="container-v3">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:40px;align-items:center;">
+      <div>
+        <span class="tagline-badge">Mobilidade Urbana</span>
+        <h2 class="title-section" style="margin-top:8px;">Como chegar aos restaurantes</h2>
+        <p class="subtitle-v3" style="margin-bottom:20px;">
+          Planeje seu trajeto com linhas de ônibus metropolitanas, itinerários integrados, paradas próximas e mapas de navegação rápida.
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="/roteiros" class="btn-v3 btn-v3-forest">
+            <i class="bi bi-bus-front"></i> Ver Linhas & Roteiros
+          </a>
+          <a href="/busca" class="btn-v3 btn-v3-outline">
+            <i class="bi bi-compass"></i> Escolher Destino
+          </a>
+        </div>
+      </div>
+      <div style="background:var(--creme-bg);border:1px solid #e2e8df;border-radius:20px;padding:28px;">
+        <h4 style="color:#0d3826;font-weight:800;margin-bottom:12px;">Dicas de Transporte em Belém</h4>
+        <p style="color:#567064;font-size:14px;margin-bottom:12px;">
+          • Principais corredores: Av. Presidente Vargas, Almirante Barroso e Av. Visconde de Souza Franco (Doca).
+        </p>
+        <p style="color:#567064;font-size:14px;margin-bottom:12px;">
+          • Travessias fluviais: Barcos partem regularmente do Terminal da Praça Princesa Isabel rumo à Ilha do Combu.
+        </p>
+        <p style="color:#567064;font-size:14px;margin:0;">
+          • Tarifas e itinerários atualizados no portal oficial de mobilidade.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. Portal do Restaurante Parceiro (Convite Comerciante) -->
+<section class="section-v3" style="background:linear-gradient(135deg, var(--forest-900), var(--forest-800));color:#fff;">
+  <div class="container-v3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center;">
+    <div>
+      <span class="tagline-badge" style="background:rgba(229,169,59,0.2);color:#f3be5d;border:1px solid rgba(229,169,59,0.3);">
+        Espaço do Comerciante
+      </span>
+      <h2 style="color:#fff;font-size:clamp(26px,3.5vw,40px);font-weight:850;margin:12px 0;">
+        É proprietário de um restaurante?
+      </h2>
+      <p style="color:#c9dbd1;font-size:16px;line-height:1.6;margin-bottom:24px;">
+        Reivindique seu cadastro oficial no Belém Restaurantes, publique seu cardápio digital com QR Code para as mesas, atualize horários de funcionamento e responda às avaliações dos clientes.
+      </p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="/partner/dashboard" class="btn-v3 btn-v3-tucupi btn-v3-lg">
+          Acessar Portal do Parceiro ➔
+        </a>
+        <a href="/#catalogo" class="btn-v3 btn-v3-outline" style="border-color:#fff;color:#fff;">
+          Reivindicar meu restaurante
+        </a>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:30px;">
+      <h4 style="color:#f3be5d;font-weight:800;margin-bottom:14px;">Vantagens para Parceiros</h4>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;color:#d2e4db;font-size:14.5px;">
+        <li>✔ Cardápio Digital Inteligente com Cuia IA</li>
+        <li>✔ QR Code pronto para impressão nas mesas</li>
+        <li>✔ Canal direto para pedidos no WhatsApp</li>
+        <li>✔ Resposta oficial às avaliações da comunidade</li>
+        <li>✔ Grade de horários e feriados (ex: Círio e Réveillon)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 10. Apoie o Projeto & Chave PIX MNSOFT -->
+<section class="section-v3" style="background:#fff;border-top:1px solid #e2e8df;">
+  <div class="container-v3">
+    <div style="background:var(--creme-bg);border:1px solid #e2e8df;border-radius:24px;padding:clamp(24px,5vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;align-items:center;">
+      <div>
+        <span class="tagline-badge">Comunidade & Sustentabilidade</span>
+        <h2 class="title-section" style="margin-top:8px;">Apoie a Gastronomia Paraense</h2>
+        <p class="subtitle-v3" style="margin-bottom:14px;">
+          O Belém Restaurantes é uma iniciativa independente da MNSOFT para valorizar os sabores amazônicos, os pequenos comerciantes e a cultura paraense.
+        </p>
+        <p class="text-muted small mb-0">
+          Chave PIX Oficial (CNPJ): <strong>18.160.057/0001-13</strong>
+        </p>
+      </div>
+      <div style="background:#fff;border:1px solid #e2e8df;border-radius:18px;padding:24px;text-align:center;">
+        <span style="font-size:13px;font-weight:700;color:#567064;text-transform:uppercase;letter-spacing:1px;">Chave PIX MNSOFT</span>
+        <div style="font-size:20px;font-weight:800;color:#0d3826;margin:8px 0;letter-spacing:1px;" id="pixKey">
+          18.160.057/0001-13
+        </div>
+        <button type="button" class="btn-v3 btn-v3-forest w-100" id="btnCopyPix" onclick="navigator.clipboard.writeText('18160057000113'); alert('Chave PIX copiada com sucesso!');">
+          Copiar Chave PIX CNPJ
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Autocomplete com Debounce no Backend
+(function() {
+  const input = document.getElementById('heroQuery');
+  const dropdown = document.getElementById('heroAutocomplete');
+  let timeout;
+
+  if (input && dropdown) {
+    input.addEventListener('input', function() {
+      clearTimeout(timeout);
+      const query = input.value.trim();
+      if (query.length < 2) {
+        dropdown.classList.remove('show');
+        dropdown.innerHTML = '';
+        return;
+      }
+
+      timeout = setTimeout(async function() {
+        try {
+          const res = await fetch('/api/search/autocomplete?q=' + encodeURIComponent(query));
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (Array.isArray(data) && data.length > 0) {
+            dropdown.innerHTML = data.map(item => `
+              <a href="${item.url}" class="autocomplete-item-v3">
+                <div>
+                  <div class="autocomplete-item-title">${item.title}</div>
+                  <div class="autocomplete-item-meta">${item.subtitle}</div>
+                </div>
+                <span class="badge-category" style="font-size:11px;">${item.type === 'restaurant' ? 'Restaurante' : 'Prato'}</span>
+              </a>
+            `).join('');
+            dropdown.classList.add('show');
+          } else {
+            dropdown.classList.remove('show');
+            dropdown.innerHTML = '';
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }, 250);
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+  }
+
+  // Geolocalização Consentida
+  const geoBtn = document.getElementById('btnGeolocalizacao');
+  const geoStatus = document.getElementById('geoStatus');
+  if (geoBtn && geoStatus) {
+    geoBtn.addEventListener('click', function() {
+      if (!navigator.geolocation) {
+        geoStatus.style.display = 'block';
+        geoStatus.textContent = 'Seu navegador não suporta geolocalização.';
+        return;
+      }
+
+      geoStatus.style.display = 'block';
+      geoStatus.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Obtendo localização aproximada...';
+
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          geoStatus.innerHTML = '✔ Localização obtida! Redirecionando para restaurantes próximos...';
+          setTimeout(function() {
+            window.location.href = '/busca?lat=' + position.coords.latitude + '&lng=' + position.coords.longitude;
+          }, 600);
+        },
+        function(error) {
+          geoStatus.textContent = 'Permissão de localização negada ou indisponível. Utilize a busca manual por cidade.';
+        },
+        { timeout: 10000, enableHighAccuracy: false }
+      );
+    });
+  }
+})();
+</script>

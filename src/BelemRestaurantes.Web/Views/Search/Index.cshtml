@@ -1,0 +1,166 @@
+@model BelemRestaurantes.Application.Models.PagedResult<BelemRestaurantes.Application.Models.RestaurantView>
+@{
+    ViewData["Title"] = "Busca Gastronômica - Belém Restaurantes";
+    var filters = (BelemRestaurantes.Application.Abstractions.SearchFilterOptions?)ViewBag.FilterOptions;
+    var searchTerm = (string?)ViewBag.SearchTerm;
+    var selectedCity = (string?)ViewBag.SelectedCity;
+    var selectedCategory = (string?)ViewBag.SelectedCategory;
+    var selectedNeighborhood = (string?)ViewBag.SelectedNeighborhood;
+}
+
+<div class="container-v3 section-v3">
+    <!-- Cabeçalho da Busca -->
+    <div style="margin-bottom: 32px;">
+        <span class="tagline-badge mb-2">Busca Gastronômica</span>
+        <h1 class="title-section mb-1">Restaurantes e Sabores do Pará</h1>
+        <p class="subtitle-v3">
+            Encontre pratos típicos, restaurantes tradicionais, açaí, tacacá e especialidades paraenses em todo o estado.
+        </p>
+    </div>
+
+    <!-- Barra de Filtros Combinados -->
+    <form method="get" action="/busca" class="p-3 bg-white rounded-4 border mb-4 shadow-sm" style="background:#fff;border:1px solid #e2e8df;border-radius:18px;padding:20px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;align-items:end;">
+            <div>
+                <label class="small fw-bold text-muted mb-1" style="display:block;font-size:13px;font-weight:700;color:#567064;">Termo ou Prato</label>
+                <input type="text" name="q" value="@searchTerm" placeholder="Ex: Filhote, Açaí, Tacacá..." class="form-control" style="width:100%;padding:10px 14px;border:1px solid #cddccf;border-radius:10px;" />
+            </div>
+
+            <div>
+                <label class="small fw-bold text-muted mb-1" style="display:block;font-size:13px;font-weight:700;color:#567064;">Cidade</label>
+                <select name="city" class="form-select" style="width:100%;padding:10px 14px;border:1px solid #cddccf;border-radius:10px;">
+                    <option value="">Todas as Cidades</option>
+                    @if (filters?.Cities != null)
+                    {
+                        foreach (var city in filters.Cities)
+                        {
+                            <option value="@city" selected="@(city == selectedCity)">@city</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div>
+                <label class="small fw-bold text-muted mb-1" style="display:block;font-size:13px;font-weight:700;color:#567064;">Categoria</label>
+                <select name="category" class="form-select" style="width:100%;padding:10px 14px;border:1px solid #cddccf;border-radius:10px;">
+                    <option value="">Todas as Categorias</option>
+                    @if (filters?.Categories != null)
+                    {
+                        foreach (var cat in filters.Categories)
+                        {
+                            <option value="@cat" selected="@(cat == selectedCategory)">@cat</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div style="display:flex;gap:8px;">
+                <button type="submit" class="btn-v3 btn-v3-forest" style="flex:1;">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="/busca" class="btn-v3 btn-v3-outline" title="Limpar Filtros">Limpar</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Resumo dos Resultados -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <p style="margin:0;color:#567064;font-size:15px;">
+            Exibindo <strong>@Model.Items.Count</strong> de <strong>@Model.TotalCount</strong> estabelecimentos encontrados.
+        </p>
+    </div>
+
+    <!-- Resultados -->
+    @if (Model.Items.Count == 0)
+    {
+        <div style="text-align:center;padding:60px 20px;background:#fff;border:1px solid #e2e8df;border-radius:20px;margin:20px 0;">
+            <div style="font-size:42px;margin-bottom:12px;">🍽️</div>
+            <h3 style="font-weight:800;color:#0d3826;margin-bottom:8px;">Nenhum restaurante encontrado</h3>
+            <p style="color:#567064;max-width:500px;margin:auto;">
+                Tente ajustar os termos da busca, selecionar outra cidade ou limpar os filtros para ver mais opções da culinária paraense.
+            </p>
+            <div style="margin-top:20px;">
+                <a href="/busca" class="btn-v3 btn-v3-forest">Ver Todos os Restaurantes</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="grid-cards-v3">
+            @foreach (var res in Model.Items)
+            {
+                <article class="card-restaurant-v3">
+                    <div class="card-media-v3">
+                        @if (!string.IsNullOrEmpty(res.PhotoUrl))
+                        {
+                            <img src="@res.PhotoUrl" alt="@res.Name" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div style="height:100%;display:grid;place-items:center;color:#e5a93b;font-size:32px;">✦</div>
+                        }
+
+                        <div class="card-badge-top">
+                            @if (!string.IsNullOrEmpty(res.Category))
+                            {
+                                <span class="badge-category">@res.Category</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-content-v3">
+                        <div>
+                            <h3 style="margin:0 0 6px;">
+                                <a href="/estabelecimento/@res.Id" class="card-title-link">@res.Name</a>
+                            </h3>
+
+                            <div class="card-info-row">
+                                <span><i class="bi bi-geo-alt text-danger"></i> @res.Neighborhood, @res.City</span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(res.Address))
+                            {
+                                <div style="font-size:13px;color:#7a9488;margin-top:4px;">
+                                    @res.Address
+                                </div>
+                            }
+                        </div>
+
+                        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #edf2ec;display:flex;justify-content:space-between;align-items:center;">
+                            <a href="/cardapio/@res.Id" class="btn-v3 btn-v3-tucupi btn-v3-sm">
+                                📖 Cardápio
+                            </a>
+                            <a href="/estabelecimento/@res.Id" class="btn-v3 btn-v3-outline btn-v3-sm">
+                                Detalhes ➔
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <!-- Paginação -->
+        @if (Model.TotalPages > 1)
+        {
+            <div style="display:flex;justify-content:center;gap:8px;margin-top:40px;align-items:center;">
+                @if (Model.Page > 1)
+                {
+                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&page=@(Model.Page - 1)" class="btn-v3 btn-v3-outline btn-v3-sm">
+                        Anterior
+                    </a>
+                }
+
+                <span style="font-size:14px;color:#567064;padding:0 12px;">
+                    Página <strong>@Model.Page</strong> de <strong>@Model.TotalPages</strong>
+                </span>
+
+                @if (Model.Page < Model.TotalPages)
+                {
+                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&page=@(Model.Page + 1)" class="btn-v3 btn-v3-outline btn-v3-sm">
+                        Próxima
+                    </a>
+                }
+            </div>
+        }
+    }
+</div>

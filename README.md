@@ -1,21 +1,64 @@
-# Belém Restaurantes
+# Belém Restaurantes — O Pará tem sabor
 
-Plataforma gastronômica do Pará em ASP.NET Core 10, MVC/Razor, JavaScript e MySQL `belrestaurante`. Ambiente alvo: VPS Windows + IIS; publicação manual pelo Visual Studio 2026; descoberta em Windows Service independente.
+Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10 (net10.0), C#, MVC/Razor, Dapper e MySQL `belrestaurante`.  
+**Empresa / Proprietário:** MNSOFT Soluções (CNPJ: 18.160.057/0001-13)  
+**Ambiente:** VPS Windows + IIS 10; Publicação manual pelo Visual Studio Community 2026; Descoberta autônoma via Windows Service.
 
-## Desenvolvimento e manutenção
+---
 
-1. Configure `ConnectionStrings__MySql` em segredo do processo. Banco remoto exige `SslMode=VerifyFull` e certificado confiável; não use credenciais de produção nos testes.
-2. Execute `dotnet restore` e `dotnet build BelemRestaurantes.sln`.
-3. Aplique migrações com credencial própria: `dotnet run --project src/BelemRestaurantes.Web -- --migrate`. Não aplique os SQL legados de `sql/`.
-4. Crie o primeiro administrador em console local interativo: `dotnet run --project src/BelemRestaurantes.Web -- --provision-admin`. Complete o TOTP no primeiro login. Não existe bootstrap HTTP.
-5. Inicie Web e verifique `/health` e `/health/ready`. A Web não executa descoberta.
-6. O Worker mantém migrações e descoberta desativadas por padrão. Ative descoberta somente após homologar Google Places, quotas, custos e retenção. Chaves de APIs ficam em segredos de ambiente.
+## 🌟 Principais Módulos da Plataforma (Sprint 06)
 
-## Verificação
+1. **Design System Belém Restaurantes V3 (`~/css/design-v3.css`):**
+   - Cores representativas: Verde Floresta, Tucupi Dourado, Urucum e Creme Amazônico.
+   - Conformidade WCAG 2.2 AA (alto contraste, anéis de foco, suporte a leitores de tela).
+2. **Nova Homepage Gastronômica:**
+   - 10 seções gastronômicas ricas: Hero com autocomplete assíncrono, Categorias Regionais, Proximidade por Geolocalização Consentida, Selo Cuia Oficial, Sabores da Comunidade, Sabores do Pará, Explore o Interior, Mobilidade Urbana, Portal do Parceiro e Apoio PIX MNSOFT.
+3. **Busca Gastronômica Inteligente (`/busca` e `/api/search/autocomplete`):**
+   - Pesquisa no backend de nomes de restaurantes, categorias, bairros e pratos típicos com tolerância a acentos e debounce de 250ms.
+4. **Página Individual do Estabelecimento (`/estabelecimento/{id}`):**
+   - Galerias segregadas (comunidade, oficiais e ilustrativas), cardápio digital integrado, notas detalhadas e integração com rotas.
+5. **Portal do Parceiro Comerciante (`/partner`):**
+   - Reivindicação segura de estabelecimento, edição de cardápio digital, envio de fotografias e contratação de planos comerciais.
+6. **Painel Administrativo MNSOFT (`/admin`):**
+   - Layout dedicado com sidebar lateral fixa (`_AdminLayout.cshtml`), triagem visual de descobertas do worker, catálogo, moderação de fotos e relatos, e status em tempo real de 8 conectores e Cuia IA (Google Places, Gemini, Groq, DeepSeek, redes sociais).
 
-- Testes unitários: `dotnet test tests/BelemRestaurantes.UnitTests`.
-- Suite completa em MySQL descartável, acessível apenas no loopback: `pwsh -File scripts/test-sprint03.ps1` (Docker e Node.js necessários). O script cria banco `belrestaurante` isolado, executa a suite e remove o container.
-- Para MySQL de homologação dedicado, defina `BELRESTAURANTES_TEST_MYSQL`; os testes de banco falham sem essa configuração. Não há fallback para a conexão de produção.
-- Publicação Folder: `dotnet publish src/BelemRestaurantes.Web -c Release /p:PublishProfile=FolderProfile`.
+---
 
-Consulte [publicação Windows](deploy/windows/README.md) e o [relatório da Sprint 03](docs/SPRINT03-REPORT.md). Consulte também [contas, e-mail e oito idiomas](docs/MEMBERS-EMAIL-I18N.md). Cadastro público, confirmação, recuperação e fila de e-mail foram adicionados; configure o keyring privado e o SMTP do Worker para entrega real. A sprint ainda não está homologada: experiências com fotos, integrações externas e VPS continuam pendentes.
+## 🚀 Desenvolvimento e Manutenção
+
+1. **Requisitos:** .NET 10.0 SDK, Visual Studio 2026 (ou VS Code), MySQL 8.0+.
+2. **Restaurar e Compilar:**
+   ```powershell
+   dotnet restore
+   dotnet build BelemRestaurantes.sln
+   ```
+3. **Executar Migrações:**
+   ```powershell
+   dotnet run --project src/BelemRestaurantes.Web -- --migrate
+   ```
+4. **Provisionar Primeiro Administrador:**
+   ```powershell
+   dotnet run --project src/BelemRestaurantes.Web -- --provision-admin
+   ```
+   *Cadastre o TOTP no aplicativo autenticador no primeiro login.*
+
+5. **Executar Testes Unitários:**
+   ```powershell
+   dotnet test tests/BelemRestaurantes.UnitTests
+   ```
+   *(95 testes unitários cobrindo regras de catálogo, IA, autenticação, moderação, planos comerciais e busca).*
+
+6. **Publicação para IIS (Windows VPS):**
+   ```powershell
+   dotnet publish src/BelemRestaurantes.Web/BelemRestaurantes.Web.csproj -c Release -o bin/Publish/Release
+   ```
+   *Ou execute a publicação diretamente pelo Visual Studio 2026 utilizando o perfil FolderProfile.*
+
+---
+
+## 📄 Documentação e Sprints Anteriores
+
+- [Relatório da Sprint 06 (Redesign Completo, Jornada Gastronômica e Homologação)](docs/SPRINT06-REPORT.md)
+- [Relatório da Sprint 05 (Portal do Parceiro, Cardápio e Monetização)](docs/SPRINT05-REPORT.md)
+- [Relatório da Sprint 04 (Comunidade, Fotos e Selo Cuia)](docs/SPRINT04-REPORT.md)
+- [Relatório da Sprint 03 (Governança e Migração)](docs/SPRINT03-REPORT.md)
