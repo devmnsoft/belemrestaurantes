@@ -106,8 +106,8 @@ public sealed class MySqlCuiaService(MySqlConnectionFactory factory, ILogger<MyS
             ORDER BY c.rank_position ASC
             """;
 
-        var rows = await connection.QueryAsync<CuiaBadgeView>(new CommandDefinition(sql, new { restaurantId }, cancellationToken: ct));
-        return rows.AsList();
+        var rows = await connection.QueryAsync<CuiaBadgeDbRow>(new CommandDefinition(sql, new { restaurantId }, cancellationToken: ct));
+        return rows.Select(MapBadge).ToList();
     }
 
     public async Task<IReadOnlyList<CuiaBadgeView>> GetTopRankingsAsync(string categoryKey, int limit, CancellationToken ct)
@@ -126,7 +126,7 @@ public sealed class MySqlCuiaService(MySqlConnectionFactory factory, ILogger<MyS
             LIMIT @limit
             """;
 
-        var rows = await connection.QueryAsync<CuiaBadgeView>(new CommandDefinition(sql, new { categoryKey, limit }, cancellationToken: ct));
+        var rows = await connection.QueryAsync<CuiaBadgeDbRow>(new CommandDefinition(sql, new { categoryKey, limit }, cancellationToken: ct));
         return rows.AsList();
     }
 
@@ -143,15 +143,43 @@ public sealed class MySqlCuiaService(MySqlConnectionFactory factory, ILogger<MyS
             ORDER BY c.category_key ASC, c.rank_position ASC
             """;
 
-        var rows = await connection.QueryAsync<CuiaBadgeView>(new CommandDefinition(sql, cancellationToken: ct));
+        var rows = await connection.QueryAsync<CuiaBadgeDbRow>(new CommandDefinition(sql, cancellationToken: ct));
         var dict = new Dictionary<string, IReadOnlyList<CuiaBadgeView>>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var group in rows.GroupBy(r => r.CategoryKey))
+        foreach (var group in rows.Select(MapBadge).GroupBy(r => r.CategoryKey))
         {
             dict[group.Key] = group.ToList();
         }
 
         return dict;
+    }
+
+    // Dapper/MySqlConnector exposes BIGINT UNSIGNED as ulong, INT UNSIGNED as uint,
+    // DECIMAL as decimal and DATETIME as DateTime. A positional record expecting
+    // long/int/double/DateTimeOffset cannot be materialized by constructor matching.
+    // Materialize using settable CLR DB types, then convert to the public domain view.
+    private sealed class CuiaBadgeDbRow
+    {
+        public ulong RestaurantId { get; set; }
+        public string RestaurantName { get; set; } = "";
+        public string RestaurantCity { get; set; } = "";
+        public string CategoryKey { get; set; } = "";
+        public string BadgeTitle { get; set; } = "";
+        public uint RankPosition { get; set; }
+        public decimal Score { get; set; }
+        public uint ApprovedReviewsCount { get; set; }
+        public string MethodologySummary { get; set; } = "";
+        public DateTime CalculatedAt { get; set; }
+    }
+
+    private static CuiaBadgeView MapBadge(CuiaBadgeDbRow row)
+    {
+        var utc = DateTime.SpecifyKind(row.CalculatedAt, DateTimeKind.Utc);
+        return new CuiaBadgeView(
+            checked((long)row.RestaurantId), row.RestaurantName, row.RestaurantCity,
+            row.CategoryKey, row.BadgeTitle, checked((int)row.RankPosition),
+            (double)row.Score, checked((int)row.ApprovedReviewsCount),
+            row.MethodologySummary, new DateTimeOffset(utc));
     }
 
     private sealed class RestaurantStatRow
