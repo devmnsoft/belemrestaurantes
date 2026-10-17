@@ -95,7 +95,15 @@ public sealed class MySqlCostLedger(MySqlConnectionFactory factory) : ICostLedge
         return alreadySpentUsd < limitUsd;
     }
 
-    private sealed record CostRow(string provider, long micros);
+    private sealed class CostRow
+    {
+        public string provider { get; set; } = default!;
+        public long micros { get; set; } = default!;
+    }
 
-    private sealed record BudgetRow(long limit_micros, bool paused);
+    private sealed class BudgetRow
+    {
+        public long limit_micros { get; set; } = default!;
+        public bool paused { get; set; } = default!;
+    }
 }

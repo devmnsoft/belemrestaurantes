@@ -1,0 +1,546 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Language" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="Explore" xml:space="preserve">
+    <value>Explorar</value>
+  </data>
+  <data name="Mobility" xml:space="preserve">
+    <value>Cómo llegar</value>
+  </data>
+  <data name="Suggest" xml:space="preserve">
+    <value>Sugerir un restaurante</value>
+  </data>
+  <data name="Tagline" xml:space="preserve">
+    <value>Descubre los sabores de Pará</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Belém Restaurantes: sabores y experiencias gastronómicas de Pará</value>
+  </data>
+  <data name="Contact" xml:space="preserve">
+    <value>Contacto</value>
+  </data>
+  <data name="ExternalNotice" xml:space="preserve">
+    <value>La información de terceros puede estar desactualizada. Confirma antes de visitar.</value>
+  </data>
+  <data name="Guide" xml:space="preserve">
+    <value>Tu guía gastronómica de Pará</value>
+  </data>
+  <data name="HeroTitle" xml:space="preserve">
+    <value>Sabores que cuentan nuestra historia.</value>
+  </data>
+  <data name="HeroText" xml:space="preserve">
+    <value>Encuentra restaurantes, açaí, tacacá, pizzerías y experiencias en Pará.</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Restaurante, plato o especialidad…</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="ExploreState" xml:space="preserve">
+    <value>EXPLORA PARÁ</value>
+  </data>
+  <data name="WhereToEat" xml:space="preserve">
+    <value>¿Dónde comemos hoy?</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>Ciudad</value>
+  </data>
+  <data name="AllCities" xml:space="preserve">
+    <value>Todas las ciudades</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Cargando restaurantes…</value>
+  </data>
+  <data name="CatalogLoading" xml:space="preserve">
+    <value>Consultando el catálogo…</value>
+  </data>
+  <data name="CatalogUnavailable" xml:space="preserve">
+    <value>El catálogo no está disponible temporalmente. Inténtalo más tarde.</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>Establecimientos encontrados: {0}</value>
+  </data>
+  <data name="ChooseRestaurant" xml:space="preserve">
+    <value>Elige un restaurante</value>
+  </data>
+  <data name="AuthorizedPhoto" xml:space="preserve">
+    <value>Foto autorizada: {0}</value>
+  </data>
+  <data name="NoPhoto" xml:space="preserve">
+    <value>Foto aún no disponible</value>
+  </data>
+  <data name="AddressChecking" xml:space="preserve">
+    <value>Dirección en verificación</value>
+  </data>
+  <data name="Website" xml:space="preserve">
+    <value>Sitio oficial</value>
+  </data>
+  <data name="RouteTitle" xml:space="preserve">
+    <value>Tu próximo sabor, en tu camino</value>
+  </data>
+  <data name="RouteIntro" xml:space="preserve">
+    <value>Elige un restaurante para consultar la ruta en transporte público en Google Maps.</value>
+  </data>
+  <data name="Start" xml:space="preserve">
+    <value>Punto de partida</value>
+  </data>
+  <data name="StartPlaceholder" xml:space="preserve">
+    <value>Dirección o punto de referencia</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>Destino</value>
+  </data>
+  <data name="BusRoute" xml:space="preserve">
+    <value>Consultar ruta en autobús ↗</value>
+  </data>
+  <data name="RouteNotice" xml:space="preserve">
+    <value>Las rutas y tarifas las proporciona el servicio de navegación, no Belém Restaurantes.</value>
+  </data>
+  <data name="Join" xml:space="preserve">
+    <value>PARTICIPA</value>
+  </data>
+  <data name="SuggestTitle" xml:space="preserve">
+    <value>¿Conoces un lugar increíble?</value>
+  </data>
+  <data name="SuggestIntro" xml:space="preserve">
+    <value>Ayuda a descubrir negocios de Pará. Todas las sugerencias se revisan.</value>
+  </data>
+  <data name="RestaurantName" xml:space="preserve">
+    <value>Nombre del establecimiento</value>
+  </data>
+  <data name="OptionalWebsite" xml:space="preserve">
+    <value>Sitio oficial (opcional)</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Observaciones</value>
+  </data>
+  <data name="SendSuggestion" xml:space="preserve">
+    <value>Enviar sugerencia</value>
+  </data>
+  <data name="Sending" xml:space="preserve">
+    <value>Enviando…</value>
+  </data>
+  <data name="SuggestionReceived" xml:space="preserve">
+    <value>Sugerencia recibida, pendiente de revisión.</value>
+  </data>
+  <data name="SendFailed" xml:space="preserve">
+    <value>No se pudo enviar. Inténtalo de nuevo.</value>
+  </data>
+  <data name="SupportTitle" xml:space="preserve">
+    <value>Apoya la guía gastronómica de Pará</value>
+  </data>
+  <data name="SupportIntro" xml:space="preserve">
+    <value>Los anuncios identificados y las donaciones apoyan el proyecto. El patrocinio no compra reseñas.</value>
+  </data>
+  <data name="CopyPix" xml:space="preserve">
+    <value>Copiar clave PIX</value>
+  </data>
+  <data name="PixCopied" xml:space="preserve">
+    <value>Clave PIX copiada</value>
+  </data>
+  <data name="PixNotice" xml:space="preserve">
+    <value>Confirma el beneficiario en tu aplicación bancaria.</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Información</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Dirección</value>
+  </data>
+  <data name="UpdatedAt" xml:space="preserve">
+    <value>Última actualización</value>
+  </data>
+  <data name="OfficialLinks" xml:space="preserve">
+    <value>Enlaces oficiales</value>
+  </data>
+  <data name="OpenMaps" xml:space="preserve">
+    <value>Abrir en Google Maps</value>
+  </data>
+  <data name="AdminTitle" xml:space="preserve">
+    <value>Administración</value>
+  </data>
+  <data name="AdminIntro" xml:space="preserve">
+    <value>Accede con usuario, contraseña y segundo factor (TOTP).</value>
+  </data>
+  <data name="UserName" xml:space="preserve">
+    <value>Usuario</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Contraseña</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Iniciar sesión</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>Cerrar sesión</value>
+  </data>
+  <data name="SessionExpired" xml:space="preserve">
+    <value>Tu cuenta fue desactivada o tu sesión caducó.</value>
+  </data>
+  <data name="SecondFactor" xml:space="preserve">
+    <value>Segundo factor</value>
+  </data>
+  <data name="TotpIntro" xml:space="preserve">
+    <value>Introduce el código de seis dígitos de tu aplicación de autenticación.</value>
+  </data>
+  <data name="TotpCode" xml:space="preserve">
+    <value>Código TOTP</value>
+  </data>
+  <data name="Verify" xml:space="preserve">
+    <value>Verificar</value>
+  </data>
+  <data name="EnrollTitle" xml:space="preserve">
+    <value>Configurar el segundo factor</value>
+  </data>
+  <data name="EnrollIntro" xml:space="preserve">
+    <value>Añade esta cuenta a tu aplicación con la clave de abajo y confirma el código generado.</value>
+  </data>
+  <data name="Activate" xml:space="preserve">
+    <value>Confirmar y activar</value>
+  </data>
+  <data name="PendingRestaurants" xml:space="preserve">
+    <value>Restaurantes pendientes de aprobación</value>
+  </data>
+  <data name="Health" xml:space="preserve">
+    <value>Estado del sistema</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Credenciales incorrectas.</value>
+  </data>
+  <data name="InvalidCode" xml:space="preserve">
+    <value>Código incorrecto.</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>Acceso denegado.</value>
+  </data>
+  <data name="MyAccount" xml:space="preserve">
+    <value>Mi cuenta</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>Crear cuenta</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>Nombre completo</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Correo electrónico</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>Confirmar contraseña</value>
+  </data>
+  <data name="Remember" xml:space="preserve">
+    <value>Mantener la sesión en este dispositivo</value>
+  </data>
+  <data name="AcceptTerms" xml:space="preserve">
+    <value>He leído y acepto los términos y la política de privacidad.</value>
+  </data>
+  <data name="Terms" xml:space="preserve">
+    <value>Términos de uso</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="PasswordRules" xml:space="preserve">
+    <value>Usa de 12 a 256 caracteres, mayúsculas, minúsculas, número y símbolo. Evita términos comunes y confirma la contraseña.</value>
+  </data>
+  <data name="RegistrationInvalid" xml:space="preserve">
+    <value>Revisa los campos, los requisitos de contraseña, su confirmación y la aceptación de términos.</value>
+  </data>
+  <data name="CheckEmail" xml:space="preserve">
+    <value>Si los datos son válidos, enviaremos un enlace de confirmación. Revisa tu correo y spam.</value>
+  </data>
+  <data name="MemberLoginFailed" xml:space="preserve">
+    <value>No se pudo iniciar sesión. Revisa tus datos, confirma tu correo o espera si realizaste varios intentos.</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>Olvidé mi contraseña</value>
+  </data>
+  <data name="ResendEmail" xml:space="preserve">
+    <value>Reenviar confirmación</value>
+  </data>
+  <data name="RecoveryNeutral" xml:space="preserve">
+    <value>Si existe una cuenta válida, enviaremos un enlace de recuperación. Revisa tu correo y spam.</value>
+  </data>
+  <data name="ConfirmEmail" xml:space="preserve">
+    <value>Confirmar correo</value>
+  </data>
+  <data name="EmailConfirmed" xml:space="preserve">
+    <value>Correo confirmado. Ya puedes iniciar sesión.</value>
+  </data>
+  <data name="InvalidLink" xml:space="preserve">
+    <value>Enlace inválido, caducado o ya utilizado. Solicita uno nuevo.</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>Definir nueva contraseña</value>
+  </data>
+  <data name="PasswordReset" xml:space="preserve">
+    <value>Contraseña cambiada. Se cerraron las sesiones anteriores. Entra con la nueva contraseña.</value>
+  </data>
+  <data name="Sessions" xml:space="preserve">
+    <value>Sesiones activas</value>
+  </data>
+  <data name="CurrentSession" xml:space="preserve">
+    <value>Sesión actual</value>
+  </data>
+  <data name="RevokeOthers" xml:space="preserve">
+    <value>Cerrar otras sesiones</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>Creada el</value>
+  </data>
+  <data name="ExpiresAt" xml:space="preserve">
+    <value>Caduca el</value>
+  </data>
+  <data name="NoCpf" xml:space="preserve">
+    <value>No solicitamos CPF brasileño. Usamos tu nombre y correo para tu cuenta; confirma el correo antes de publicar.</value>
+  </data>
+  <data name="TermsText" xml:space="preserve">
+    <value>Usa el portal responsablemente. No divulgues datos de terceros, contenido ofensivo ni reseñas fraudulentas. Las sugerencias se revisan. Confirma la información de terceros antes de visitar.</value>
+  </data>
+  <data name="PrivacyText" xml:space="preserve">
+    <value>Tratamos nombre, correo, hash de contraseña y registros de seguridad para operar la cuenta. Los tokens y correos en cola están protegidos. Para solicitar acceso, exportación o eliminación, escribe a comercial@belemrestaurantes.com.br. Las solicitudes se atienden actualmente de forma operativa.</value>
+  </data>
+  <data name="TellYourExperience" xml:space="preserve">
+    <value>Cuéntanos tu experiencia</value>
+  </data>
+  <data name="OverallRating" xml:space="preserve">
+    <value>Calificación general</value>
+  </data>
+  <data name="ServiceRating" xml:space="preserve">
+    <value>Atención</value>
+  </data>
+  <data name="FlavorRating" xml:space="preserve">
+    <value>Sabor</value>
+  </data>
+  <data name="AmbianceRating" xml:space="preserve">
+    <value>Ambiente</value>
+  </data>
+  <data name="CostBenefitRating" xml:space="preserve">
+    <value>Relación calidad-precio</value>
+  </data>
+  <data name="ReviewComment" xml:space="preserve">
+    <value>Tu reseña / comentario</value>
+  </data>
+  <data name="DishesConsumed" xml:space="preserve">
+    <value>Platos consumidos</value>
+  </data>
+  <data name="PricePaid" xml:space="preserve">
+    <value>Precio pagado (opcional)</value>
+  </data>
+  <data name="AddPhotos" xml:space="preserve">
+    <value>Agregar fotos</value>
+  </data>
+  <data name="PhotoPreview" xml:space="preserve">
+    <value>Vista previa</value>
+  </data>
+  <data name="PublishVisibility" xml:space="preserve">
+    <value>Visibilidad</value>
+  </data>
+  <data name="VisibilityPublic" xml:space="preserve">
+    <value>Pública (visible tras moderación)</value>
+  </data>
+  <data name="VisibilityPrivate" xml:space="preserve">
+    <value>Privada (solo tú)</value>
+  </data>
+  <data name="VisibilityUnlisted" xml:space="preserve">
+    <value>No listada (solo con enlace secreto)</value>
+  </data>
+  <data name="SubmitExperience" xml:space="preserve">
+    <value>Enviar experiencia</value>
+  </data>
+  <data name="ExperienceInvalidScores" xml:space="preserve">
+    <value>Por favor ingrese calificaciones válidas de 1 a 5 estrellas.</value>
+  </data>
+  <data name="EditExperience" xml:space="preserve">
+    <value>Editar experiencia</value>
+  </data>
+  <data name="DeleteExperience" xml:space="preserve">
+    <value>Eliminar experiencia</value>
+  </data>
+  <data name="PendingModerationNotice" xml:space="preserve">
+    <value>En espera de moderación</value>
+  </data>
+  <data name="RejectedNotice" xml:space="preserve">
+    <value>Publicación rechazada</value>
+  </data>
+  <data name="SubmitAppeal" xml:space="preserve">
+    <value>Apelar decisión (Recurso)</value>
+  </data>
+  <data name="AppealText" xml:space="preserve">
+    <value>Motivo del recurso</value>
+  </data>
+  <data name="AppealSubmitted" xml:space="preserve">
+    <value>Recurso enviado para revisión de los moderadores.</value>
+  </data>
+  <data name="AppealFailed" xml:space="preserve">
+    <value>No fue posible enviar el recurso.</value>
+  </data>
+  <data name="OfficialPhotos" xml:space="preserve">
+    <value>Fotos oficiales</value>
+  </data>
+  <data name="CommunityPhotos" xml:space="preserve">
+    <value>Fotos de la comunidad</value>
+  </data>
+  <data name="IllustrativePhotos" xml:space="preserve">
+    <value>Fotos ilustrativas</value>
+  </data>
+  <data name="NoPhotosYet" xml:space="preserve">
+    <value>Aún no hay fotos en esta categoría.</value>
+  </data>
+  <data name="CommunityFeedTitle" xml:space="preserve">
+    <value>Sabores de la Comunidad</value>
+  </data>
+  <data name="CommunityFeedSubtitle" xml:space="preserve">
+    <value>Experiencias y fotos reales compartidas por los visitantes</value>
+  </data>
+  <data name="Like" xml:space="preserve">
+    <value>Me gusta</value>
+  </data>
+  <data name="Unlike" xml:space="preserve">
+    <value>Ya no me gusta</value>
+  </data>
+  <data name="Comments" xml:space="preserve">
+    <value>Comentarios</value>
+  </data>
+  <data name="AddComment" xml:space="preserve">
+    <value>Agregar comentario</value>
+  </data>
+  <data name="SendComment" xml:space="preserve">
+    <value>Enviar comentario</value>
+  </data>
+  <data name="ReportContent" xml:space="preserve">
+    <value>Denunciar contenido</value>
+  </data>
+  <data name="ReportReason" xml:space="preserve">
+    <value>Motivo de la denuncia</value>
+  </data>
+  <data name="ReportNotes" xml:space="preserve">
+    <value>Detalles adicionales</value>
+  </data>
+  <data name="ReportReceived" xml:space="preserve">
+    <value>Denuncia recibida. Nuestro equipo la revisará.</value>
+  </data>
+  <data name="SortRecent" xml:space="preserve">
+    <value>Más recientes</value>
+  </data>
+  <data name="SortTop" xml:space="preserve">
+    <value>Más valoradas</value>
+  </data>
+  <data name="ShareExperience" xml:space="preserve">
+    <value>Compartir</value>
+  </data>
+  <data name="ShareWhatsApp" xml:space="preserve">
+    <value>WhatsApp</value>
+  </data>
+  <data name="ShareFacebook" xml:space="preserve">
+    <value>Facebook</value>
+  </data>
+  <data name="ShareInstagram" xml:space="preserve">
+    <value>Instagram</value>
+  </data>
+  <data name="ShareTikTok" xml:space="preserve">
+    <value>TikTok</value>
+  </data>
+  <data name="CopyLink" xml:space="preserve">
+    <value>Copiar enlace</value>
+  </data>
+  <data name="LinkCopied" xml:space="preserve">
+    <value>¡Enlace copiado!</value>
+  </data>
+  <data name="ShareNative" xml:space="preserve">
+    <value>Compartir en el dispositivo</value>
+  </data>
+  <data name="CuiaBadge" xml:space="preserve">
+    <value>Sello Cuia</value>
+  </data>
+  <data name="CuiaMethodology" xml:space="preserve">
+    <value>Metodología transparente</value>
+  </data>
+  <data name="CuiaRankPosition" xml:space="preserve">
+    <value>Posición en el ranking</value>
+  </data>
+  <data name="CuiaScore" xml:space="preserve">
+    <value>Puntuación Cuia</value>
+  </data>
+  <data name="ProfileUpdated" xml:space="preserve">
+    <value>Perfil actualizado con éxito.</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Cambiar contraseña</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>Contraseña actual</value>
+  </data>
+  <data name="ChangeEmail" xml:space="preserve">
+    <value>Cambiar correo</value>
+  </data>
+  <data name="NewEmail" xml:space="preserve">
+    <value>Nuevo correo</value>
+  </data>
+  <data name="Bio" xml:space="preserve">
+    <value>Presentación / Bio</value>
+  </data>
+  <data name="ExportMyData" xml:space="preserve">
+    <value>Exportar mis datos (LGPD)</value>
+  </data>
+  <data name="DeleteMyAccount" xml:space="preserve">
+    <value>Eliminar / Anonimizar cuenta</value>
+  </data>
+  <data name="LgpdRequestReceived" xml:space="preserve">
+    <value>Solicitud LGPD registrada con éxito.</value>
+  </data>
+  <data name="MyExperiences" xml:space="preserve">
+    <value>Mis experiencias</value>
+  </data>
+  <data name="ItemApproved" xml:space="preserve">
+    <value>Elemento aprobado con éxito.</value>
+  </data>
+  <data name="ItemRejected" xml:space="preserve">
+    <value>Elemento rechazado con éxito.</value>
+  </data>
+  <data name="PhotoApproved" xml:space="preserve">
+    <value>Foto aprobada.</value>
+  </data>
+  <data name="PhotoRejected" xml:space="preserve">
+    <value>Foto rechazada.</value>
+  </data>
+  <data name="ReportUpheld" xml:space="preserve">
+    <value>Denuncia procedente. Contenido moderado.</value>
+  </data>
+  <data name="ReportDismissed" xml:space="preserve">
+    <value>Denuncia desestimada.</value>
+  </data>
+  <data name="MemberLocked" xml:space="preserve">
+    <value>Miembro bloqueado con éxito.</value>
+  </data>
+  <data name="MemberUnlocked" xml:space="preserve">
+    <value>Miembro desbloqueado con éxito.</value>
+  </data>
+  <data name="AccountAnonymized" xml:space="preserve">
+    <value>Cuenta anonimizada según LGPD.</value>
+  </data>
+  <data name="LgpdCompleted" xml:space="preserve">
+    <value>Solicitud LGPD completada.</value>
+  </data>
+  <data name="CuiaRecalculated" xml:space="preserve">
+    <value>Rankings del Sello Cuia recalculados con éxito.</value>
+  </data>
+</root>

@@ -20,6 +20,7 @@ public class Program
                 services.AddInfrastructure(hostContext.Configuration);
                 services.AddHostedService<MigrationHostedService>();
                 services.AddHostedService<DiscoveryHostedService>();
+                services.AddHostedService<EmailHostedService>();
             })
             .ConfigureLogging(logging => logging.AddConsole())
             .Build()
@@ -39,7 +40,7 @@ public sealed class MigrationHostedService(
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        if (!configuration.GetValue<bool>("Database:ApplyMigrations", true))
+        if (!configuration.GetValue<bool>("Database:ApplyMigrations", false))
         {
             logger.LogInformation("Aplicação de migrações desativada (Database:ApplyMigrations=false).");
             return;

@@ -24,6 +24,12 @@ public sealed class MySqlConnectionFactory
         _connectionString = connectionString;
         _builder = new MySqlConnectionStringBuilder(connectionString);
 
+        if (!string.Equals(_builder.Database, "belrestaurante", StringComparison.Ordinal))
+            throw new InvalidOperationException("Somente o banco belrestaurante é autorizado.");
+        var local = _builder.Server is "localhost" or "127.0.0.1" or "::1";
+        if (!local && _builder.SslMode != MySqlSslMode.VerifyFull)
+            throw new InvalidOperationException("MySQL remoto exige SslMode=VerifyFull e certificado confiável.");
+
         // Salvaguardas aplicadas no cliente: conexões não caem para modo inseguro
         // por engano de digitação, e não ficam penduradas indefinidamente.
         if (_builder.SslMode is not (MySqlSslMode.Required or MySqlSslMode.VerifyCA or MySqlSslMode.VerifyFull))
@@ -63,8 +69,16 @@ public sealed class MySqlConnectionFactory
     public async Task<MySqlConnection> OpenAsync(CancellationToken ct)
     {
         var connection = Create();
-        await connection.OpenAsync(ct);
-        return connection;
+        try
+        {
+            await connection.OpenAsync(ct);
+            return connection;
+        }
+        catch
+        {
+            await connection.DisposeAsync();
+            throw;
+        }
     }
 
     /// <summary>Valida a string sem efeitos colaterais, para o health check.</summary>

@@ -1,0 +1,121 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantClaimRequest>
+@{
+    ViewData["Title"] = "Moderação de Reivindicações de Estabelecimentos - MNSOFT";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-forest text-decoration-none">Admin</a></li>
+                    <li class="breadcrumb-item active">Reivindicações de Restaurantes</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold text-forest mb-0">Reivindicações de Estabelecimentos</h1>
+        </div>
+        <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Painel MNSOFT
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h5 class="fw-bold text-forest mb-3">
+            <i class="bi bi-shield-check text-warning me-2"></i>Fila de Solicitações Pendentes (@Model.Count)
+        </h5>
+
+        @if (Model.Count == 0)
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-check-circle text-success mb-2" style="font-size: 2.5rem;"></i>
+                <p class="mb-0">Nenhuma solicitação de reivindicação pendente no momento.</p>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-4">
+                @foreach (var claim in Model)
+                {
+                    <div class="border rounded-4 p-4 bg-light">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                            <div>
+                                <span class="badge bg-warning text-dark mb-1">Pendente de Revisão</span>
+                                <h5 class="fw-bold text-forest mb-0">@claim.RestaurantName</h5>
+                                <div class="text-muted small">Restaurante ID: #@claim.RestaurantId • Usuário Solicitante: @claim.UserId</div>
+                            </div>
+                            <span class="text-muted small">Recebida em @claim.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+
+                        <div class="row g-3 mb-3 bg-white p-3 rounded-3 border">
+                            <div class="col-md-6">
+                                <strong class="small text-forest">Razão Social / Nome Fantasia:</strong>
+                                <div>@claim.BusinessName</div>
+                            </div>
+                            <div class="col-md-6">
+                                <strong class="small text-forest">CNPJ / Documento:</strong>
+                                <div>@(string.IsNullOrEmpty(claim.TaxId) ? "Não informado" : claim.TaxId)</div>
+                            </div>
+                            <div class="col-md-6">
+                                <strong class="small text-forest">Telefone / WhatsApp:</strong>
+                                <div>@claim.ContactPhone</div>
+                            </div>
+                            <div class="col-md-6">
+                                <strong class="small text-forest">E-mail Comercial:</strong>
+                                <div>@claim.ContactEmail</div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(claim.OfficialChannels))
+                            {
+                                <div class="col-12">
+                                    <strong class="small text-forest">Canais Oficiais:</strong>
+                                    <div><a href="@claim.OfficialChannels" target="_blank">@claim.OfficialChannels</a></div>
+                                </div>
+                            }
+                            <div class="col-12">
+                                <strong class="small text-forest">Comprovação de Vínculo com o Estabelecimento:</strong>
+                                <div class="p-2 bg-light rounded text-muted small">@claim.VerificationEvidence</div>
+                            </div>
+                        </div>
+
+                        <!-- Ações de Moderação -->
+                        <div class="d-flex justify-content-end gap-2 flex-wrap">
+                            <!-- Botão e Form de Rejeição -->
+                            <form method="post" action="/admin/partner/claims/@claim.Id/review" class="d-flex gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="approve" value="false" />
+                                <input type="text" name="rejectionReason" class="form-control form-control-sm" placeholder="Motivo da rejeição..." required style="min-width: 220px;" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Confirmar rejeição desta reivindicação?');">
+                                    <i class="bi bi-x-circle me-1"></i>Rejeitar
+                                </button>
+                            </form>
+
+                            <!-- Form de Aprovação -->
+                            <form method="post" action="/admin/partner/claims/@claim.Id/review">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="approve" value="true" />
+                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Deseja APROVAR esta reivindicação? O usuário receberá acesso total à gestão deste restaurante.');">
+                                    <i class="bi bi-check-circle me-1"></i>Aprovar Vínculo
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

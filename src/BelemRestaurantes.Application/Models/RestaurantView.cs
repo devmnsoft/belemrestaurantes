@@ -14,7 +14,10 @@ public sealed record RestaurantView(
     string? TikTok,
     string? YouTube,
     string? PhotoUrl,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt)
+{
+    public RestaurantView() : this(0, "", "", null, null, null, null, null, null, null, null, null, default) { }
+}
 
 /// <summary>Filtros da busca pública. Todos os campos são validados e parametrizados.</summary>
 public sealed record RestaurantSearchQuery(
@@ -86,4 +89,7 @@ public sealed record PendingApproval(
     double DedupConfidence,
     string? ConflictReason,
     DateTimeOffset DiscoveredAt,
-    string? AiSuggestion);
+    string? AiSuggestion)
+{
+    public PendingApproval() : this(0, "", "", null, null, null, null, 0, null, default, null) { }
+}

@@ -1,6 +1,6 @@
 param(
  [string]$Project = "src/BelemRestaurantes.Web/BelemRestaurantes.Web.csproj",
- [string]$Output = "artifacts/publish"
+ [string]$Output = "artifacts/publish/web"
 )
 $ErrorActionPreference = "Stop"
 dotnet --info

@@ -1,0 +1,108 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.ExperienceView>
+@{
+    ViewData["Title"] = T["CommunityFeedTitle"].Value;
+    var currentSort = ViewData["Sort"] as string ?? "recent";
+    var pageNum = (int)(ViewData["Page"] ?? 1);
+}
+
+<section class="hero" style="padding:60px 0;">
+  <div class="shell">
+    <span class="overline">✦ @T["CommunityFeedTitle"]</span>
+    <h1 style="font-size:clamp(32px,5vw,54px);margin:12px 0;">@T["CommunityFeedTitle"]</h1>
+    <p>@T["CommunityFeedSubtitle"]</p>
+  </div>
+</section>
+
+<section class="shell section">
+  <div class="heading" style="margin-bottom:28px;">
+    <div>
+      <span class="overline dark">✦ Comunidade Gastronômica</span>
+      <h2>Experiências Reais</h2>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <a href="/feed?sort=recent" class="badge @(currentSort == "recent" ? "green" : "")" style="padding:8px 16px;text-decoration:none;font-size:14px;">
+        🕒 @T["SortRecent"]
+      </a>
+      <a href="/feed?sort=top" class="badge @(currentSort == "top" ? "green" : "")" style="padding:8px 16px;text-decoration:none;font-size:14px;">
+        🔥 @T["SortTop"]
+      </a>
+    </div>
+  </div>
+
+  @if (Model.Count == 0)
+  {
+      <div class="panel" style="text-align:center;padding:50px 20px;">
+        <p class="muted" style="font-size:18px;">Nenhuma experiência pública aprovada no momento.</p>
+        <p>Visite um restaurante no catálogo e compartilhe a sua história!</p>
+        <div style="margin-top:16px;">
+          <a href="/#catalogo" class="button-link">Explorar catálogo</a>
+        </div>
+      </div>
+  }
+  else
+  {
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;">
+        @foreach (var exp in Model)
+        {
+            <div class="card" style="display:flex;flex-direction:column;border-radius:18px;box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+              @if (exp.Photos.Count > 0)
+              {
+                  <a href="/experience/@exp.Id" style="height:210px;display:block;overflow:hidden;background:#e8ede9;">
+                    <img src="/media/thumb/@exp.Photos[0].ThumbnailName" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+                  </a>
+              }
+              else
+              {
+                  <div style="height:100px;background:linear-gradient(135deg,#174b3c,#276e53);color:#f6c271;display:flex;align-items:center;justify-content:center;font-size:24px;">
+                    ✦
+                  </div>
+              }
+
+              <div class="inside" style="flex:1;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:start;">
+                  <div>
+                    <h3 style="margin:0 0 4px;font-size:18px;">
+                      <a href="/establishment/@exp.RestaurantId" style="color:#174b3c;text-decoration:none;">@exp.RestaurantName</a>
+                    </h3>
+                    <small class="muted">@exp.RestaurantCity · por <b>@exp.AuthorName</b></small>
+                  </div>
+                  <div style="color:#e67e22;font-size:16px;letter-spacing:1px;" title="@exp.Stars estrelas">
+                    @string.Concat(Enumerable.Repeat("★", exp.Stars))
+                  </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(exp.DishesConsumed))
+                {
+                    <p style="margin:2px 0;font-size:13px;color:#547062;"><b>🍴 Pratos:</b> @exp.DishesConsumed</p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(exp.ReviewText))
+                {
+                    <p style="margin:4px 0;font-size:14px;color:#203d33;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
+                      @exp.ReviewText
+                    </p>
+                }
+
+                <div style="margin-top:auto;padding-top:12px;border-top:1px solid #edf2ec;display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+                  <form method="post" action="/experience/@exp.Id/like" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="ghost" style="padding:4px 10px;font-size:12px;">
+                      @(exp.HasLiked ? "❤️" : "🤍") @exp.LikesCount
+                    </button>
+                  </form>
+
+                  <a href="/experience/@exp.Id#comentarios" style="color:#547062;text-decoration:none;">
+                    💬 @exp.CommentsCount
+                  </a>
+
+                  <a href="/experience/@exp.Id" class="button-link" style="padding:6px 12px;font-size:12px;">
+                    Ver relato →
+                  </a>
+                </div>
+              </div>
+            </div>
+        }
+      </div>
+  }
+</section>

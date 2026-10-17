@@ -1,0 +1,3 @@
+@{ ViewData["Title"] = T["MyAccount"].Value; }
+<section class="shell section narrow"><div class="panel"><p role="status">@ViewData["Message"]</p>
+<a href="/account/login">@T["SignIn"]</a><a href="/account/forgot">@T["ForgotPassword"]</a><a href="/account/resend">@T["ResendEmail"]</a></div></section>

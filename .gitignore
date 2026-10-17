@@ -9,3 +9,6 @@
 *.sqlite
 secrets.json
 appsettings.Production.json
+artifacts/
+TestResults/
+*.pubxml.user

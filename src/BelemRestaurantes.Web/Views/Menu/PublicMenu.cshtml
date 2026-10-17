@@ -1,0 +1,156 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.MenuCategory>
+@{
+    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var profile = (BelemRestaurantes.Domain.Entities.RestaurantProfile?)ViewBag.Profile;
+    ViewData["Title"] = $"Cardápio Digital - {restaurant.Name}";
+    var rawWhatsapp = profile?.DeliveryWhatsapp ?? profile?.CommercialWhatsapp;
+    var whatsappUrl = !string.IsNullOrEmpty(rawWhatsapp)
+        ? $"https://wa.me/{System.Text.RegularExpressions.Regex.Replace(rawWhatsapp, @"[^\d]", "")}"
+        : null;
+}
+
+<div class="container py-4">
+    <!-- Cabeçalho do Cardápio -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-forest text-white">
+        <div class="p-4 p-md-5 position-relative">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2">Cardápio Oficial Digital</span>
+                    <h1 class="display-6 fw-bold mb-1 text-white">@restaurant.Name</h1>
+                    @if (!string.IsNullOrEmpty(profile?.Slogan))
+                    {
+                        <p class="text-white-50 mb-2">@profile.Slogan</p>
+                    }
+                    <div class="d-flex align-items-center gap-3 text-white-50 small flex-wrap">
+                        <span><i class="bi bi-geo-alt me-1 text-danger"></i>@restaurant.Neighborhood, @restaurant.City</span>
+                        @if (profile?.IsAcceptingOrders == true)
+                        {
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Aceitando Pedidos</span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-warning text-dark fw-bold btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#qrCodeModal">
+                        <i class="bi bi-qr-code me-1"></i>QR Code da Mesa
+                    </button>
+                    @if (!string.IsNullOrEmpty(whatsappUrl))
+                    {
+                        <a href="@whatsappUrl" target="_blank" class="btn btn-success fw-bold btn-sm rounded-pill px-3">
+                            <i class="bi bi-whatsapp me-1"></i>Pedir no WhatsApp
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-journal-x text-muted" style="font-size: 3rem;"></i>
+            <h5 class="text-forest fw-bold mt-3">Cardápio em Atualização</h5>
+            <p class="text-muted">O estabelecimento está atualizando seus pratos e opções. Volte em breve!</p>
+        </div>
+    }
+    else
+    {
+        <!-- Navegação por Categorias -->
+        <div class="d-flex gap-2 overflow-x-auto pb-3 mb-4 sticky-top bg-white pt-2">
+            @foreach (var cat in Model)
+            {
+                <a href="#cat-@cat.Id" class="btn btn-outline-forest btn-sm rounded-pill text-nowrap">
+                    @cat.Name (@cat.Items.Count)
+                </a>
+            }
+        </div>
+
+        <!-- Seções por Categoria -->
+        <div class="d-flex flex-column gap-5">
+            @foreach (var cat in Model)
+            {
+                <div id="cat-@cat.Id">
+                    <div class="d-flex align-items-center gap-2 mb-3 border-bottom pb-2">
+                        <h4 class="fw-bold text-forest mb-0">@cat.Name</h4>
+                        <span class="badge bg-light text-muted border">@cat.Items.Count</span>
+                    </div>
+
+                    <div class="row g-3">
+                        @foreach (var item in cat.Items.Where(i => i.IsAvailable))
+                        {
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm rounded-4 p-3 bg-light d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                            <h6 class="fw-bold text-forest mb-0">@item.Name</h6>
+                                            <span class="h6 fw-bold text-forest text-nowrap mb-0">R$ @item.Price.ToString("F2")</span>
+                                        </div>
+
+                                        @if (item.IsRegionalDish)
+                                        {
+                                            <span class="badge bg-warning text-dark small mb-2">
+                                                <i class="bi bi-award-fill me-1"></i>Sabor Regional Paraense
+                                            </span>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(item.Description))
+                                        {
+                                            <p class="small text-muted mb-2">@item.Description</p>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(item.Ingredients))
+                                        {
+                                            <div class="small text-muted mb-1">
+                                                <strong>Ingredientes:</strong> @item.Ingredients
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(item.Allergens))
+                                        {
+                                            <div class="small text-danger">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>Alérgenos: @item.Allergens
+                                            </div>
+                                        }
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(whatsappUrl))
+                                    {
+                                        <div class="mt-3 text-end">
+                                            <a href="@whatsappUrl?text=@Uri.EscapeDataString($"Olá! Gostaria de pedir: {item.Name} (R$ {item.Price:F2})")" target="_blank" class="btn btn-outline-success btn-sm rounded-pill">
+                                                <i class="bi bi-whatsapp me-1"></i>Pedir este item
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Modal QR Code -->
+<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-forest" id="qrCodeModalLabel">QR Code do Cardápio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="p-4 bg-light rounded-4 d-inline-block mb-3 border">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=@Uri.EscapeDataString($"https://belemrestaurantes.com.br/cardapio/{restaurant.Id}")" alt="QR Code do Cardápio" class="img-fluid rounded" />
+                </div>
+                <h6 class="fw-bold text-forest mb-1">@restaurant.Name</h6>
+                <p class="text-muted small mb-3">Imprima e posicione nas mesas para acesso instantâneo dos clientes via celular.</p>
+                <div class="input-group">
+                    <input type="text" class="form-control form-control-sm text-center" value="https://belemrestaurantes.com.br/cardapio/@restaurant.Id" id="linkCardapio" readonly />
+                    <button class="btn btn-forest btn-sm" type="button" onclick="navigator.clipboard.writeText(document.getElementById('linkCardapio').value); alert('Link copiado!');">
+                        Copiar Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

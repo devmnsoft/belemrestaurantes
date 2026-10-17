@@ -1,0 +1,71 @@
+@model BelemRestaurantes.Domain.Entities.MerchantOrder
+@{
+    ViewData["Title"] = $"Pedido {Model.OrderNumber} - Belém Restaurantes";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 text-center">
+                <div class="mb-3">
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Aguardando Pagamento</span>
+                </div>
+                <h3 class="fw-bold text-forest mb-1">Pedido Gerado com Sucesso!</h3>
+                <p class="text-muted mb-4">Pedido <strong>#@Model.OrderNumber</strong></p>
+
+                <div class="bg-light p-4 rounded-4 mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Plano Contratado:</span>
+                        <strong class="text-uppercase text-forest">@Model.PlanCode</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Valor Mensal:</span>
+                        <strong class="h4 mb-0 text-forest">R$ @Model.Amount.ToString("F2")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Forma de Pagamento:</span>
+                        <strong>PIX Direto MNSOFT</strong>
+                    </div>
+                </div>
+
+                <div class="border rounded-4 p-4 mb-4 text-start">
+                    <h6 class="fw-bold text-forest mb-2">
+                        <i class="bi bi-qr-code me-2 text-warning"></i>Pagamento Instantâneo via PIX
+                    </h6>
+                    <p class="small text-muted mb-3">
+                        Utilize a chave oficial ou copie o código PIX Copia e Cola abaixo no aplicativo do seu banco:
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Chave PIX Oficial (CNPJ):</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm bg-white" value="@Model.PixCnpj" id="pixCnpjInput" readonly />
+                            <button class="btn btn-outline-forest btn-sm" type="button" onclick="navigator.clipboard.writeText(document.getElementById('pixCnpjInput').value); alert('Chave CNPJ copiada!');">
+                                Copiar Chave
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.PixCopyPaste))
+                    {
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-muted">Código PIX Copia e Cola:</label>
+                            <div class="input-group">
+                                <textarea class="form-control form-control-sm bg-white" rows="2" id="pixCopyInput" readonly>@Model.PixCopyPaste</textarea>
+                                <button class="btn btn-outline-forest btn-sm" type="button" onclick="navigator.clipboard.writeText(document.getElementById('pixCopyInput').value); alert('Código PIX copiado!');">
+                                    Copiar Código
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="/partner/@Model.RestaurantId" class="btn btn-forest py-2 fw-bold">
+                        <i class="bi bi-arrow-left me-1"></i>Retornar ao Painel do Restaurante
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

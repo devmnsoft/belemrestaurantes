@@ -1,13 +1,83 @@
-@{ ViewData["Title"] = "Painel administrativo"; }
+@{
+    ViewData["Title"] = T["AdminTitle"].Value + " · MNSOFT";
+}
 <section class="shell section">
-  <h1>Painel MNSOFT — Belém Restaurantes</h1>
-  <ul>
-    <li><a href="/api/admin/review/pending">Restaurantes pendentes de aprovação</a></li>
-    <li>Edição de cidades, bairros e categorias: tabelas DiscoveryTarget e administradores via SQL/seed.</li>
-    <li>Health do sistema: <a href="/health/ready">/health/ready</a></li>
-  </ul>
-  <form method="post" action="@Url.Action("Logout","AdminAccount")">
-    @Html.AntiForgeryToken()
-    <button type="submit">Sair</button>
-  </form>
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ Gestão Governança & Comunidade</span>
+      <h1>@T["AdminTitle"] · MNSOFT</h1>
+      <p class="muted">Belém Restaurantes — Operações e Moderação</p>
+    </div>
+
+    <div>
+      <form method="post" action="@Url.Action("Logout","AdminAccount")">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="ghost">@T["SignOut"]</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-top:24px;">
+    <div class="stat">
+      <span class="n">💬</span>
+      <h3 style="margin:4px 0;"><a href="/admin/experiences">Moderação de Experiências</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Revisão de notas, relatos e recursos de contestação.</p>
+    </div>
+
+    <div class="stat">
+      <span class="n">📷</span>
+      <h3 style="margin:4px 0;"><a href="/admin/photos">Moderação de Fotografias</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Varredura de fotos enviadas pela comunidade.</p>
+    </div>
+
+    <div class="stat">
+      <span class="n">🚩</span>
+      <h3 style="margin:4px 0;"><a href="/admin/reports">Denúncias da Comunidade</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Triagem de conteúdos ofensivos, spam ou PII.</p>
+    </div>
+
+    <div class="stat">
+      <span class="n">👥</span>
+      <h3 style="margin:4px 0;"><a href="/admin/members">Gestão de Membros</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Contas públicas, e-mails confirmados e bloqueios.</p>
+    </div>
+
+    <div class="stat">
+      <span class="n">🏆</span>
+      <h3 style="margin:4px 0;"><a href="/admin/cuia">Selo Cuia & Rankings</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Metodologia transparente e recálculo de posições.</p>
+    </div>
+
+    <div class="stat">
+      <span class="n">🔒</span>
+      <h3 style="margin:4px 0;"><a href="/admin/lgpd">Solicitações LGPD</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Exportação e anonimização de contas de usuários.</p>
+    </div>
+
+    <div class="stat">
+      <span class="n">✉️</span>
+      <h3 style="margin:4px 0;"><a href="/admin/smtp">Monitoramento SMTP</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Fila outbox Locaweb, entregas e dead-letter.</p>
+    </div>
+
+    <div class="stat">
+      <span class="n">🏪</span>
+      <h3 style="margin:4px 0;"><a href="/admin/partner/claims">Reivindicações Parceiros</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Moderação de vínculos e pedidos de comerciantes.</p>
+    </div>
+
+    <div class="stat">
+      <span class="n">🍽️</span>
+      <h3 style="margin:4px 0;"><a href="/api/admin/review/pending">Descoberta Gastronômica</a></h3>
+      <p style="margin:0;font-size:13px;color:#547062;">Aprovação de restaurantes descobertos pelo Worker.</p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:28px;">
+    <h3>Saúde e Diagnóstico dos Serviços</h3>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px;">
+      <a href="/health/ready" target="_blank">✓ /health/ready (Prontidão)</a>
+      <a href="/health/live" target="_blank">✓ /health/live (Liveness)</a>
+    </div>
+  </div>
 </section>

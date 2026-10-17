@@ -9,7 +9,8 @@ using Xunit;
 
 namespace BelemRestaurantes.IntegrationTests;
 
-public class WebEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection("MySql")]
+public class WebEndpointTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -29,10 +30,18 @@ public class WebEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         });
     }
 
+    public async Task InitializeAsync()
+    {
+        using var provider = (ServiceProvider)ServiceContainer.Build();
+        await provider.GetRequiredService<BelemRestaurantes.Infrastructure.Migrations.MigrationRunner>().ApplyAsync(default);
+    }
+
+    public Task DisposeAsync() { _factory.Dispose(); return Task.CompletedTask; }
+
     [Fact]
     public async Task HealthReady_Returns200()
     {
-        var client = _factory.CreateClient();
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
         var response = await client.GetAsync("/health/ready");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -40,7 +49,7 @@ public class WebEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task RestaurantsList_Returns200()
     {
-        var client = _factory.CreateClient();
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
         var response = await client.GetAsync("/api/restaurants?limit=5");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -48,7 +57,7 @@ public class WebEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Home_Returns200()
     {
-        var client = _factory.CreateClient();
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
         var response = await client.GetAsync("/");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

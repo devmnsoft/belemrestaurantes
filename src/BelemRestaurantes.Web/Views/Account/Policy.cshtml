@@ -1,0 +1,2 @@
+@{ var privacy=ViewData["Privacy"] is true; ViewData["Title"]=T[privacy?"Privacy":"Terms"].Value; }
+<section class="shell section narrow"><h1>@ViewData["Title"]</h1><p>@T[privacy?"PrivacyText":"TermsText"]</p><p>2026-10 · Belém Restaurantes</p></section>

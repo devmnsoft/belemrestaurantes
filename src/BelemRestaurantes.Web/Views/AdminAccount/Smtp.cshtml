@@ -1,0 +1,72 @@
+@model IReadOnlyList<dynamic>
+@{
+    ViewData["Title"] = "Monitoramento SMTP Locaweb";
+    var stateCounts = ViewData["StateCounts"] as Dictionary<string, int> ?? new();
+}
+<section class="shell section">
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ Infraestrutura Transacional Locaweb</span>
+      <h1>Monitoramento SMTP</h1>
+      <p class="muted">Status da fila outbox de e-mails transacionais (comercial@belemrestaurantes.com.br).</p>
+    </div>
+    <div>
+      <a href="/admin/dashboard" class="button-link ghost">← Voltar ao painel</a>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="margin:20px 0;">
+    <div class="stat">
+      <span class="n">@(stateCounts.GetValueOrDefault("pending", 0))</span>
+      <span>Pendentes na fila</span>
+    </div>
+    <div class="stat">
+      <span class="n">@(stateCounts.GetValueOrDefault("sending", 0))</span>
+      <span>Em envio (Lease ativo)</span>
+    </div>
+    <div class="stat">
+      <span class="n" style="color:#1e7145;">@(stateCounts.GetValueOrDefault("sent", 0))</span>
+      <span>Entregues com sucesso</span>
+    </div>
+    <div class="stat alert">
+      <span class="n">@(stateCounts.GetValueOrDefault("dead_lettered", 0))</span>
+      <span>Dead-letter (Falhas)</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Últimas 50 Mensagens na Fila</h3>
+    <div style="overflow-x:auto;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Estado</th>
+            <th>Tentativas</th>
+            <th>Criado em</th>
+            <th>Próxima tentativa / Concluído</th>
+            <th>Último erro</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var m in Model)
+          {
+              <tr>
+                <td><code>@m.id</code></td>
+                <td>
+                  @if (m.state == "sent") { <span class="badge green">Sent</span> }
+                  else if (m.state == "pending") { <span class="badge">Pending</span> }
+                  else if (m.state == "sending") { <span class="badge" style="background:#fef9e7;color:#d35400;">Sending</span> }
+                  else { <span class="badge red">Dead-letter</span> }
+                </td>
+                <td>@m.attempts / 6</td>
+                <td>@m.created_at.ToString("g")</td>
+                <td>@(m.completed_at != null ? m.completed_at.ToString("g") : m.next_attempt_at.ToString("g"))</td>
+                <td><code>@(m.last_error ?? "-")</code></td>
+              </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

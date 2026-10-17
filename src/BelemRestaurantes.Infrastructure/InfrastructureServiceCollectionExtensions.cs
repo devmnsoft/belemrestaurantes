@@ -21,6 +21,7 @@ public static class InfrastructureServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        Dapper.SqlMapper.AddTypeHandler(new MySql.UtcDateTimeOffsetHandler());
         services.Configure<GooglePlacesOptions>(configuration.GetSection(GooglePlacesOptions.SectionName));
 
         var googleOptions = configuration
@@ -72,6 +73,13 @@ public static class InfrastructureServiceCollectionExtensions
             breakDuration: TimeSpan.FromMinutes(2)));
         services.AddSingleton<ResilientExecutor>();
 
+        services.AddSingleton<Members.MailPayloadProtector>();
+        services.AddSingleton<IPasswordVerifier, Pbkdf2PasswordVerifier>();
+        services.AddScoped<IMemberAccounts, Members.MySqlMemberAccounts>();
+        services.AddSingleton<Members.ISmtpTransportFactory, Members.DefaultSmtpTransportFactory>();
+        services.AddScoped<ITransactionalMailSender, Members.SmtpTransactionalMailSender>();
+        services.AddScoped<IEmailDispatcher, Members.MySqlEmailDispatcher>();
+
         // Persistência.
         services.AddSingleton(_ =>
         {
@@ -92,6 +100,19 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ICostLedger, MySqlCostLedger>();
         services.AddScoped<IAuditWriter, MySqlAuditWriter>();
         services.AddScoped<MigrationRunner>();
+
+        // Sprint 04 - Módulos Sociais, Fotos, Selo Cuia e Governança LGPD
+        services.AddScoped<IExperienceService, Social.MySqlExperienceService>();
+        services.AddScoped<IPhotoStorageService, Social.DiskPhotoStorageService>();
+        services.AddScoped<ICuiaService, Social.MySqlCuiaService>();
+        services.AddScoped<ILgpdService, Social.MySqlLgpdService>();
+
+        // Sprint 05 - Portal do Restaurante Parceiro, Cardápio Digital Inteligente, Monetização e Roteiros
+        services.AddScoped<IPartnerAuthorizationService, Partner.MySqlPartnerAuthorizationService>();
+        services.AddScoped<IPartnerPortalService, Partner.MySqlPartnerPortalService>();
+        services.AddScoped<IMenuService, Partner.MySqlMenuService>();
+        services.AddScoped<IMonetizationService, Partner.MySqlMonetizationService>();
+        services.AddScoped<IMobilityTrailService, Partner.MySqlMobilityTrailService>();
 
         services.AddHttpClient("googleplaces", client =>
         {

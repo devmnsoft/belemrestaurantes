@@ -98,7 +98,14 @@ public sealed class MySqlRatingRepository(MySqlConnectionFactory factory) : IRat
         return avg is null || avg.ToString() == string.Empty ? null : Convert.ToDouble(avg, System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    private sealed record RatingRow(long Id, string UserSubject, int Stars, string? Review, DateTimeOffset CreatedAt);
+    private sealed class RatingRow
+    {
+        public long Id { get; set; } = default!;
+        public string UserSubject { get; set; } = default!;
+        public int Stars { get; set; } = default!;
+        public string? Review { get; set; } = default!;
+        public DateTimeOffset CreatedAt { get; set; } = default!;
+    }
 }
 
 public sealed class MySqlDeletionRequestRepository(MySqlConnectionFactory factory) : IDeletionRequestRepository
@@ -141,5 +148,14 @@ public sealed class MySqlDeletionRequestRepository(MySqlConnectionFactory factor
             new { id }, cancellationToken: ct));
     }
 
-    private sealed record DeletionRow(long Id, string Requester, string TargetType, long TargetId, string? Reason, string Status, DateTimeOffset RequestedAt);
+    private sealed class DeletionRow
+    {
+        public long Id { get; set; } = default!;
+        public string Requester { get; set; } = default!;
+        public string TargetType { get; set; } = default!;
+        public long TargetId { get; set; } = default!;
+        public string? Reason { get; set; } = default!;
+        public string Status { get; set; } = default!;
+        public DateTimeOffset RequestedAt { get; set; } = default!;
+    }
 }

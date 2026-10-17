@@ -1,0 +1,293 @@
+@model BelemRestaurantes.Application.Abstractions.ExperienceView
+@{
+    ViewData["Title"] = $"{Model.AuthorName} sobre {Model.RestaurantName}";
+    ViewData["OgTitle"] = $"{Model.AuthorName} avaliou {Model.RestaurantName} no Belém Restaurantes";
+    ViewData["OgDescription"] = Model.ReviewText ?? $"Avaliação {Model.Stars} estrelas em {Model.RestaurantCity}. Pratos: {Model.DishesConsumed}";
+    ViewData["OgUrl"] = $"{Context.Request.Scheme}://{Context.Request.Host}/experience/{Model.Id}";
+    if (Model.Photos.Count > 0)
+    {
+        ViewData["OgImage"] = $"{Context.Request.Scheme}://{Context.Request.Host}/media/photo/{Model.Photos[0].FileName}";
+    }
+
+    var comments = ViewData["Comments"] as IReadOnlyList<BelemRestaurantes.Application.Abstractions.CommentView> ?? [];
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var isAuthor = !string.IsNullOrEmpty(currentUserId) && currentUserId == Model.UserId;
+    var shareUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/experience/{Model.Id}";
+    var shareText = $"Veja a experiência de {Model.AuthorName} no restaurante {Model.RestaurantName} ({Model.RestaurantCity}): {shareUrl}";
+}
+
+<section class="shell section narrow">
+  @if (TempData["Flash"] is string flash)
+  {
+      <div class="flash">@flash</div>
+  }
+  @if (TempData["SuccessMessage"] is string success)
+  {
+      <div class="flash">@success</div>
+  }
+  @if (TempData["ErrorMessage"] is string error)
+  {
+      <div class="panel warn"><p style="color:#b03a2e;margin:0;">@error</p></div>
+  }
+  @if (TempData["ReportNotice"] is string reportNotice)
+  {
+      <div class="flash">@reportNotice</div>
+  }
+
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ <a href="/establishment/@Model.RestaurantId" style="color:inherit;text-decoration:none;">@Model.RestaurantName · @Model.RestaurantCity</a></span>
+      <h1 style="margin:8px 0 12px;font-size:clamp(28px,4vw,40px);">Experiência de @Model.AuthorName</h1>
+      <p class="muted" style="margin:0;">
+        Publicada em @Model.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")
+        @if (Model.Visibility != "public")
+        {
+            <span class="badge" style="background:#e8f4f8;color:#2980b9;">🔒 @Model.Visibility</span>
+        }
+        @if (Model.Status == "pending")
+        {
+            <span class="badge" style="background:#fef9e7;color:#d35400;">⏳ @T["PendingModerationNotice"]</span>
+        }
+        @if (Model.Status == "rejected")
+        {
+            <span class="badge red">⚠️ @T["RejectedNotice"]</span>
+        }
+      </p>
+    </div>
+
+    @if (isAuthor)
+    {
+        <div style="display:flex;gap:10px;">
+          <a href="/experience/edit/@Model.Id" class="button-link ghost">@T["EditExperience"]</a>
+          <form method="post" action="/experience/delete/@Model.Id" onsubmit="return confirm('Deseja realmente excluir esta experiência?');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="danger">@T["DeleteExperience"]</button>
+          </form>
+        </div>
+    }
+  </div>
+
+  @if (Model.Status == "rejected" && !string.IsNullOrWhiteSpace(Model.RejectionReason))
+  {
+      <div class="panel warn" style="margin:16px 0;">
+        <h3 style="color:#b03a2e;margin:0 0 6px;">Motivo da moderação:</h3>
+        <p style="margin:0;">@Model.RejectionReason</p>
+
+        @if (isAuthor && Model.AppealStatus == "none")
+        {
+            <div style="margin-top:14px;border-top:1px dashed #dce7dc;padding-top:12px;">
+              <h4>@T["SubmitAppeal"]</h4>
+              <form method="post" action="/experience/@Model.Id/appeal">
+                @Html.AntiForgeryToken()
+                <label>@T["AppealText"]</label>
+                <textarea name="appealText" rows="3" required maxlength="1000" style="width:100%;padding:10px;border:1px solid #cddccf;border-radius:8px;" placeholder="Explique por que esta publicação deve ser revisada..."></textarea>
+                <div style="margin-top:8px;">
+                  <button type="submit">Enviar recurso</button>
+                </div>
+              </form>
+            </div>
+        }
+        else if (Model.AppealStatus == "pending")
+        {
+            <p style="margin-top:10px;color:#d35400;font-weight:600;">⏳ Seu recurso está em análise pelos moderadores.</p>
+        }
+      </div>
+  }
+
+  <!-- Notas e Detalhes -->
+  <div class="panel" style="margin-top:18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #edf2ec;padding-bottom:14px;">
+      <div>
+        <span style="font-size:13px;color:#547062;text-transform:uppercase;letter-spacing:1px;font-weight:700;">@T["OverallRating"]</span>
+        <div style="font-size:26px;color:#e67e22;letter-spacing:3px;">
+          @string.Concat(Enumerable.Repeat("★", Model.Stars))@string.Concat(Enumerable.Repeat("☆", 5 - Model.Stars))
+          <span style="font-size:18px;color:#203d33;font-weight:750;margin-left:6px;">@Model.Stars / 5</span>
+        </div>
+      </div>
+      @if (Model.PricePaid.HasValue)
+      {
+          <div style="background:#eafaf1;padding:8px 16px;border-radius:12px;border:1px solid #a9dfbf;">
+            <span style="font-size:12px;color:#1e8449;font-weight:700;">@T["PricePaid"]</span>
+            <div style="font-size:18px;font-weight:800;color:#145a32;">R$ @Model.PricePaid.Value.ToString("N2")</div>
+          </div>
+      }
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;padding:12px 0;">
+      <div style="background:#f4f7f4;padding:8px;border-radius:8px;">
+        <small style="color:#547062;">@T["ServiceRating"]</small>
+        <div style="font-weight:800;color:#174b3c;font-size:16px;">@Model.ServiceStars ★</div>
+      </div>
+      <div style="background:#f4f7f4;padding:8px;border-radius:8px;">
+        <small style="color:#547062;">@T["FlavorRating"]</small>
+        <div style="font-weight:800;color:#174b3c;font-size:16px;">@Model.FlavorStars ★</div>
+      </div>
+      <div style="background:#f4f7f4;padding:8px;border-radius:8px;">
+        <small style="color:#547062;">@T["AmbianceRating"]</small>
+        <div style="font-weight:800;color:#174b3c;font-size:16px;">@Model.AmbianceStars ★</div>
+      </div>
+      <div style="background:#f4f7f4;padding:8px;border-radius:8px;">
+        <small style="color:#547062;">@T["CostBenefitRating"]</small>
+        <div style="font-weight:800;color:#174b3c;font-size:16px;">@Model.CostBenefitStars ★</div>
+      </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.DishesConsumed))
+    {
+        <div style="margin:10px 0;">
+          <b>🍴 @T["DishesConsumed"]:</b>
+          <span style="color:#203d33;">@Model.DishesConsumed</span>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ReviewText))
+    {
+        <div style="margin:12px 0;font-size:16px;line-height:1.6;color:#1e352b;white-space:pre-line;">
+          @Model.ReviewText
+        </div>
+    }
+
+    <!-- Galeria de Fotos Anexadas -->
+    @if (Model.Photos.Count > 0)
+    {
+        <div style="margin:16px 0;">
+          <h4 style="margin:0 0 10px;">Fotografias anexadas (@Model.Photos.Count)</h4>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;">
+            @foreach (var photo in Model.Photos)
+            {
+                <a href="/media/photo/@photo.FileName" target="_blank" style="display:block;height:160px;border-radius:12px;overflow:hidden;border:1px solid #dce7dc;">
+                  <img src="/media/thumb/@photo.ThumbnailName" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+                </a>
+            }
+          </div>
+        </div>
+    }
+
+    <!-- Interações Sociais (Curtir e Compartilhar) -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-top:1px solid #edf2ec;padding-top:14px;margin-top:10px;">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <form method="post" action="/experience/@Model.Id/like">
+          @Html.AntiForgeryToken()
+          <button type="submit" class="ghost" style="padding:8px 16px;display:inline-flex;align-items:center;gap:6px;">
+            <span>@(Model.HasLiked ? "❤️" : "🤍")</span>
+            <b>@T["Like"]</b>
+            <span>(@Model.LikesCount)</span>
+          </button>
+        </form>
+
+        <span style="color:#547062;font-size:14px;">💬 @Model.CommentsCount @T["Comments"]</span>
+      </div>
+
+      <!-- Barra de Compartilhamento Social -->
+      @if (Model.Visibility == "public" && Model.Status == "approved")
+      {
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:13px;font-weight:700;color:#547062;">@T["ShareExperience"]:</span>
+            
+            <a href="https://api.whatsapp.com/send?text=@Uri.EscapeDataString(shareText)" target="_blank" rel="noopener noreferrer" class="badge" style="background:#25d366;color:#fff;text-decoration:none;padding:6px 12px;" title="WhatsApp">
+              WhatsApp
+            </a>
+
+            <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(shareUrl)" target="_blank" rel="noopener noreferrer" class="badge" style="background:#1877f2;color:#fff;text-decoration:none;padding:6px 12px;" title="Facebook">
+              Facebook
+            </a>
+
+            <button type="button" id="copyShareBtn" class="badge" style="background:#174b3c;color:#fff;border:0;cursor:pointer;padding:6px 12px;">
+              🔗 @T["CopyLink"]
+            </button>
+
+            <button type="button" id="nativeShareBtn" class="badge" style="background:#a66525;color:#fff;border:0;cursor:pointer;padding:6px 12px;display:none;">
+              📲 @T["ShareNative"]
+            </button>
+          </div>
+      }
+    </div>
+  </div>
+
+  <!-- Comentários Comunitários -->
+  <section id="comentarios" style="margin-top:34px;">
+    <h3>@T["Comments"] (@comments.Count)</h3>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <form method="post" action="/experience/@Model.Id/comment" class="panel" style="margin-bottom:20px;">
+          @Html.AntiForgeryToken()
+          <label><b>@T["AddComment"]</b></label>
+          <textarea name="commentText" rows="3" required maxlength="1000" placeholder="Deixe seu comentário sobre este relato ou prato..." style="width:100%;padding:10px;border:1px solid #cddccf;border-radius:8px;"></textarea>
+          <div style="text-align:right;margin-top:8px;">
+            <button type="submit">@T["SendComment"]</button>
+          </div>
+        </form>
+    }
+    else
+    {
+        <p class="muted"><a href="/account/login?returnUrl=/experience/@Model.Id">Faça login</a> para participar da conversa e comentar.</p>
+    }
+
+    <div style="display:grid;gap:12px;">
+      @foreach (var c in comments)
+      {
+          <div class="panel" style="padding:14px;background:#fafcfb;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <strong>@c.AuthorName</strong>
+              <small class="muted">@c.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")</small>
+            </div>
+            <p style="margin:0;font-size:14px;color:#203d33;">@c.CommentText</p>
+          </div>
+      }
+    </div>
+  </section>
+
+  <!-- Denúncia de Conteúdo Inadequado -->
+  @if (User.Identity?.IsAuthenticated == true && !isAuthor)
+  {
+      <div style="margin-top:30px;text-align:right;">
+        <details>
+          <summary style="cursor:pointer;font-size:13px;color:#b03a2e;">🚩 @T["ReportContent"]</summary>
+          <form method="post" action="/experience/@Model.Id/report" class="panel" style="margin-top:10px;text-align:left;">
+            @Html.AntiForgeryToken()
+            <label>@T["ReportReason"]</label>
+            <select name="reason" required>
+              <option value="offensive">Linguagem ofensiva ou assédio</option>
+              <option value="pii">Divulgação de dados pessoais sensíveis</option>
+              <option value="fake">Avaliação falsa ou difamatória</option>
+              <option value="spam">Spam ou autopromoção comercial</option>
+              <option value="other">Outro motivo</option>
+            </select>
+            <label>@T["ReportNotes"]</label>
+            <input name="notes" maxlength="500" placeholder="Descreva brevemente a irregularidade..." />
+            <div style="margin-top:10px;">
+              <button type="submit" class="danger">Enviar denúncia para moderação</button>
+            </div>
+          </form>
+        </details>
+      </div>
+  }
+</section>
+
+@section Scripts {
+<script>
+  const copyBtn = document.getElementById('copyShareBtn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText('@shareUrl').then(() => {
+        const orig = copyBtn.innerText;
+        copyBtn.innerText = '✅ @T["LinkCopied"]';
+        setTimeout(() => copyBtn.innerText = orig, 3000);
+      });
+    });
+  }
+
+  const nativeBtn = document.getElementById('nativeShareBtn');
+  if (nativeBtn && navigator.share) {
+    nativeBtn.style.display = 'inline-block';
+    nativeBtn.addEventListener('click', () => {
+      navigator.share({
+        title: '@Model.AuthorName sobre @Model.RestaurantName',
+        text: '@shareText',
+        url: '@shareUrl'
+      }).catch(() => {});
+    });
+  }
+</script>
+}

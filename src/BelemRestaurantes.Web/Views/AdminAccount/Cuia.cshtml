@@ -1,0 +1,80 @@
+@model IReadOnlyDictionary<string, IReadOnlyList<BelemRestaurantes.Application.Abstractions.CuiaBadgeView>>
+@{
+    ViewData["Title"] = "Selo Cuia & Rankings";
+}
+<section class="shell section">
+  @if (TempData["Flash"] is string flash)
+  {
+      <div class="flash">@flash</div>
+  }
+
+  <div class="heading">
+    <div>
+      <span class="overline dark">✦ Classificação Própria MNSOFT</span>
+      <h1>Selo Cuia & Rankings Gastronômicos</h1>
+      <p class="muted">Metodologia bayesiana transparente, antifraude e categorizada.</p>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="/admin/cuia/recalculate" onsubmit="return confirm('Deseja recalcular todas as posições do Selo Cuia a partir das avaliações aprovadas?');">
+        @Html.AntiForgeryToken()
+        <button type="submit" style="background:#174b3c;">🔄 Recalcular Rankings</button>
+      </form>
+      <a href="/admin/dashboard" class="button-link ghost">← Voltar ao painel</a>
+    </div>
+  </div>
+
+  <div class="panel" style="background:#f4f7f4;margin:20px 0;">
+    <h3 style="margin-top:0;">Metodologia do Selo Cuia</h3>
+    <p style="font-size:14px;color:#355d4c;margin:4px 0;">
+      A nota do Selo Cuia é 100% independente do Google. O cálculo aplica média bayesiana ponderada (fator neutro m=3, C=4.0) sobre o volume de avaliações aprovadas pela comunidade, mitigando fraudes e distorções de pequenas amostras.
+    </p>
+  </div>
+
+  @if (Model.Count == 0)
+  {
+      <div class="panel" style="text-align:center;padding:40px;">
+        <p class="muted">Nenhum ranking calculado ainda. Clique no botão "Recalcular Rankings" acima.</p>
+      </div>
+  }
+  else
+  {
+      <div style="display:grid;gap:24px;">
+        @foreach (var kv in Model)
+        {
+            <div class="panel">
+              <h2 style="margin:0 0 12px;font-size:20px;color:#174b3c;">
+                🏆 @(BelemRestaurantes.Domain.Rules.CuiaRatingRules.CategoryTitles.GetValueOrDefault(kv.Key, kv.Key))
+              </h2>
+
+              <div style="overflow-x:auto;">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th style="width:60px;">Posição</th>
+                      <th>Restaurante</th>
+                      <th>Cidade</th>
+                      <th>Pontuação Cuia</th>
+                      <th>Avaliações Aprovadas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach (var r in kv.Value)
+                    {
+                        <tr>
+                          <td><b style="font-size:16px;color:#a66525;">#@r.RankPosition</b></td>
+                          <td>
+                            <a href="/establishment/@r.RestaurantId" target="_blank" style="color:#174b3c;font-weight:700;">@r.RestaurantName</a>
+                          </td>
+                          <td>@r.RestaurantCity</td>
+                          <td><b>@r.Score.ToString("F2")</b> / 5.00</td>
+                          <td>@r.ApprovedReviewsCount</td>
+                        </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+        }
+      </div>
+  }
+</section>

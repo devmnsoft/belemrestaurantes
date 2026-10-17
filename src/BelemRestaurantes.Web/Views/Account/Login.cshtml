@@ -1,0 +1,12 @@
+@model BelemRestaurantes.Web.Models.MemberLoginInput
+@{ ViewData["Title"] = T["SignIn"].Value; }
+<section class="shell section narrow"><h1>@T["SignIn"]</h1>
+<form method="post" action="/account/login" class="panel">
+  @Html.AntiForgeryToken()
+  <input asp-for="ReturnUrl" type="hidden" />
+  <label>@T["Email"]<input asp-for="Email" type="email" autocomplete="username" required maxlength="200" /></label>
+  <label>@T["Password"]<input name="Password" type="password" autocomplete="current-password" required maxlength="256" /></label>
+  <label class="check-label"><input asp-for="Remember" type="checkbox" /> @T["Remember"]</label>
+  <div asp-validation-summary="All" role="alert"></div><button type="submit">@T["SignIn"]</button>
+  <a href="/account/forgot">@T["ForgotPassword"]</a><a href="/account/resend">@T["ResendEmail"]</a><a href="/account/register">@T["Register"]</a>
+</form></section>

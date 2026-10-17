@@ -1,1 +1,61 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="description" content="Belém Restaurantes: sabores e experiências gastronômicas do Pará"/><title>Belém Restaurantes | O Pará tem sabor</title><link rel="stylesheet" asp-append-version="true" href="~/css/site.css"/></head><body><header><a asp-controller="Home" asp-action="Index" class="brand"><span class="mark">✦</span> belém <strong>restaurantes</strong></a><nav><a href="#catalogo">Explorar</a><a href="#mobilidade">Mobilidade</a><a href="#indicacao">Indicar restaurante</a></nav></header><main>@RenderBody()</main><footer>Belém Restaurantes · O Pará tem sabor · MNSOFT · <a href="mailto:contato@mnsoft.com.br">Contato</a><br/><small>Informações de terceiros podem estar desatualizadas. Confirme antes de visitar.</small></footer><script src="~/js/site.js" asp-append-version="true"></script></body></html>
+@using System.Globalization
+@using BelemRestaurantes.Web.Localization
+<!DOCTYPE html>
+<html lang="@CultureInfo.CurrentUICulture.Name">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="@(ViewData["MetaDescription"] ?? T["Description"].Value)" />
+  <title>@(ViewData["Title"] ?? T["Tagline"].Value) | Belém Restaurantes</title>
+
+  @if (ViewData["OgTitle"] is not null)
+  {
+      <meta property="og:title" content="@ViewData["OgTitle"]" />
+      <meta property="og:description" content="@(ViewData["OgDescription"] ?? T["Description"].Value)" />
+      <meta property="og:url" content="@ViewData["OgUrl"]" />
+      <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
+      @if (ViewData["OgImage"] is not null)
+      {
+          <meta property="og:image" content="@ViewData["OgImage"]" />
+      }
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="@ViewData["OgTitle"]" />
+      <meta name="twitter:description" content="@(ViewData["OgDescription"] ?? T["Description"].Value)" />
+  }
+
+  <link rel="stylesheet" asp-append-version="true" href="~/css/site.css" />
+  @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+<header>
+  <a asp-controller="Home" asp-action="Index" class="brand"><span class="mark">✦</span> belém <strong>restaurantes</strong></a>
+  <nav aria-label="@T["Explore"]">
+    <a href="/#catalogo">@T["Explore"]</a>
+    <a href="/community">@T["CommunityFeedTitle"]</a>
+    <a href="/roteiros">Roteiros</a>
+    <a href="/#mobilidade">@T["Mobility"]</a>
+    <a href="/partner/dashboard">Portal Parceiro</a>
+    <a href="/account">@T["MyAccount"]</a>
+  </nav>
+  <form method="post" action="/language" class="language-picker">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+    <label for="language">@T["Language"]</label>
+    <select id="language" name="culture">
+      @foreach (var language in SupportedLanguages.All)
+      {
+        <option value="@language.Code" selected="@(language.Code == CultureInfo.CurrentUICulture.Name)">@language.Name</option>
+      }
+    </select>
+    <button type="submit">@T["Apply"]</button>
+  </form>
+</header>
+<main>@RenderBody()</main>
+<footer>
+  Belém Restaurantes · @T["Tagline"] · MNSOFT · <a href="mailto:comercial@belemrestaurantes.com.br">@T["Contact"]</a>
+  <br /><small>@T["ExternalNotice"]</small>
+</footer>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

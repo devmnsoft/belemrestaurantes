@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Dapper;
 using BelemRestaurantes.Application.Models;
 using BelemRestaurantes.Domain.Entities;
@@ -9,9 +10,21 @@ namespace BelemRestaurantes.Infrastructure.MySql;
 /// <c>FOR UPDATE SKIP LOCKED</c>: duas instâncias do Windows Service nunca
 /// processam o mesmo job, mesmo started ao mesmo tempo.
 /// </summary>
-public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock clock) : IDiscoveryQueue
+public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock clock, Microsoft.Extensions.Configuration.IConfiguration configuration) : IDiscoveryQueue
 {
-    public async Task<IReadOnlyList<DiscoveryWorkItem>> ClaimDueAsync(
+    public async Task<IReadOnlyList<DiscoveryWorkItem>> ClaimDueAsync(int batchSize, string instanceId, TimeSpan lockDuration, CancellationToken ct)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try { return await ClaimOnceAsync(batchSize, instanceId, lockDuration, ct); }
+            catch (MySqlConnector.MySqlException ex) when (attempt < 2 && ex.Number is 1213 or 1205)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(50 * (attempt + 1) + Random.Shared.Next(50)), ct);
+            }
+        }
+    }
+
+    private async Task<IReadOnlyList<DiscoveryWorkItem>> ClaimOnceAsync(
         int batchSize,
         string instanceId,
         TimeSpan lockDuration,
@@ -22,15 +35,14 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
         var lockedUntil = now.Add(lockDuration);
 
         await using var connection = await factory.OpenAsync(ct);
-        await connection.OpenAsync(ct);
-        await using var transaction = await connection.BeginTransactionAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted, ct);
 
         var rows = (await connection.QueryAsync<JobRow>(new CommandDefinition(
             """
-            SELECT id, target_id, city, category, attempts
-            FROM discovery_jobs
-            WHERE state = 'pending' AND next_attempt_at <= @now
-            ORDER BY next_attempt_at, id
+            SELECT j.id, j.target_id, j.city, j.category, j.attempts
+            FROM discovery_jobs j JOIN discovery_targets t ON t.id = j.target_id
+            WHERE j.state = 'pending' AND j.next_attempt_at <= @now AND t.enabled = TRUE
+            ORDER BY j.next_attempt_at, j.id
             LIMIT @batchSize
             FOR UPDATE SKIP LOCKED
             """,
@@ -65,6 +77,14 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
     {
         await using var connection = await factory.OpenAsync(ct);
 
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            """
+            UPDATE discovery_targets t JOIN discovery_jobs j ON j.target_id = t.id
+            SET t.next_run_at = @nextRun, t.last_success_at = @now, t.locked_until = NULL, t.last_error = NULL
+            WHERE j.id = @jobId AND j.state = 'running'
+            """, new { jobId, now = clock.UtcNow, nextRun = clock.UtcNow.AddMinutes(Math.Max(10, configuration.GetValue<int>("Discovery:TargetRefreshMinutes", 10080))) },
+            transaction, cancellationToken: ct));
         await connection.ExecuteAsync(new CommandDefinition(
             """
             UPDATE discovery_jobs
@@ -72,7 +92,8 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
             WHERE id = @jobId
             """,
             new { jobId, now = clock.UtcNow },
-            cancellationToken: ct));
+            transaction, cancellationToken: ct));
+        await transaction.CommitAsync(ct);
     }
 
     public async Task FailAsync(long jobId, string error, TimeSpan backoff, int maxAttempts, CancellationToken ct)
@@ -84,9 +105,9 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
         await connection.ExecuteAsync(new CommandDefinition(
             """
             UPDATE discovery_jobs
-            SET attempts = attempts + 1,
-                state = CASE WHEN attempts + 1 >= @maxAttempts THEN 'dead_lettered' ELSE 'pending' END,
-                next_attempt_at = CASE WHEN attempts + 1 >= @maxAttempts THEN @now ELSE @nextAttempt END END,
+            SET state = CASE WHEN attempts + 1 >= @maxAttempts THEN 'dead_lettered' ELSE 'pending' END,
+                next_attempt_at = CASE WHEN attempts + 1 >= @maxAttempts THEN @now ELSE @nextAttempt END,
+                attempts = attempts + 1,
                 locked_until = NULL,
                 locked_by = NULL,
                 last_error = @error
@@ -126,6 +147,11 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
     {
         await using var connection = await factory.OpenAsync(ct);
 
+        var acquired = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+            "SELECT GET_LOCK('belrestaurante:enqueue', 0)", cancellationToken: ct));
+        if (acquired != 1) return 0;
+        try
+        {
         // Um job por alvo vencido, e apenas se não houver job aberto para ele.
         var created = await connection.ExecuteAsync(new CommandDefinition(
             """
@@ -137,7 +163,7 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
               AND (t.locked_until IS NULL OR t.locked_until <= @now)
               AND NOT EXISTS (
                   SELECT 1 FROM discovery_jobs j
-                  WHERE j.target_id = t.id AND j.state IN ('pending','running')
+                  WHERE j.target_id = t.id AND j.state IN ('pending','running','dead_lettered')
               )
             """,
             new { now },
@@ -151,7 +177,7 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
                 UPDATE discovery_targets t
                 JOIN discovery_jobs j ON j.target_id = t.id
                 SET t.locked_until = @now, t.attempts = t.attempts + 1
-                WHERE t.locked_until IS NULL OR t.locked_until <= @now
+                WHERE (t.locked_until IS NULL OR t.locked_until <= @now)
                   AND j.state = 'pending'
                 """,
                 new { now },
@@ -159,6 +185,12 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
         }
 
         return created;
+        }
+        finally
+        {
+            await connection.ExecuteScalarAsync<int?>(new CommandDefinition(
+                "SELECT RELEASE_LOCK('belrestaurante:enqueue')", cancellationToken: CancellationToken.None));
+        }
     }
 
     public async Task<int> CountPendingAsync(CancellationToken ct)
@@ -177,5 +209,12 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
             "SELECT COUNT(*) FROM discovery_jobs WHERE state = 'dead_lettered'", cancellationToken: ct));
     }
 
-    private sealed record JobRow(long id, long target_id, string city, string category, int attempts);
+    private sealed class JobRow
+    {
+        public long id { get; set; } = default!;
+        public long target_id { get; set; } = default!;
+        public string city { get; set; } = default!;
+        public string category { get; set; } = default!;
+        public int attempts { get; set; } = default!;
+    }
 }

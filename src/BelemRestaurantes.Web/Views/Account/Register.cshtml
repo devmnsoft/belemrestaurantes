@@ -1,0 +1,18 @@
+@model BelemRestaurantes.Web.Models.RegisterInput
+@{ ViewData["Title"] = T["Register"].Value; }
+<section class="shell section narrow">
+  <h1>@T["Register"]</h1><p>@T["NoCpf"]</p>
+  <form method="post" action="/account/register" class="panel">
+    @Html.AntiForgeryToken()
+    <label>@T["FullName"]<input asp-for="FullName" autocomplete="name" required maxlength="160" minlength="2" /></label>
+    <label>@T["Email"]<input asp-for="Email" type="email" autocomplete="email" required maxlength="200" /></label>
+    <label>@T["Password"]<input name="Password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></label>
+    <label>@T["ConfirmPassword"]<input name="ConfirmPassword" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></label>
+    <p class="muted">@T["PasswordRules"]</p>
+    <div class="honeypot" aria-hidden="true"><label>Website<input name="Website" tabindex="-1" autocomplete="off" /></label></div>
+    <label class="check-label"><input asp-for="AcceptTerms" type="checkbox" required /> @T["AcceptTerms"]</label>
+    <p><a href="/account/terms" target="_blank" rel="noopener">@T["Terms"]</a> · <a href="/account/privacy" target="_blank" rel="noopener">@T["Privacy"]</a></p>
+    <div asp-validation-summary="All" role="alert"></div>
+    <button type="submit">@T["Register"]</button><a href="/account/login">@T["SignIn"]</a>
+  </form>
+</section>

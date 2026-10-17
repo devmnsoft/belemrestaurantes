@@ -1,10 +1,9 @@
-# uninstall-service.ps1
-$serviceName = "BelemRestauranteCuiaDiscovery"
-$service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
-if ($service) {
-    Stop-Service -Name $serviceName -Force
-    sc.exe delete $serviceName | Out-Null
-    Write-Host "Service removido."
-} else {
-    Write-Host "Service não encontrado."
-}
+param([string]$ServiceName = 'BelemRestauranteCuiaDiscovery')
+$ErrorActionPreference = 'Stop'
+$service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+if (-not $service) { Write-Host 'Serviço não instalado.'; return }
+Stop-Service -Name $ServiceName
+$service.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(60))
+sc.exe delete $ServiceName | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Falha ao remover registro do serviço.' }
+Write-Host 'Serviço removido. Arquivos, configurações, logs e banco preservados.'

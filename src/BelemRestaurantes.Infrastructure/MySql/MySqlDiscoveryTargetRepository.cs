@@ -28,7 +28,6 @@ public sealed class MySqlDiscoveryTargetRepository(MySqlConnectionFactory factor
         var now = clock.UtcNow;
 
         await using var connection = await factory.OpenAsync(ct);
-        await connection.OpenAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
 
         var changed = await connection.ExecuteAsync(new CommandDefinition(
@@ -111,9 +110,18 @@ public sealed class MySqlDiscoveryTargetRepository(MySqlConnectionFactory factor
         row.last_success_at,
         row.last_error);
 
-    private sealed record TargetRow(
-        long id, string city, string category, bool enabled, DateTimeOffset next_run_at,
-        DateTimeOffset? locked_until, int attempts, DateTimeOffset? last_success_at, string? last_error);
+    private sealed class TargetRow
+    {
+        public long id { get; set; } = default!;
+        public string city { get; set; } = default!;
+        public string category { get; set; } = default!;
+        public bool enabled { get; set; } = default!;
+        public DateTimeOffset next_run_at { get; set; } = default!;
+        public DateTimeOffset? locked_until { get; set; } = default!;
+        public int attempts { get; set; } = default!;
+        public DateTimeOffset? last_success_at { get; set; } = default!;
+        public string? last_error { get; set; } = default!;
+    }
 }
 
 /// <summary>Telemetria de execução dos ciclos, consumida pelo dashboard.</summary>

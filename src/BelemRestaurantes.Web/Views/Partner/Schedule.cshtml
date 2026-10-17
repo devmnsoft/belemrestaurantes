@@ -1,0 +1,173 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantSchedule>
+@{
+    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var specialSchedules = (IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantSpecialSchedule>)ViewBag.SpecialSchedules;
+    ViewData["Title"] = $"Horários e Feriados - {restaurant.Name}";
+
+    string[] dayNames = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="/partner/dashboard" class="text-forest text-decoration-none">Portal do Parceiro</a></li>
+                    <li class="breadcrumb-item"><a href="/partner/@restaurant.Id" class="text-forest text-decoration-none">@restaurant.Name</a></li>
+                    <li class="breadcrumb-item active">Horários</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold text-forest mb-0">Horários de Funcionamento & Feriados</h1>
+        </div>
+        <a href="/partner/@restaurant.Id" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao Painel
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Grade Regular Semanal -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold text-forest mb-3">
+                    <i class="bi bi-calendar-week me-2 text-warning"></i>Grade Semanal Regular
+                </h5>
+                <p class="text-muted small mb-4">
+                    Configure os horários padrão de abertura e fechamento para cada dia da semana. Se o local não abre em determinado dia, marque a opção "Fechado".
+                </p>
+
+                <form method="post" action="/partner/@restaurant.Id/schedule">
+                    @Html.AntiForgeryToken()
+
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%;">Dia</th>
+                                    <th style="width: 25%;">Abre</th>
+                                    <th style="width: 25%;">Fecha</th>
+                                    <th style="width: 20%;" class="text-center">Fechado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i <= 6; i++)
+                                {
+                                    var day = (byte)i;
+                                    var schedule = Model.FirstOrDefault(s => s.DayOfWeek == day);
+                                    var isClosed = schedule?.IsClosed ?? (day == 1); // segunda padrão fechado
+                                    var openTime = schedule?.OpenTime?.ToString(@"hh\:mm") ?? "11:30";
+                                    var closeTime = schedule?.CloseTime?.ToString(@"hh\:mm") ?? "23:00";
+
+                                    <tr>
+                                        <td class="fw-bold">
+                                            @dayNames[i]
+                                            <input type="hidden" name="schedules[@i].DayOfWeek" value="@i" />
+                                        </td>
+                                        <td>
+                                            <input type="time" name="schedules[@i].OpenTime" value="@openTime" class="form-control form-control-sm" />
+                                        </td>
+                                        <td>
+                                            <input type="time" name="schedules[@i].CloseTime" value="@closeTime" class="form-control form-control-sm" />
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check form-switch d-inline-block">
+                                                <input class="form-check-input" type="checkbox" name="schedules[@i].IsClosed" value="true" @(isClosed ? "checked" : "") id="chkClosed_@i" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-forest px-4">
+                            <i class="bi bi-save me-1"></i>Salvar Horários Regulares
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Horários Especiais e Feriados -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h5 class="fw-bold text-forest mb-3">
+                    <i class="bi bi-star me-2 text-warning"></i>Adicionar Feriado / Data Especial
+                </h5>
+                <p class="text-muted small mb-3">
+                    Cadastre alterações para o Círio de Nazaré, Natal, Ano Novo ou folgas extraordinárias.
+                </p>
+
+                <form method="post" action="/partner/@restaurant.Id/schedule/special">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Data Específica *</label>
+                        <input type="date" name="SpecificDate" class="form-control form-control-sm" required min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Motivo ou Nome do Feriado *</label>
+                        <input type="text" name="Reason" class="form-control form-control-sm" placeholder="Ex: Domingo do Círio, Réveillon" required />
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Abre às</label>
+                            <input type="time" name="OpenTime" class="form-control form-control-sm" value="12:00" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Fecha às</label>
+                            <input type="time" name="CloseTime" class="form-control form-control-sm" value="18:00" />
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="IsClosed" value="true" id="chkSpecialClosed" />
+                        <label class="form-check-label small" for="chkSpecialClosed">Permanecerá totalmente fechado neste dia</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-forest btn-sm w-100">
+                        <i class="bi bi-plus-circle me-1"></i>Salvar Horário Especial
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de Datas Especiais Cadastradas -->
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h6 class="fw-bold text-forest mb-2">Próximos Horários Especiais</h6>
+                @if (specialSchedules.Count == 0)
+                {
+                    <p class="text-muted small mb-0">Nenhuma data especial ou feriado cadastrado para os próximos dias.</p>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var sp in specialSchedules)
+                        {
+                            <div class="list-group-item px-0 py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="small text-forest">@sp.SpecificDate.ToString("dd/MM/yyyy")</strong>
+                                        <div class="text-muted small">@sp.Reason</div>
+                                    </div>
+                                    <span class="badge @(sp.IsClosed ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success")">
+                                        @(sp.IsClosed ? "Fechado" : $"{sp.OpenTime:hh\\:mm} às {sp.CloseTime:hh\\:mm}")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
