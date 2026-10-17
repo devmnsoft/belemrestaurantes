@@ -1,31 +1,40 @@
 @using BelemRestaurantes.Domain.Entities
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Cuia Discovery 360 · Cobertura Estadual & Inteligência";
+    ViewData["Title"] = "Cuia Discovery 360 · Cobertura Estadual & Operação 360";
     var coverageStats = ViewData["CoverageStats"] as IReadOnlyList<MunicipalityCoverageStats> ?? [];
     var pendingEnrichments = (int)(ViewData["PendingEnrichments"] ?? 0);
     var recentChanges = ViewData["RecentChanges"] as IReadOnlyList<RestaurantAttributeHistory> ?? [];
     var pendingMedias = ViewData["PendingMedias"] as IReadOnlyList<RestaurantMedia> ?? [];
+    var intelligenceStats = ViewData["IntelligenceStats"] as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var recentInvoices = ViewData["RecentInvoices"] as IReadOnlyList<CommercialInvoice> ?? Array.Empty<CommercialInvoice>();
+    var totalIntelligencePending = intelligenceStats.TryGetValue("pending", out var pCount) ? pCount : 0;
 }
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
   <div>
     <span class="badge-tag-v3" style="background: rgba(30,122,84,0.15); color: var(--forest-800); border: 1px solid rgba(30,122,84,0.3); margin-bottom: 8px;">
-      🌐 SPRINT 09 · ECOSSISTEMA AUTÔNOMO
+      🌐 SPRINT 10 · OPERAÇÃO GASTRONÔMICA 360 & DESIGN V4
     </span>
     <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
-      Cuia Discovery 360
+      Central de Operações Gastronômicas 360
     </h1>
     <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
-      Cobertura oficial dos municípios do Pará, enriquecimento inteligente contínuo, motor de mídias e auditoria de reconciliação.
+      Cobertura oficial de municípios e ilhas do Pará, fila central de 8 tarefas de inteligência, mídias autorizadas e monetização PIX MNSOFT.
     </p>
   </div>
   
-  <div style="display: flex; gap: 10px;">
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <form method="post" action="/admin/discovery360/intelligence-batch" style="margin: 0;">
+      @Html.AntiForgeryToken()
+      <button type="submit" class="btn-v4 btn-v4-tucupi" style="display: flex; align-items: center; gap: 8px;">
+        <span>⚡</span> Processar Fila de Inteligência (@totalIntelligencePending)
+      </button>
+    </form>
     <form method="post" action="/admin/discovery360/enrich-batch" style="margin: 0;">
       @Html.AntiForgeryToken()
       <button type="submit" class="btn-v3 btn-v3-primary" style="display: flex; align-items: center; gap: 8px;">
-        <span>✨</span> Processar Fila de Enriquecimento (@pendingEnrichments)
+        <span>✨</span> Enriquecimento (@pendingEnrichments)
       </button>
     </form>
     <a href="/admin/crawler" class="btn-v3 btn-v3-outline">
@@ -277,4 +286,137 @@
       </tbody>
     </table>
   </div>
+</div>
+
+<!-- Seção 4: Fila Central Cuia Discovery Intelligence (8 Tipos de Tarefas) -->
+<div class="card-restaurant-v3" style="padding: 24px; margin-top: 30px; margin-bottom: 30px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-900); margin: 0 0 4px 0;">
+        🧠 Fila Central Cuia Discovery Intelligence
+      </h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+        Processamento autônomo e periódico: descoberta, atualização, encerramento de atividades, conflitos e revisão de mídia.
+      </p>
+    </div>
+    <span class="badge-v4" style="background: rgba(229,169,59,0.15); color: var(--tucupi-800); font-weight: 750;">
+      Ciclo de 10 min · Worker Permanente
+    </span>
+  </div>
+
+  <div class="grid-cards-v3" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
+    @{
+      var jobTypes = new[] {
+        ("new_discovery", "Novas Descobertas", "🔍"),
+        ("update_existing", "Atualização Recorrente", "🔄"),
+        ("enrichment", "Enriquecimento IA", "✨"),
+        ("source_verification", "Verificação de Fontes", "🛡️"),
+        ("deduplication", "Deduplicação", "🧩"),
+        ("closure_validation", "Validação Fechamento", "🚪"),
+        ("media_review", "Revisão de Mídias", "📸"),
+        ("conflict_resolution", "Resolução Conflitos", "⚖️")
+      };
+    }
+    @foreach (var (taskKey, label, icon) in jobTypes)
+    {
+      var count = intelligenceStats.TryGetValue(taskKey, out var c) ? c : 0;
+      <div style="background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 12px; text-align: center;">
+        <div style="font-size: 18px; margin-bottom: 4px;">@icon</div>
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">@label</div>
+        <div style="font-size: 20px; font-weight: 800; color: var(--forest-900); font-family: var(--font-display); margin-top: 2px;">
+          @count
+        </div>
+      </div>
+    }
+  </div>
+
+  <div style="display: flex; gap: 16px; font-size: 12px; color: var(--text-muted); background: rgba(30,122,84,0.05); padding: 10px 14px; border-radius: 8px;">
+    <span><strong>Pending:</strong> @(intelligenceStats.TryGetValue("pending", out var pend) ? pend : 0)</span>
+    <span>•</span>
+    <span><strong>Completed:</strong> @(intelligenceStats.TryGetValue("completed", out var comp) ? comp : 0)</span>
+    <span>•</span>
+    <span><strong>Failed:</strong> @(intelligenceStats.TryGetValue("failed", out var fail) ? fail : 0)</span>
+    <span>•</span>
+    <span><strong>DeadLetter:</strong> @(intelligenceStats.TryGetValue("dead_letter", out var dl) ? dl : 0)</span>
+  </div>
+</div>
+
+<!-- Seção 5: Monetização Real & Faturas PIX MNSOFT (FASE 10) -->
+<div class="card-restaurant-v3" style="padding: 24px; margin-top: 30px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-900); margin: 0 0 4px 0;">
+        💳 Monetização Real & Faturas Comerciais PIX
+      </h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+        Chave Oficial CNPJ MNSOFT: <code>18.160.057/0001-13</code> · Validação Segura com Assinatura HMAC-SHA256
+      </p>
+    </div>
+    <span class="badge-v4" style="background: rgba(30,122,84,0.15); color: var(--forest-800); font-weight: 750;">
+      Auditoria Antifraude Ativa
+    </span>
+  </div>
+
+  @if (recentInvoices.Count == 0)
+  {
+    <div style="text-align: center; padding: 28px; background: rgba(0,0,0,0.02); border-radius: 10px; color: var(--text-muted); font-size: 13px;">
+      Nenhuma fatura comercial gerada recentemente no banco belrestaurante.
+    </div>
+  }
+  else
+  {
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+        <thead>
+          <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); color: var(--forest-900);">
+            <th style="padding: 8px 10px;">Data</th>
+            <th style="padding: 8px 10px;">Restaurante</th>
+            <th style="padding: 8px 10px;">Plano</th>
+            <th style="padding: 8px 10px;">Valor</th>
+            <th style="padding: 8px 10px;">TxID PIX</th>
+            <th style="padding: 8px 10px; text-align: center;">Status</th>
+            <th style="padding: 8px 10px; text-align: center;">Ação de Confirmação</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var inv in recentInvoices)
+          {
+            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+              <td style="padding: 8px 10px; color: var(--text-muted);">@inv.CreatedAt.ToString("dd/MM HH:mm")</td>
+              <td style="padding: 8px 10px; font-weight: 700;">#@inv.RestaurantId</td>
+              <td style="padding: 8px 10px; font-weight: 600; color: var(--forest-800);">@inv.PlanCode</td>
+              <td style="padding: 8px 10px; font-weight: 750; color: var(--forest-950);">R$ @((inv.AmountCents / 100.0m).ToString("F2"))</td>
+              <td style="padding: 8px 10px; font-family: monospace; font-size: 11px;">@inv.PixTxid</td>
+              <td style="padding: 8px 10px; text-align: center;">
+                @if (inv.PixStatus == "paid")
+                {
+                  <span class="badge-tag-v3" style="font-size: 10px; background: rgba(30,122,84,0.15); color: var(--forest-800);">✓ Pago</span>
+                }
+                else
+                {
+                  <span class="badge-tag-v3" style="font-size: 10px; background: rgba(229,169,59,0.15); color: var(--tucupi-800);">⏳ Pendente</span>
+                }
+              </td>
+              <td style="padding: 8px 10px; text-align: center;">
+                @if (inv.PixStatus == "pending")
+                {
+                  <form method="post" action="/admin/discovery360/invoice/@inv.PixTxid/confirm" style="display: inline; margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="authHash" value="@inv.AuthHash" />
+                    <button type="submit" class="btn-v4 btn-v4-primary" style="font-size: 11px; padding: 4px 10px;">
+                      Confirmar Pagamento
+                    </button>
+                  </form>
+                }
+                else
+                {
+                  <span style="font-size: 11px; color: var(--text-muted);">Confirmado em @inv.PaidAt?.ToString("dd/MM HH:mm")</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </div>

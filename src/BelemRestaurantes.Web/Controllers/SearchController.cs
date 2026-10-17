@@ -12,7 +12,8 @@ namespace BelemRestaurantes.Web.Controllers;
 public sealed class SearchController(
     ISearchService searchService,
     IRestaurantReadRepository restaurantRepository,
-    IGeoMunicipalityRepository? geoRepository = null) : Controller
+    IGeoMunicipalityRepository? geoRepository = null,
+    IGeoDistrictLocalityRepository? localityRepository = null) : Controller
 {
     [HttpGet("api/search/autocomplete")]
     public async Task<IActionResult> Autocomplete([FromQuery] string? q, CancellationToken ct)
@@ -62,7 +63,34 @@ public sealed class SearchController(
             ? await geoRepository.ListAllAsync(ct)
             : Array.Empty<BelemRestaurantes.Domain.Entities.GeoMunicipality>();
 
+        var localities = localityRepository != null
+            ? await localityRepository.ListTouristHighlightsAsync(ct)
+            : Array.Empty<BelemRestaurantes.Domain.Entities.GeoDistrictLocality>();
+
+        ViewBag.TouristLocalities = localities;
         return View(municipalities);
+    }
+
+    [HttpGet("localidade/{slug}")]
+    public async Task<IActionResult> LocalityPage(string slug, [FromQuery] int page = 1, CancellationToken ct = default)
+    {
+        var normalizedSlug = slug.Replace("-", " ").Trim();
+        var locality = localityRepository != null ? await localityRepository.GetByNameAsync(normalizedSlug, ct) : null;
+        var name = locality?.Name ?? char.ToUpper(normalizedSlug[0]) + normalizedSlug[1..];
+
+        var searchQuery = new RestaurantSearchQuery(
+            Neighborhood: name,
+            Page: Math.Max(1, page),
+            PageSize: 24);
+
+        var result = await restaurantRepository.SearchAsync(searchQuery, ct);
+        var filterOptions = await searchService.GetFilterOptionsAsync(ct);
+
+        ViewBag.SelectedNeighborhood = name;
+        ViewBag.DistrictLocality = locality;
+        ViewBag.FilterOptions = filterOptions;
+
+        return View("Index", result);
     }
 
     [HttpGet("cidade/{slug}")]
