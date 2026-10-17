@@ -1,206 +1,270 @@
 @model BelemRestaurantes.Application.Models.RestaurantView
 @using BelemRestaurantes.Application.Abstractions
 @{
-    ViewData["Title"] = Model.Name;
+    ViewData["Title"] = $"{Model.Name} — Belém Restaurantes";
+    ViewData["MetaDescription"] = $"Conheça {Model.Name} em {Model.City} ({Model.Neighborhood}): cardápio digital, horários, fotos, notas do Selo Cuia e avaliações da comunidade.";
+    ViewData["OgTitle"] = $"{Model.Name} | Belém Restaurantes";
+    ViewData["OgDescription"] = $"Cardápio, fotos e avaliações de {Model.Name} em {Model.City}. O Pará tem sabor!";
+    if (!string.IsNullOrEmpty(Model.PhotoUrl))
+    {
+        ViewData["OgImage"] = Model.PhotoUrl;
+    }
+
     var cuiaBadges = ViewData["CuiaBadges"] as IReadOnlyList<CuiaBadgeView> ?? [];
     var gallery = ViewData["Gallery"] as RestaurantGallery;
     var experiences = ViewData["Experiences"] as IReadOnlyList<ExperienceView> ?? [];
 }
-<section class="shell section">
-  <div class="heading">
-    <div>
-      <span class="overline dark">@Model.City · @(Model.Neighborhood ?? T["AddressChecking"].Value)</span>
-      <h1>@Model.Name</h1>
-      <p class="muted">@Model.Category</p>
-      
-      @if (cuiaBadges.Count > 0)
-      {
-          <div class="cuia-badges" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
-            @foreach (var badge in cuiaBadges)
-            {
-                <span class="badge" style="background:#174b3c;color:#f6c271;padding:6px 14px;border-radius:20px;font-size:13px;display:inline-flex;align-items:center;gap:6px;" title="@badge.MethodologySummary">
-                  <span>🏆</span> @badge.BadgeTitle (@badge.RankPosition º lugar · Nota @badge.Score.ToString("F2"))
-                </span>
-            }
-          </div>
-      }
-    </div>
 
+<div class="container-v3 section-v3">
+  <!-- Topo: Breadcrumb e Ações -->
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:20px;">
     <div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <a href="/cardapio/@Model.Id" class="button-link" style="background:#e5a93b;color:#1a2e1d;font-size:15px;padding:14px 22px;font-weight:bold;">
-        📖 Ver Cardápio Digital
+      <a href="/busca" style="text-decoration:none;color:#567064;font-size:14px;font-weight:650;">
+        ← Voltar para a busca
       </a>
-      <a href="/experience/create?restaurantId=@Model.Id" class="button-link" style="font-size:15px;padding:14px 22px;">
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <a href="/cardapio/@Model.Id" class="btn-v3 btn-v3-tucupi">
+        📖 Cardápio Digital
+      </a>
+      <a href="/experience/create?restaurantId=@Model.Id" class="btn-v3 btn-v3-forest">
         ✦ @T["TellYourExperience"]
       </a>
-      <a href="/partner/claim/@Model.Id" class="button-link" style="background:transparent;border:1px solid #174b3c;color:#174b3c;font-size:14px;padding:12px 18px;">
+      <a href="/partner/claim/@Model.Id" class="btn-v3 btn-v3-outline">
         🏪 Reivindicar Restaurante
       </a>
     </div>
   </div>
 
-  @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
-  {
-      <div class="photo" style="height:340px;margin:18px 0;border-radius:18px;overflow:hidden;">
-        <img src="@Model.PhotoUrl" alt="@T["AuthorizedPhoto", Model.Name]" style="width:100%;height:100%;object-fit:cover;" loading="lazy" referrerpolicy="no-referrer" />
-      </div>
-  }
+  <!-- Banner Principal do Restaurante -->
+  <div style="background:#fff;border:1px solid #e2e8df;border-radius:24px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:32px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));">
+      <!-- Foto de Capa -->
+      <div style="height:360px;background:#0d3826;position:relative;">
+        @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
+        {
+          <img src="@Model.PhotoUrl" alt="@T["AuthorizedPhoto", Model.Name]" style="width:100%;height:100%;object-fit:cover;" loading="eager" referrerpolicy="no-referrer" />
+        }
+        else
+        {
+          <div style="height:100%;display:grid;place-items:center;color:#e5a93b;font-size:48px;">✦</div>
+        }
 
-  <div class="split">
-    <div>
-      <h2>@T["Information"]</h2>
-      <p><b>@T["Address"]:</b> @(Model.Address ?? T["AddressChecking"].Value)</p>
-      <p><b>@T["City"]:</b> @Model.City</p>
-      <p><b>@T["UpdatedAt"]:</b> @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")</p>
-      <h3>@T["OfficialLinks"]</h3>
-      <div class="actions">
-        @if (Model.Website is not null) { <a href="@Model.Website" target="_blank" rel="noopener noreferrer">@T["Website"]</a> }
-        @if (Model.Instagram is not null) { <a href="@Model.Instagram" target="_blank" rel="noopener noreferrer">Instagram</a> }
-        @if (Model.Facebook is not null) { <a href="@Model.Facebook" target="_blank" rel="noopener noreferrer">Facebook</a> }
-        @if (Model.TikTok is not null) { <a href="@Model.TikTok" target="_blank" rel="noopener noreferrer">TikTok</a> }
-        @if (Model.YouTube is not null) { <a href="@Model.YouTube" target="_blank" rel="noopener noreferrer">YouTube</a> }
+        @if (cuiaBadges.Count > 0)
+        {
+          <div style="position:absolute;bottom:16px;left:16px;display:flex;gap:8px;flex-wrap:wrap;">
+            @foreach (var badge in cuiaBadges)
+            {
+              <span class="badge-cuia-gold" title="@badge.MethodologySummary">
+                🏆 @badge.BadgeTitle • @badge.RankPosition º Lugar
+              </span>
+            }
+          </div>
+        }
       </div>
-    </div>
-    <div class="panel">
-      <h3>@T["Mobility"]</h3>
-      <p>@T["RouteNotice"]</p>
-      <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer">@T["OpenMaps"]</a>
+
+      <!-- Detalhes e Apresentação -->
+      <div style="padding:clamp(24px,4vw,36px);display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span class="tagline-badge">@Model.Category</span>
+            <span style="font-size:13px;color:#7a9488;">• Atualizado em @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("d")</span>
+          </div>
+
+          <h1 class="title-section" style="margin-bottom:8px;font-size:clamp(26px,3.5vw,38px);">@Model.Name</h1>
+
+          <div style="font-size:15px;color:#567064;margin-bottom:16px;display:flex;align-items:center;gap:6px;">
+            <span style="color:#c84b31;">📍</span> @(Model.Address ?? T["AddressChecking"].Value), @Model.Neighborhood, @Model.City
+          </div>
+
+          <!-- Redes Sociais Oficiais -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
+            @if (Model.Website is not null) { <a href="@Model.Website" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">🌐 Site Oficial</a> }
+            @if (Model.Instagram is not null) { <a href="@Model.Instagram" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">📸 Instagram</a> }
+            @if (Model.Facebook is not null) { <a href="@Model.Facebook" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">📘 Facebook</a> }
+            @if (Model.TikTok is not null) { <a href="@Model.TikTok" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">🎵 TikTok</a> }
+            @if (Model.YouTube is not null) { <a href="@Model.YouTube" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">▶️ YouTube</a> }
+          </div>
+        </div>
+
+        <!-- Barra de Ações Rápidas -->
+        <div style="padding-top:16px;border-top:1px solid #edf2ec;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">
+            🗺️ Como Chegar (Mapa)
+          </a>
+          <button type="button" class="btn-v3 btn-v3-outline btn-v3-sm" onclick="navigator.clipboard.writeText(window.location.href); alert('Link do restaurante copiado!');">
+            🔗 Compartilhar
+          </button>
+          <a href="/#indicacao" class="btn-v3 btn-v3-outline btn-v3-sm text-muted">
+            ✏️ Sugerir Correção
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Galeria de Fotos Segregada (Oficiais, Comunidade, Ilustrativas) -->
-  <section style="margin-top:40px;">
-    <h2>Galeria de Fotografias</h2>
-    
-    <div style="margin:20px 0;">
-      <h3 style="color:#174b3c;font-size:17px;margin-bottom:12px;">📷 @T["CommunityPhotos"]</h3>
-      @if (gallery?.CommunityPhotos.Count > 0)
-      {
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px;align-items:start;">
+    <!-- Coluna Esquerda: Informações & Mobilidade -->
+    <div>
+      <!-- Cardápio Digital Rápido -->
+      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:var(--shadow-sm);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h3 style="font-size:18px;font-weight:800;color:#0d3826;margin:0;">📖 Cardápio Digital da Casa</h3>
+          <a href="/cardapio/@Model.Id" class="btn-v3 btn-v3-tucupi btn-v3-sm">Acessar Cardápio ➔</a>
+        </div>
+        <p style="color:#567064;font-size:14px;margin:0;">
+          Consulte os pratos típicos, preços atualizados, alérgenos e opções regionais disponíveis.
+        </p>
+      </div>
+
+      <!-- Como Chegar e Mobilidade -->
+      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:24px;">
+        <h3 style="font-size:18px;font-weight:800;color:#0d3826;margin-bottom:12px;">🚍 Mobilidade Urbana & Como Chegar</h3>
+        <p style="color:#567064;font-size:14px;line-height:1.6;margin-bottom:16px;">
+          Localizado no bairro @(Model.Neighborhood ?? "Central") de @Model.City. Acesso pelas vias principais do município, com linhas de ônibus metropolitanas e paradas de integração regulares.
+        </p>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=@Uri.EscapeDataString(Model.Name + " " + Model.Address + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-forest w-100 btn-v3-sm">
+          Traçar Rota no Google Maps
+        </a>
+      </div>
+
+      <!-- Galeria de Fotos Segregada -->
+      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:24px;box-shadow:var(--shadow-sm);">
+        <h3 style="font-size:18px;font-weight:800;color:#0d3826;margin-bottom:16px;">📷 Fotografias do Restaurante</h3>
+
+        <!-- Fotos da Comunidade -->
+        <h4 style="font-size:14.5px;color:#144f36;font-weight:750;margin-bottom:10px;">Enviadas pela Comunidade</h4>
+        @if (gallery?.CommunityPhotos.Count > 0)
+        {
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:18px;">
             @foreach (var photo in gallery.CommunityPhotos)
             {
-                <a href="/media/photo/@photo.FileName" target="_blank" style="display:block;border-radius:12px;overflow:hidden;border:1px solid #dce7dc;height:140px;">
-                  <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
-                </a>
+              <a href="/media/photo/@photo.FileName" target="_blank" style="display:block;border-radius:10px;overflow:hidden;border:1px solid #e2e8df;height:90px;">
+                <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+              </a>
             }
           </div>
-      }
-      else
-      {
-          <p class="muted">@T["NoPhotosYet"]</p>
-      }
-    </div>
+        }
+        else
+        {
+          <p style="font-size:13px;color:#7a9488;margin-bottom:18px;">Nenhuma foto enviada pela comunidade ainda.</p>
+        }
 
-    @if (gallery?.OfficialPhotos.Count > 0)
-    {
-        <div style="margin:20px 0;">
-          <h3 style="color:#174b3c;font-size:17px;margin-bottom:12px;">🏢 @T["OfficialPhotos"]</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;">
+        <!-- Fotos Oficiais -->
+        @if (gallery?.OfficialPhotos.Count > 0)
+        {
+          <h4 style="font-size:14.5px;color:#144f36;font-weight:750;margin-bottom:10px;">Fotos Oficiais da Casa</h4>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;">
             @foreach (var photo in gallery.OfficialPhotos)
             {
-                <a href="/media/photo/@photo.FileName" target="_blank" style="display:block;border-radius:12px;overflow:hidden;border:1px solid #dce7dc;height:140px;">
-                  <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
-                </a>
+              <a href="/media/photo/@photo.FileName" target="_blank" style="display:block;border-radius:10px;overflow:hidden;border:1px solid #e2e8df;height:90px;">
+                <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+              </a>
             }
           </div>
-        </div>
-    }
-
-    @if (gallery?.IllustrativePhotos.Count > 0)
-    {
-        <div style="margin:20px 0;">
-          <h3 style="color:#647469;font-size:17px;margin-bottom:12px;">🎨 @T["IllustrativePhotos"]</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;">
-            @foreach (var photo in gallery.IllustrativePhotos)
-            {
-                <div style="border-radius:12px;overflow:hidden;border:1px solid #dce7dc;height:140px;">
-                  <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
-                </div>
-            }
-          </div>
-        </div>
-    }
-  </section>
-
-  <!-- Módulo Social: Avaliações e Experiências da Comunidade -->
-  <section style="margin-top:40px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-      <h2>@T["CommunityFeedTitle"] (@experiences.Count)</h2>
-      <a href="/experience/create?restaurantId=@Model.Id" class="button-link">@T["TellYourExperience"]</a>
+        }
+      </div>
     </div>
 
-    @if (experiences.Count == 0)
-    {
-        <div class="panel" style="text-align:center;padding:40px 20px;">
-          <p style="font-size:17px;color:#547062;">Seja o primeiro a contar como foi sua visita a este estabelecimento!</p>
-          <div style="margin-top:14px;">
-            <a href="/experience/create?restaurantId=@Model.Id" class="button-link">@T["TellYourExperience"]</a>
+    <!-- Coluna Direita: Avaliações e Experiências da Comunidade -->
+    <div>
+      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:28px;box-shadow:var(--shadow-sm);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8df;">
+          <div>
+            <h2 style="font-size:22px;font-weight:800;color:#0d3826;margin:0;">Experiências da Comunidade</h2>
+            <span style="font-size:14px;color:#567064;">@experiences.Count relatos reais compartilhados</span>
           </div>
+          <a href="/experience/create?restaurantId=@Model.Id" class="btn-v3 btn-v3-forest btn-v3-sm">
+            ✦ Avaliar Restaurante
+          </a>
         </div>
-    }
-    else
-    {
-        <div style="display:grid;gap:18px;">
-          @foreach (var exp in experiences)
-          {
-              <div class="panel" style="display:grid;gap:10px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+
+        @if (experiences.Count == 0)
+        {
+          <div style="text-align:center;padding:40px 16px;background:var(--creme-bg);border-radius:16px;">
+            <div style="font-size:32px;margin-bottom:8px;">💬</div>
+            <h4 style="font-weight:750;color:#0d3826;margin-bottom:6px;">Seja o primeiro a avaliar!</h4>
+            <p style="color:#567064;font-size:14px;max-width:400px;margin:auto;margin-bottom:16px;">
+              Conte como foi seu atendimento, sabor dos pratos, ambiente e custo-benefício em @Model.Name.
+            </p>
+            <a href="/experience/create?restaurantId=@Model.Id" class="btn-v3 btn-v3-forest btn-v3-sm">
+              Escrever Primeira Avaliação
+            </a>
+          </div>
+        }
+        else
+        {
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            @foreach (var exp in experiences)
+            {
+              <div style="border:1px solid #e2e8df;border-radius:16px;padding:20px;background:var(--creme-bg);">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
                   <div>
-                    <strong style="font-size:16px;">@exp.AuthorName</strong>
-                    <span class="muted" style="font-size:13px;margin-left:8px;">@exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("d")</span>
+                    <strong style="color:#0d3826;font-size:15px;">@exp.AuthorName</strong>
+                    <div style="font-size:12px;color:#7a9488;">@exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy HH:mm")</div>
                   </div>
-                  <div style="font-size:18px;color:#e67e22;letter-spacing:2px;" title="@exp.Stars estrelas">
-                    @string.Concat(Enumerable.Repeat("★", exp.Stars))@string.Concat(Enumerable.Repeat("☆", 5 - exp.Stars))
+                  <div class="star-rating-v3">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                      <span style="color:@(i <= exp.Stars ? "#e5a93b" : "#dce7dc");">★</span>
+                    }
                   </div>
                 </div>
 
-                <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;background:#f4f7f4;padding:8px 14px;border-radius:10px;">
-                  <span><b>@T["ServiceRating"]:</b> @exp.ServiceStars★</span>
-                  <span><b>@T["FlavorRating"]:</b> @exp.FlavorStars★</span>
-                  <span><b>@T["AmbianceRating"]:</b> @exp.AmbianceStars★</span>
-                  <span><b>@T["CostBenefitRating"]:</b> @exp.CostBenefitStars★</span>
+                <!-- Subcritérios de Nota -->
+                <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;background:#fff;padding:8px 12px;border-radius:10px;border:1px solid #e2e8df;margin-bottom:12px;">
+                  <span><b>Atendimento:</b> @exp.ServiceStars★</span>
+                  <span><b>Sabor:</b> @exp.FlavorStars★</span>
+                  <span><b>Ambiente:</b> @exp.AmbianceStars★</span>
+                  <span><b>Custo-Benefício:</b> @exp.CostBenefitStars★</span>
                   @if (exp.PricePaid.HasValue)
                   {
-                      <span><b>@T["PricePaid"]:</b> R$ @exp.PricePaid.Value.ToString("N2")</span>
+                    <span><b>Preço pago:</b> R$ @exp.PricePaid.Value.ToString("F2")</span>
                   }
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(exp.DishesConsumed))
                 {
-                    <p style="margin:4px 0;font-size:14px;"><b>🍴 @T["DishesConsumed"]:</b> @exp.DishesConsumed</p>
+                  <div style="font-size:13.5px;color:#0d3826;font-weight:700;margin-bottom:6px;">
+                    🍴 Pratos: @exp.DishesConsumed
+                  </div>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(exp.ReviewText))
                 {
-                    <p style="margin:4px 0;font-size:15px;line-height:1.5;">@exp.ReviewText</p>
+                  <p style="font-size:14.5px;line-height:1.5;color:#203d33;margin:0 0 12px;">
+                    @exp.ReviewText
+                  </p>
                 }
 
                 @if (exp.Photos.Count > 0)
                 {
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;">
-                      @foreach (var p in exp.Photos)
-                      {
-                          <a href="/media/photo/@p.FileName" target="_blank" style="width:90px;height:70px;border-radius:8px;overflow:hidden;border:1px solid #dce7dc;">
-                            <img src="/media/thumb/@p.ThumbnailName" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
-                          </a>
-                      }
-                    </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                    @foreach (var p in exp.Photos)
+                    {
+                      <a href="/media/photo/@p.FileName" target="_blank" style="width:80px;height:65px;border-radius:8px;overflow:hidden;border:1px solid #dce7dc;">
+                        <img src="/media/thumb/@p.ThumbnailName" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+                      </a>
+                    }
+                  </div>
                 }
 
-                <div style="display:flex;gap:14px;align-items:center;margin-top:6px;font-size:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #e2e8df;font-size:13px;">
                   <form method="post" action="/experience/@exp.Id/like" style="display:inline;">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="ghost" style="padding:6px 12px;font-size:13px;">
-                      @(exp.HasLiked ? "❤️" : "🤍") @T["Like"] (@exp.LikesCount)
+                    <button type="submit" class="btn-v3 btn-v3-outline btn-v3-sm" style="padding:4px 10px;font-size:12px;">
+                      @(exp.HasLiked ? "❤️" : "🤍") Curtir (@exp.LikesCount)
                     </button>
                   </form>
-                  <a href="/experience/@exp.Id" style="color:#174b3c;font-weight:700;">💬 @T["Comments"] (@exp.CommentsCount)</a>
-                  <a href="/experience/@exp.Id" style="color:#174b3c;margin-left:auto;text-decoration:none;">🔗 @T["ShareExperience"]</a>
+                  <a href="/experience/@exp.Id" style="color:#0d3826;font-weight:750;text-decoration:none;">
+                    💬 Comentários (@exp.CommentsCount)
+                  </a>
                 </div>
               </div>
-          }
-        </div>
-    }
-  </section>
-</section>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

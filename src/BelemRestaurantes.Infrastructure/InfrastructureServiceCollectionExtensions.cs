@@ -114,6 +114,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IMonetizationService, Partner.MySqlMonetizationService>();
         services.AddScoped<IMobilityTrailService, Partner.MySqlMobilityTrailService>();
 
+        // Sprint 06 - Busca Gastronômica Inteligente e Autocomplete
+        services.AddScoped<ISearchService, Search.MySqlSearchService>();
+
         services.AddHttpClient("googleplaces", client =>
         {
             client.Timeout = googleOptions.Timeout;

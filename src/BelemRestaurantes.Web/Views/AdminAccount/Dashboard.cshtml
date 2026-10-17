@@ -1,83 +1,143 @@
 @{
-    ViewData["Title"] = T["AdminTitle"].Value + " · MNSOFT";
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Visão Geral Operacional";
 }
-<section class="shell section">
-  <div class="heading">
-    <div>
-      <span class="overline dark">✦ Gestão Governança & Comunidade</span>
-      <h1>@T["AdminTitle"] · MNSOFT</h1>
-      <p class="muted">Belém Restaurantes — Operações e Moderação</p>
-    </div>
 
-    <div>
-      <form method="post" action="@Url.Action("Logout","AdminAccount")">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="ghost">@T["SignOut"]</button>
-      </form>
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <span class="badge-tag-v3" style="margin-bottom: 8px;">✦ Painel de Controle Integrado</span>
+    <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
+      Visão Geral · MNSOFT
+    </h1>
+    <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
+      Belém Restaurantes — Monitoramento de catálogo, moderação comunitária, conectores de IA e governança.
+    </p>
+  </div>
+  <div style="display: flex; gap: 10px;">
+    <a href="/admin/discovery" class="btn-v3 btn-v3-primary" style="font-size: 13px;">
+      🔍 Triagem de Descobertas
+    </a>
+    <a href="/admin/connectors" class="btn-v3 btn-v3-outline" style="font-size: 13px;">
+      🤖 Status Conectores & IA
+    </a>
+  </div>
+</div>
+
+<!-- Grid de Acesso aos 12 Módulos Administrativos -->
+<div class="grid-cards-v3" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin-bottom: 36px;">
+  
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">🍽️</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/restaurants" style="color: inherit; text-decoration: none;">Catálogo de Restaurantes</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Consulta ao catálogo publicado, notas do Selo Cuia, bairros e gestão de estabelecimentos do Pará.
+    </p>
+    <a href="/admin/restaurants" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Gerenciar Catálogo →</a>
   </div>
 
-  <div class="stat-grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-top:24px;">
-    <div class="stat">
-      <span class="n">💬</span>
-      <h3 style="margin:4px 0;"><a href="/admin/experiences">Moderação de Experiências</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Revisão de notas, relatos e recursos de contestação.</p>
-    </div>
-
-    <div class="stat">
-      <span class="n">📷</span>
-      <h3 style="margin:4px 0;"><a href="/admin/photos">Moderação de Fotografias</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Varredura de fotos enviadas pela comunidade.</p>
-    </div>
-
-    <div class="stat">
-      <span class="n">🚩</span>
-      <h3 style="margin:4px 0;"><a href="/admin/reports">Denúncias da Comunidade</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Triagem de conteúdos ofensivos, spam ou PII.</p>
-    </div>
-
-    <div class="stat">
-      <span class="n">👥</span>
-      <h3 style="margin:4px 0;"><a href="/admin/members">Gestão de Membros</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Contas públicas, e-mails confirmados e bloqueios.</p>
-    </div>
-
-    <div class="stat">
-      <span class="n">🏆</span>
-      <h3 style="margin:4px 0;"><a href="/admin/cuia">Selo Cuia & Rankings</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Metodologia transparente e recálculo de posições.</p>
-    </div>
-
-    <div class="stat">
-      <span class="n">🔒</span>
-      <h3 style="margin:4px 0;"><a href="/admin/lgpd">Solicitações LGPD</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Exportação e anonimização de contas de usuários.</p>
-    </div>
-
-    <div class="stat">
-      <span class="n">✉️</span>
-      <h3 style="margin:4px 0;"><a href="/admin/smtp">Monitoramento SMTP</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Fila outbox Locaweb, entregas e dead-letter.</p>
-    </div>
-
-    <div class="stat">
-      <span class="n">🏪</span>
-      <h3 style="margin:4px 0;"><a href="/admin/partner/claims">Reivindicações Parceiros</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Moderação de vínculos e pedidos de comerciantes.</p>
-    </div>
-
-    <div class="stat">
-      <span class="n">🍽️</span>
-      <h3 style="margin:4px 0;"><a href="/api/admin/review/pending">Descoberta Gastronômica</a></h3>
-      <p style="margin:0;font-size:13px;color:#547062;">Aprovação de restaurantes descobertos pelo Worker.</p>
-    </div>
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">🔍</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/discovery" style="color: inherit; text-decoration: none;">Descoberta Automática</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Triagem e aprovação visual de estabelecimentos capturados pelo worker via Google Places API.
+    </p>
+    <a href="/admin/discovery" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Revisar Pendências →</a>
   </div>
 
-  <div class="panel" style="margin-top:28px;">
-    <h3>Saúde e Diagnóstico dos Serviços</h3>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px;">
-      <a href="/health/ready" target="_blank">✓ /health/ready (Prontidão)</a>
-      <a href="/health/live" target="_blank">✓ /health/live (Liveness)</a>
-    </div>
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">💬</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/experiences" style="color: inherit; text-decoration: none;">Moderação de Relatos</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Revisão de avaliações comunitárias, notas detalhadas e recursos de contestação de comerciantes.
+    </p>
+    <a href="/admin/experiences" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Moderar Relatos →</a>
   </div>
-</section>
+
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">📷</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/photos" style="color: inherit; text-decoration: none;">Moderação de Fotos</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Aprovação de imagens reais enviadas por visitantes de pratos e ambientes dos restaurantes.
+    </p>
+    <a href="/admin/photos" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Ver Fotografias →</a>
+  </div>
+
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">🏆</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/cuia" style="color: inherit; text-decoration: none;">Selo Cuia & Rankings</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Cálculo do ranking regional baseado em avaliações verificadas e metodologia auditável.
+    </p>
+    <a href="/admin/cuia" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Recalcular Notas →</a>
+  </div>
+
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">🏪</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/partner/claims" style="color: inherit; text-decoration: none;">Reivindicações Parceiro</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Análise documental de comerciantes solicitando administração de suas páginas e cardápios.
+    </p>
+    <a href="/admin/partner/claims" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Triar Reivindicações →</a>
+  </div>
+
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">🤖</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/connectors" style="color: inherit; text-decoration: none;">Cuia IA & Conectores</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Monitoramento de Gemini, Groq, DeepSeek, Google Places e redes sociais sem vazar segredos.
+    </p>
+    <a href="/admin/connectors" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Status Conectores →</a>
+  </div>
+
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">✉️</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/smtp" style="color: inherit; text-decoration: none;">Fila Transacional SMTP</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Monitoramento outbox de e-mails de confirmação e recuperação via servidor Locaweb oficial.
+    </p>
+    <a href="/admin/smtp" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Monitorar Fila →</a>
+  </div>
+
+  <div class="card-restaurant-v3" style="padding: 22px;">
+    <div style="font-size: 28px; margin-bottom: 12px;">💳</div>
+    <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
+      <a href="/admin/monetization" style="color: inherit; text-decoration: none;">Planos & Apoio PIX</a>
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 14px 0;">
+      Gestão de planos comerciais, ativações manuais de pedidos e chave PIX institucional MNSOFT.
+    </p>
+    <a href="/admin/monetization" class="btn-v3 btn-v3-outline btn-v3-sm" style="width: 100%; text-align: center;">Ver Pedidos & Planos →</a>
+  </div>
+
+</div>
+
+<!-- Diagnóstico de Saúde dos Endpoints -->
+<div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 22px; box-shadow: var(--shadow-sm);">
+  <h3 style="font-family: var(--font-display); font-size: 17px; font-weight: 750; color: var(--forest-900); margin: 0 0 12px 0;">
+    🛡️ Diagnóstico de Confiabilidade da VPS & IIS
+  </h3>
+  <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+    <a href="/health/ready" target="_blank" class="btn-v3 btn-v3-outline btn-v3-sm">
+      ✓ /health/ready (Prontidão do Banco MySQL)
+    </a>
+    <a href="/health/live" target="_blank" class="btn-v3 btn-v3-outline btn-v3-sm">
+      ✓ /health/live (Liveness Processo IIS)
+    </a>
+  </div>
+</div>
