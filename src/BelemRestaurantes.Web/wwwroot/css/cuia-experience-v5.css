@@ -1,0 +1,35 @@
+/* Cuia Experience V5 — direção editorial gastronômica, mobile-first.
+   Estágio 1: Homepage, busca, categorias, navegação e cartões públicos. */
+:root{--cuia-forest:#103f32;--cuia-leaf:#267051;--cuia-saffron:#f3c15f;--cuia-urucum:#b84f32;--cuia-ivory:#faf8f1;--cuia-line:#e1e8df;--cuia-ink:#1a332b;--cuia-shadow:0 18px 46px rgba(10,54,37,.10)}
+body{background:var(--cuia-ivory);color:var(--cuia-ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+body>header{background:#fff;box-shadow:0 3px 24px rgba(11,55,36,.055);border-bottom:1px solid var(--cuia-line);position:sticky;top:0;z-index:20}
+body>header .brand{font-weight:850;letter-spacing:-.05em;color:var(--cuia-forest);white-space:nowrap}
+body>header nav a{text-decoration:none;color:#375c4c;font-weight:680;border-radius:9px;padding:9px 4px;transition:color .2s}
+body>header nav a:hover{color:var(--cuia-urucum)}
+body>header .mark{background:var(--cuia-forest);color:var(--cuia-saffron);border-radius:12px}
+.hero-v3{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(circle at 80% 20%,#367d5d 0%,transparent 40%),linear-gradient(120deg,#0a3026,#154937 60%,#225942)!important;padding:clamp(62px,8vw,112px) 0!important;color:#fff}
+.hero-v3::before{content:"";position:absolute;inset:auto -60px -180px auto;width:clamp(240px,42vw,650px);aspect-ratio:1;border:2px solid rgba(249,220,150,.23);border-radius:50%;z-index:-1}
+.hero-v3 .tagline-badge{display:inline-flex;align-items:center;background:rgba(249,214,145,.1)!important;color:#ffe2a2!important;border:1px solid rgba(255,225,161,.38)!important;font-weight:750;border-radius:999px;padding:9px 17px}
+.hero-v3 .title-display{color:#fff!important;font-size:clamp(38px,5.8vw,76px);line-height:1.055;letter-spacing:-.055em;max-width:850px;text-wrap:balance}
+.hero-v3 .title-display em{font-style:normal;color:var(--cuia-saffron)}
+.hero-v3 .subtitle-v3{color:#e2efe9!important;max-width:650px;font-size:clamp(16px,2vw,19px);line-height:1.68}
+.hero-search-box{background:#fff!important;border:1px solid rgba(255,255,255,.7);padding:9px!important;border-radius:18px!important;box-shadow:0 20px 50px rgba(0,0,0,.22);max-width:860px}
+.hero-search-box form{display:flex;align-items:stretch;gap:8px}
+.hero-search-box input,.hero-search-box select{border:1px solid #e4e8e0!important;border-radius:11px!important;min-height:54px!important;box-shadow:none!important;color:#263c30;background:#fff!important;font-size:16px}
+.hero-search-box input{flex:1;min-width:140px}
+.hero-search-box .btn-v3-tucupi{min-height:54px!important;background:var(--cuia-saffron)!important;color:#2d372c!important;border:0!important;font-weight:800;border-radius:11px}
+.hero-search-box .btn-v3-tucupi:hover{background:#ffd27e!important}
+.chips-container-v3{gap:10px!important}.chip-item-v3{border-radius:999px!important;transition:background .2s,transform .2s;font-weight:680!important}.chip-item-v3:hover{transform:translateY(-2px)}
+.section-v3{padding-block:clamp(45px,6vw,85px)}.title-section{letter-spacing:-.04em;line-height:1.16;text-wrap:balance}
+.card-restaurant-v3,.card{background:#fff!important;border:1px solid var(--cuia-line)!important;border-radius:22px!important;overflow:hidden;box-shadow:0 5px 20px rgba(13,53,34,.045)!important;transition:transform .2s ease,box-shadow .2s ease}
+.card-restaurant-v3:hover,.card:hover{transform:translateY(-3px);box-shadow:var(--cuia-shadow)!important}
+.card-media-v3{aspect-ratio:4/3;overflow:hidden}.card-media-v3 img{height:100%;width:100%;object-fit:cover}
+.card-content-v3{padding:21px!important}.card-title-link{color:#163d2f!important;text-decoration:none}.card-title-link:hover{text-decoration:underline}
+.btn-v3{border-radius:11px!important;font-weight:750;transition:transform .15s,background .15s}
+.btn-v3:active{transform:scale(.985)}
+.btn-v3-forest{background:var(--cuia-forest)!important;color:#fff!important}.btn-v3-forest:hover{background:var(--cuia-leaf)!important}
+.tagline-badge{letter-spacing:.025em}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #e89f33;outline-offset:3px}
+@media(max-width:950px){body>header{flex-wrap:wrap}body>header nav{order:3;display:flex;width:100%;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:18px;padding-bottom:8px}body>header nav a{flex-shrink:0}}
+@media(max-width:720px){.hero-v3{padding:54px 0!important}.hero-search-box form{flex-direction:column}.hero-search-box select,.hero-search-box input,.hero-search-box button{width:100%;min-width:0}.hero-v3 .title-display{font-size:clamp(38px,10vw,52px)}.card-restaurant-v3,.card{border-radius:17px!important}.section-v3{padding-block:48px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
