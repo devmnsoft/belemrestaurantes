@@ -16,12 +16,13 @@ namespace BelemRestaurantes.Infrastructure.Crawler;
 
 /// <summary>
 /// Implementa cliente HTTP seguro com proteção rigorosa contra SSRF e DNS Rebinding.
-/// Valida cada IP resolvido antes de estabelecer conexão e impede conexões para redes privadas,
-/// loopback, metadados de provedores de nuvem ou portas não padrão de navegação web.
+/// Rejeita domínios com QUALQUER resolução de IP proibida, valida redirects manualmente
+/// e impede conexões para redes privadas, loopback, metadados de provedores de nuvem ou portas não padrão.
 /// </summary>
 public sealed class SafeHttpClient : ISafeHttpClient
 {
     private const int MaxResponseBytes = 2 * 1024 * 1024; // 2 MB máximo para HTML / XML
+    private const int MaxRedirects = 3;
     private readonly ILogger<SafeHttpClient> _logger;
 
     public SafeHttpClient(ILogger<SafeHttpClient> logger)
@@ -36,146 +37,178 @@ public sealed class SafeHttpClient : ISafeHttpClient
         int timeoutSeconds = 15,
         CancellationToken ct = default)
     {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
-        {
-            return new SafeDownloadResult(false, 0, null, null, null, null, "URL absoluta inválida");
-        }
+        var currentUrl = url;
+        var redirectCount = 0;
 
-        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+        while (redirectCount <= MaxRedirects)
         {
-            return new SafeDownloadResult(false, 0, null, null, null, null, $"Esquema de URL não permitido: {uri.Scheme}");
-        }
-
-        // Portas permitidas estritamente: 80 (HTTP) e 443 (HTTPS)
-        if (uri.Port != 80 && uri.Port != 443)
-        {
-            return new SafeDownloadResult(false, 0, null, null, null, null, $"Porta não padrão rejeitada por segurança: {uri.Port}");
-        }
-
-        try
-        {
-            // Validação preventiva de DNS para o hostname
-            await ValidateDnsSecurityAsync(uri.Host, ct);
-
-            // Criação do socket handler com checagem SSRF em nível de conexão
-            using var handler = new SocketsHttpHandler
+            if (!Uri.TryCreate(currentUrl, UriKind.Absolute, out var uri))
             {
-                ConnectCallback = async (context, cancellationToken) =>
-                {
-                    var host = context.DnsEndPoint.Host;
-                    var addresses = await Dns.GetHostAddressesAsync(host, cancellationToken);
-                    
-                    if (addresses.Length == 0)
-                    {
-                        throw new SocketException((int)SocketError.HostNotFound);
-                    }
+                return new SafeDownloadResult(false, 0, null, null, null, null, "URL absoluta inválida");
+            }
 
-                    // Validação de todos os IPs retornados (proteção contra DNS Rebinding)
-                    foreach (var ip in addresses)
+            if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            {
+                return new SafeDownloadResult(false, 0, null, null, null, null, $"Esquema de URL não permitido: {uri.Scheme}");
+            }
+
+            // Portas permitidas estritamente: 80 (HTTP) e 443 (HTTPS)
+            if (uri.Port != 80 && uri.Port != 443)
+            {
+                return new SafeDownloadResult(false, 0, null, null, null, null, $"Porta não padrão rejeitada por segurança: {uri.Port}");
+            }
+
+            try
+            {
+                // 1. Validação preventiva de DNS para o hostname atual (incluindo redirects)
+                await ValidateDnsSecurityAsync(uri.Host, ct);
+
+                // 2. Socket handler com controle manual de redirect e checagem no handshake TCP
+                using var handler = new SocketsHttpHandler
+                {
+                    ConnectCallback = async (context, cancellationToken) =>
                     {
-                        if (IsDisallowedIp(ip))
+                        var host = context.DnsEndPoint.Host;
+                        var addresses = await Dns.GetHostAddressesAsync(host, cancellationToken);
+
+                        if (addresses.Length == 0)
                         {
-                            throw new SecurityException($"Bloqueio SSRF: O endereço IP {ip} associado ao host {host} é restrito.");
+                            throw new SocketException((int)SocketError.HostNotFound);
                         }
-                    }
 
-                    var targetIp = addresses.First(ip => !IsDisallowedIp(ip));
-                    var socket = new Socket(targetIp.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    try
-                    {
-                        await socket.ConnectAsync(new IPEndPoint(targetIp, context.DnsEndPoint.Port), cancellationToken);
-                        return new NetworkStream(socket, ownsSocket: true);
-                    }
-                    catch
-                    {
-                        socket.Dispose();
-                        throw;
-                    }
-                },
-                AllowAutoRedirect = true,
-                MaxAutomaticRedirections = 3,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            };
+                        // Rejeitar se QUALQUER endereço IP resolvido for restrito (mitiga DNS Rebinding multi-homed)
+                        var badIp = addresses.FirstOrDefault(IsDisallowedIp);
+                        if (badIp != null)
+                        {
+                            throw new SecurityException($"Bloqueio SSRF: O endereço IP {badIp} associado ao host '{host}' é restrito.");
+                        }
 
-            using var httpClient = new HttpClient(handler)
-            {
-                Timeout = TimeSpan.FromSeconds(Math.Max(5, timeoutSeconds))
-            };
+                        var targetIp = addresses[0];
+                        var socket = new Socket(targetIp.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                        try
+                        {
+                            await socket.ConnectAsync(new IPEndPoint(targetIp, context.DnsEndPoint.Port), cancellationToken);
+                            return new NetworkStream(socket, ownsSocket: true);
+                        }
+                        catch
+                        {
+                            socket.Dispose();
+                            throw;
+                        }
+                    },
+                    AllowAutoRedirect = false, // Controle manual de redirects para validação de segurança a cada salto
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                };
 
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("CuiaCrawler/1.0 (+https://belemrestaurantes.com.br/crawler-info; comercial@belemrestaurantes.com.br)");
-            httpClient.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml,text/xml,application/rss+xml,application/json;q=0.9,*/*;q=0.5");
-
-            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-
-            if (!string.IsNullOrWhiteSpace(etag))
-            {
-                request.Headers.IfNoneMatch.Add(new EntityTagHeaderValue(etag.StartsWith("\"") ? etag : $"\"{etag}\""));
-            }
-
-            if (!string.IsNullOrWhiteSpace(lastModified) && DateTimeOffset.TryParse(lastModified, out var dt))
-            {
-                request.Headers.IfModifiedSince = dt;
-            }
-
-            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-
-            if (response.StatusCode == HttpStatusCode.NotModified)
-            {
-                return new SafeDownloadResult(true, (int)response.StatusCode, null, null, etag, lastModified, null, NotModified: true);
-            }
-
-            var contentType = response.Content.Headers.ContentType?.MediaType?.ToLowerInvariant() ?? string.Empty;
-
-            // Rejeição rigorosa de arquivos executáveis, binários ou mídias pesadas
-            if (IsDisallowedMediaType(contentType))
-            {
-                return new SafeDownloadResult(false, (int)response.StatusCode, null, contentType, null, null, $"Tipo de mídia rejeitado: {contentType}");
-            }
-
-            // Leitura com limitação de tamanho para proteção de memória (máximo 2 MB)
-            await using var responseStream = await response.Content.ReadAsStreamAsync(ct);
-            using var memoryStream = new MemoryStream();
-            var buffer = new byte[8192];
-            int bytesRead;
-            long totalRead = 0;
-
-            while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
-            {
-                totalRead += bytesRead;
-                if (totalRead > MaxResponseBytes)
+                using var httpClient = new HttpClient(handler)
                 {
-                    return new SafeDownloadResult(false, (int)response.StatusCode, null, contentType, null, null, $"Tamanho do conteúdo excedeu o limite máximo seguro de {MaxResponseBytes / 1024} KB");
+                    Timeout = TimeSpan.FromSeconds(Math.Max(5, timeoutSeconds))
+                };
+
+                httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("CuiaCrawler/2.0 (+https://belemrestaurantes.com.br/crawler-info; comercial@belemrestaurantes.com.br)");
+                httpClient.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml,text/xml,application/rss+xml,application/json;q=0.9,*/*;q=0.5");
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+
+                // ETag e If-Modified-Since somente para a URL original (não enviar em redirects)
+                if (redirectCount == 0)
+                {
+                    if (!string.IsNullOrWhiteSpace(etag))
+                    {
+                        request.Headers.IfNoneMatch.Add(new EntityTagHeaderValue(etag.StartsWith("\"") ? etag : $"\"{etag}\""));
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(lastModified) && DateTimeOffset.TryParse(lastModified, out var dt))
+                    {
+                        request.Headers.IfModifiedSince = dt;
+                    }
                 }
-                memoryStream.Write(buffer, 0, bytesRead);
+
+                using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+
+                if (response.StatusCode == HttpStatusCode.NotModified)
+                {
+                    return new SafeDownloadResult(true, (int)response.StatusCode, null, null, etag, lastModified, null, NotModified: true);
+                }
+
+                // Tratar redirecionamento manualmente com validação de segurança no salto
+                if (IsRedirect(response.StatusCode))
+                {
+                    redirectCount++;
+                    var location = response.Headers.Location;
+                    if (location == null)
+                    {
+                        return new SafeDownloadResult(false, (int)response.StatusCode, null, null, null, null, "Redirecionamento sem cabeçalho Location.");
+                    }
+
+                    var nextUri = location.IsAbsoluteUri ? location : new Uri(uri, location);
+                    currentUrl = nextUri.ToString();
+                    _logger.LogInformation("Seguindo redirecionamento {Step} para {NextUrl}", redirectCount, currentUrl);
+                    continue;
+                }
+
+                var contentType = response.Content.Headers.ContentType?.MediaType?.ToLowerInvariant() ?? string.Empty;
+
+                // Rejeição rigorosa de arquivos executáveis, binários ou mídias pesadas
+                if (IsDisallowedMediaType(contentType))
+                {
+                    return new SafeDownloadResult(false, (int)response.StatusCode, null, contentType, null, null, $"Tipo de mídia rejeitado: {contentType}");
+                }
+
+                // Leitura com limitação de tamanho para proteção de memória (máximo 2 MB)
+                await using var responseStream = await response.Content.ReadAsStreamAsync(ct);
+                using var memoryStream = new MemoryStream();
+                var buffer = new byte[8192];
+                int bytesRead;
+                long totalRead = 0;
+
+                while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
+                {
+                    totalRead += bytesRead;
+                    if (totalRead > MaxResponseBytes)
+                    {
+                        return new SafeDownloadResult(false, (int)response.StatusCode, null, contentType, null, null, $"Tamanho do conteúdo excedeu o limite máximo seguro de {MaxResponseBytes / 1024} KB");
+                    }
+                    memoryStream.Write(buffer, 0, bytesRead);
+                }
+
+                var textContent = Encoding.UTF8.GetString(memoryStream.ToArray());
+                var resETag = response.Headers.ETag?.Tag;
+                var resLastModified = response.Content.Headers.LastModified?.ToString("R");
+
+                return new SafeDownloadResult(
+                    response.IsSuccessStatusCode,
+                    (int)response.StatusCode,
+                    textContent,
+                    contentType,
+                    resETag,
+                    resLastModified,
+                    response.IsSuccessStatusCode ? null : $"HTTP {response.StatusCode}");
             }
+            catch (SecurityException secEx)
+            {
+                _logger.LogWarning("Tentativa de acesso bloqueada por segurança SSRF: {Url}. Motivo: {Msg}", currentUrl, secEx.Message);
+                return new SafeDownloadResult(false, 0, null, null, null, null, $"Segurança SSRF: {secEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Falha na requisição para {Url}: {Error}", currentUrl, ex.Message);
+                return new SafeDownloadResult(false, 0, null, null, null, null, "Falha de conexão com o servidor de origem.");
+            }
+        }
 
-            var textContent = Encoding.UTF8.GetString(memoryStream.ToArray());
-            var resETag = response.Headers.ETag?.Tag;
-            var resLastModified = response.Content.Headers.LastModified?.ToString("R");
-
-            return new SafeDownloadResult(
-                response.IsSuccessStatusCode,
-                (int)response.StatusCode,
-                textContent,
-                contentType,
-                resETag,
-                resLastModified,
-                response.IsSuccessStatusCode ? null : $"HTTP {response.StatusCode}");
-        }
-        catch (SecurityException secEx)
-        {
-            _logger.LogWarning("Tentativa de acesso bloqueada por segurança SSRF: {Url}. Erro: {Msg}", url, secEx.Message);
-            return new SafeDownloadResult(false, 0, null, null, null, null, $"Segurança SSRF: {secEx.Message}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Falha na requisição para {Url}", url);
-            return new SafeDownloadResult(false, 0, null, null, null, null, ex.Message);
-        }
+        return new SafeDownloadResult(false, 0, null, null, null, null, "Limite máximo de 3 redirecionamentos excedido.");
     }
 
+    private static bool IsRedirect(HttpStatusCode code) =>
+        code is HttpStatusCode.Moved
+             or HttpStatusCode.Redirect
+             or HttpStatusCode.SeeOther
+             or HttpStatusCode.TemporaryRedirect
+             or (HttpStatusCode)308;
+
     /// <summary>
-    /// Verifica se o IP pertence a redes restritas ou não roteáveis na internet pública.
+    /// Verifica se o IP pertence a redes restritas, loopback, privadas ou não roteáveis na internet pública.
     /// </summary>
     public static bool IsDisallowedIp(IPAddress ip)
     {
@@ -196,29 +229,54 @@ public sealed class SafeHttpClient : ISafeHttpClient
         {
             var bytes = targetIp.GetAddressBytes();
 
+            // 0.0.0.0/8 (Rede atual)
+            if (bytes[0] == 0) return true;
+
             // 10.0.0.0/8 (Privada RFC 1918)
             if (bytes[0] == 10) return true;
-
-            // 172.16.0.0/12 (Privada RFC 1918)
-            if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) return true;
-
-            // 192.168.0.0/16 (Privada RFC 1918)
-            if (bytes[0] == 192 && bytes[1] == 168) return true;
 
             // 127.0.0.0/8 (Loopback)
             if (bytes[0] == 127) return true;
 
-            // 169.254.0.0/16 (Link-Local e Cloud Metadata: AWS/GCP/Azure 169.254.169.254)
-            if (bytes[0] == 169 && bytes[1] == 254) return true;
-
             // 100.64.0.0/10 (Carrier-Grade NAT RFC 6598)
             if (bytes[0] == 100 && (bytes[1] & 0xC0) == 64) return true;
 
-            // 0.0.0.0/8 (Rede atual)
-            if (bytes[0] == 0) return true;
+            // 169.254.0.0/16 (Link-Local e Cloud Metadata: AWS/GCP/Azure 169.254.169.254)
+            if (bytes[0] == 169 && bytes[1] == 254) return true;
+
+            // 172.16.0.0/12 (Privada RFC 1918)
+            if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) return true;
+
+            // 192.0.2.0/24 (TEST-NET-1 RFC 5737)
+            if (bytes[0] == 192 && bytes[1] == 0 && bytes[2] == 2) return true;
+
+            // 192.168.0.0/16 (Privada RFC 1918)
+            if (bytes[0] == 192 && bytes[1] == 168) return true;
+
+            // 198.18.0.0/15 (Benchmark de rede RFC 2544)
+            if (bytes[0] == 198 && (bytes[1] & 0xFE) == 18) return true;
+
+            // 198.51.100.0/24 (TEST-NET-2 RFC 5737)
+            if (bytes[0] == 198 && bytes[1] == 51 && bytes[2] == 100) return true;
+
+            // 203.0.113.0/24 (TEST-NET-3 RFC 5737)
+            if (bytes[0] == 203 && bytes[1] == 0 && bytes[2] == 113) return true;
 
             // 224.0.0.0/4 (Multicast) e 240.0.0.0/4 (Reservado)
             if (bytes[0] >= 224) return true;
+
+            // 255.255.255.255 (Broadcast)
+            if (bytes[0] == 255 && bytes[1] == 255 && bytes[2] == 255 && bytes[3] == 255) return true;
+        }
+        else if (targetIp.AddressFamily == AddressFamily.InterNetworkV6)
+        {
+            var bytes = targetIp.GetAddressBytes();
+
+            // fc00::/7 (Unique Local Address)
+            if ((bytes[0] & 0xFE) == 0xFC) return true;
+
+            // 2001:db8::/32 (Documentação)
+            if (bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0x0D && bytes[3] == 0xB8) return true;
         }
 
         return false;
@@ -243,9 +301,11 @@ public sealed class SafeHttpClient : ISafeHttpClient
             throw new SocketException((int)SocketError.HostNotFound);
         }
 
-        if (addresses.All(IsDisallowedIp))
+        // Se QUALQUER endereço retornado pelo DNS for proibido, abortar imediatamente
+        var restricted = addresses.FirstOrDefault(IsDisallowedIp);
+        if (restricted != null)
         {
-            throw new SecurityException($"Todos os endereços IP resolvidos para '{host}' são restritos.");
+            throw new SecurityException($"O host '{host}' resolve para endereço IP restrito ({restricted}). Acesso proibido por política SSRF.");
         }
     }
 
