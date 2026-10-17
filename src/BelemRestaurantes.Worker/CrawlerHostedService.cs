@@ -88,27 +88,35 @@ public sealed class CrawlerHostedService : BackgroundService
 
     private async Task RunSingleCycleAsync(int maxTasks, CancellationToken ct)
     {
+        var startedAt = DateTimeOffset.UtcNow;
         _logger.LogInformation("Iniciando ciclo autônomo do Cuia Crawler...");
 
         using var scope = _scopeFactory.CreateScope();
         var orchestrator = scope.ServiceProvider.GetRequiredService<ICrawlerOrchestrator>();
+        var telemetryRepo = scope.ServiceProvider.GetService<IDiscoveryTelemetryRepository>();
+
+        int crawlerProcessed = 0;
+        int enrichedCount = 0;
+        int intelJobs = 0;
+        string status = "success";
+        string? errorMessage = null;
 
         try
         {
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(TimeSpan.FromMinutes(8));
 
-            var processed = await orchestrator.RunCrawlerCycleAsync(maxTasks, timeoutCts.Token);
-            _logger.LogInformation("Ciclo do Cuia Crawler concluído com sucesso: {Count} tarefas processadas.", processed);
+            crawlerProcessed = await orchestrator.RunCrawlerCycleAsync(maxTasks, timeoutCts.Token);
+            _logger.LogInformation("Ciclo do Cuia Crawler concluído com sucesso: {Count} tarefas processadas.", crawlerProcessed);
 
             // Sprint 09: Enriquecimento inteligente contínuo de estabelecimentos (Fase 3)
             var enrichmentService = scope.ServiceProvider.GetService<IEnrichmentService>();
             if (enrichmentService != null)
             {
-                var enriched = await enrichmentService.RunEnrichmentCycleAsync(10, timeoutCts.Token);
-                if (enriched > 0)
+                enrichedCount = await enrichmentService.RunEnrichmentCycleAsync(10, timeoutCts.Token);
+                if (enrichedCount > 0)
                 {
-                    _logger.LogInformation("Ciclo de Enriquecimento Discovery 360: {Count} estabelecimentos enriquecidos.", enriched);
+                    _logger.LogInformation("Ciclo de Enriquecimento Discovery 360: {Count} estabelecimentos enriquecidos.", enrichedCount);
                 }
             }
 
@@ -116,7 +124,7 @@ public sealed class CrawlerHostedService : BackgroundService
             var intelligenceOrchestrator = scope.ServiceProvider.GetService<IDiscoveryIntelligenceOrchestrator>();
             if (intelligenceOrchestrator != null)
             {
-                var intelJobs = await intelligenceOrchestrator.RunIntelligenceCycleAsync(10, timeoutCts.Token);
+                intelJobs = await intelligenceOrchestrator.RunIntelligenceCycleAsync(10, timeoutCts.Token);
                 if (intelJobs > 0)
                 {
                     _logger.LogInformation("Ciclo Discovery Intelligence: {Count} tarefas de inteligência processadas.", intelJobs);
@@ -125,11 +133,39 @@ public sealed class CrawlerHostedService : BackgroundService
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            // Saída normal
+            status = "warning";
+            errorMessage = "Ciclo interrompido por cancelamento ou parada do serviço.";
         }
         catch (Exception ex)
         {
+            status = "error";
+            errorMessage = ex.Message;
             _logger.LogError(ex, "Falha durante execução do ciclo do Cuia Crawler.");
+        }
+        finally
+        {
+            var finishedAt = DateTimeOffset.UtcNow;
+            if (telemetryRepo != null)
+            {
+                try
+                {
+                    await telemetryRepo.RecordTelemetryAsync(
+                        serviceName: "Crawler & Intelligence",
+                        startedAt: startedAt,
+                        finishedAt: finishedAt,
+                        sourceQueried: "Sitemaps, Feeds & Schema.org",
+                        recordsCreated: crawlerProcessed,
+                        recordsUpdated: enrichedCount + intelJobs,
+                        apiUnitsConsumed: Math.Max(0, crawlerProcessed + enrichedCount),
+                        status: status,
+                        errorMessage: errorMessage,
+                        ct: CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Falha ao registrar telemetria do ciclo no banco de dados.");
+                }
+            }
         }
     }
 }

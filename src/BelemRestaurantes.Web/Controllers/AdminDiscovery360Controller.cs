@@ -19,7 +19,11 @@ public sealed class AdminDiscovery360Controller(
     IEnrichmentService enrichmentService,
     ICrawlerTaskQueue taskQueue,
     ICrawlerSourceRepository sourceRepo,
-    ILogger<AdminDiscovery360Controller> logger) : Controller
+    ILogger<AdminDiscovery360Controller> logger,
+    IDiscoveryIntelligenceQueue? intelligenceQueue = null,
+    ICommercialMonetizationRepository? monetizationRepo = null,
+    IDiscoveryIntelligenceOrchestrator? orchestrator = null,
+    IDiscoveryTelemetryRepository? telemetryRepo = null) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct)
@@ -29,12 +33,79 @@ public sealed class AdminDiscovery360Controller(
         var recentChanges = await attributeHistory.ListRecentChangesAsync(25, ct);
         var pendingMedias = await mediaRepo.ListPendingModerationAsync(30, ct);
 
+        var intelligenceStats = intelligenceQueue != null
+            ? await intelligenceQueue.GetJobCountsByStatusAsync(ct)
+            : new Dictionary<string, int>();
+
+        var recentInvoices = monetizationRepo != null
+            ? await monetizationRepo.ListRecentInvoicesAsync(15, ct)
+            : Array.Empty<CommercialInvoice>();
+
+        var telemetrySummary = telemetryRepo != null
+            ? await telemetryRepo.GetSummaryAsync(ct)
+            : new DiscoveryTelemetrySummary();
+
+        var recentTelemetry = telemetryRepo != null
+            ? await telemetryRepo.ListRecentTelemetryAsync(15, ct)
+            : Array.Empty<DiscoveryTelemetryRecord>();
+
         ViewData["CoverageStats"] = coverage;
         ViewData["PendingEnrichments"] = pendingEnrichments;
         ViewData["RecentChanges"] = recentChanges;
         ViewData["PendingMedias"] = pendingMedias;
+        ViewData["IntelligenceStats"] = intelligenceStats;
+        ViewData["RecentInvoices"] = recentInvoices;
+        ViewData["TelemetrySummary"] = telemetrySummary;
+        ViewData["RecentTelemetry"] = recentTelemetry;
 
         return View("~/Views/AdminAccount/Discovery360.cshtml");
+    }
+
+    [HttpPost("intelligence-batch")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RunIntelligenceBatch(CancellationToken ct)
+    {
+        try
+        {
+            if (orchestrator != null)
+            {
+                var processed = await orchestrator.RunIntelligenceCycleAsync(10, ct);
+                logger.LogInformation("Fila central de inteligência executada por {User}: {Count} itens processados", User.Identity?.Name, processed);
+                TempData["Flash"] = $"Fila Central de Inteligência 360 executada: {processed} tarefas processadas.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Orquestrador de inteligência não configurado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao processar lote de inteligência");
+            TempData["ErrorMessage"] = "Erro ao executar fila de inteligência.";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost("invoice/{txid}/confirm")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmInvoicePayment(string txid, [FromForm] string authHash, CancellationToken ct)
+    {
+        if (monetizationRepo != null)
+        {
+            var success = await monetizationRepo.ConfirmPaymentAsync(txid, authHash, DateTimeOffset.UtcNow, ct);
+            if (success)
+            {
+                logger.LogInformation("Fatura PIX {Txid} confirmada com sucesso por {User}", txid, User.Identity?.Name);
+                TempData["Flash"] = $"Fatura {txid} confirmada com autenticação segura HMAC-SHA256.";
+            }
+            else
+            {
+                logger.LogWarning("Falha na validação de pagamento para fatura {Txid} por {User}", txid, User.Identity?.Name);
+                TempData["ErrorMessage"] = $"Não foi possível confirmar o pagamento da fatura {txid}. Assinatura HMAC inválida ou fatura não encontrada.";
+            }
+        }
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost("enrich-batch")]

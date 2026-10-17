@@ -139,6 +139,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ICommercialMonetizationRepository, MySql.MySqlCommercialMonetizationRepository>();
         services.AddScoped<IDiscoveryIntelligenceOrchestrator, Crawler.DiscoveryIntelligenceOrchestrator>();
 
+        // Sprint 11 - Telemetria Unificada e Qualidade do Catálogo Gastronômico
+        services.AddScoped<IDiscoveryTelemetryRepository, MySql.MySqlDiscoveryTelemetryRepository>();
+
         services.AddHttpClient("googleplaces", client =>
         {
             client.Timeout = googleOptions.Timeout;
