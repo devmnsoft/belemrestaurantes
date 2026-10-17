@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 using BelemRestaurantes.Web;
 using BelemRestaurantes.Web.Localization;
 using Microsoft.AspNetCore.Hosting;
@@ -13,7 +14,17 @@ namespace BelemRestaurantes.IntegrationTests;
 public sealed class LocalizationTests : IDisposable
 {
     private readonly WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>()
-        .WithWebHostBuilder(builder => builder.UseEnvironment("Development"));
+        .WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new System.Collections.Generic.Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:MySql"] = DatabaseEnvironment.ConnectionString() ?? "Server=127.0.0.1;Database=belrestaurante;User=test;Password=test;SslMode=Required;"
+                });
+            });
+        });
 
     private HttpClient Client() => factory.CreateClient(new WebApplicationFactoryClientOptions
     { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });

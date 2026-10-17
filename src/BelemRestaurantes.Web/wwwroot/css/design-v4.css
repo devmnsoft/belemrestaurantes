@@ -1,0 +1,320 @@
+/* ==========================================================================
+   BELÉM RESTAURANTES — DESIGN SYSTEM V4 (O Pará tem sabor)
+   Paleta: Verde Floresta, Tucupi Dourado, Urucum Paraense, Creme Amazônico
+   Acessibilidade: WCAG 2.2 AA (Contraste 4.5:1+, Foco Visível, Tipografia Fluida)
+   Iconografia: SVG Nativo (sem emojis estáticos para funções de sistema)
+   ========================================================================== */
+
+:root {
+  /* Cores V4 Primárias e Naturais */
+  --forest-950: #04160e;
+  --forest-900: #072317;
+  --forest-800: #0d3826;
+  --forest-700: #144f36;
+  --forest-600: #1b6847;
+  --forest-500: #24845b;
+  --forest-100: #e6f2eb;
+  --forest-50:  #f2f8f5;
+
+  /* Tucupi Dourado */
+  --tucupi-600: #c98818;
+  --tucupi-500: #e5a93b;
+  --tucupi-400: #f3be5d;
+  --tucupi-100: #fef5e3;
+  --tucupi-50:  #fffaf0;
+
+  /* Urucum / Alerta */
+  --urucum-600: #9e2a16;
+  --urucum-500: #c84b31;
+  --urucum-100: #fbece9;
+
+  /* Superfícies & Neutros */
+  --creme-bg:       #fbf9f4;
+  --surface-card:   #ffffff;
+  --surface-muted:  #f4f6f2;
+  --surface-dark:   #0d3826;
+
+  --text-main:      #12241d;
+  --text-muted:     #4d665b;
+  --text-light:     #6f8a7e;
+  --text-inverse:   #ffffff;
+
+  --border-light:   #e1e7de;
+  --border-strong:  #cad4c6;
+  --border-focus:   #e5a93b;
+
+  /* Raios e Sombras */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  --shadow-subtle: 0 1px 3px rgba(7, 35, 23, 0.05);
+  --shadow-card:   0 4px 16px rgba(7, 35, 23, 0.07);
+  --shadow-hover:  0 10px 28px rgba(7, 35, 23, 0.12);
+
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body:    'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Base e Acessibilidade */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--creme-bg);
+  color: var(--text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--forest-950);
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+/* Foco Acessível WCAG 2.2 AA */
+:focus-visible {
+  outline: 3px solid var(--tucupi-500) !important;
+  outline-offset: 3px !important;
+}
+
+/* Card Gastronômico V4 */
+.card-gastronomico-v4 {
+  background: var(--surface-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-gastronomico-v4:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--tucupi-400);
+}
+
+.card-media-wrap-v4 {
+  position: relative;
+  height: 200px;
+  background-color: var(--forest-900);
+  overflow: hidden;
+}
+
+.card-media-wrap-v4 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.card-gastronomico-v4:hover .card-media-wrap-v4 img {
+  transform: scale(1.04);
+}
+
+.badge-tier-v4 {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(7, 35, 23, 0.85);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+}
+
+.badge-cuia-v4 {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, var(--tucupi-500), var(--tucupi-600));
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.card-body-v4 {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Indicadores de Status Operacional */
+.badge-status-v4 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-status-operational {
+  background: rgba(36, 132, 91, 0.15);
+  color: var(--forest-700);
+  border: 1px solid rgba(36, 132, 91, 0.3);
+}
+
+.badge-status-temp-closed {
+  background: rgba(229, 169, 59, 0.15);
+  color: var(--tucupi-600);
+  border: 1px solid rgba(229, 169, 59, 0.4);
+}
+
+.badge-status-perm-closed {
+  background: rgba(200, 75, 49, 0.12);
+  color: #b91c1c;
+  border: 1px solid rgba(200, 75, 49, 0.3);
+}
+
+/* Botões V4 */
+.btn-v4 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.btn-v4-primary {
+  background-color: var(--forest-800);
+  color: #ffffff;
+}
+
+.btn-v4-primary:hover {
+  background-color: var(--forest-700);
+  color: #ffffff;
+}
+
+.btn-v4-tucupi {
+  background-color: var(--tucupi-500);
+  color: var(--forest-950);
+}
+
+.btn-v4-tucupi:hover {
+  background-color: var(--tucupi-400);
+  color: var(--forest-950);
+}
+
+.btn-v4-outline {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--forest-800);
+}
+
+.btn-v4-outline:hover {
+  background: rgba(13, 56, 38, 0.05);
+  border-color: var(--forest-700);
+}
+
+/* Galeria Responsiva V4 */
+.galeria-grid-v4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.galeria-item-v4 {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  height: 105px;
+  background-color: var(--surface-muted);
+  position: relative;
+}
+
+.galeria-item-v4 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.galeria-item-v4:hover img {
+  transform: scale(1.08);
+}
+
+/* Alertas V4 */
+.alert-v4 {
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.alert-v4-success {
+  background-color: rgba(36, 132, 91, 0.1);
+  border: 1px solid var(--forest-500);
+  color: var(--forest-900);
+}
+
+.alert-v4-warning {
+  background-color: rgba(229, 169, 59, 0.12);
+  border: 1px solid var(--tucupi-500);
+  color: #854d0e;
+}
+
+.alert-v4-danger {
+  background-color: rgba(200, 75, 49, 0.1);
+  border: 1px solid var(--urucum-500);
+  color: #991b1b;
+}
+
+/* Estados Vazios V4 */
+.empty-state-v4 {
+  text-align: center;
+  padding: 48px 20px;
+  background: var(--surface-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+
+.empty-state-icon-v4 {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  color: var(--text-light);
+}
+
+/* Iconografia SVG Utilitária Embutida (Sem Emojis Decorativos no Sistema) */
+.icon-svg-v4 {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  vertical-align: middle;
+}

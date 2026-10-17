@@ -111,6 +111,17 @@ public sealed class CrawlerHostedService : BackgroundService
                     _logger.LogInformation("Ciclo de Enriquecimento Discovery 360: {Count} estabelecimentos enriquecidos.", enriched);
                 }
             }
+
+            // Sprint 10: Fila central unificada do Cuia Discovery Intelligence (Fase 2)
+            var intelligenceOrchestrator = scope.ServiceProvider.GetService<IDiscoveryIntelligenceOrchestrator>();
+            if (intelligenceOrchestrator != null)
+            {
+                var intelJobs = await intelligenceOrchestrator.RunIntelligenceCycleAsync(10, timeoutCts.Token);
+                if (intelJobs > 0)
+                {
+                    _logger.LogInformation("Ciclo Discovery Intelligence: {Count} tarefas de inteligência processadas.", intelJobs);
+                }
+            }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
