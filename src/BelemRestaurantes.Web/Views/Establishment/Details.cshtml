@@ -15,48 +15,50 @@
     var experiences = ViewData["Experiences"] as IReadOnlyList<ExperienceView> ?? [];
 }
 
-<div class="container-v3 section-v3">
-  <!-- Topo: Breadcrumb e Ações -->
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:20px;">
+<div class="cuia-container cuia-section">
+  <!-- Topo: Breadcrumb e Ações V5 -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 24px;">
     <div>
-      <a href="/busca" style="text-decoration:none;color:#567064;font-size:14px;font-weight:650;">
+      <a href="/busca" class="cuia-btn cuia-btn-outline cuia-btn-sm">
         ← Voltar para a busca
       </a>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <a href="/cardapio/@Model.Id" class="btn-v3 btn-v3-tucupi">
-        📖 Cardápio Digital
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <a href="/cardapio/@Model.Id" class="cuia-btn cuia-btn-primary">
+        Cardápio Digital
       </a>
-      <a href="/experience/create?restaurantId=@Model.Id" class="btn-v3 btn-v3-forest">
+      <a href="/experience/create?restaurantId=@Model.Id" class="cuia-btn cuia-btn-secondary">
         ✦ @T["TellYourExperience"]
       </a>
-      <a href="/partner/claim/@Model.Id" class="btn-v3 btn-v3-outline">
-        🏪 Reivindicar Restaurante
+      <a href="/partner/claim/@Model.Id" class="cuia-btn cuia-btn-outline">
+        Reivindicar Restaurante
       </a>
     </div>
   </div>
 
-  <!-- Banner Principal do Restaurante -->
-  <div style="background:#fff;border:1px solid #e2e8df;border-radius:24px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:32px;">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));">
+  <!-- Banner Principal do Restaurante V5 -->
+  <div class="cuia-card" style="padding: 0; overflow: hidden; margin-bottom: 32px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
       <!-- Foto de Capa -->
-      <div style="height:360px;background:#0d3826;position:relative;">
+      <div style="height: 360px; background: var(--floresta-900, #113F32); position: relative;">
         @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
         {
-          <img src="@Model.PhotoUrl" alt="@T["AuthorizedPhoto", Model.Name]" style="width:100%;height:100%;object-fit:cover;" loading="eager" referrerpolicy="no-referrer" />
+          <img src="@Model.PhotoUrl" alt="@T["AuthorizedPhoto", Model.Name]" style="width: 100%; height: 100%; object-fit: cover;" loading="eager" referrerpolicy="no-referrer" />
         }
         else
         {
-          <div style="height:100%;display:grid;place-items:center;color:#e5a93b;font-size:48px;">✦</div>
+          <div style="height: 100%; display: grid; place-items: center; color: var(--tucupi-500, #e8ad46); font-size: 48px; background: linear-gradient(135deg, #113F32, #1b5e4b);">
+            ✦
+          </div>
         }
 
         @if (cuiaBadges.Count > 0)
         {
-          <div style="position:absolute;bottom:16px;left:16px;display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="position: absolute; bottom: 16px; left: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
             @foreach (var badge in cuiaBadges)
             {
-              <span class="badge-cuia-gold" title="@badge.MethodologySummary">
-                🏆 @badge.BadgeTitle • @badge.RankPosition º Lugar
+              <span class="cuia-tag cuia-tag-tucupi" title="@badge.MethodologySummary">
+                Selo Cuia @badge.BadgeTitle • @badge.RankPosition º Lugar
               </span>
             }
           </div>
@@ -64,101 +66,101 @@
       </div>
 
       <!-- Detalhes e Apresentação -->
-      <div style="padding:clamp(24px,4vw,36px);display:flex;flex-direction:column;justify-content:space-between;">
+      <div style="padding: clamp(24px, 4vw, 36px); display: flex; flex-direction: column; justify-content: space-between;">
         <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <span class="tagline-badge">@Model.Category</span>
-            <span style="font-size:13px;color:#7a9488;">• Atualizado em @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("d")</span>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span class="cuia-tag cuia-tag-floresta">@Model.Category</span>
+            <span style="font-size: 13px; color: var(--texto-secundario, #4b635a);">• Atualizado em @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("d")</span>
           </div>
 
-          <h1 class="title-section" style="margin-bottom:8px;font-size:clamp(26px,3.5vw,38px);">@Model.Name</h1>
+          <h1 class="cuia-section-title" style="margin-bottom: 8px; font-size: clamp(26px, 3.5vw, 36px);">@Model.Name</h1>
 
-          <div style="font-size:15px;color:#567064;margin-bottom:16px;display:flex;align-items:center;gap:6px;">
-            <span style="color:#c84b31;">📍</span> @(Model.Address ?? T["AddressChecking"].Value), @Model.Neighborhood, @Model.City
+          <div style="font-size: 15px; color: var(--texto-secundario, #4b635a); margin-bottom: 16px;">
+            @(Model.Address ?? T["AddressChecking"].Value), @Model.Neighborhood, @Model.City
           </div>
 
           <!-- Redes Sociais Oficiais -->
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
-            @if (Model.Website is not null) { <a href="@Model.Website" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">🌐 Site Oficial</a> }
-            @if (Model.Instagram is not null) { <a href="@Model.Instagram" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">📸 Instagram</a> }
-            @if (Model.Facebook is not null) { <a href="@Model.Facebook" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">📘 Facebook</a> }
-            @if (Model.TikTok is not null) { <a href="@Model.TikTok" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">🎵 TikTok</a> }
-            @if (Model.YouTube is not null) { <a href="@Model.YouTube" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">▶️ YouTube</a> }
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0;">
+            @if (Model.Website is not null) { <a href="@Model.Website" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">Site Oficial ↗</a> }
+            @if (Model.Instagram is not null) { <a href="@Model.Instagram" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">Instagram ↗</a> }
+            @if (Model.Facebook is not null) { <a href="@Model.Facebook" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">Facebook ↗</a> }
+            @if (Model.TikTok is not null) { <a href="@Model.TikTok" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">TikTok ↗</a> }
+            @if (Model.YouTube is not null) { <a href="@Model.YouTube" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">YouTube ↗</a> }
           </div>
         </div>
 
         <!-- Barra de Ações Rápidas -->
-        <div style="padding-top:16px;border-top:1px solid #edf2ec;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-          <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-outline btn-v3-sm">
-            🗺️ Como Chegar (Mapa)
+        <div style="padding-top: 16px; border-top: 1px solid var(--borda-suave, #e2e8df); display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">
+            Como Chegar (Mapa) ↗
           </a>
-          <button type="button" class="btn-v3 btn-v3-outline btn-v3-sm" onclick="navigator.clipboard.writeText(window.location.href); alert('Link do restaurante copiado!');">
-            🔗 Compartilhar
+          <button type="button" class="cuia-btn cuia-btn-outline cuia-btn-sm" onclick="navigator.clipboard.writeText(window.location.href); alert('Link do restaurante copiado!');">
+            Compartilhar
           </button>
-          <a href="/#indicacao" class="btn-v3 btn-v3-outline btn-v3-sm text-muted">
-            ✏️ Sugerir Correção
+          <a href="/#indicacao" class="cuia-btn cuia-btn-outline cuia-btn-sm" style="color: var(--texto-secundario);">
+            Sugerir Correção
           </a>
         </div>
       </div>
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px;align-items:start;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; align-items: start;">
     <!-- Coluna Esquerda: Informações & Mobilidade -->
     <div>
       <!-- Cardápio Digital Rápido -->
-      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:var(--shadow-sm);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h3 style="font-size:18px;font-weight:800;color:#0d3826;margin:0;">📖 Cardápio Digital da Casa</h3>
-          <a href="/cardapio/@Model.Id" class="btn-v3 btn-v3-tucupi btn-v3-sm">Acessar Cardápio ➔</a>
+      <div class="cuia-card" style="margin-bottom: 24px; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <h3 style="font-size: 18px; font-weight: 800; color: var(--floresta-900, #113F32); margin: 0;">Cardápio Digital da Casa</h3>
+          <a href="/cardapio/@Model.Id" class="cuia-btn cuia-btn-primary cuia-btn-sm">Acessar Cardápio →</a>
         </div>
-        <p style="color:#567064;font-size:14px;margin:0;">
+        <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; margin: 0;">
           Consulte os pratos típicos, preços atualizados, alérgenos e opções regionais disponíveis.
         </p>
       </div>
 
       <!-- Como Chegar e Mobilidade -->
-      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:24px;">
-        <h3 style="font-size:18px;font-weight:800;color:#0d3826;margin-bottom:12px;">🚍 Mobilidade Urbana & Como Chegar</h3>
-        <p style="color:#567064;font-size:14px;line-height:1.6;margin-bottom:16px;">
+      <div class="cuia-card" style="margin-bottom: 24px; padding: 24px;">
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 12px;">Mobilidade Urbana & Como Chegar</h3>
+        <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
           Localizado no bairro @(Model.Neighborhood ?? "Central") de @Model.City. Acesso pelas vias principais do município, com linhas de ônibus metropolitanas e paradas de integração regulares.
         </p>
-        <a href="https://www.google.com/maps/dir/?api=1&destination=@Uri.EscapeDataString(Model.Name + " " + Model.Address + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="btn-v3 btn-v3-forest w-100 btn-v3-sm">
-          Traçar Rota no Google Maps
+        <a href="https://www.google.com/maps/dir/?api=1&destination=@Uri.EscapeDataString(Model.Name + " " + Model.Address + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-secondary cuia-btn-sm" style="width: 100%; text-align: center;">
+          Traçar Rota no Google Maps ↗
         </a>
       </div>
 
       <!-- Galeria de Fotos Segregada -->
-      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:24px;box-shadow:var(--shadow-sm);">
-        <h3 style="font-size:18px;font-weight:800;color:#0d3826;margin-bottom:16px;">📷 Fotografias do Restaurante</h3>
+      <div class="cuia-card" style="padding: 24px;">
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 16px;">Fotografias do Restaurante</h3>
 
         <!-- Fotos da Comunidade -->
-        <h4 style="font-size:14.5px;color:#144f36;font-weight:750;margin-bottom:10px;">Enviadas pela Comunidade</h4>
+        <h4 style="font-size: 14px; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Enviadas pela Comunidade</h4>
         @if (gallery?.CommunityPhotos.Count > 0)
         {
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:18px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 18px;">
             @foreach (var photo in gallery.CommunityPhotos)
             {
-              <a href="/media/photo/@photo.FileName" target="_blank" style="display:block;border-radius:10px;overflow:hidden;border:1px solid #e2e8df;height:90px;">
-                <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+              <a href="/media/photo/@photo.FileName" target="_blank" style="display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--borda-suave, #e2e8df); height: 90px;">
+                <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
               </a>
             }
           </div>
         }
         else
         {
-          <p style="font-size:13px;color:#7a9488;margin-bottom:18px;">Nenhuma foto enviada pela comunidade ainda.</p>
+          <p style="font-size: 13px; color: var(--texto-secundario, #4b635a); margin-bottom: 18px;">Nenhuma foto enviada pela comunidade ainda.</p>
         }
 
         <!-- Fotos Oficiais -->
         @if (gallery?.OfficialPhotos.Count > 0)
         {
-          <h4 style="font-size:14.5px;color:#144f36;font-weight:750;margin-bottom:10px;">Fotos Oficiais da Casa</h4>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:18px;">
+          <h4 style="font-size: 14px; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Fotos Oficiais da Casa</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 18px;">
             @foreach (var photo in gallery.OfficialPhotos)
             {
-              <a href="/media/photo/@photo.FileName" target="_blank" style="display:block;border-radius:10px;overflow:hidden;border:1px solid #e2e8df;height:90px;">
-                <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+              <a href="/media/photo/@photo.FileName" target="_blank" style="display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--borda-suave, #e2e8df); height: 90px;">
+                <img src="/media/thumb/@photo.ThumbnailName" alt="@photo.Caption" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
               </a>
             }
           </div>
@@ -169,14 +171,14 @@
         }
         @if (mediaList.Count > 0)
         {
-          <h4 style="font-size:14.5px;color:#144f36;font-weight:750;margin-bottom:10px;">Mídias Licenciadas & Experiências</h4>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:18px;">
+          <h4 style="font-size: 14px; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Mídias Licenciadas & Experiências</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 18px;">
             @foreach (var m in mediaList)
             {
-              <div style="border-radius:10px;overflow:hidden;border:1px solid #e2e8df;background:#f9fafb;" title="@m.AttributionText (@m.LicenseType)">
-                <img src="@m.MediaUrl" alt="Mídia de @Model.Name" style="width:100%;height:90px;object-fit:cover;" loading="lazy" onerror="this.src='/images/placeholder-restaurant.jpg';" />
-                <div style="font-size:9.5px;color:#567064;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                  📷 @m.AttributionText
+              <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--borda-suave, #e2e8df); background: #f9fafb;" title="@m.AttributionText (@m.LicenseType)">
+                <img src="@m.MediaUrl" alt="Mídia de @Model.Name" style="width: 100%; height: 90px; object-fit: cover;" loading="lazy" onerror="this.src='/images/placeholder-restaurant.jpg';" />
+                <div style="font-size: 10px; color: var(--texto-secundario, #4b635a); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  @m.AttributionText
                 </div>
               </div>
             }
@@ -184,68 +186,68 @@
         }
       </div>
 
-      <!-- Procedência & Transparência das Informações (Sprint 09) -->
-      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:20px;margin-top:24px;box-shadow:var(--shadow-sm);">
-        <h4 style="font-size:14.5px;font-weight:750;color:#0d3826;margin:0 0 8px 0;display:flex;align-items:center;gap:6px;">
-          <span>🛡️</span> Transparência & Procedência dos Dados
+      <!-- Procedência & Transparência das Informações -->
+      <div class="cuia-card" style="margin-top: 24px; padding: 20px;">
+        <h4 style="font-size: 14px; font-weight: 700; color: var(--floresta-900, #113F32); margin: 0 0 8px 0;">
+          Transparência & Procedência dos Dados
         </h4>
-        <p style="font-size:12.5px;color:#567064;line-height:1.5;margin:0 0 10px 0;">
+        <p style="font-size: 12.5px; color: var(--texto-secundario, #4b635a); line-height: 1.5; margin: 0 0 10px 0;">
           As informações cadastrais deste estabelecimento foram auditadas no catálogo de @Model.City.
         </p>
-        <div style="font-size:11.5px;color:#7a9488;background:var(--creme-bg);padding:8px 12px;border-radius:8px;">
+        <div style="font-size: 11.5px; color: var(--texto-secundario, #4b635a); background: var(--palha-100, #f7f4eb); padding: 8px 12px; border-radius: 8px;">
           <div><strong>Última atualização:</strong> @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy HH:mm")</div>
-          <div style="margin-top:2px;"><strong>Status:</strong> Cadastrado oficialmente · Verificado pela curadoria</div>
+          <div style="margin-top: 2px;"><strong>Status:</strong> Cadastrado · Curadoria auditada</div>
         </div>
       </div>
     </div>
 
     <!-- Coluna Direita: Avaliações e Experiências da Comunidade -->
     <div>
-      <div style="background:#fff;border:1px solid #e2e8df;border-radius:20px;padding:28px;box-shadow:var(--shadow-sm);">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8df;">
+      <div class="cuia-card" style="padding: 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--borda-suave, #e2e8df);">
           <div>
-            <h2 style="font-size:22px;font-weight:800;color:#0d3826;margin:0;">Experiências da Comunidade</h2>
-            <span style="font-size:14px;color:#567064;">@experiences.Count relatos reais compartilhados</span>
+            <h2 style="font-size: 22px; font-weight: 800; color: var(--floresta-900, #113F32); margin: 0;">Experiências da Comunidade</h2>
+            <span style="font-size: 14px; color: var(--texto-secundario, #4b635a);">@experiences.Count relatos reais compartilhados</span>
           </div>
-          <a href="/experience/create?restaurantId=@Model.Id" class="btn-v3 btn-v3-forest btn-v3-sm">
+          <a href="/experience/create?restaurantId=@Model.Id" class="cuia-btn cuia-btn-secondary cuia-btn-sm">
             ✦ Avaliar Restaurante
           </a>
         </div>
 
         @if (experiences.Count == 0)
         {
-          <div style="text-align:center;padding:40px 16px;background:var(--creme-bg);border-radius:16px;">
-            <div style="font-size:32px;margin-bottom:8px;">💬</div>
-            <h4 style="font-weight:750;color:#0d3826;margin-bottom:6px;">Seja o primeiro a avaliar!</h4>
-            <p style="color:#567064;font-size:14px;max-width:400px;margin:auto;margin-bottom:16px;">
+          <div style="text-align: center; padding: 40px 16px; background: var(--palha-100, #f7f4eb); border-radius: 16px;">
+            <div style="font-size: 32px; margin-bottom: 8px; color: var(--tucupi-600, #c48b28);">✦</div>
+            <h4 style="font-weight: 700; color: var(--floresta-900, #113F32); margin-bottom: 6px;">Seja o primeiro a avaliar!</h4>
+            <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; max-width: 400px; margin: auto; margin-bottom: 16px;">
               Conte como foi seu atendimento, sabor dos pratos, ambiente e custo-benefício em @Model.Name.
             </p>
-            <a href="/experience/create?restaurantId=@Model.Id" class="btn-v3 btn-v3-forest btn-v3-sm">
+            <a href="/experience/create?restaurantId=@Model.Id" class="cuia-btn cuia-btn-secondary cuia-btn-sm">
               Escrever Primeira Avaliação
             </a>
           </div>
         }
         else
         {
-          <div style="display:flex;flex-direction:column;gap:20px;">
+          <div style="display: flex; flex-direction: column; gap: 20px;">
             @foreach (var exp in experiences)
             {
-              <div style="border:1px solid #e2e8df;border-radius:16px;padding:20px;background:var(--creme-bg);">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+              <div class="cuia-card" style="background: var(--palha-100, #f7f4eb); padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                   <div>
-                    <strong style="color:#0d3826;font-size:15px;">@exp.AuthorName</strong>
-                    <div style="font-size:12px;color:#7a9488;">@exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy HH:mm")</div>
+                    <strong style="color: var(--floresta-900, #113F32); font-size: 15px;">@exp.AuthorName</strong>
+                    <div style="font-size: 12px; color: var(--texto-secundario, #4b635a);">@exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy HH:mm")</div>
                   </div>
-                  <div class="star-rating-v3">
+                  <div class="cuia-rating">
                     @for (int i = 1; i <= 5; i++)
                     {
-                      <span style="color:@(i <= exp.Stars ? "#e5a93b" : "#dce7dc");">★</span>
+                      <span style="color: @(i <= exp.Stars ? "#e8ad46" : "#dce7dc");">★</span>
                     }
                   </div>
                 </div>
 
                 <!-- Subcritérios de Nota -->
-                <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;background:#fff;padding:8px 12px;border-radius:10px;border:1px solid #e2e8df;margin-bottom:12px;">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; background: #ffffff; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--borda-suave, #e2e8df); margin-bottom: 12px;">
                   <span><b>Atendimento:</b> @exp.ServiceStars★</span>
                   <span><b>Sabor:</b> @exp.FlavorStars★</span>
                   <span><b>Ambiente:</b> @exp.AmbianceStars★</span>
@@ -258,39 +260,39 @@
 
                 @if (!string.IsNullOrWhiteSpace(exp.DishesConsumed))
                 {
-                  <div style="font-size:13.5px;color:#0d3826;font-weight:700;margin-bottom:6px;">
-                    🍴 Pratos: @exp.DishesConsumed
+                  <div style="font-size: 13.5px; color: var(--floresta-900, #113F32); font-weight: 700; margin-bottom: 6px;">
+                    Prato: @exp.DishesConsumed
                   </div>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(exp.ReviewText))
                 {
-                  <p style="font-size:14.5px;line-height:1.5;color:#203d33;margin:0 0 12px;">
+                  <p style="font-size: 14px; line-height: 1.5; color: var(--texto-principal, #17342d); margin: 0 0 12px;">
                     @exp.ReviewText
                   </p>
                 }
 
                 @if (exp.Photos.Count > 0)
                 {
-                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
                     @foreach (var p in exp.Photos)
                     {
-                      <a href="/media/photo/@p.FileName" target="_blank" style="width:80px;height:65px;border-radius:8px;overflow:hidden;border:1px solid #dce7dc;">
-                        <img src="/media/thumb/@p.ThumbnailName" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+                      <a href="/media/photo/@p.FileName" target="_blank" style="width: 80px; height: 65px; border-radius: 8px; overflow: hidden; border: 1px solid var(--borda-suave, #e2e8df);">
+                        <img src="/media/thumb/@p.ThumbnailName" alt="" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
                       </a>
                     }
                   </div>
                 }
 
-                <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #e2e8df;font-size:13px;">
-                  <form method="post" action="/experience/@exp.Id/like" style="display:inline;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--borda-suave, #e2e8df); font-size: 13px;">
+                  <form method="post" action="/experience/@exp.Id/like" style="display: inline;">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn-v3 btn-v3-outline btn-v3-sm" style="padding:4px 10px;font-size:12px;">
-                      @(exp.HasLiked ? "❤️" : "🤍") Curtir (@exp.LikesCount)
+                    <button type="submit" class="cuia-btn cuia-btn-outline cuia-btn-sm" style="padding: 4px 10px; font-size: 12px;">
+                      @(exp.HasLiked ? "♥" : "♡") Curtir (@exp.LikesCount)
                     </button>
                   </form>
-                  <a href="/experience/@exp.Id" style="color:#0d3826;font-weight:750;text-decoration:none;">
-                    💬 Comentários (@exp.CommentsCount)
+                  <a href="/experience/@exp.Id" style="color: var(--floresta-900, #113F32); font-weight: 700; text-decoration: none;">
+                    Comentários (@exp.CommentsCount) →
                   </a>
                 </div>
               </div>

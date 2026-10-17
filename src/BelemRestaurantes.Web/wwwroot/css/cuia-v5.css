@@ -1,0 +1,498 @@
+/* ==========================================================================
+   Cuia Experience V5 — Belém Restaurantes Design System
+   Paleta: Verde Profundo (#113F32), Dourado Tucupi (#E8AD46), Urucum (#B7513C),
+           Palha Amazônica (#F7F4EB), Texto (#17342D).
+   Conformidade: WCAG 2.2 AA, Responsivo (360px a 1440px+), Sem Dependência de Emojis
+   ========================================================================== */
+
+:root {
+  --cuia-forest: #113F32;
+  --cuia-forest-dark: #0A261E;
+  --cuia-forest-light: #1A5947;
+  --cuia-forest-surface: rgba(17, 63, 50, 0.05);
+
+  --cuia-tucupi: #E8AD46;
+  --cuia-tucupi-dark: #C68E2D;
+  --cuia-tucupi-soft: #F9EED4;
+  --cuia-tucupi-surface: rgba(232, 173, 70, 0.12);
+
+  --cuia-urucum: #B7513C;
+  --cuia-urucum-dark: #8F3725;
+  --cuia-urucum-surface: rgba(183, 81, 60, 0.1);
+
+  --cuia-palha: #F7F4EB;
+  --cuia-surface: #FDFBF7;
+  --cuia-surface-card: #FFFFFF;
+  --cuia-border: #E5E0D5;
+  --cuia-border-subtle: #ECE8DE;
+
+  --cuia-text: #17342D;
+  --cuia-text-muted: #567064;
+  --cuia-text-light: #7A9488;
+  --cuia-white: #FFFFFF;
+
+  --cuia-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --cuia-font-display: 'Outfit', 'Inter', -apple-system, sans-serif;
+
+  --cuia-shadow-sm: 0 2px 8px rgba(17, 63, 50, 0.04);
+  --cuia-shadow: 0 4px 18px rgba(17, 63, 50, 0.07);
+  --cuia-shadow-hover: 0 10px 28px rgba(17, 63, 50, 0.12);
+
+  --cuia-radius-sm: 8px;
+  --cuia-radius-md: 14px;
+  --cuia-radius-lg: 20px;
+  --cuia-radius-full: 9999px;
+
+  --cuia-transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Base e Acessibilidade */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--cuia-font-sans);
+  color: var(--cuia-text);
+  background-color: var(--cuia-surface);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--cuia-tucupi);
+  outline-offset: 2px;
+}
+
+/* Layout */
+.cuia-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(16px, 4vw, 32px);
+  padding-right: clamp(16px, 4vw, 32px);
+}
+
+.cuia-section {
+  padding-top: clamp(40px, 6vw, 64px);
+  padding-bottom: clamp(40px, 6vw, 64px);
+}
+
+.cuia-section-muted {
+  background-color: var(--cuia-palha);
+}
+
+.cuia-flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cuia-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 24px;
+}
+
+/* Tipografia Cuia V5 */
+.cuia-title-hero {
+  font-family: var(--cuia-font-display);
+  font-size: clamp(30px, 4.5vw, 48px);
+  font-weight: 850;
+  line-height: 1.15;
+  color: var(--cuia-white);
+  margin: 0 0 16px 0;
+}
+
+.cuia-title-section {
+  font-family: var(--cuia-font-display);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  color: var(--cuia-forest-dark);
+  margin: 0 0 8px 0;
+  line-height: 1.25;
+}
+
+.cuia-subtitle {
+  font-size: clamp(15px, 1.8vw, 17px);
+  color: var(--cuia-text-muted);
+  margin: 0 0 24px 0;
+  max-width: 680px;
+}
+
+.cuia-tagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background-color: var(--cuia-tucupi-surface);
+  color: var(--cuia-tucupi-dark);
+  border: 1px solid rgba(232, 173, 70, 0.35);
+  border-radius: var(--cuia-radius-full);
+  font-size: 12.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+}
+
+/* Hero Section V5 */
+.cuia-hero {
+  background: radial-gradient(circle at 80% 20%, #1A5947 0%, var(--cuia-forest) 60%, var(--cuia-forest-dark) 100%);
+  color: var(--cuia-white);
+  padding-top: clamp(48px, 8vw, 84px);
+  padding-bottom: clamp(48px, 8vw, 84px);
+  position: relative;
+  overflow: hidden;
+}
+
+.cuia-hero-search {
+  background-color: var(--cuia-white);
+  padding: 8px;
+  border-radius: var(--cuia-radius-md);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
+  display: flex;
+  gap: 8px;
+  position: relative;
+  max-width: 760px;
+  margin-top: 24px;
+}
+
+.cuia-hero-input {
+  flex: 1;
+  border: none;
+  padding: 12px 18px;
+  font-size: 15px;
+  color: var(--cuia-text);
+  outline: none;
+  background: transparent;
+  min-width: 180px;
+}
+
+.cuia-hero-select {
+  border: none;
+  border-left: 1px solid var(--cuia-border);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cuia-forest);
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  min-width: 140px;
+}
+
+/* Botões V5 */
+.cuia-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  font-family: var(--cuia-font-sans);
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: var(--cuia-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--cuia-transition);
+  min-height: 44px;
+  line-height: 1;
+}
+
+.cuia-btn-primary {
+  background-color: var(--cuia-forest);
+  color: var(--cuia-white);
+}
+.cuia-btn-primary:hover {
+  background-color: var(--cuia-forest-dark);
+  transform: translateY(-1px);
+}
+
+.cuia-btn-tucupi {
+  background-color: var(--cuia-tucupi);
+  color: var(--cuia-forest-dark);
+}
+.cuia-btn-tucupi:hover {
+  background-color: var(--cuia-tucupi-dark);
+  color: var(--cuia-white);
+  transform: translateY(-1px);
+}
+
+.cuia-btn-urucum {
+  background-color: var(--cuia-urucum);
+  color: var(--cuia-white);
+}
+.cuia-btn-urucum:hover {
+  background-color: var(--cuia-urucum-dark);
+  transform: translateY(-1px);
+}
+
+.cuia-btn-outline {
+  background-color: transparent;
+  border-color: var(--cuia-border);
+  color: var(--cuia-forest);
+}
+.cuia-btn-outline:hover {
+  background-color: var(--cuia-palha);
+  border-color: var(--cuia-forest);
+}
+
+.cuia-btn-sm {
+  padding: 8px 14px;
+  font-size: 13px;
+  min-height: 36px;
+}
+
+/* Cards Gastronômicos V5 */
+.cuia-card {
+  background-color: var(--cuia-surface-card);
+  border: 1px solid var(--cuia-border-subtle);
+  border-radius: var(--cuia-radius-md);
+  padding: 20px;
+  box-shadow: var(--cuia-shadow-sm);
+}
+
+.cuia-card-restaurant,
+.cuia-establishment-card {
+  background-color: var(--cuia-surface-card);
+  border: 1px solid var(--cuia-border-subtle);
+  border-radius: var(--cuia-radius-md);
+  overflow: hidden;
+  box-shadow: var(--cuia-shadow);
+  transition: var(--cuia-transition);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+.cuia-card-restaurant:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--cuia-shadow-hover);
+  border-color: var(--cuia-forest-light);
+}
+
+.cuia-card-thumb-wrap {
+  width: 100%;
+  height: 190px;
+  position: relative;
+  background-color: var(--cuia-palha);
+  overflow: hidden;
+}
+
+.cuia-card-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.cuia-card-restaurant:hover .cuia-card-thumb {
+  transform: scale(1.04);
+}
+
+.cuia-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.cuia-card-title {
+  font-family: var(--cuia-font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--cuia-forest-dark);
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+}
+
+.cuia-card-meta {
+  font-size: 13.5px;
+  color: var(--cuia-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cuia-card-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--cuia-border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cuia-forest);
+}
+
+/* Badges e Selos */
+.cuia-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--cuia-radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cuia-badge-gold {
+  background-color: var(--cuia-tucupi-soft);
+  color: var(--cuia-tucupi-dark);
+  border: 1px solid rgba(232, 173, 70, 0.5);
+}
+
+.cuia-badge-forest {
+  background-color: var(--cuia-forest-surface);
+  color: var(--cuia-forest);
+  border: 1px solid rgba(17, 63, 50, 0.2);
+}
+
+.cuia-badge-status-operational {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #A5D6A7;
+}
+
+.cuia-badge-status-temp-closed {
+  background-color: #FFF3E0;
+  color: #E65100;
+  border: 1px solid #FFCC80;
+}
+
+.cuia-badge-status-perm-closed {
+  background-color: #FFEBEE;
+  color: #C62828;
+  border: 1px solid #EF9A9A;
+}
+
+/* Chips de Categorias */
+.cuia-chips-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.cuia-chip {
+  padding: 8px 16px;
+  background-color: var(--cuia-white);
+  border: 1px solid var(--cuia-border);
+  border-radius: var(--cuia-radius-full);
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--cuia-text);
+  text-decoration: none;
+  transition: var(--cuia-transition);
+}
+.cuia-chip:hover {
+  background-color: var(--cuia-palha);
+  border-color: var(--cuia-tucupi);
+  color: var(--cuia-forest);
+}
+.cuia-chip.active {
+  background-color: var(--cuia-forest);
+  border-color: var(--cuia-forest);
+  color: var(--cuia-white);
+}
+
+/* Estados Vazios e Placeholders */
+.cuia-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background-color: var(--cuia-surface-card);
+  border: 1px dashed var(--cuia-border);
+  border-radius: var(--cuia-radius-md);
+  color: var(--cuia-text-muted);
+}
+.cuia-empty-state h3 {
+  font-family: var(--cuia-font-display);
+  font-size: 18px;
+  font-weight: 750;
+  color: var(--cuia-forest-dark);
+  margin: 12px 0 6px 0;
+}
+
+/* Tabelas Acessíveis V5 */
+.cuia-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--cuia-border);
+  border-radius: var(--cuia-radius-sm);
+  background: var(--cuia-white);
+}
+
+.cuia-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+.cuia-table th {
+  background-color: var(--cuia-palha);
+  padding: 12px 14px;
+  font-weight: 750;
+  color: var(--cuia-forest-dark);
+  border-bottom: 2px solid var(--cuia-border);
+}
+.cuia-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cuia-border-subtle);
+  color: var(--cuia-text);
+}
+.cuia-table tr:hover td {
+  background-color: rgba(247, 244, 235, 0.4);
+}
+
+/* Dropdown de Autocomplete */
+.cuia-autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--cuia-white);
+  border: 1px solid var(--cuia-border);
+  border-radius: var(--cuia-radius-sm);
+  box-shadow: var(--cuia-shadow-hover);
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+}
+.cuia-autocomplete-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--cuia-border-subtle);
+  color: var(--cuia-text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cuia-autocomplete-item:hover {
+  background-color: var(--cuia-palha);
+  color: var(--cuia-forest-dark);
+}
+
+/* Responsividade Mobile (360px a 768px) */
+@media (max-width: 768px) {
+  .cuia-hero-search {
+    flex-direction: column;
+  }
+  .cuia-hero-select {
+    border-left: none;
+    border-top: 1px solid var(--cuia-border);
+  }
+  .cuia-btn {
+    width: 100%;
+  }
+}

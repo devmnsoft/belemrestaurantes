@@ -1,0 +1,182 @@
+@model BelemRestaurantes.Web.Controllers.AdminDiscoveryDiagnosticsViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Diagnóstico Cuia Discovery & Inatividade";
+}
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <span class="cuia-tag cuia-tag-urucum" style="margin-bottom: 8px;">✦ Diagnóstico Operacional · Frente 2</span>
+    <h1 style="font-family: var(--font-display, 'Outfit', sans-serif); font-size: 28px; font-weight: 800; color: var(--forest-950, #0a251e); margin: 0;">
+      Diagnóstico do Cuia Discovery & Crawler
+    </h1>
+    <p style="color: var(--text-muted, #4b635a); font-size: 14px; margin: 4px 0 0 0;">
+      Auditoria em tempo real de conectividade MySQL, status do Google Places, fila persistente e motivos de inatividade do motor de busca.
+    </p>
+  </div>
+  <div style="display: flex; gap: 10px;">
+    <form method="post" action="/admin/diagnostics/activate-belem" style="margin: 0;">
+      @Html.AntiForgeryToken()
+      <button type="submit" class="cuia-btn cuia-btn-secondary" title="Ativa todos os alvos de Belém e coloca jobs vencidos na fila">
+        ⚡ Ativar Alvos de Belém
+      </button>
+    </form>
+    <form method="post" action="/admin/diagnostics/run-belem-now" style="margin: 0;">
+      @Html.AntiForgeryToken()
+      <button type="submit" class="cuia-btn cuia-btn-primary" title="Executa busca e ingestão imediata em Belém">
+        🔍 Executar Descoberta de Belém Agora
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Diagnóstico de Motivos de Inatividade -->
+@if (Model.InactivityReasons.Count > 0)
+{
+  <div class="cuia-card" style="border-left: 4px solid var(--urucum-600, #b7513c); margin-bottom: 24px; background: #fffaf9;">
+    <h3 style="font-size: 16px; font-weight: 800; color: var(--urucum-700, #963825); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+      <span>⚠️</span> Motivos Identificados de Inatividade ou Restrição Operacional (@Model.InactivityReasons.Count)
+    </h3>
+    <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: var(--text-main, #17342d); line-height: 1.6;">
+      @foreach (var reason in Model.InactivityReasons)
+      {
+        <li style="margin-bottom: 6px;">@reason</li>
+      }
+    </ul>
+    <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted, #4b635a);">
+      <strong>Como solucionar:</strong> Chaves de API externas devem ser configuradas nas variáveis de ambiente da VPS Windows (ex: <code>GOOGLEPLACES__APIKEY</code>). Alvos de Belém podem ser habilitados pelo botão acima.
+    </div>
+  </div>
+}
+else
+{
+  <div class="cuia-card" style="border-left: 4px solid var(--forest-600, #1b5e4b); margin-bottom: 24px; background: #f0fdf4;">
+    <h3 style="font-size: 16px; font-weight: 800; color: #166534; margin: 0; display: flex; align-items: center; gap: 8px;">
+      <span>✓</span> Todos os Subsistemas Operacionais e Prontos para Descoberta
+    </h3>
+    <p style="margin: 4px 0 0 0; font-size: 13px; color: #15803d;">
+      O banco está conectado, alvos de Belém estão ativos e o agendamento de lotes ocorre a cada 10 minutos.
+    </p>
+  </div>
+}
+
+<!-- Grid de Cartões de Diagnóstico -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 28px;">
+  <!-- Card Banco de Dados -->
+  <div class="cuia-card">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Conexão MySQL / MariaDB</div>
+    <div style="font-size: 22px; font-weight: 800; margin-top: 6px; color: @(Model.MySqlConnected ? "var(--forest-900)" : "var(--urucum-600)");">
+      @(Model.MySqlConnected ? "● Conectado" : "✕ Falha")
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      Banco: <strong>@Model.MySqlDatabase</strong> @(Model.MySqlConnected ? $"({Model.MySqlPingMs}ms)" : "")
+    </div>
+    @if (!Model.MySqlConnected)
+    {
+      <div style="font-size: 11px; color: var(--urucum-600); margin-top: 4px;">@Model.MySqlErrorMessage</div>
+    }
+  </div>
+
+  <!-- Card Google Places -->
+  <div class="cuia-card">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Google Places API (New)</div>
+    <div style="font-size: 22px; font-weight: 800; margin-top: 6px; color: @(Model.GooglePlacesConfigured ? "var(--forest-900)" : "var(--urucum-600)");">
+      @(Model.GooglePlacesConfigured ? "✓ Configurado" : "○ Chave Ausente")
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      @Model.GooglePlacesStatusMessage
+    </div>
+  </div>
+
+  <!-- Card Alvos de Belém -->
+  <div class="cuia-card">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Alvos de Belém</div>
+    <div style="font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--forest-900);">
+      @Model.BelemTargetsEnabled ativos
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      Total estadual: @Model.EnabledDiscoveryTargets de @Model.TotalDiscoveryTargets alvos
+    </div>
+  </div>
+
+  <!-- Card Fila de Descoberta -->
+  <div class="cuia-card">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Fila Durável (Jobs)</div>
+    <div style="font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--forest-900);">
+      @Model.DiscoveryPendingJobs pendentes
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      Falhas: @Model.DiscoveryFailedJobs | Dead letters: @Model.DiscoveryDeadLetteredJobs
+    </div>
+  </div>
+
+  <!-- Card Cuia Crawler -->
+  <div class="cuia-card">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Cuia Crawler (Autônomo)</div>
+    <div style="font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--forest-900);">
+      @Model.CrawlerActiveSources fontes ativas
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      Tarefas pendentes: @Model.CrawlerPendingTasks
+    </div>
+  </div>
+
+  <!-- Card Moderação -->
+  <div class="cuia-card">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Fila de Moderação</div>
+    <div style="font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--tucupi-600, #c48b28);">
+      @Model.TotalPendingModeration itens
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      <a href="/admin/discovery" style="color: var(--forest-800); font-weight: 600;">Revisar estabelecimentos ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- Telemetria do Último Ciclo -->
+<div class="cuia-card" style="margin-bottom: 24px;">
+  <h3 style="font-size: 18px; font-weight: 800; color: var(--forest-950); margin: 0 0 16px 0;">
+    Último Ciclo do Windows Worker (BelemRestauranteCuiaDiscovery)
+  </h3>
+  @if (Model.LastWorkerCycle != null)
+  {
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+      <div>
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Início do Ciclo</div>
+        <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">
+          @Model.LastWorkerCycle.started_at.ToString("dd/MM/yyyy HH:mm:ss")
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Conclusão</div>
+        <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">
+          @(Model.LastWorkerCycle.completed_at?.ToString("dd/MM/yyyy HH:mm:ss") ?? "Em execução")
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Jobs Processados</div>
+        <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">
+          @Model.LastWorkerCycle.jobs_claimed
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Locais Descobertos</div>
+        <div style="font-size: 15px; font-weight: 700; color: var(--forest-800);">
+          @Model.LastWorkerCycle.places_discovered
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Falhas do Ciclo</div>
+        <div style="font-size: 15px; font-weight: 700; color: @(Model.LastWorkerCycle.jobs_failed > 0 ? "var(--urucum-600)" : "var(--forest-800)");">
+          @Model.LastWorkerCycle.jobs_failed
+        </div>
+      </div>
+    </div>
+  }
+  else
+  {
+    <p style="font-size: 14px; color: var(--text-muted); margin: 0;">
+      Nenhum ciclo registrado na tabela <code>discovery_cycle_runs</code>. Inicie o Windows Worker para iniciar as varreduras de 10 em 10 minutos.
+    </p>
+  }
+</div>
