@@ -100,6 +100,17 @@ public sealed class CrawlerHostedService : BackgroundService
 
             var processed = await orchestrator.RunCrawlerCycleAsync(maxTasks, timeoutCts.Token);
             _logger.LogInformation("Ciclo do Cuia Crawler concluído com sucesso: {Count} tarefas processadas.", processed);
+
+            // Sprint 09: Enriquecimento inteligente contínuo de estabelecimentos (Fase 3)
+            var enrichmentService = scope.ServiceProvider.GetService<IEnrichmentService>();
+            if (enrichmentService != null)
+            {
+                var enriched = await enrichmentService.RunEnrichmentCycleAsync(10, timeoutCts.Token);
+                if (enriched > 0)
+                {
+                    _logger.LogInformation("Ciclo de Enriquecimento Discovery 360: {Count} estabelecimentos enriquecidos.", enriched);
+                }
+            }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {

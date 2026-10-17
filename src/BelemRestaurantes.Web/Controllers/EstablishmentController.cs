@@ -12,7 +12,9 @@ public sealed class EstablishmentController(
     IRestaurantReadRepository repo,
     IExperienceService experienceService,
     IPhotoStorageService photoService,
-    ICuiaService cuiaService) : Controller
+    ICuiaService cuiaService,
+    IRestaurantMediaRepository? mediaRepo = null,
+    IRestaurantAttributeHistoryRepository? historyRepo = null) : Controller
 {
     private string? ViewerUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -29,10 +31,14 @@ public sealed class EstablishmentController(
         var cuiaBadges = await cuiaService.GetBadgesForRestaurantAsync(id, ct);
         var gallery = await photoService.GetGalleryForRestaurantAsync(id, ct);
         var communityExperiences = await experienceService.ListPublicByRestaurantAsync(id, 1, 30, ViewerUserId(), ct);
+        var mediaList = mediaRepo != null ? await mediaRepo.GetMediaByRestaurantAsync(id, onlyApproved: true, ct) : [];
+        var attrHistory = historyRepo != null ? await historyRepo.GetHistoryAsync(id, ct) : [];
 
         ViewData["CuiaBadges"] = cuiaBadges;
         ViewData["Gallery"] = gallery;
         ViewData["Experiences"] = communityExperiences;
+        ViewData["MediaList"] = mediaList;
+        ViewData["AttributeHistory"] = attrHistory;
 
         return View(establishment);
     }

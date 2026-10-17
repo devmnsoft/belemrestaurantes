@@ -24,6 +24,10 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
     private readonly IRestaurantIngestionRepository _ingestion;
     private readonly IModerationRepository _moderation;
     private readonly IAiRouter _aiRouter;
+    private readonly IEnrichmentQueueRepository? _enrichmentQueue;
+    private readonly IRestaurantMediaRepository? _mediaRepo;
+    private readonly IRestaurantAttributeHistoryRepository? _historyRepo;
+    private readonly IGeoMunicipalityRepository? _geoRepo;
     private readonly IClock _clock;
     private readonly ILogger<CrawlerOrchestrator> _logger;
 
@@ -38,7 +42,11 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         IModerationRepository moderation,
         IAiRouter aiRouter,
         IClock clock,
-        ILogger<CrawlerOrchestrator> logger)
+        ILogger<CrawlerOrchestrator> logger,
+        IEnrichmentQueueRepository? enrichmentQueue = null,
+        IRestaurantMediaRepository? mediaRepo = null,
+        IRestaurantAttributeHistoryRepository? historyRepo = null,
+        IGeoMunicipalityRepository? geoRepo = null)
     {
         _sources = sources;
         _taskQueue = taskQueue;
@@ -51,6 +59,10 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         _aiRouter = aiRouter;
         _clock = clock;
         _logger = logger;
+        _enrichmentQueue = enrichmentQueue;
+        _mediaRepo = mediaRepo;
+        _historyRepo = historyRepo;
+        _geoRepo = geoRepo;
     }
 
     public async Task<int> RunCrawlerCycleAsync(int maxTasks, CancellationToken ct)
@@ -252,6 +264,55 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
             provider: $"crawler:{task.SourceId}",
             now: _clock.UtcNow,
             ct: ct);
+
+        // Discovery 360: Registrar histórico inicial do nome e cidade
+        if (_historyRepo != null)
+        {
+            await _historyRepo.RecordHistoryAsync(new RestaurantAttributeHistory
+            {
+                RestaurantId = restaurantId,
+                AttributeName = "name",
+                OldValue = null,
+                NewValue = extracted.Name,
+                SourceType = "crawler_discovery",
+                SourceReference = extracted.SourceUrl,
+                ConfidenceScore = (decimal)extracted.ConfidenceScore,
+                RequiresModeration = false,
+                IsApplied = true
+            }, ct);
+        }
+
+        // Discovery 360: Adicionar foto licenciada externa se extraída
+        if (!string.IsNullOrWhiteSpace(extracted.PhotoUrl) && _mediaRepo != null)
+        {
+            await _mediaRepo.AddMediaAsync(new RestaurantMedia
+            {
+                RestaurantId = restaurantId,
+                MediaType = "photo_dish",
+                MediaUrl = extracted.PhotoUrl,
+                PriorityTier = (int)MediaPriorityTier.LicensedExternal,
+                SourceOrigin = extracted.SourceUrl,
+                AttributionText = extracted.PhotoAttribution ?? $"Foto via {extracted.SourceUrl}",
+                LicenseType = "licensed_external",
+                Status = "pending"
+            }, ct);
+        }
+
+        // Discovery 360: Enfileirar para enriquecimento contínuo (redes sociais, horário, cardápio)
+        if (_enrichmentQueue != null)
+        {
+            await _enrichmentQueue.EnqueueAsync(restaurantId, priority: 1, fields: "all", ct: ct);
+        }
+
+        // Discovery 360: Atualizar telemetria do município se existente
+        if (_geoRepo != null)
+        {
+            var geo = await _geoRepo.GetByNameAsync(city, ct);
+            if (geo != null)
+            {
+                await _geoRepo.UpdateScanTimestampAsync(geo.IbgeCode, _clock.UtcNow, "in_progress", ct);
+            }
+        }
 
         // Se a deduplicação indicou incerteza ou conflito, enfileira para moderação humana
         if (dedupResult.RequiresHumanReview || extracted.HasConflict)

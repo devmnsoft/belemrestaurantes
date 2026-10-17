@@ -126,6 +126,13 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ICrawlerTelemetryRepository, Crawler.MySqlCrawlerTelemetryRepository>();
         services.AddScoped<ICrawlerOrchestrator, Application.Services.CrawlerOrchestrator>();
 
+        // Sprint 09 - Cuia Discovery 360: Cobertura Estadual, Enriquecimento e Motor de Mídia
+        services.AddScoped<IGeoMunicipalityRepository, MySql.MySqlGeoMunicipalityRepository>();
+        services.AddScoped<IEnrichmentQueueRepository, MySql.MySqlEnrichmentQueueRepository>();
+        services.AddScoped<IRestaurantAttributeHistoryRepository, MySql.MySqlRestaurantAttributeHistoryRepository>();
+        services.AddScoped<IRestaurantMediaRepository, MySql.MySqlRestaurantMediaRepository>();
+        services.AddScoped<IEnrichmentService, Crawler.EnrichmentService>();
+
         services.AddHttpClient("googleplaces", client =>
         {
             client.Timeout = googleOptions.Timeout;
