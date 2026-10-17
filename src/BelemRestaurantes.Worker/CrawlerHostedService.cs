@@ -38,7 +38,7 @@ public sealed class CrawlerHostedService : BackgroundService
             return;
         }
 
-        var intervalMinutes = Math.Max(5, _configuration.GetValue<int>("Crawler:IntervalMinutes", 10));
+        var intervalMinutes = Math.Max(5, _configuration.GetValue<int>("Crawler:IntervalMinutes", 1));
         var every = TimeSpan.FromMinutes(intervalMinutes);
         var maxTasks = Math.Clamp(_configuration.GetValue<int>("Crawler:MaxTasksPerCycle", 10), 1, 30);
 
