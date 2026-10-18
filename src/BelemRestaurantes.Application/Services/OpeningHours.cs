@@ -27,7 +27,7 @@ public static class OpeningHours
     {
         var local=TimeZoneInfo.ConvertTime(instant,ParaZone);
         var info=schedule.Info;
-        if(info is null || DateTime.SpecifyKind(info.ExpiresAt,DateTimeKind.Utc)<=now.UtcDateTime || DateTime.SpecifyKind(info.ConfirmedAt,DateTimeKind.Utc)>now.UtcDateTime.AddMinutes(5))
+        if(info is null || DateTime.SpecifyKind(info.ExpiresAt,DateTimeKind.Utc)<=now.UtcDateTime || DateTime.SpecifyKind(info.ExpiresAt,DateTimeKind.Utc)<=instant.UtcDateTime || DateTime.SpecifyKind(info.ConfirmedAt,DateTimeKind.Utc)>now.UtcDateTime.AddMinutes(5))
             return new("unknown","Horário não confirmado");
         if(info.TemporaryClosedUntil is {} closed && local.Date<=closed.Date)
             return new("temporary","Fechamento provisório informado até "+closed.ToString("dd/MM/yyyy"));

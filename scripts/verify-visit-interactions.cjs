@@ -2,14 +2,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {chromium} = require(path.resolve('artifacts/ui-test/node_modules/playwright'));
 const base = process.env.VISUAL_TEST_BASE_URL || 'http://localhost:5180';
-const output = path.resolve('artifacts/sprint17');
+const output = path.resolve(process.env.VISUAL_TEST_OUTPUT || 'artifacts/sprint17');
 let browser;
 (async () => {
   browser = await chromium.launch({headless: true});
   const context = await browser.newContext({viewport: {width: 390, height: 900}, geolocation: {latitude: -1.45, longitude: -48.49}, permissions: ['geolocation']});
   const page = await context.newPage();
   const errors = []; page.on('pageerror', error => errors.push(error.message));
-  const html = fs.readFileSync(path.join(output, 'snapshots/visit-fallback.html'), 'utf8');
+  const html = fs.readFileSync(path.join(process.env.VISUAL_TEST_SNAPSHOTS || path.join(output, 'snapshots'), 'visit-fallback.html'), 'utf8');
   await page.route(base + '/__visit/interaction', route => route.fulfill({contentType: 'text/html; charset=utf-8', body: html}));
   await page.route('https://www.openstreetmap.org/**', route => route.fulfill({contentType: 'text/html', body: '<p>Mapa do provedor simulado apenas neste teste.</p>'}));
   await page.addInitScript(() => {

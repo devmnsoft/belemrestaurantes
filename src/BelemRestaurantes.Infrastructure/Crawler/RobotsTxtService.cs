@@ -41,9 +41,16 @@ public sealed class RobotsTxtService : IRobotsTxtService
         var robotsUrl = $"{hostKey}/robots.txt";
         var result = await _httpClient.DownloadAsync(robotsUrl, timeoutSeconds: 8, ct: ct);
 
+        if(!result.Success && result.StatusCode is not (404 or 410))
+        {
+            // A timeout, access denial or unavailable server cannot establish permission.
+            Cache[hostKey]=new CachedRobotsEntry(["/"],60,DateTimeOffset.UtcNow.AddMinutes(5));
+            return (false,60);
+        }
+
         if (!result.Success || string.IsNullOrWhiteSpace(result.ContentText))
         {
-            // Se o robots.txt não existe (404 ou indisponível), permitir com crawl-delay conservador de 5 segundos
+            // Ausência explícita (404/410) ou arquivo vazio válido: ritmo conservador.
             var defaultEntry = new CachedRobotsEntry(
                 Rules: [],
                 CrawlDelaySeconds: 5,

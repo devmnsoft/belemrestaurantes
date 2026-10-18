@@ -102,6 +102,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IRestaurantIngestionRepository, MySqlRestaurantIngestionRepository>();
         services.AddScoped<IModerationRepository, MySqlModerationRepository>();
         services.AddScoped<MySqlBulkModeration>();
+        services.AddScoped<IParaRecipes,MySqlParaRecipes>();
+        services.AddScoped<MySqlStatewideDiscoveryPlan>();
+        services.AddScoped<MySqlMaintenanceJobs>();
         services.AddScoped<IOperatingHoursRepository,MySqlOperatingHours>();
         services.AddScoped<IMobilityProvider,Mobility.GoogleRoutesProvider>();
         services.AddHttpClient("routes",client=>client.Timeout=TimeSpan.FromSeconds(15));

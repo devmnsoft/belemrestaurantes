@@ -1,5 +1,14 @@
 (() => {
   'use strict';
+  const adminMenu = document.querySelector('.admin-menu-disclosure');
+  if (adminMenu) {
+    const mobile = window.matchMedia('(max-width: 900px)');
+    const adapt = () => {
+      if (mobile.matches && adminMenu.contains(document.activeElement)) adminMenu.querySelector('summary')?.focus();
+      adminMenu.open = !mobile.matches;
+    };
+    adapt(); mobile.addEventListener('change', adapt);
+  }
   const toggle = document.querySelector('.para-menu-toggle');
   const nav = document.getElementById('public-navigation');
   toggle?.addEventListener('click', () => {

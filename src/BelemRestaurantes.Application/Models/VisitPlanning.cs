@@ -18,7 +18,8 @@ public sealed class OperationInfo
 public sealed record OpeningAssessment(string State,string Message,DateTimeOffset? NextChange=null);
 public sealed record OperatingSchedule(OperationInfo? Info,IReadOnlyList<OpeningDay> Days);
 public sealed record VisitRequest(long RestaurantId,string? Origin,string Mode="transit",DateTime? LocalTime=null,
-    bool Arrival=true,int MaxWalkMeters=1000,string Preference="less_walking",bool Accessible=false);
+    bool Arrival=true,int MaxWalkMeters=1000,string Preference="less_walking",bool Accessible=false,string Occasion="any",int VisitMinutes=60);
+public sealed record VisitWindow(DateTimeOffset Start,DateTimeOffset End,string Note);
 public sealed record RouteStep(string Mode,string Instruction,string? Line=null,string? Board=null,string? Alight=null,
     string? Departure=null,string? Arrival=null,int? DistanceMeters=null);
 public sealed record RouteAlternative(string Description,int DistanceMeters,int DurationSeconds,

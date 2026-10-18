@@ -26,6 +26,7 @@
   <!-- Scripts de migração embutidos: o runner nunca depende de caminho de arquivo em disco. -->
   <ItemGroup>
     <EmbeddedResource Include="Migrations\Scripts\*.sql" />
+    <EmbeddedResource Include="Editorial\para-recipes.json" />
   </ItemGroup>
 
   <!--

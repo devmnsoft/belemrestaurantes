@@ -722,4 +722,9 @@
   <data name="ExpeditionFormNote" xml:space="preserve"><value>Busca establecimientos publicados. Confirma la atención antes de salir.</value></data>
   <data name="ExpeditionCraving" xml:space="preserve"><value>¿Qué quieres probar?</value></data>
   <data name="ExpeditionFind" xml:space="preserve"><value>Encontrar sabores</value></data>
+
+  <data name="RecipesHomeEyebrow" xml:space="preserve"><value>SABORES EN CASA</value></data>
+  <data name="RecipesHomeTitle" xml:space="preserve"><value>De Pará a tu cocina.</value></data>
+  <data name="RecipesHomeText" xml:space="preserve"><value>Una cuia, una historia y las ganas de cocinar. Abre nuestro cuaderno de adaptaciones inspiradas en los sabores de Pará.</value></data>
+  <data name="RecipesHomeAction" xml:space="preserve"><value>Explorar recetas</value></data>
 </root>

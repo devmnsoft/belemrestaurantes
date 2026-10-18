@@ -722,4 +722,9 @@
   <data name="ExpeditionFormNote" xml:space="preserve"><value>Search published establishments. Confirm service before setting off.</value></data>
   <data name="ExpeditionCraving" xml:space="preserve"><value>What would you like to try?</value></data>
   <data name="ExpeditionFind" xml:space="preserve"><value>Find flavours</value></data>
+
+  <data name="RecipesHomeEyebrow" xml:space="preserve"><value>FLAVOURS AT HOME</value></data>
+  <data name="RecipesHomeTitle" xml:space="preserve"><value>From Pará to your kitchen.</value></data>
+  <data name="RecipesHomeText" xml:space="preserve"><value>A bowl, a story and the joy of cooking. Explore our original home adaptations inspired by the flavours of Pará.</value></data>
+  <data name="RecipesHomeAction" xml:space="preserve"><value>Explore recipes</value></data>
 </root>
