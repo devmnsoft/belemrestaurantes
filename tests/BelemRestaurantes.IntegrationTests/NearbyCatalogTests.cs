@@ -24,7 +24,7 @@ public sealed class NearbyCatalogTests
             foreach (var (name, latitude) in new[] { ("Perto", -1.45), ("Longe", -1.70) })
             {
                 var place = new DiscoveredPlace("fixture-" + name + marker, name + " " + marker, "Centro", "Belém", "Restaurante", "Rua fixture " + name,
-                    latitude, -48.49, null, null, null, null, ["restaurant"]);
+                    latitude, -48.49, "https://example.org/fixture", null, null, null, ["restaurant"]);
                 var id = await ingestion.UpsertDiscoveredAsync(place, "test_fixture", DateTimeOffset.UtcNow, default);
                 ids.Add(id);
                 Assert.True(await moderation.ApproveAsync(id, "fixture-nearby", default));

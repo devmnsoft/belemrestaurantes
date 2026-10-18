@@ -53,7 +53,7 @@ public sealed class DiscoveryOperationsTests
         var restaurantIds = new List<long>(); var suggestionIds = new List<long>();
         try
         {
-            var place = new BelemRestaurantes.Application.Models.DiscoveredPlace("fixture-review-" + marker, "Original " + marker, null, "Belém", "Restaurante", null, null, null, null, null, null, null, ["restaurant"]);
+            var place = new BelemRestaurantes.Application.Models.DiscoveredPlace("fixture-review-" + marker, "Original " + marker, null, "Belém", "Restaurante", "Rua de homologação", null, null, "https://example.org/fixture", null, null, null, ["restaurant"]);
             var original = await ingestion.UpsertDiscoveredAsync(place,"test_fixture",DateTimeOffset.UtcNow,default);
             restaurantIds.Add(original);
             Assert.True(await moderation.ApproveAsync(original,"fixture-review",default));

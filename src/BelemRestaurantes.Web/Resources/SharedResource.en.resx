@@ -704,4 +704,9 @@
   <data name="CardAddressPending" xml:space="preserve"><value>Address under review</value></data>
   <data name="CardView" xml:space="preserve"><value>View {0}</value></data>
   <data name="CardDistance" xml:space="preserve"><value>{0} km · straight-line distance</value></data>
+
+  <data name="VisitHomeTitle" xml:space="preserve"><value>The journey has a flavour of its own.</value></data>
+  <data name="VisitHomeText" xml:space="preserve"><value>Plan how to get there, check opening hours and explore the information available for your visit.</value></data>
+  <data name="VisitHomeAction" xml:space="preserve"><value>Plan my visit</value></data>
+  <data name="VisitBusAction" xml:space="preserve"><value>Which bus should I take?</value></data>
 </root>

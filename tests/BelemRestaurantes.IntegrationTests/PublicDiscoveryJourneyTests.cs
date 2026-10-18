@@ -30,7 +30,7 @@ public sealed class PublicDiscoveryJourneyTests
         try
         {
             var place = new DiscoveredPlace("fixture-" + marker, "Cuia da Feira · homologação", "Campina", "Belém", "Restaurante", "Endereço de homologação",
-                -1.45, -48.49, null, null, null, null, ["restaurant"]) { Phone = "(91) 3333-4444" };
+                -1.45, -48.49, "https://example.org/fixture", null, null, null, ["restaurant"]) { Phone = "(91) 3333-4444" };
             id = await ingestion.UpsertDiscoveredAsync(place, "test_fixture", DateTimeOffset.UtcNow, default);
             Assert.True(await moderation.ApproveAsync(id, "fixture-public-journey", default));
             var detail = await client.GetAsync("/establishment/" + id);

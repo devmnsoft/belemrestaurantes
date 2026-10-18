@@ -134,7 +134,7 @@ public sealed class CatalogJourneyTests
         var catalog=provider.GetRequiredService<IRestaurantReadRepository>();
         var before=(await catalog.CountPublishedByCityAsync(default)).GetValueOrDefault("belem");
         var marker=Guid.NewGuid().ToString("N");
-        var place=new DiscoveredPlace("fixture-atlas-"+marker,"Atlas "+marker,null,"Belém","Restaurante",null,null,null,null,null,null,null,["restaurant"]);
+        var place=new DiscoveredPlace("fixture-atlas-"+marker,"Atlas "+marker,null,"Belém","Restaurante","Rua de homologação",null,null,"https://example.org/fixture",null,null,null,["restaurant"]);
         var id=await provider.GetRequiredService<IRestaurantIngestionRepository>().UpsertDiscoveredAsync(place,"test_fixture",DateTimeOffset.UtcNow,default);
         await using var connection=await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
         try

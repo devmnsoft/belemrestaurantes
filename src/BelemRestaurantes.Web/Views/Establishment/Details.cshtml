@@ -16,6 +16,7 @@
 }
 
 <div class="cuia-container cuia-section">
+  <section class="visit-panel" lang="pt-BR" aria-labelledby="visit-section"><span class="para-eyebrow">CUIA MOBILIDADE 360</span><h2 id="visit-section">Como chegar e quando visitar</h2><p class="visit-status">@((ViewData["OpeningAssessment"] as BelemRestaurantes.Application.Models.OpeningAssessment)?.Message??"Horário não confirmado")</p><p>Ônibus, BRT, caminhada, bicicleta, carro e referências de transporte fluvial. Confira trajetos, funcionamento e informações disponíveis antes de sair.</p><a href="/cuia-rotas?restaurantId=@Model.Id" class="para-button">Planejar minha visita →</a></section>
   <nav class="para-breadcrumb" aria-label="Você está aqui"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/busca">Onde comer</a><span aria-hidden="true">/</span><span>@Model.Name</span></nav>
   <article class="para-detail-hero">
     <div class="para-detail-media">

@@ -121,27 +121,36 @@ public sealed class PartnerController(
 
     [HttpPost("{restaurantId:long}/schedule")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateSchedule(long restaurantId, List<RestaurantSchedule> schedules, CancellationToken ct)
+    public async Task<IActionResult> UpdateSchedule(long restaurantId, List<RestaurantSchedule> schedules, [FromServices] IOperatingHoursRepository hours, CancellationToken ct)
     {
         if (!await AuthorizePartnerAsync(restaurantId, ct)) return Forbid();
 
-        await portalService.UpdateSchedulesAsync(restaurantId, schedules, Array.Empty<RestaurantSpecialSchedule>(), ct);
+        var previous=await hours.GetAsync(restaurantId,ct);
+        if(!ModelState.IsValid||schedules.Count>7||schedules.Select(s=>s.DayOfWeek).Distinct().Count()!=schedules.Count)return BadRequest();
+        var days=schedules.Select(s=>new OpeningDay(s.DayOfWeek,s.IsClosed,false,
+            s.IsClosed?[]:s.OpenTime is {} open&&s.CloseTime is {} close?[new OpeningWindow((int)open.TotalMinutes,(int)close.TotalMinutes)]:[])).ToList();
+        days.AddRange(previous.Days.Where(d=>d.Date is not null));
+        var info=previous.Info??new OperationInfo();info.Authority="owner";info.ConfirmedAt=DateTime.UtcNow;info.ExpiresAt=DateTime.UtcNow.AddDays(90);
+        info.SourceUrl=$"https://{Request.Host}/estabelecimento/{restaurantId}";
+        try{await hours.SaveAsync(restaurantId,previous.Info?.Version??0,info,days,CurrentUserId(),ct);}
+        catch(ArgumentException ex){TempData["ErrorMessage"]=ex.Message;return RedirectToAction(nameof(Schedule),new{restaurantId});}
         TempData["SuccessMessage"] = "Horários regulares de funcionamento atualizados com sucesso!";
         return RedirectToAction(nameof(Schedule), new { restaurantId });
     }
 
     [HttpPost("{restaurantId:long}/schedule/special")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddSpecialSchedule(long restaurantId, RestaurantSpecialSchedule special, CancellationToken ct)
+    public async Task<IActionResult> AddSpecialSchedule(long restaurantId, RestaurantSpecialSchedule special, [FromServices] IOperatingHoursRepository hours, CancellationToken ct)
     {
         if (!await AuthorizePartnerAsync(restaurantId, ct)) return Forbid();
 
-        var (regular, existingSpecial) = await portalService.GetSchedulesAsync(restaurantId, ct);
-        var updatedSpecial = existingSpecial.Where(s => s.SpecificDate != special.SpecificDate).ToList();
-        special.RestaurantId = restaurantId;
-        updatedSpecial.Add(special);
-
-        await portalService.UpdateSchedulesAsync(restaurantId, regular, updatedSpecial, ct);
+        var previous=await hours.GetAsync(restaurantId,ct);
+        var days=previous.Days.Where(d=>d.Date!=special.SpecificDate).ToList();
+        days.Add(new((int)special.SpecificDate.DayOfWeek,special.IsClosed,false,special.IsClosed?[]:
+            special.OpenTime is {} open&&special.CloseTime is {} close?[new OpeningWindow((int)open.TotalMinutes,(int)close.TotalMinutes)]:[],special.SpecificDate));
+        var info=previous.Info??new OperationInfo();info.Authority="owner";info.ConfirmedAt=DateTime.UtcNow;info.ExpiresAt=DateTime.UtcNow.AddDays(90);info.SourceUrl=$"https://{Request.Host}/estabelecimento/{restaurantId}";
+        try{await hours.SaveAsync(restaurantId,previous.Info?.Version??0,info,days,CurrentUserId(),ct);}
+        catch(ArgumentException ex){TempData["ErrorMessage"]=ex.Message;return RedirectToAction(nameof(Schedule),new{restaurantId});}
         TempData["SuccessMessage"] = "Horário especial / feriado cadastrado com sucesso!";
         return RedirectToAction(nameof(Schedule), new { restaurantId });
     }

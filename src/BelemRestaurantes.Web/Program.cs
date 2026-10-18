@@ -82,6 +82,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminArea", p => p.RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.Moderator, AdminRoles.Operator, AdminRoles.PlatformAdmin));
     options.AddPolicy("PlatformAdmin",
         p => p.RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.PlatformAdmin));
+    options.AddPolicy("ContentEditor",p=>p.RequireAuthenticatedUser().RequireClaim("amr","mfa").RequireRole(AdminRoles.Editor,AdminRoles.Moderator,AdminRoles.PlatformAdmin));
 });
 
 // JWT provisório removido (Sprint 02): não havia emissor configurado e a
@@ -143,13 +144,20 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=(self)";
     context.Response.Headers["Content-Security-Policy"] =
-        "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
+        "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src https://www.openstreetmap.org; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
     await next();
 });
 app.UseStaticFiles();
 app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
+app.Use(async(context,next)=>{
+    if(context.User.Identity?.IsAuthenticated==true && context.User.FindFirst("must_change_password")?.Value=="true"
+        && (context.Request.Path.StartsWithSegments("/admin")||context.Request.Path.StartsWithSegments("/api/admin"))
+        && !context.Request.Path.StartsWithSegments("/admin/change-password") && !context.Request.Path.StartsWithSegments("/admin/logout"))
+    {context.Response.Redirect("/admin/change-password");return;}
+    await next();
+});
 app.UseAuthorization();
 app.Use(async (context, next) =>
 {
