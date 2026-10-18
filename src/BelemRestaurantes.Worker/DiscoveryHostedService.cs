@@ -30,7 +30,7 @@ public sealed class DiscoveryHostedService(
             return;
         }
 
-        var every = TimeSpan.FromMinutes(Math.Max(10, configuration.GetValue<int>("Discovery:IntervalMinutes", 10)));
+        var every = TimeSpan.FromMinutes(Math.Max(1, configuration.GetValue<int>("Discovery:IntervalMinutes", 10)));
         var batchSize = Math.Clamp(configuration.GetValue<int>("Discovery:BatchSize", 5), 1, 50);
         var maxAttempts = 3;
 
