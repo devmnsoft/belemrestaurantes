@@ -37,6 +37,20 @@ public sealed class DiscoveryOrchestrator(
         {
             throw;
         }
+        catch (DiscoveryProviderUnavailableException ex)
+        {
+            metrics.Failed++;
+            logger.LogWarning("Fonte {Provider} indisponível para {City}/{Category}; nova consulta após {RetryAt}: {Reason}",
+                provider.Name, work.City, work.Category, ex.RetryAt, ex.Message);
+            return metrics.ToSnapshot() with { Source = provider.Name, FailureReason = ex.Message, ProviderRetryAt = ex.RetryAt };
+        }
+        catch (TimeoutException ex)
+        {
+            metrics.Failed++;
+            logger.LogWarning("Fonte {Provider} temporariamente indisponível para {City}/{Category}: {Reason}",
+                provider.Name, work.City, work.Category, ex.Message);
+            return metrics.ToSnapshot() with { Source = provider.Name, FailureReason = ex.Message };
+        }
         catch (Exception ex)
         {
             // Falha de API não pode derrubar o ciclo: apenas este job é marcado como falho.
@@ -44,7 +58,7 @@ public sealed class DiscoveryOrchestrator(
             logger.LogError(
                 ex, "Falha ao consultar {Provider} para {City}/{Category}",
                 provider.Name, work.City, work.Category);
-            return metrics.ToSnapshot() with { Source = provider.Name };
+            return metrics.ToSnapshot() with { Source = provider.Name, FailureReason = ex.Message };
         }
 
         metrics.Discovered = search.Places.Count;

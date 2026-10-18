@@ -19,6 +19,8 @@ public sealed record DiscoveryCycleMetrics(
     TimeSpan Duration)
 {
     public string Source { get; init; } = "google_places";
+    public string? FailureReason { get; init; }
+    public DateTimeOffset? ProviderRetryAt { get; init; }
     public static DiscoveryCycleMetrics Empty => new(0, 0, 0, 0, 0, 0, TimeSpan.Zero);
 
     public override string ToString() =>

@@ -97,6 +97,9 @@ public interface IDiscoveryQueue
 
     Task FailAsync(long jobId, string error, TimeSpan backoff, int maxAttempts, CancellationToken ct);
 
+    /// <summary>Indisponibilidade da fonte: libera a reserva sem incrementar attempts.</summary>
+    Task DeferAsync(long jobId, string error, DateTimeOffset retryAt, CancellationToken ct);
+
     /// <summary>Devolve jobs travados além do prazo (worker caiu) para a fila.</summary>
     Task<int> ReleaseStaleLocksAsync(DateTimeOffset now, CancellationToken ct);
 
