@@ -24,6 +24,7 @@ public sealed class SecurityEndpointTests : IDisposable
 
     [Theory]
     [InlineData("/admin/dashboard")]
+    [InlineData("/admin/suggestions")]
     [InlineData("/api/admin/review/pending")]
     [InlineData("/community/favorite/1")]
     [InlineData("/account")]

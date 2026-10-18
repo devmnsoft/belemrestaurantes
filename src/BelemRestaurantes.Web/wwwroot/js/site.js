@@ -11,11 +11,7 @@ function elem(tag, klass, content) {
   if (content !== undefined) node.textContent = content;
   return node;
 }
-document.addEventListener('submit', event => {
-  const form = event.target;
-  if (form instanceof HTMLFormElement && form.dataset.confirm && !window.confirm(form.dataset.confirm)) event.preventDefault();
-});
-if (el('go')) {
+if (el('go') && el('query') && el('client-text')) {
   const text = el('client-text').dataset;
   let activeRequest;
   let totalCount = 0;

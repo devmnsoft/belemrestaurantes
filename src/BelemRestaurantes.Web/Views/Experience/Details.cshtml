@@ -59,7 +59,7 @@
     {
         <div style="display:flex;gap:10px;">
           <a href="/experience/edit/@Model.Id" class="button-link ghost">@T["EditExperience"]</a>
-          <form method="post" action="/experience/delete/@Model.Id" onsubmit="return confirm('Deseja realmente excluir esta experiência?');">
+          <form method="post" action="/experience/delete/@Model.Id" data-confirm="Deseja realmente excluir esta experiência?">
             @Html.AntiForgeryToken()
             <button type="submit" class="danger">@T["DeleteExperience"]</button>
           </form>
@@ -192,11 +192,11 @@
               Facebook
             </a>
 
-            <button type="button" id="copyShareBtn" class="badge" style="background:#174b3c;color:#fff;border:0;cursor:pointer;padding:6px 12px;">
+            <button type="button" id="copyShareBtn" data-share-url="@shareUrl" data-copied="@T["LinkCopied"]" class="badge" style="background:#174b3c;color:#fff;border:0;cursor:pointer;padding:6px 12px;">
               🔗 @T["CopyLink"]
             </button>
 
-            <button type="button" id="nativeShareBtn" class="badge" style="background:#a66525;color:#fff;border:0;cursor:pointer;padding:6px 12px;display:none;">
+            <button type="button" id="nativeShareBtn" data-share-url="@shareUrl" data-share-text="@shareText" class="badge" style="background:#a66525;color:#fff;border:0;cursor:pointer;padding:6px 12px;display:none;">
               📲 @T["ShareNative"]
             </button>
           </div>
@@ -266,28 +266,5 @@
 </section>
 
 @section Scripts {
-<script>
-  const copyBtn = document.getElementById('copyShareBtn');
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText('@shareUrl').then(() => {
-        const orig = copyBtn.innerText;
-        copyBtn.innerText = '✅ @T["LinkCopied"]';
-        setTimeout(() => copyBtn.innerText = orig, 3000);
-      });
-    });
-  }
-
-  const nativeBtn = document.getElementById('nativeShareBtn');
-  if (nativeBtn && navigator.share) {
-    nativeBtn.style.display = 'inline-block';
-    nativeBtn.addEventListener('click', () => {
-      navigator.share({
-        title: '@Model.AuthorName sobre @Model.RestaurantName',
-        text: '@shareText',
-        url: '@shareUrl'
-      }).catch(() => {});
-    });
-  }
-</script>
+<script src="~/js/experience.js" asp-append-version="true" defer></script>
 }

@@ -12,6 +12,8 @@
         </p>
     </div>
 
+    @if(Model.Count==0)
+    { <div class="para-empty"><span class="para-category-icon para-blue">@await Html.PartialAsync("_ParaIcon","river")</span><div><h2>O próximo caminho começa com um sabor.</h2><p>Os roteiros estão sendo preparados. Enquanto isso, explore o catálogo e escolha os lugares que quer conhecer.</p><a href="/busca" class="para-button">Explorar restaurantes ↗</a></div></div> }
     <div class="row g-4">
         @foreach (var trail in Model)
         {

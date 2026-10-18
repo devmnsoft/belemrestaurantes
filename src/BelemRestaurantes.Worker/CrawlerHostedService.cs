@@ -11,7 +11,7 @@ namespace BelemRestaurantes.Worker;
 
 /// <summary>
 /// Cuia Crawler como serviço autônomo em background no Worker/Windows Service.
-/// Executa ciclos com frequência configurável, respeitando limites e regras das fontes públicas.
+/// Executa ciclos a cada 10 minutos para pesquisa e extração contínua e gentil de fontes públicas.
 /// </summary>
 public sealed class CrawlerHostedService : BackgroundService
 {
@@ -150,13 +150,15 @@ public sealed class CrawlerHostedService : BackgroundService
                 try
                 {
                     await telemetryRepo.RecordTelemetryAsync(
-                        serviceName: "Crawler & Intelligence",
+                        serviceName: "Crawler & Intelligence (tarefas)",
                         startedAt: startedAt,
                         finishedAt: finishedAt,
                         sourceQueried: "Sitemaps, Feeds & Schema.org",
-                        recordsCreated: crawlerProcessed,
-                        recordsUpdated: enrichedCount + intelJobs,
-                        apiUnitsConsumed: Math.Max(0, crawlerProcessed + enrichedCount),
+                        // Tarefas processadas não são restaurantes criados, nem unidades de API.
+                        // Os números de ingestão reais estão em crawler_runs.
+                        recordsCreated: 0,
+                        recordsUpdated: enrichedCount,
+                        apiUnitsConsumed: 0,
                         status: status,
                         errorMessage: errorMessage,
                         ct: CancellationToken.None);

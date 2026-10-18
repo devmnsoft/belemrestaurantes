@@ -12,9 +12,16 @@ public sealed record MigrationScript(string Id, string Name, string Sql)
 {
     public string ComputeChecksum()
     {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(Sql));
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(Sql.Replace("\r\n", "\n")));
         return Convert.ToHexString(hash);
     }
+
+    // Checkouts Windows antigos gravaram o checksum do mesmo SQL em CRLF.
+    // Aceitamos apenas as duas representações de fim de linha, nunca outro SQL.
+    public bool MatchesChecksum(string checksum) =>
+        string.Equals(checksum, ComputeChecksum(), StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(checksum, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+            Sql.Replace("\r\n", "\n").Replace("\n", "\r\n")))), StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>Resultado da aplicação do conjunto de migrações.</summary>
@@ -69,7 +76,7 @@ public sealed class MigrationRunner(MySqlConnectionFactory connectionFactory, IL
 
                 if (appliedById.TryGetValue(script.Id, out var existing))
                 {
-                    if (!string.Equals(existing, checksum, StringComparison.OrdinalIgnoreCase))
+                    if (!script.MatchesChecksum(existing))
                     {
                         throw new MigrationChecksumMismatchException(script.Id, existing, checksum);
                     }
@@ -90,6 +97,23 @@ public sealed class MigrationRunner(MySqlConnectionFactory connectionFactory, IL
 
                 foreach (var statement in SqlScriptSplitter.Split(script.Sql))
                 {
+                    var additions=LegacyConditionalColumns.Expand(script.Id,statement);
+                    if(additions is not null)
+                    {
+                        foreach(var addition in additions)
+                        {
+                            var exists=await connection.ExecuteScalarAsync<int>(new CommandDefinition("""
+                                SELECT COUNT(*) FROM information_schema.columns
+                                WHERE table_schema=DATABASE() AND table_name=@Table AND column_name=@Column
+                                """,new{addition.Table,addition.Column},cancellationToken:ct));
+                            if(exists>0)continue;
+                            await using var compatibleCommand=connection.CreateCommand();
+                            compatibleCommand.CommandText=addition.Sql;
+                            compatibleCommand.CommandTimeout=120;
+                            await compatibleCommand.ExecuteNonQueryAsync(ct);
+                        }
+                        continue;
+                    }
                     await using var command = connection.CreateCommand();
                     command.CommandText = statement;
                     command.CommandTimeout = 120;

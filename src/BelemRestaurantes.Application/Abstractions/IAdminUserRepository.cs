@@ -30,6 +30,7 @@ public sealed record AdminUserRecord(
     DateTimeOffset? LockoutEndAt,
     DateTimeOffset? LastLoginAt)
 {
+    public bool MustChangePassword { get; init; }
     /// <summary>Bloqueio por tentativas falhas vigente.</summary>
     public bool IsLockedOut(DateTimeOffset now) => LockoutEndAt is not null && LockoutEndAt > now;
 }

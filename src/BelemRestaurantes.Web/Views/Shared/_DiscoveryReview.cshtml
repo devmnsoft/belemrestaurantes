@@ -1,0 +1,45 @@
+@model BelemRestaurantes.Application.Models.PagedResult<BelemRestaurantes.Application.Models.PendingApproval>
+@{
+    var term = ViewData["ReviewTerm"] as string;
+    var city = ViewData["ReviewCity"] as string;
+    var category = ViewData["ReviewCategory"] as string;
+    var cities = ViewData["ReviewCities"] as IReadOnlyList<string> ?? [];
+    var categories = ViewData["ReviewCategories"] as IReadOnlyList<string> ?? [];
+    string PageUrl(int page) => "/admin/discovery" + Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?> {
+        ["term"]=term,["city"]=city,["category"]=category,["page"]=page.ToString() });
+}
+<section class="para-review" aria-labelledby="review-title">
+  <p><a class="para-button" href="/admin/moderacao">Abrir central de aprovação em lote</a> <a href="/admin/operacao">Saúde do Worker e alvos</a></p>
+  <div class="para-section-heading"><div><span class="para-eyebrow">CURADORIA DO GUIA</span><h2 id="review-title">Novos lugares, um olhar cuidadoso.</h2><p>Confira a fonte antes de publicar. A importação não confirma funcionamento, horários ou qualidade.</p></div><a href="/admin/suggestions" class="para-text-link">Indicações da comunidade ↗</a></div>
+  <form action="/admin/discovery" method="get" class="para-review-filters">
+    <div><label for="review-term">Nome, endereço ou bairro</label><input id="review-term" name="term" value="@term" maxlength="160" placeholder="Encontre um cadastro" /></div>
+    <div><label for="review-city">Município</label><select id="review-city" name="city"><option value="">Todos</option>@foreach(var item in cities){<option value="@item" selected="@(item==city)">@item</option>}</select></div>
+    <div><label for="review-category">Tipo de lugar</label><select id="review-category" name="category"><option value="">Todos</option>@foreach(var item in categories){<option value="@item" selected="@(item==category)">@item</option>}</select></div>
+    <button type="submit" class="para-button">Filtrar cadastros</button><a href="/admin/discovery" class="para-text-link">Limpar</a>
+  </form>
+  <p class="para-review-count">@Model.TotalCount cadastros nesta seleção · Página @Model.Page de @Math.Max(1,Model.TotalPages)</p>
+  @if(Model.Items.Count==0)
+  { <div class="para-empty"><h3>Nenhum cadastro nesta seleção.</h3><p>Altere os filtros ou aguarde a próxima descoberta.</p></div> }
+  <div class="para-review-grid">
+  @foreach(var item in Model.Items)
+  {
+    <article class="para-review-card">
+      <div class="para-review-card-top"><span class="para-eyebrow">@(item.Category ?? "Categoria a revisar")</span><span>#@item.Id</span></div>
+      <h3>@item.Name</h3><p>@item.City @(!string.IsNullOrWhiteSpace(item.Neighborhood)?"· "+item.Neighborhood:"")</p>
+      <p>@(item.Address ?? "Endereço não informado pela fonte")</p>
+      @if(!string.IsNullOrWhiteSpace(item.Phone)){<p>Contato informado: @item.Phone</p>}
+      @if(!string.IsNullOrWhiteSpace(item.ConflictReason)){<p class="para-review-warning">@item.ConflictReason</p>}
+      <dl><div><dt>Identificador</dt><dd>@(item.GooglePlaceId ?? "Não disponível")</dd></div><div><dt>Descoberto em UTC</dt><dd>@item.DiscoveredAt.ToString("dd/MM/yyyy HH:mm")</dd></div></dl>
+      @if(BelemRestaurantes.Domain.Rules.SocialLinkRules.TryValidate(item.SourceUrl,out var source)){<a href="@source" target="_blank" rel="noopener noreferrer" class="para-text-link">Conferir fonte original ↗</a>}
+      <div class="para-review-decisions">
+        <form method="post" action="/admin/discovery/@item.Id/approve">@Html.AntiForgeryToken()<button type="submit" class="para-button">Aprovar e publicar</button></form>
+        <details><summary>Rejeitar cadastro</summary><form method="post" action="/admin/discovery/@item.Id/reject">@Html.AntiForgeryToken()<label for="reject-@item.Id">Motivo da rejeição</label><input id="reject-@item.Id" name="reason" required maxlength="500" /><button type="submit" class="cuia-btn cuia-btn-outline">Confirmar rejeição</button></form></details>
+      </div>
+    </article>
+  }
+  </div>
+  @if(Model.TotalPages>1)
+  {
+    <nav class="para-pagination" aria-label="Páginas de cadastros pendentes">@if(Model.Page>1){<a href="@PageUrl(Model.Page-1)">← Anterior</a>}<span aria-current="page">@Model.Page / @Model.TotalPages</span>@if(Model.Page<Model.TotalPages){<a href="@PageUrl(Model.Page+1)">Próxima →</a>}</nav>
+  }
+</section>

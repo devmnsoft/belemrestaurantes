@@ -6,100 +6,35 @@
     var currentPage = ViewData["Page"] as int? ?? 1;
 }
 
-<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-  <div>
-    <span class="badge-tag-v3" style="margin-bottom: 8px;">✦ Worker de Descoberta & Google Places</span>
-    <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
-      Triagem de Estabelecimentos Descobertos
-    </h1>
-    <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
-      Aprovação ou rejeição de estabelecimentos encontrados automaticamente pelo motor de busca.
-    </p>
-  </div>
-  <a href="/admin/dashboard" class="btn-v3 btn-v3-outline btn-v3-sm">← Voltar ao Painel</a>
-</div>
-
-<div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-  <div>
-    <strong style="color: var(--forest-900); font-size: 15px;">Fila de Triagem Ativa</strong>
-    <div style="font-size: 13px; color: var(--text-muted);">
-      Há <strong>@totalPending</strong> estabelecimentos pendentes de análise por moderadores humanos.
-    </div>
-  </div>
-  <a href="/admin/connectors" class="btn-v3 btn-v3-sm btn-v3-outline">Ver Conectores & Telemetria</a>
-</div>
-
-@if (Model.Items.Count == 0)
-{
-  <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 48px; text-align: center;">
-    <div style="font-size: 40px; margin-bottom: 12px;">✅</div>
-    <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-900); margin: 0 0 8px 0;">
-      Tudo Limpo!
-    </h3>
-    <p style="color: var(--text-muted); font-size: 14px; margin: 0;">
-      Não há estabelecimentos descobertos aguardando moderação no momento.
-    </p>
-  </div>
+@{
+    var cycles = ViewData["DiscoveryCycles"] as IReadOnlyList<BelemRestaurantes.Web.Models.DiscoveryCycleView> ?? [];
+    var targets = ViewData["TargetRuns"] as IReadOnlyList<BelemRestaurantes.Web.Models.DiscoveryTargetRunView> ?? [];
 }
-else
-{
-  <div style="display: flex; flex-direction: column; gap: 16px;">
-    @foreach (var item in Model.Items)
-    {
-      <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 22px; box-shadow: var(--shadow-sm);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 14px;">
-          <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <span class="badge-tag-v3" style="font-size: 11px;">#@item.Id</span>
-              <span class="badge-tag-v3" style="background: rgba(229,169,59,0.2); color: #854d0e; font-size: 11px;">
-                @(item.ConflictReason ?? "Pendente de Avaliação")
-              </span>
-            </div>
-            <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-950); margin: 0;">
-              @item.Name
-            </h3>
-            <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-              📍 @item.City @(!string.IsNullOrWhiteSpace(item.Neighborhood) ? $"— {item.Neighborhood}" : "")
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 8px;">
-            <!-- Formulário de Aprovação com CSRF -->
-            <form method="post" action="/admin/discovery/@item.Id/approve" style="margin: 0;">
-              @Html.AntiForgeryToken()
-              <button type="submit" class="btn-v3 btn-v3-primary btn-v3-sm">
-                ✓ Publicar no Catálogo
-              </button>
-            </form>
-
-            <!-- Formulário de Rejeição com CSRF -->
-            <form method="post" action="/admin/discovery/@item.Id/reject" style="margin: 0; display: flex; gap: 6px;">
-              @Html.AntiForgeryToken()
-              <input type="text" name="reason" placeholder="Motivo da rejeição" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);" />
-              <button type="submit" class="btn-v3 btn-v3-sm" style="background: rgba(200,75,49,0.15); border: 1px solid rgba(200,75,49,0.4); color: var(--urucum-700);">
-                ✕ Rejeitar
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <div style="font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border-light); padding-top: 12px; display: flex; justify-content: space-between; flex-wrap: wrap;">
-          <div>Data da Descoberta: @item.DiscoveredAt.ToString("dd/MM/yyyy HH:mm")</div>
-          <div>Place ID: @(item.GooglePlaceId ?? "Não disponível")</div>
-        </div>
-      </div>
-    }
+<section class="para-operations">
+  <span class="para-eyebrow">CUIA · OPERAÇÃO DE DESCOBERTA</span>
+  <h1>Da descoberta à mesa.</h1>
+  <p>Resultados gravados pelo Worker independente. Novos cadastros passam pela triagem antes de aparecer no portal.</p>
+  <div class="para-stat-row">
+    <article><strong>@cycles.Sum(c => c.Found)</strong><span>Encontrados nos ciclos abaixo</span></article>
+    <article><strong>@cycles.Sum(c => c.Created)</strong><span>Novos registros</span></article>
+    <article><strong>@cycles.Sum(c => c.Updated)</strong><span>Registros atualizados</span></article>
+    <article><strong>@totalPending</strong><span>Aguardando moderação</span></article>
   </div>
+  <form method="post" action="/admin/discovery/retry" class="para-retry-form">
+    @Html.AntiForgeryToken()<label for="retry-city">Cidade com tarefas esgotadas</label><input id="retry-city" name="city" value="Belém" required maxlength="100" /><button type="submit" class="para-button">Reagendar tarefas com falha</button><p>Use após corrigir a fonte ou as credenciais. Tarefas em execução não são alteradas.</p>
+  </form><h2>Últimos ciclos do Discovery</h2>
+  <div class="para-table-wrap" role="region" tabindex="0" aria-label="Ciclos de descoberta"><table><caption class="sr-only">Execuções persistidas do Discovery. Horários em UTC.</caption><thead><tr><th scope="col">Ciclo / início UTC</th><th scope="col">Estado</th><th scope="col">Encontrados</th><th scope="col">Novos</th><th scope="col">Atualizados</th><th scope="col">Falhas</th></tr></thead><tbody>
+  @foreach (var cycle in cycles)
+  { <tr><td>#@cycle.Id · @cycle.StartedAt.ToString("dd/MM HH:mm:ss")</td><td>@(cycle.CompletedAt is null ? "Sem conclusão registrada" : cycle.Failed > 0 ? "Concluído com falhas" : "Concluído")</td><td>@cycle.Found</td><td>@cycle.Created</td><td>@cycle.Updated</td><td>@cycle.Failed</td></tr> }
+  @if (cycles.Count == 0) { <tr><td colspan="6">Nenhum ciclo registrado. Consulte o diagnóstico e os logs do Worker.</td></tr> }
+  </tbody></table></div>
+  <h2>Descoberta por cidade e fonte</h2>
+  <div class="para-table-wrap" role="region" tabindex="0" aria-label="Resultados por cidade e fonte"><table><caption class="sr-only">Últimas consultas por cidade e fonte</caption><thead><tr><th scope="col">Ciclo</th><th scope="col">Cidade / categoria</th><th scope="col">Fonte</th><th scope="col">Encontrados</th><th scope="col">Novos / atualizados</th><th scope="col">Descartados / falhas</th></tr></thead><tbody>
+  @foreach (var target in targets)
+  { <tr><td>#@target.CycleId</td><td>@target.City · @target.Category</td><td>@target.Source</td><td>@target.Found</td><td>@target.Created / @target.Updated</td><td>@target.Skipped / @target.Failed</td></tr> }
+  @if (targets.Count == 0) { <tr><td colspan="6">Nenhuma consulta registrada após a migration 017. Ausência de dados não comprova execução.</td></tr> }
+  </tbody></table></div>
+  <p><a href="/admin/diagnostics" class="para-text-link">Diagnóstico ↗</a> · <a href="/admin/crawler" class="para-text-link">Ciclos do Crawler ↗</a></p>
+</section>
 
-  @if (Model.TotalPages > 1)
-  {
-    <div style="display: flex; justify-content: center; gap: 8px; margin-top: 24px;">
-      @for (var p = 1; p <= Model.TotalPages; p++)
-      {
-        <a href="/admin/discovery?page=@p" class="btn-v3 btn-v3-sm @(p == currentPage ? "btn-v3-primary" : "btn-v3-outline")">
-          @p
-        </a>
-      }
-    </div>
-  }
-}
+@await Html.PartialAsync("_DiscoveryReview", Model)

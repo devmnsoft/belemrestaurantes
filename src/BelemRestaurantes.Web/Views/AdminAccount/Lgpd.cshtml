@@ -50,7 +50,7 @@
               <div style="display:flex;gap:10px;margin-top:8px;">
                 @if (req.RequestType == "deletion" || req.RequestType == "anonymization")
                 {
-                    <form method="post" action="/admin/lgpd/@req.Id/anonymize" onsubmit="return confirm('ATENÇÃO: Deseja realmente anonimizar os dados pessoais deste titular? Esta ação revogará credenciais e desvinculará a identidade.');">
+                    <form method="post" action="/admin/lgpd/@req.Id/anonymize" data-confirm="ATENÇÃO: Deseja realmente anonimizar os dados pessoais deste titular? Esta ação revogará credenciais e desvinculará a identidade.">
                       @Html.AntiForgeryToken()
                       <input type="hidden" name="userId" value="@req.UserId" />
                       <button type="submit" class="danger">Executar Anonimização (LGPD Art. 16)</button>

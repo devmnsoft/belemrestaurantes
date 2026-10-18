@@ -37,18 +37,18 @@
 
   <!-- 1. Dados do Perfil -->
   <div class="panel" style="margin-bottom:24px;">
-    <h2>Perfil do Visitante</h2>
+    <h2>Perfil do Visitante</h2><a href="/account/favorites" class="para-text-link">Meus favoritos ↗</a>
     <form method="post" action="/account/profile" style="display:grid;gap:12px;">
       @Html.AntiForgeryToken()
       <div>
-        <label><b>@T["FullName"]</b></label>
-        <input name="fullName" value="@(profile?.FullName ?? User.Identity?.Name)" required minlength="2" maxlength="160" />
+        <label for="profile-name"><b>@T["FullName"]</b></label>
+        <input id="profile-name" name="fullName" value="@(profile?.FullName ?? User.Identity?.Name)" required minlength="2" maxlength="160" />
       </div>
 
       <div>
-        <label><b>@T["Email"]</b></label>
+        <label for="profile-email"><b>@T["Email"]</b></label>
         <div style="display:flex;gap:10px;align-items:center;">
-          <input value="@profile?.Email" disabled style="background:#f4f7f4;color:#547062;" />
+          <input id="profile-email" value="@profile?.Email" disabled style="background:#f4f7f4;color:#547062;" />
           @if (profile?.EmailConfirmed == true)
           {
               <span class="badge green" title="E-mail verificado">✓ Verificado</span>
@@ -57,8 +57,8 @@
       </div>
 
       <div>
-        <label><b>@T["Bio"]</b></label>
-        <textarea name="bio" rows="2" maxlength="300" placeholder="Conte um pouco sobre suas preferências culinárias no Pará..." style="width:100%;padding:10px;border:1px solid #cddccf;border-radius:10px;">@profile?.Bio</textarea>
+        <label for="profile-bio"><b>@T["Bio"]</b></label>
+        <textarea id="profile-bio" name="bio" rows="2" maxlength="300" placeholder="Conte um pouco sobre suas preferências culinárias no Pará..." style="width:100%;padding:10px;border:1px solid #cddccf;border-radius:10px;">@profile?.Bio</textarea>
       </div>
 
       <div>
@@ -168,7 +168,7 @@
         📥 @T["ExportMyData"]
       </a>
 
-      <form method="post" action="/account/lgpd/delete" onsubmit="return confirm('Tem certeza de que deseja solicitar a anonimização e exclusão da sua conta? Suas sessões serão encerradas e seus dados de identidade desvinculados.');" style="display:inline;">
+      <form method="post" action="/account/lgpd/delete" data-confirm="Tem certeza de que deseja solicitar a anonimização e exclusão da sua conta? Suas sessões serão encerradas e seus dados de identidade desvinculados." style="display:inline;">
         @Html.AntiForgeryToken()
         <button type="submit" class="danger">
           🗑️ @T["DeleteMyAccount"]

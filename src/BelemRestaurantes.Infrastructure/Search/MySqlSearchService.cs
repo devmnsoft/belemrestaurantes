@@ -66,12 +66,11 @@ public sealed class MySqlSearchService(MySqlConnectionFactory connectionFactory)
         await using var connection = await connectionFactory.OpenAsync(ct);
 
         const string sql = @"
-            SELECT DISTINCT city FROM restaurants WHERE status = 'published' AND city IS NOT NULL AND city != '' ORDER BY city;
             SELECT DISTINCT category FROM restaurants WHERE status = 'published' AND category IS NOT NULL AND category != '' ORDER BY category;
             SELECT DISTINCT neighborhood FROM restaurants WHERE status = 'published' AND neighborhood IS NOT NULL AND neighborhood != '' ORDER BY neighborhood;";
 
         await using var multi = await connection.QueryMultipleAsync(new CommandDefinition(sql, cancellationToken: ct));
-        var cities = (await multi.ReadAsync<string>()).ToList();
+        var cities = BelemRestaurantes.Domain.Data.ParaOfficialCatalog.Municipalities.Select(c=>c.Name).OrderBy(n=>n).ToArray();
         var categories = (await multi.ReadAsync<string>()).ToList();
         var neighborhoods = (await multi.ReadAsync<string>()).ToList();
 
