@@ -1,32 +1,70 @@
 @model BelemRestaurantes.Application.Models.PagedResult<BelemRestaurantes.Application.Models.ModerationCandidate>
 @using BelemRestaurantes.Application.Models
-@{ Layout="_AdminLayout"; ViewData["Title"]="Central de aprovação"; var f=(ModerationFilter)ViewData["Filter"]!;
-string PageUrl(int page)=>"/admin/moderacao"+Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?> { ["Term"]=f.Term,["City"]=f.City,["Category"]=f.Category,["Source"]=f.Source,["Completeness"]=f.Completeness,["Duplicate"]=f.Duplicate,["From"]=f.From?.ToString("yyyy-MM-dd"),["Until"]=f.Until?.ToString("yyyy-MM-dd"),["Stage"]=f.Stage,["Sort"]=f.Sort,["page"]=page.ToString(),["PageSize"]=f.PageSize.ToString() }); }
-<section class="para-operations">
-<span class="para-eyebrow">CUIA · CURADORIA HUMANA</span><h1>Uma boa mesa começa com cuidado.</h1>
-<p>Revise os dados e a fonte. A publicação no guia não confirma funcionamento ou qualidade.</p>
-<form method="get" class="para-review-filters">
-<div><label for="stage">Situação</label><select id="stage" name="Stage">@foreach(var stage in new[]{("pending","Pendentes"),("approved","Aprovados sem publicação"),("published","Publicados"),("rejected","Rejeitados"),("archived","Arquivados"),("blocked","Bloqueados")}){<option value="@stage.Item1" selected="@(stage.Item1==(f.Stage??"pending"))">@stage.Item2</option>}</select></div>
-<div><label for="sort">Ordenar</label><select id="sort" name="Sort">@foreach(var sort in new[]{("oldest","Mais antigos"),("recent","Mais recentes"),("name","Nome"),("city","Município")}){<option value="@sort.Item1" selected="@(sort.Item1==(f.Sort??"oldest"))">@sort.Item2</option>}</select></div>
-<div><label for="page-size">Cadastros por página</label><select id="page-size" name="PageSize">@foreach(var size in new[]{30,60,120}){<option value="@size" selected="@(f.PageSize==size)">@size</option>}</select></div><div><label for="term">Nome, endereço ou identificador</label><input id="term" name="Term" value="@f.Term" maxlength="160" /></div>
-<div><label for="city">Município</label><input id="city" name="City" value="@f.City" maxlength="100" /></div>
-<div><label for="category">Categoria</label><input id="category" name="Category" value="@f.Category" maxlength="100" /></div>
-<div><label for="source">Fonte</label><select id="source" name="Source"><option value="">Todas</option>@foreach(var source in new[]{"minha_receita","openstreetmap","googleplaces","suggestion"}){<option selected="@(source==f.Source)">@source</option>}</select></div>
-<div><label for="complete">Validação</label><select id="complete" name="Completeness"><option value="">Todos</option><option value="eligible" selected="@(f.Completeness=="eligible")">Elegíveis para publicação</option><option value="incomplete" selected="@(f.Completeness=="incomplete")">Com impedimentos</option></select></div>
-<div><label for="duplicate">Duplicidade</label><select id="duplicate" name="Duplicate"><option value="">Todas</option><option value="yes" selected="@(f.Duplicate=="yes")">Possíveis duplicados</option><option value="no" selected="@(f.Duplicate=="no")">Sem alerta</option></select></div>
-<div><label for="from">Descoberto a partir de</label><input type="date" id="from" name="From" value="@f.From?.ToString("yyyy-MM-dd")" /></div><div><label for="until">Até</label><input type="date" id="until" name="Until" value="@f.Until?.ToString("yyyy-MM-dd")" /></div><button class="para-button">Aplicar filtros</button></form>
-<p><strong>@Model.TotalCount</strong> cadastros no filtro · Limite por confirmação: @ViewData["BatchLimit"].</p>
-<form method="post" action="/admin/moderacao/preparar" data-bulk-form>
-@Html.AntiForgeryToken()
-@foreach(var field in new Dictionary<string,string?>{["Term"]=f.Term,["City"]=f.City,["Category"]=f.Category,["Source"]=f.Source,["Completeness"]=f.Completeness,["Duplicate"]=f.Duplicate,["From"]=f.From?.ToString("yyyy-MM-dd"),["Until"]=f.Until?.ToString("yyyy-MM-dd"),["Stage"]=f.Stage,["Sort"]=f.Sort,["PageSize"]=f.PageSize.ToString()}){<input type="hidden" name="@field.Key" value="@field.Value" />}
-<div class="cuia-card p-3 mb-3"><label><input type="checkbox" name="allFiltered" value="true" /> Selecionar os próximos @Math.Min(Model.TotalCount,(int)ViewData["BatchLimit"]!) cadastros do filtro, incluindo outras páginas</label><p>O lote respeita a ordem do filtro e o limite seguro. Após concluir, repita a seleção para revisar os próximos pendentes. A próxima tela mostra exatamente os registros que serão afetados.</p></div>
-<div class="recipe-tools"><button type="button" class="para-button" data-bulk-page>Selecionar página</button><button type="button" class="para-text-link" data-bulk-clear>Limpar seleção</button><span role="status" data-bulk-count>Selecione os cadastros para revisar.</span></div><div class="para-review-grid">
-@foreach(var row in Model.Items){<article class="para-review-card"><label class="form-check"><input type="checkbox" name="ids" value="@row.Id" /> Selecionar #@row.Id</label><h2>@row.Name</h2><p>@row.Category · @row.City · @row.Neighborhood</p><p>@(row.Address??"Endereço ausente")</p><p>@(row.Phone??"Telefone ausente")</p><p>Situação: @row.Stage</p><p>@row.Source · @row.DiscoveredAt.ToString("dd/MM/yyyy HH:mm") UTC</p><p>Completude: @row.Completeness% · @(row.Duplicate?"Possível duplicidade":"Sem alerta de duplicidade")</p><p>@(row.BlockReason??"Elegível para revisão e publicação")</p><p class="small">@row.ExternalId</p>@if(Uri.TryCreate(row.SourceUrl,UriKind.Absolute,out var uri)&&uri.Scheme=="https"){<a href="@uri" target="_blank" rel="noopener noreferrer">Conferir fonte ↗</a>}<p><a href="/admin/mobilidade?restaurantId=@row.Id">Horários e funcionamento</a></p></article>}
-</div>
-@if(Model.Items.Count==0){<p class="para-empty">Nenhum cadastro neste filtro.</p>}
-<div class="cuia-card p-3 mt-3"><label for="operation">O que fazer com a seleção?</label><select id="operation" name="operation"><option value="approve">Aprovar e publicar</option><option value="approve_only">Aprovar, sem publicar</option><option value="publish">Publicar previamente aprovados</option><option value="archive">Arquivar</option><option value="block">Bloquear</option><option value="reject">Rejeitar</option><option value="review">Solicitar revisão</option><option value="duplicate">Marcar possível duplicado</option><option value="reprocess">Reprocessar enriquecimento</option></select><label for="reason">Motivo (obrigatório para rejeição, revisão, arquivo e bloqueio)</label><textarea id="reason" name="reason" maxlength="500"></textarea><button class="para-button mt-3">Revisar ação e quantidade</button></div>
+@using BelemRestaurantes.Web.Models
+@{
+    Layout="_AdminLayout";ViewData["Title"]="Aprovação de restaurantes";
+    var f=(ModerationFilter)ViewData["Filter"]!;var limit=(int)ViewData["BatchLimit"]!;
+    var advanced=!string.IsNullOrWhiteSpace(f.Category)||!string.IsNullOrWhiteSpace(f.Source)||!string.IsNullOrWhiteSpace(f.Completeness)||!string.IsNullOrWhiteSpace(f.Duplicate)||f.From is not null||f.Until is not null;
+    var start=Model.TotalCount==0?0:(Model.Page-1)*Model.PageSize+1;
+    var end=Math.Min(Model.Page*Model.PageSize,Model.TotalCount);
+}
+<section class="para-operations review-workspace">
+<header class="review-heading"><span class="para-eyebrow">CUIA · REVISÃO DO CATÁLOGO</span><h1>Aprovação de restaurantes</h1><p>Confira os dados e a fonte. Selecione os cadastros e revise a ação antes de confirmar.</p></header>
+<form method="get" action="/admin/moderacao" class="review-filter-form">
+  <div class="review-basic-filters">
+    <div><label for="term">Buscar restaurante</label><input id="term" name="Term" value="@f.Term" maxlength="160" placeholder="Nome, endereço ou identificador"/></div>
+    <div><label for="city">Município</label><input id="city" name="City" value="@f.City" maxlength="100"/></div>
+    <div><label for="stage">Situação</label><select id="stage" name="Stage">@foreach(var stage in new[]{("pending","Pendentes"),("approved","Aprovados, sem publicação"),("published","Publicados"),("rejected","Rejeitados"),("archived","Arquivados"),("blocked","Bloqueados")}){<option value="@stage.Item1" selected="@(stage.Item1==(f.Stage??"pending"))">@stage.Item2</option>}</select></div>
+    <div><label for="sort">Ordenar por</label><select id="sort" name="Sort">@foreach(var sort in new[]{("oldest","Mais antigos"),("recent","Mais recentes"),("name","Nome"),("city","Município")}){<option value="@sort.Item1" selected="@(sort.Item1==(f.Sort??"oldest"))">@sort.Item2</option>}</select></div>
+    <div><label for="page-size">Por página</label><select id="page-size" name="PageSize">@foreach(var size in new[]{30,60,120}){<option value="@size" selected="@(f.SafePageSize==size)">@size cadastros</option>}</select></div>
+  </div>
+  <details class="review-advanced" open="@advanced"><summary>Mais filtros: fonte, categoria, validação e datas</summary><div class="review-basic-filters">
+    <div><label for="category">Categoria</label><input id="category" name="Category" value="@f.Category" maxlength="100"/></div>
+    <div><label for="source">Fonte dos dados</label><select id="source" name="Source"><option value="">Todas as fontes</option>@foreach(var source in new[]{("minha_receita","Cadastro de empresas"),("openstreetmap","OpenStreetMap"),("googleplaces","Google Places"),("suggestion","Sugestão")}){<option value="@source.Item1" selected="@(source.Item1==f.Source)">@source.Item2</option>}</select></div>
+    <div><label for="complete">Validação</label><select id="complete" name="Completeness"><option value="">Todos os cadastros</option><option value="eligible" selected="@(f.Completeness=="eligible")">Sem impedimentos para publicação</option><option value="incomplete" selected="@(f.Completeness=="incomplete")">Com impedimentos</option></select></div>
+    <div><label for="duplicate">Duplicidade</label><select id="duplicate" name="Duplicate"><option value="">Todos</option><option value="yes" selected="@(f.Duplicate=="yes")">Possíveis duplicados</option><option value="no" selected="@(f.Duplicate=="no")">Sem alerta de duplicidade</option></select></div>
+    <div><label for="from">Descoberto a partir de</label><input type="date" id="from" name="From" value="@f.From?.ToString("yyyy-MM-dd")"/></div>
+    <div><label for="until">Descoberto até</label><input type="date" id="until" name="Until" value="@f.Until?.ToString("yyyy-MM-dd")"/></div>
+  </div></details>
+  <div class="review-filter-actions"><button class="para-button">Aplicar filtros</button><a href="/admin/moderacao">Limpar filtros</a></div>
 </form>
-<nav class="para-pagination" aria-label="Paginação">@if(Model.Page>1){<a href="@PageUrl(Model.Page-1)">Anterior</a>}<span>@Model.Page / @Math.Max(1,Model.TotalPages)</span>@if(Model.Page<Model.TotalPages){<a href="@PageUrl(Model.Page+1)">Próxima</a>}</nav>
+<div class="review-results-heading"><h2>Cadastros para revisar</h2><p><strong>@start–@end</strong> de <strong>@Model.TotalCount.ToString("N0")</strong> resultados · Página @Model.Page de @Math.Max(1,Model.TotalPages)</p></div>
+@{ViewData["Position"]="top";}
+@await Html.PartialAsync("_ModerationPagination",Model)
+<p class="review-loading" role="status" data-bulk-loading></p>
+<form method="post" action="/admin/moderacao/preparar" data-bulk-form data-selection-key="@ModerationNavigation.SelectionKey(f)" data-batch-limit="@limit" data-filter-count="@Math.Min(Model.TotalCount,limit)">
+@Html.AntiForgeryToken()
+@foreach(var field in ModerationNavigation.Fields(f)){<input type="hidden" name="@field.Key" value="@field.Value"/>}
+<input type="hidden" name="page" value="@Model.Page"/>
+<div data-bulk-hidden></div>
+<div class="review-selection">
+  <div class="review-selection-buttons"><button type="button" data-bulk-page>Selecionar esta página</button><button type="button" data-bulk-clear>Limpar seleção</button><strong role="status" aria-live="polite" data-bulk-count>Nenhum cadastro selecionado.</strong></div>
+  <p hidden data-bulk-persist-note></p>
+  <noscript><p>Com JavaScript desativado, selecione e revise uma página de cada vez.</p></noscript>
+  <label class="review-filter-selection"><input type="checkbox" name="allFiltered" value="true"/> Selecionar o próximo lote do filtro: até @Math.Min(Model.TotalCount,limit) cadastros, incluindo outras páginas</label>
+  <p>O limite por confirmação é @limit cadastros. A próxima tela mostra exatamente quais serão afetados.</p>
+</div>
+<div class="review-list">
+@foreach(var row in Model.Items)
+{
+  var impediment=row.Status=="pending"?row.BlockReason:null;
+  <article class="review-row" data-bulk-row>
+    <div class="review-row-title"><label class="review-row-check"><input type="checkbox" name="ids" value="@row.Id" aria-label="Selecionar @row.Name, cadastro @row.Id"/><span>Selecionar</span></label><div><h3>@row.Name</h3><p>@(row.Category??"Categoria não informada") · @row.City @(!string.IsNullOrWhiteSpace(row.Neighborhood)?"· "+row.Neighborhood:"")</p></div><span class="review-stage">@ModerationNavigation.StageLabel(row.Stage)</span></div>
+    <p class="review-address">@(row.Address??"Endereço não informado")</p>
+    @if(impediment is not null){<p class="review-impediment"><strong>Precisa de atenção:</strong> @impediment</p>}
+    else if(row.Status=="pending"){<p class="review-ready">Dados básicos completos. Confira a fonte antes de publicar.</p>}
+    <div class="review-row-actions">
+      @if(Uri.TryCreate(row.SourceUrl,UriKind.Absolute,out var uri)&&uri.Scheme=="https"){<a href="@uri.AbsoluteUri" target="_blank" rel="noopener noreferrer">Conferir fonte ↗</a>}
+      <a href="/admin/midias?restaurantId=@row.Id">Vídeos</a><a href="/admin/mobilidade?restaurantId=@row.Id">Horários</a>
+    </div>
+    <details class="review-row-details"><summary>Mais informações do cadastro #@row.Id</summary><dl><div><dt>Telefone</dt><dd>@(row.Phone??"Não informado")</dd></div><div><dt>Origem</dt><dd>@(row.Source??"Não identificada")</dd></div><div><dt>Dados preenchidos</dt><dd>@row.Completeness%</dd></div><div><dt>Duplicidade</dt><dd>@(row.Duplicate?"Possível duplicado: revisar":"Sem alerta")</dd></div><div><dt>Descoberto em</dt><dd>@row.DiscoveredAt.AddHours(-3).ToString("dd/MM/yyyy HH:mm") (Brasília)</dd></div><div><dt>Identificador na fonte</dt><dd>@(row.ExternalId??"Não informado")</dd></div></dl></details>
+  </article>
+}
+</div>
+@if(Model.Items.Count==0){<div class="para-empty"><h3>Nenhum cadastro neste filtro.</h3><p>Altere os filtros ou volte à lista de pendentes.</p><a href="/admin/moderacao">Ver pendentes</a></div>}
+<fieldset class="review-action-panel"><legend>Ação para os selecionados</legend><label for="operation">O que você quer fazer?</label><select id="operation" name="operation"><option value="approve">Aprovar e publicar</option><option value="approve_only">Aprovar, sem publicar</option><option value="publish">Publicar previamente aprovados</option><option value="archive">Arquivar</option><option value="block">Bloquear</option><option value="reject">Rejeitar</option><option value="review">Solicitar revisão</option><option value="duplicate">Marcar possível duplicado</option><option value="reprocess">Reprocessar dados</option></select><label for="reason">Motivo da ação</label><textarea id="reason" name="reason" maxlength="500" aria-describedby="reason-help"></textarea><p id="reason-help">Obrigatório para arquivar, bloquear, rejeitar, solicitar revisão, marcar duplicidade e reprocessar.</p><button class="para-button" type="submit">Revisar seleção e ação</button></fieldset>
+</form>
+@{ViewData["Position"]="bottom";}
+@await Html.PartialAsync("_ModerationPagination",Model)
 </section>
-
 @section Scripts{<script src="~/js/bulk-moderation.js" asp-append-version="true" defer></script>}

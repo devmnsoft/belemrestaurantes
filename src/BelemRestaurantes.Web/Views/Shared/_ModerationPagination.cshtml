@@ -1,0 +1,15 @@
+@model BelemRestaurantes.Application.Models.PagedResult<BelemRestaurantes.Application.Models.ModerationCandidate>
+@using BelemRestaurantes.Web.Models
+@{var filter=(BelemRestaurantes.Application.Models.ModerationFilter)ViewData["Filter"]!;var pages=Math.Max(1,Model.TotalPages);var position=ViewData["Position"] as string??"top";}
+<nav class="review-pagination" aria-label="Páginas da aprovação · @(position=="top"?"início":"fim")" data-bulk-pagination>
+  <div class="review-page-links">
+    @if(Model.Page>1){<a href="@ModerationNavigation.PageUrl(filter,1)" aria-label="Primeira página">Primeira</a><a href="@ModerationNavigation.PageUrl(filter,Model.Page-1)" rel="prev">Anterior</a>}
+    @for(var number=Math.Max(1,Model.Page-2);number<=Math.Min(pages,Model.Page+2);number++)
+    {if(number==Model.Page){<span aria-current="page">@number</span>}else{<a href="@ModerationNavigation.PageUrl(filter,number)" aria-label="Ir à página @number">@number</a>}}
+    @if(Model.Page<pages){<a href="@ModerationNavigation.PageUrl(filter,Model.Page+1)" rel="next">Próxima</a><a href="@ModerationNavigation.PageUrl(filter,pages)" aria-label="Última página">Última</a>}
+  </div>
+  <form method="get" action="/admin/moderacao" class="review-page-jump">
+    @foreach(var field in ModerationNavigation.Fields(filter)){<input type="hidden" name="@field.Key" value="@field.Value"/>}
+    <label for="review-page-@position">Ir à página</label><input id="review-page-@position" name="page" type="number" min="1" max="@pages" value="@Model.Page" inputmode="numeric" required/><span>de @pages</span><button type="submit">Ir</button>
+  </form>
+</nav>

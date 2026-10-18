@@ -1,3 +1,12 @@
 @model BelemRestaurantes.Application.Models.ModerationBatch
-@{Layout="_AdminLayout";ViewData["Title"]="Confirmar ação em lote";}
-<section class="para-operations"><span class="para-eyebrow">REVISÃO FINAL</span><h1>Confirme os @Model.Items.Count cadastros.</h1><p>Operação: @Model.Operation · @Model.Reason</p><p>A seleção é fixa e expira em 15 minutos. A validação será repetida na transação; cadastros inválidos ou já decididos serão ignorados.</p><ul>@foreach(var row in Model.Items){<li>#@row.Id — @row.Name, @row.City · @(row.BlockReason??"Elegível")</li>}</ul><form method="post" action="/admin/moderacao/confirmar">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id"/><label><input type="checkbox" name="confirmed" value="true" required /> Conferi a seleção e confirmo a operação.</label><p><button class="para-button">Confirmar ação</button> <a href="/admin/moderacao">Cancelar</a></p></form></section>
+@using BelemRestaurantes.Web.Models
+@{Layout="_AdminLayout";ViewData["Title"]="Revisar ação em lote";var returnUrl=ModerationNavigation.SafeReturn(ViewData["ReturnUrl"] as string);}
+<section class="para-operations review-workspace" data-bulk-prepared-key="@ViewData["SelectionKey"]">
+<header class="review-heading"><span class="para-eyebrow">REVISÃO ANTES DE CONFIRMAR</span><h1>@ModerationNavigation.OperationLabel(Model.Operation)</h1><p><strong>@Model.Items.Count cadastros</strong> nesta seleção. Confira os nomes e os avisos abaixo.</p></header>
+<a href="@returnUrl">Voltar aos filtros e cancelar esta revisão</a>
+@if(!string.IsNullOrWhiteSpace(Model.Reason)){<p><strong>Motivo informado:</strong> @Model.Reason</p>}
+<p class="review-notice">A confirmação vence em 15 minutos. A validação será repetida ao confirmar; cadastros alterados, incompletos ou já decididos podem ser ignorados.</p>
+<ol class="review-confirm-list">@foreach(var row in Model.Items){<li><strong>@row.Name</strong><span>@row.City · Cadastro #@row.Id</span><span>@(row.BlockReason??"Dados básicos disponíveis para revisão.")</span></li>}</ol>
+<form method="post" action="/admin/moderacao/confirmar" class="review-action-panel">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id"/><input type="hidden" name="returnUrl" value="@returnUrl"/><label class="review-filter-selection"><input type="checkbox" name="confirmed" value="true" required/> Conferi os cadastros e confirmo: @ModerationNavigation.OperationLabel(Model.Operation).</label><div class="review-filter-actions"><button class="para-button" type="submit">Confirmar para @Model.Items.Count cadastros</button><a href="@returnUrl">Cancelar</a></div></form>
+</section>
+@section Scripts{<script src="~/js/bulk-moderation.js" asp-append-version="true" defer></script>}

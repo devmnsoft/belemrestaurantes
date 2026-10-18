@@ -18,7 +18,6 @@ public sealed class MySqlModerationRepository(
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
-        var offset = (page - 1) * pageSize;
 
         await using var connection = await factory.OpenAsync(ct);
         const string where = """
@@ -27,37 +26,38 @@ public sealed class MySqlModerationRepository(
             AND (@city IS NULL OR r.normalized_city = @city)
             AND (@category IS NULL OR r.category = @category)
             """;
-        var parameters = new
+        var parameters = new DynamicParameters(new
         {
-            pageSize, offset,
+            pageSize,
             term = string.IsNullOrWhiteSpace(term) ? null : "%" + MySqlRestaurantReadRepository.EscapeLike(term.Trim()[..Math.Min(term.Trim().Length,160)]) + "%",
             city = string.IsNullOrWhiteSpace(city) ? null : NameNormalizer.Normalize(city),
             category = CategoryRules.Clean(category)
-        };
+        });
 
         var total = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
             $"SELECT COUNT(*) FROM restaurants r WHERE {where}", parameters, cancellationToken: ct));
 
         if (total == 0)
         {
-            return PagedResult<PendingApproval>.Empty(page, pageSize);
+            return PagedResult<PendingApproval>.Empty(1, pageSize);
         }
 
+        page=Math.Clamp(page,1,Math.Max(1,(int)Math.Ceiling(total/(double)pageSize)));
+        parameters.Add("offset",(page-1)*pageSize);
+        var ids=(await connection.QueryAsync<long>(new CommandDefinition($"SELECT r.id FROM restaurants r WHERE {where} ORDER BY r.created_at,r.id LIMIT @pageSize OFFSET @offset",parameters,cancellationToken:ct))).ToArray();
+        if(ids.Length==0)return new([],page,pageSize,total);
         var items = await connection.QueryAsync<PendingApproval>(new CommandDefinition(
             $"""
             SELECT r.id AS Id, r.name AS Name, r.city AS City, r.neighborhood AS Neighborhood,
                    r.category AS Category, r.google_place_id AS GooglePlaceId, r.address AS Address, r.phone AS Phone,
                    r.created_source_url AS SourceUrl, r.created_at AS DiscoveredAt,
-                   COALESCE(m.detail, '') AS ConflictReason,
+                   COALESCE((SELECT MAX(m.detail) FROM moderation_queue m WHERE m.item_type='restaurant' AND m.status='pending' AND m.item_id=r.id), '') AS ConflictReason,
                    NULL AS DedupConfidence, NULL AS AiSuggestion
             FROM restaurants r
-            LEFT JOIN (SELECT item_id, MAX(detail) AS detail FROM moderation_queue
-                       WHERE item_type='restaurant' AND status='pending' GROUP BY item_id) m ON m.item_id=r.id
-            WHERE {where}
+            WHERE r.id IN @ids
             ORDER BY r.created_at, r.id
-            LIMIT @pageSize OFFSET @offset
             """,
-            parameters,
+            new { ids },
             cancellationToken: ct));
 
         return new PagedResult<PendingApproval>(items.AsList(), page, pageSize, total);

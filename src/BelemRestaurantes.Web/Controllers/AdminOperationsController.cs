@@ -123,7 +123,7 @@ public sealed class AdminOperationsController(
     [HttpPost("discovery/{id:long}/approve")]
     [Authorize(Policy = "RestaurantModerator")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ApproveDiscovery(long id, CancellationToken ct)
+    public async Task<IActionResult> ApproveDiscovery(long id, string? term, string? city, string? category, int page, CancellationToken ct)
     {
         var ok = await moderationRepo.ApproveAsync(id, Actor(), ct);
         if (ok)
@@ -131,13 +131,13 @@ public sealed class AdminOperationsController(
         else
             TempData["ErrorMessage"] = $"Não foi possível aprovar o estabelecimento #{id}. Verifique se ainda está pendente.";
 
-        return RedirectToAction("Discovery");
+        return Redirect(Url.Action("Discovery",new{term,city,category,page=Math.Max(1,page)})+"#revisao-cadastros");
     }
 
     [HttpPost("discovery/{id:long}/reject")]
     [Authorize(Policy = "RestaurantModerator")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RejectDiscovery(long id, [FromForm] string reason, CancellationToken ct)
+    public async Task<IActionResult> RejectDiscovery(long id, [FromForm] string reason, string? term, string? city, string? category, int page, CancellationToken ct)
     {
         var safeReason = string.IsNullOrWhiteSpace(reason) ? "Rejeitado na triagem administrativa" : reason.Trim();
         var ok = await moderationRepo.RejectAsync(id, Actor(), safeReason, ct);
@@ -146,7 +146,7 @@ public sealed class AdminOperationsController(
         else
             TempData["ErrorMessage"] = $"Não foi possível rejeitar o estabelecimento #{id}.";
 
-        return RedirectToAction("Discovery");
+        return Redirect(Url.Action("Discovery",new{term,city,category,page=Math.Max(1,page)})+"#revisao-cadastros");
     }
 
     // 3. Status Cuia IA e Conectores

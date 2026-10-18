@@ -1,0 +1,9 @@
+@model BelemRestaurantes.Application.Models.PagedResult<BelemRestaurantes.Application.Models.PendingApproval>
+@{var term=ViewData["ReviewTerm"] as string;var city=ViewData["ReviewCity"] as string;var category=ViewData["ReviewCategory"] as string;var position=ViewData["Position"] as string??"top";var pages=Math.Max(1,Model.TotalPages);
+string PageUrl(int number)=>"/admin/discovery"+Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?>{["term"]=term,["city"]=city,["category"]=category,["page"]=number.ToString()});}
+<nav class="review-pagination" aria-label="Páginas dos cadastros descobertos · @position">
+<div class="review-page-links">
+@if(Model.Page>1){<a href="@PageUrl(1)">Primeira</a><a href="@PageUrl(Model.Page-1)" rel="prev">Anterior</a>}
+@for(var number=Math.Max(1,Model.Page-2);number<=Math.Min(pages,Model.Page+2);number++){if(number==Model.Page){<span aria-current="page">@number</span>}else{<a href="@PageUrl(number)" aria-label="Ir à página @number">@number</a>}}
+@if(Model.Page<pages){<a href="@PageUrl(Model.Page+1)" rel="next">Próxima</a><a href="@PageUrl(pages)">Última</a>}
+</div><form method="get" action="/admin/discovery" class="review-page-jump"><input type="hidden" name="term" value="@term"/><input type="hidden" name="city" value="@city"/><input type="hidden" name="category" value="@category"/><label for="discovery-page-@position">Ir à página</label><input id="discovery-page-@position" type="number" name="page" min="1" max="@pages" value="@Model.Page" required/><span>de @pages</span><button>Ir</button></form></nav>

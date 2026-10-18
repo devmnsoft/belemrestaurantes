@@ -12,7 +12,7 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
         SELECT r.id Id,r.name Name,r.city City,r.category Category,r.address Address,r.neighborhood Neighborhood,
         r.phone Phone,r.created_source_url SourceUrl,r.google_place_id ExternalId,r.status Status,r.created_at DiscoveredAt,
         CASE WHEN r.status IN ('published','rejected') THEN r.status WHEN r.status='suspended' THEN CASE WHEN r.moderation_stage='blocked' THEN 'blocked' ELSE 'archived' END ELSE r.moderation_stage END Stage,
-        (SELECT o.provider FROM source_observations o WHERE o.restaurant_id=r.id ORDER BY o.last_seen_at DESC LIMIT 1) Source,
+        (SELECT o.provider FROM source_observations o WHERE o.restaurant_id=r.id ORDER BY o.last_seen_at DESC,o.id DESC LIMIT 1) Source,
         EXISTS(SELECT 1 FROM geo_municipalities g WHERE g.normalized_name=r.normalized_city) ValidCity,
         (EXISTS(SELECT 1 FROM moderation_queue m WHERE m.item_type='restaurant' AND m.item_id=r.id
              AND m.status='pending' AND m.reason IN ('DuplicateSuspected','PossibleDuplicate','Duplicate','DeduplicationConflict'))
@@ -24,31 +24,53 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
     public async Task<PagedResult<ModerationCandidate>> ListAsync(ModerationFilter filter, int page, CancellationToken ct)
     {
         await using var db=await factory.OpenAsync(ct);
-        var sql=FilteredSql(filter);
+        var from=" FROM restaurants r"+FilteredWhere(filter);
         var parameters=Parameters(filter);
-        var count=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM ("+sql+") filtered",parameters,cancellationToken:ct));
-        var pageSize = Math.Clamp(filter.PageSize, 30, 120);
-        page=Math.Clamp(page,1,Math.Max(1,(count+pageSize-1)/pageSize));
+        // Count only the requested filter. Expensive checks are evaluated here only when filtered.
+        var count=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*)"+from,parameters,cancellationToken:ct));
+        var pageSize=filter.SafePageSize;
+        page=Math.Clamp(page,1,Math.Max(1,(int)Math.Ceiling(count/(double)pageSize)));
         parameters.Add("offset",(page-1)*pageSize);
         parameters.Add("pageSize",pageSize);
-        var rows=(await db.QueryAsync<ModerationCandidate>(new CommandDefinition(sql+Order(filter)+" LIMIT @pageSize OFFSET @offset",parameters,cancellationToken:ct))).AsList();
+        // Slice IDs before loading observations and duplicate flags, including on deep pages.
+        var ids=(await db.QueryAsync<long>(new CommandDefinition("SELECT r.id"+from+Order(filter)+" LIMIT @pageSize OFFSET @offset",parameters,cancellationToken:ct))).ToArray();
+        var rows=ids.Length==0?new List<ModerationCandidate>():(await db.QueryAsync<ModerationCandidate>(new CommandDefinition(Select+" WHERE r.id IN @ids"+Order(filter),new{ids},cancellationToken:ct))).AsList();
         return new(rows,page,pageSize,count);
     }
     private async Task<List<ModerationCandidate>> CandidatesAsync(ModerationFilter f, CancellationToken ct)
     {
-        await using var db = await factory.OpenAsync(ct);
-        return (await db.QueryAsync<ModerationCandidate>(new CommandDefinition(FilteredSql(f)+Order(f)+" LIMIT @limit",Parameters(f),cancellationToken:ct))).AsList();
+        await using var db=await factory.OpenAsync(ct);
+        var ids=(await db.QueryAsync<long>(new CommandDefinition("SELECT r.id FROM restaurants r"+FilteredWhere(f)+Order(f)+" LIMIT @limit",Parameters(f),cancellationToken:ct))).ToArray();
+        return ids.Length==0?[]:(await db.QueryAsync<ModerationCandidate>(new CommandDefinition(Select+" WHERE r.id IN @ids"+Order(f),new{ids},cancellationToken:ct))).AsList();
     }
-    private static string FilteredSql(ModerationFilter f)=>"SELECT * FROM ("+Select+"\n"+"""
-            WHERE (@term IS NULL OR r.name LIKE @term OR r.address LIKE @term OR r.google_place_id LIKE @term)
-            AND (@city IS NULL OR r.city=@city) AND (@category IS NULL OR r.category=@category)
-            AND (@from IS NULL OR r.created_at>=@from) AND (@until IS NULL OR r.created_at<@until)
-            ) candidates WHERE Stage=@stage AND (@source IS NULL OR Source=@source)
-            AND (@duplicate IS NULL OR Duplicate=@duplicate)
-            AND (@eligible IS NULL OR COALESCE((ValidCity=1 AND Duplicate=0 AND CHAR_LENGTH(TRIM(Name))>=2
-                AND NULLIF(TRIM(Category),'') IS NOT NULL AND NULLIF(TRIM(Address),'') IS NOT NULL
-                AND SourceUrl LIKE 'https://%'),0)=@eligible)
-            """;
+    private const string SourceCheck="(SELECT o.provider FROM source_observations o WHERE o.restaurant_id=r.id ORDER BY o.last_seen_at DESC,o.id DESC LIMIT 1)";
+    private const string CityCheck="EXISTS(SELECT 1 FROM geo_municipalities g WHERE g.normalized_name=r.normalized_city)";
+    private const string DuplicateCheck="""
+        (EXISTS(SELECT 1 FROM moderation_queue m WHERE m.item_type='restaurant' AND m.item_id=r.id
+          AND m.status='pending' AND m.reason IN ('DuplicateSuspected','PossibleDuplicate','Duplicate','DeduplicationConflict'))
+        OR EXISTS(SELECT 1 FROM restaurants d WHERE d.id<>r.id AND d.status IN ('pending','published')
+          AND d.normalized_city=r.normalized_city AND d.normalized_name=r.normalized_name
+          AND COALESCE(d.address,'')=COALESCE(r.address,'')))
+        """;
+    private static string FilteredWhere(ModerationFilter f)
+    {
+        var sql=new System.Text.StringBuilder(" WHERE ");
+        sql.Append(f.Stage switch {
+            "published"=>"r.status='published'", "rejected"=>"r.status='rejected'",
+            "archived"=>"r.status='suspended' AND r.moderation_stage<>'blocked'",
+            "blocked"=>"r.status='suspended' AND r.moderation_stage='blocked'",
+            "approved"=>"r.status='pending' AND r.moderation_stage='approved'",
+            _=>"r.status='pending' AND r.moderation_stage='pending'" });
+        if(!string.IsNullOrWhiteSpace(f.Term))sql.Append(" AND (r.name LIKE @term OR r.address LIKE @term OR r.google_place_id LIKE @term)");
+        if(!string.IsNullOrWhiteSpace(f.City))sql.Append(" AND r.city=@city");
+        if(!string.IsNullOrWhiteSpace(f.Category))sql.Append(" AND r.category=@category");
+        if(f.From is not null)sql.Append(" AND r.created_at>=@from");
+        if(f.Until is not null)sql.Append(" AND r.created_at<@until");
+        if(!string.IsNullOrWhiteSpace(f.Source))sql.Append(" AND "+SourceCheck+"=@source");
+        if(f.Duplicate is "yes" or "no")sql.Append(" AND "+DuplicateCheck+"=@duplicate");
+        if(f.Completeness is "eligible" or "incomplete")sql.Append(" AND COALESCE(("+CityCheck+" AND NOT "+DuplicateCheck+" AND CHAR_LENGTH(TRIM(r.name))>=2 AND NULLIF(TRIM(r.category),'') IS NOT NULL AND NULLIF(TRIM(r.address),'') IS NOT NULL AND r.created_source_url LIKE 'https://%'),0)=@eligible");
+        return sql.ToString();
+    }
     private DynamicParameters Parameters(ModerationFilter f)
     {
         return new DynamicParameters(new { term=string.IsNullOrWhiteSpace(f.Term)?null:"%"+MySqlRestaurantReadRepository.EscapeLike(f.Term.Trim()[..Math.Min(f.Term.Trim().Length,160)])+"%",
@@ -57,7 +79,7 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
             eligible=f.Completeness=="eligible"?(bool?)true:f.Completeness=="incomplete"?false:null,limit=Limit,
             stage=f.Stage is "approved" or "published" or "rejected" or "archived" or "blocked"?f.Stage:"pending" });
     }
-    private static string Order(ModerationFilter f)=>f.Sort switch{"name"=>" ORDER BY Name,Id","recent"=>" ORDER BY DiscoveredAt DESC,Id DESC","city"=>" ORDER BY City,Name,Id",_=>" ORDER BY DiscoveredAt,Id"};
+    private static string Order(ModerationFilter f)=>f.Sort switch{"name"=>" ORDER BY r.name,r.id","recent"=>" ORDER BY r.created_at DESC,r.id DESC","city"=>" ORDER BY r.city,r.name,r.id",_=>" ORDER BY r.created_at,r.id"};
     private static string? Clean(string? text) => string.IsNullOrWhiteSpace(text)?null:text.Trim()[..Math.Min(text.Trim().Length,160)];
     public async Task<ModerationBatch> PrepareAsync(string actor, string operation, string? reason, long[] ids,
         bool allFiltered, ModerationFilter filter, CancellationToken ct)
@@ -70,7 +92,7 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
             if(ids.Length>Limit)throw new ArgumentException($"O limite é {Limit} cadastros.");
             await using var selectionDb=await factory.OpenAsync(ct);
             var parameters=Parameters(filter);parameters.Add("ids",ids.Distinct().ToArray());
-            candidates=(await selectionDb.QueryAsync<ModerationCandidate>(new CommandDefinition(FilteredSql(filter)+" AND Id IN @ids",parameters,cancellationToken:ct))).AsList();
+            candidates=(await selectionDb.QueryAsync<ModerationCandidate>(new CommandDefinition(Select+FilteredWhere(filter)+" AND r.id IN @ids",parameters,cancellationToken:ct))).AsList();
         }
         var selected=allFiltered?candidates:candidates.Where(c=>ids.Contains(c.Id)).ToList();
         if(selected.Count==0 || selected.Count>Limit) throw new ArgumentException($"Selecione entre 1 e {Limit} cadastros; refine os filtros para dividir a operação.");

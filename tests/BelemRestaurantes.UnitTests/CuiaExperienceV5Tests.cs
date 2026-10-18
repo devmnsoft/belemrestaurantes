@@ -21,11 +21,11 @@ public class CuiaExperienceV5Tests
     }
 
     [Fact]
-    public void Migrations_MustContain27Scripts_SequentialAndValid()
+    public void Migrations_MustContain29Scripts_SequentialAndValid()
     {
         // Frente 1 & 2: Todas as migrações embutidas devem ser encontradas e ordenadas
         var scripts = MigrationRunner.LoadScripts();
-        Assert.Equal(27, scripts.Count);
+        Assert.Equal(29, scripts.Count);
 
         for (int i = 0; i < scripts.Count; i++)
         {
