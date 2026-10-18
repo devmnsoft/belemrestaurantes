@@ -15,11 +15,20 @@ public interface IRestaurantReadRepository
     Task<IReadOnlyList<string>> ListNeighborhoodsAsync(string city, CancellationToken ct);
 
     Task<IReadOnlyList<string>> ListCategoriesAsync(CancellationToken ct);
+    Task<IReadOnlyDictionary<string,int>> CountPublishedByCityAsync(CancellationToken ct)
+        => Task.FromResult<IReadOnlyDictionary<string,int>>(new Dictionary<string,int>());
 }
 
 /// <summary>Operações de ingested do catálogo usadas pelo worker.</summary>
 public interface IRestaurantIngestionRepository
 {
+    async Task<(long Id, bool Created)> UpsertWithOutcomeAsync(DiscoveredPlace place, string provider, DateTimeOffset now, CancellationToken ct)
+    {
+        var candidates = await FindDuplicationCandidatesAsync(place.NormalizedName, place.ResolvedCity, place.ExternalId, ct);
+        var id = await UpsertDiscoveredAsync(place, provider, now, ct);
+        return (id, !candidates.Any(c => c.Id == id));
+    }
+
     /// <summary>
     /// Busca candidatos para deduplicação numa janela de nomes/cidade.
     /// <paramref name="externalId"/> habilita a comparação por Place ID, que é
@@ -56,7 +65,8 @@ public interface IRestaurantIngestionRepository
 /// <summary>Decisão de moderação sobre um estabelecimento.</summary>
 public interface IModerationRepository
 {
-    Task<PagedResult<PendingApproval>> ListPendingAsync(int page, int pageSize, CancellationToken ct);
+    Task<PagedResult<PendingApproval>> ListPendingAsync(int page, int pageSize, CancellationToken ct,
+        string? term = null, string? city = null, string? category = null);
 
     Task<bool> ApproveAsync(long restaurantId, string actor, CancellationToken ct);
 
@@ -72,6 +82,7 @@ public interface IModerationRepository
 /// <summary>Fila persistente de descoberta.</summary>
 public interface IDiscoveryQueue
 {
+    Task<int> RetryDeadLettersAsync(string city, CancellationToken ct) => throw new NotSupportedException();
     /// <summary>
     /// Reserva jobs vencidos de forma atômica e sem duplicar entre instâncias.
     /// Deve usar <c>SELECT ... FOR UPDATE SKIP LOCKED</c> (MySQL 8) ou equivalente.
@@ -110,6 +121,9 @@ public interface IDiscoveryTargetRepository
 /// <summary>Registro das execuções de ciclo, para o dashboard.</summary>
 public interface ICycleTelemetryRepository
 {
+    Task RecordTargetAsync(long cycleId, DiscoveryWorkItem work, DiscoveryCycleMetrics metrics, CancellationToken ct)
+        => Task.CompletedTask;
+
     Task<long> StartCycleAsync(string instanceId, DateTimeOffset now, CancellationToken ct);
 
     Task CompleteCycleAsync(

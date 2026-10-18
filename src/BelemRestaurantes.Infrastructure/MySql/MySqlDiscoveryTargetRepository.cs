@@ -127,6 +127,18 @@ public sealed class MySqlDiscoveryTargetRepository(MySqlConnectionFactory factor
 /// <summary>Telemetria de execução dos ciclos, consumida pelo dashboard.</summary>
 public sealed class MySqlCycleTelemetryRepository(MySqlConnectionFactory factory, IClock clock) : ICycleTelemetryRepository
 {
+    public async Task RecordTargetAsync(long cycleId, DiscoveryWorkItem work, DiscoveryCycleMetrics metrics, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition("""
+            INSERT INTO discovery_target_runs
+                (cycle_id, job_id, city, category, source, found_count, created_count, updated_count, skipped_count, failed_count)
+            VALUES (@cycleId, NULLIF(@JobId, 0), @City, @Category, @Source, @PlacesDiscovered,
+                    @RestaurantsCreated, @RestaurantsUpdated, @PlacesSkipped, @JobsFailed)
+            """, new { cycleId, work.JobId, work.City, work.Category, metrics.Source, metrics.PlacesDiscovered,
+                metrics.RestaurantsCreated, metrics.RestaurantsUpdated, metrics.PlacesSkipped, metrics.JobsFailed }, cancellationToken: ct));
+    }
+
     public async Task<long> StartCycleAsync(string instanceId, DateTimeOffset now, CancellationToken ct)
     {
         await using var connection = await factory.OpenAsync(ct);

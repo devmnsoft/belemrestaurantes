@@ -1,6 +1,8 @@
 @model BelemRestaurantes.Web.Models.RegisterInput
 @{ ViewData["Title"] = T["Register"].Value; }
-<section class="shell section narrow">
+<section class="para-container para-auth">
+@await Html.PartialAsync("_AuthStory")
+<div class="para-auth-content">
   <h1>@T["Register"]</h1><p>@T["NoCpf"]</p>
   <form method="post" action="/account/register" class="panel">
     @Html.AntiForgeryToken()
@@ -15,4 +17,5 @@
     <div asp-validation-summary="All" role="alert"></div>
     <button type="submit">@T["Register"]</button><a href="/account/login">@T["SignIn"]</a>
   </form>
+</div>
 </section>

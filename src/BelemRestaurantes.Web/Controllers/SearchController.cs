@@ -34,6 +34,11 @@ public sealed class SearchController(
         [FromQuery] string? category,
         [FromQuery] string? neighborhood,
         [FromQuery] int page = 1,
+        [FromQuery] string? sort = null,
+        [FromQuery] bool photosOnly = false,
+        [FromQuery] double? lat = null,
+        [FromQuery] double? lng = null,
+        [FromQuery] double radius = 10,
         CancellationToken ct = default)
     {
         var searchQuery = new RestaurantSearchQuery(
@@ -42,7 +47,7 @@ public sealed class SearchController(
             Category: category,
             Neighborhood: neighborhood,
             Page: Math.Max(1, page),
-            PageSize: 24);
+            PageSize: 24, Sort: sort, PhotosOnly: photosOnly, Latitude: lat, Longitude: lng, RadiusKm: radius);
 
         var result = await restaurantRepository.SearchAsync(searchQuery, ct);
         var filterOptions = await searchService.GetFilterOptionsAsync(ct);
@@ -52,12 +57,13 @@ public sealed class SearchController(
         ViewBag.SelectedCategory = category;
         ViewBag.SelectedNeighborhood = neighborhood;
         ViewBag.FilterOptions = filterOptions;
+        ViewData["Query"] = searchQuery;
 
         return View(result);
     }
 
     [HttpGet("cidades")]
-    public async Task<IActionResult> Cities(CancellationToken ct)
+    public async Task<IActionResult> Cities(CancellationToken ct, [FromQuery] string? q = null, [FromQuery] string? region = null)
     {
         var municipalities = geoRepository != null
             ? await geoRepository.ListAllAsync(ct)
@@ -68,6 +74,12 @@ public sealed class SearchController(
             : Array.Empty<BelemRestaurantes.Domain.Entities.GeoDistrictLocality>();
 
         ViewBag.TouristLocalities = localities;
+        ViewData["AtlasQuery"] = q;
+        ViewData["AtlasRegion"] = region;
+        ViewData["CityCounts"] = await restaurantRepository.CountPublishedByCityAsync(ct);
+        if(!string.IsNullOrWhiteSpace(q)) municipalities=municipalities.Where(c=>BelemRestaurantes.Domain.Rules.NameNormalizer.RemoveDiacritics(c.Name)
+            .Contains(BelemRestaurantes.Domain.Rules.NameNormalizer.RemoveDiacritics(q.Trim()[..Math.Min(q.Trim().Length,120)]),StringComparison.OrdinalIgnoreCase)).ToArray();
+        if(!string.IsNullOrWhiteSpace(region)) municipalities=municipalities.Where(c=>c.Mesoregion==region).ToArray();
         return View(municipalities);
     }
 
@@ -75,6 +87,7 @@ public sealed class SearchController(
     public async Task<IActionResult> LocalityPage(string slug, [FromQuery] int page = 1, CancellationToken ct = default)
     {
         var normalizedSlug = slug.Replace("-", " ").Trim();
+        if (normalizedSlug.Length == 0) return NotFound();
         var locality = localityRepository != null ? await localityRepository.GetByNameAsync(normalizedSlug, ct) : null;
         var name = locality?.Name ?? char.ToUpper(normalizedSlug[0]) + normalizedSlug[1..];
 
@@ -97,6 +110,7 @@ public sealed class SearchController(
     public async Task<IActionResult> CityPage(string slug, [FromQuery] int page = 1, CancellationToken ct = default)
     {
         var normalizedSlug = slug.Replace("-", " ").Trim();
+        if (normalizedSlug.Length == 0) return NotFound();
         var geo = geoRepository != null ? await geoRepository.GetByNameAsync(normalizedSlug, ct) : null;
         var cityName = geo?.Name ?? char.ToUpper(normalizedSlug[0]) + normalizedSlug[1..];
 

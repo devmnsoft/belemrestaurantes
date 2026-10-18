@@ -145,7 +145,7 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                     if (task.Depth < 2 && download.ContentType != null && download.ContentType.Contains("html"))
                     {
                         // Enfileirar no máximo 10 URLs filhas do mesmo domínio
-                        EnqueueChildLinks(task, download.ContentText);
+                        await EnqueueChildLinksAsync(task, download.ContentText, ct);
                     }
 
                     await _taskQueue.CompleteTaskAsync(task.Id, ct);
@@ -187,6 +187,13 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
             // Se a fonte nunca foi rastreada ou já passou de 6 horas
             if (source.LastCrawledAt == null || source.LastCrawledAt < DateTimeOffset.UtcNow.AddHours(-6))
             {
+                var (allowed, _) = await _robotsTxtService.CheckAccessAsync(source.BaseUrl, "CuiaCrawler", ct);
+                if (!allowed)
+                {
+                    _logger.LogWarning("Crawler: fonte {SourceId}, cidade {City}, não consultada por robots.txt.", source.Id, source.TargetCity);
+                    await _sources.RecordCrawlResultAsync(source.Id, false, "Bloqueado por robots.txt", null, null, ct);
+                    continue;
+                }
                 var download = await _httpClient.DownloadAsync(source.BaseUrl, source.ETag, source.LastModifiedHeader, 15, ct);
                 if (download.NotModified)
                 {
@@ -225,6 +232,8 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                 }
                 else
                 {
+                    _logger.LogWarning("Crawler: fonte {SourceId}, cidade {City}, falha HTTP {Status}: {Reason}",
+                        source.Id, source.TargetCity, download.StatusCode, download.ErrorMessage);
                     await _sources.RecordCrawlResultAsync(source.Id, false, download.ErrorMessage, null, null, ct);
                 }
             }
@@ -240,7 +249,8 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
 
         // Deduplicação contra o catálogo existente
         var candidates = await _ingestion.FindDuplicationCandidatesAsync(normalizedName, city, null, ct);
-        var externalId = $"crawler:{Math.Abs(extracted.SourceUrl.GetHashCode())}";
+        var identity = $"{extracted.SourceUrl}|{NameNormalizer.Normalize(extracted.Name)}|{NameNormalizer.Normalize(city)}|{extracted.Address}";
+        var externalId = "crawler:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(identity)));
         var dedupResult = DeduplicationService.Compare(externalId, extracted.Name, city, candidates);
 
         var place = new DiscoveredPlace(
@@ -257,7 +267,8 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
             GoogleRating: null,
             GoogleRatingCount: null,
             Types: ["restaurant", "food", "crawler_discovered"]
-        );
+        ) { Phone = extracted.Telephone, Instagram = extracted.Instagram, Facebook = extracted.Facebook,
+            TikTok = extracted.TikTok, YouTube = extracted.YouTube };
 
         var restaurantId = await _ingestion.UpsertDiscoveredAsync(
             place,
@@ -346,7 +357,7 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         return true;
     }
 
-    private void EnqueueChildLinks(CrawlerTask parentTask, string htmlContent)
+    private async Task EnqueueChildLinksAsync(CrawlerTask parentTask, string htmlContent, CancellationToken ct)
     {
         try
         {
@@ -375,12 +386,13 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
 
             if (childUrls.Count > 0)
             {
-                _ = _taskQueue.EnqueueBatchTasksAsync(childUrls, CancellationToken.None);
+                await _taskQueue.EnqueueBatchTasksAsync(childUrls, ct);
             }
         }
-        catch
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch (Exception ex)
         {
-            // Falha não fatal na extração de URLs filhas
+            _logger.LogWarning(ex, "Falha ao enfileirar URLs filhas da fonte {SourceId}", parentTask.SourceId);
         }
     }
 }

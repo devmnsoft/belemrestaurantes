@@ -16,6 +16,12 @@ public sealed record RestaurantView(
     string? PhotoUrl,
     DateTimeOffset UpdatedAt)
 {
+    public double? Latitude { get; init; }
+    public double? Longitude { get; init; }
+    public double? DistanceKm { get; init; }
+    public string? Phone { get; init; }
+    public string? BusinessStatus { get; init; }
+    public string? SourceUrl { get; init; }
     public RestaurantView() : this(0, "", "", null, null, null, null, null, null, null, null, null, default) { }
 }
 
@@ -28,7 +34,12 @@ public sealed record RestaurantSearchQuery(
     decimal? MinPrice = null,
     decimal? MaxPrice = null,
     int Page = 1,
-    int PageSize = 24)
+    int PageSize = 24,
+    string? Sort = null,
+    bool PhotosOnly = false,
+    double? Latitude = null,
+    double? Longitude = null,
+    double RadiusKm = 10)
 {
     /// <summary>Limites aplicados pela regra, não pelo controller.</summary>
     public int SafePage => Math.Clamp(Page, 1, 10_000);
@@ -38,6 +49,10 @@ public sealed record RestaurantSearchQuery(
     public string? SafeTerm => string.IsNullOrWhiteSpace(Term) ? null : Term.Trim();
 
     public string? SafeCity => string.IsNullOrWhiteSpace(City) ? null : City.Trim();
+    public bool HasLocation => Latitude is { } lat && Longitude is { } lng && double.IsFinite(lat) && double.IsFinite(lng)
+        && lat is >= -90 and <= 90 && lng is >= -180 and <= 180;
+    public double SafeRadiusKm => double.IsFinite(RadiusKm) ? Math.Clamp(RadiusKm, 1, 100) : 10;
+    public string SafeSort => Sort is "recent" or "city" ? Sort : Sort == "nearby" && HasLocation ? "nearby" : "name";
 }
 
 /// <summary>Resultado paginado.</summary>
@@ -64,6 +79,14 @@ public sealed record DiscoveredPlace(
     int? GoogleRatingCount,
     IReadOnlyList<string> Types)
 {
+    public string? Phone { get; init; }
+    public string? State { get; init; }
+    public string? BusinessStatus { get; init; }
+    public string? Instagram { get; init; }
+    public string? Facebook { get; init; }
+    public string? TikTok { get; init; }
+    public string? YouTube { get; init; }
+
     /// <summary>Nome normalizado, usado como chave de deduplicação.</summary>
     public string NormalizedName => NameNormalizer.Normalize(Name);
 
@@ -91,5 +114,7 @@ public sealed record PendingApproval(
     DateTimeOffset DiscoveredAt,
     string? AiSuggestion)
 {
+    public string? Address { get; init; }
+    public string? Phone { get; init; }
     public PendingApproval() : this(0, "", "", null, null, null, null, 0, null, default, null) { }
 }

@@ -21,11 +21,11 @@ public class CuiaExperienceV5Tests
     }
 
     [Fact]
-    public void Migrations_MustContain16Scripts_SequentialAndValid()
+    public void Migrations_MustContain20Scripts_SequentialAndValid()
     {
         // Frente 1 & 2: Todas as migrações embutidas devem ser encontradas e ordenadas
         var scripts = MigrationRunner.LoadScripts();
-        Assert.Equal(16, scripts.Count);
+        Assert.Equal(20, scripts.Count);
 
         for (int i = 0; i < scripts.Count; i++)
         {
@@ -34,7 +34,7 @@ public class CuiaExperienceV5Tests
             Assert.False(string.IsNullOrWhiteSpace(scripts[i].Sql));
         }
 
-        Assert.Equal("016", scripts[15].Id);
+        Assert.Equal("019", scripts[18].Id);
     }
 
     [Fact]

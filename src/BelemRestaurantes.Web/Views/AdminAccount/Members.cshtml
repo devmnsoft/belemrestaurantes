@@ -62,7 +62,7 @@
                 }
                 else
                 {
-                    <form method="post" action="/admin/members/@m.Id/lock" onsubmit="return confirm('Deseja realmente bloquear este usuário? Todas as sessões dele serão revogadas.');" style="display:inline;">
+                    <form method="post" action="/admin/members/@m.Id/lock" data-confirm="Deseja realmente bloquear este usuário? Todas as sessões dele serão revogadas." style="display:inline;">
                       @Html.AntiForgeryToken()
                       <input type="hidden" name="reason" value="administrativo" />
                       <button type="submit" class="danger" style="padding:4px 8px;font-size:12px;">Bloquear</button>

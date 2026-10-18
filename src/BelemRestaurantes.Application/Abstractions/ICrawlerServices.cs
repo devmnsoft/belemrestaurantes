@@ -27,7 +27,12 @@ public sealed record CrawlerSummaryStats(
     int TotalDiscoveredToday,
     int TotalIngestedToday,
     int TotalErrorsToday
-);
+)
+{
+    // COUNT retorna Int64 e SUM retorna Decimal no MySQL. O construtor
+    // vazio permite ao Dapper converter cada coluna para a propriedade Int32.
+    public CrawlerSummaryStats() : this(0, 0, 0, 0, 0, 0, 0, 0) { }
+}
 
 public interface ISafeHttpClient
 {

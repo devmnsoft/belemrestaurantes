@@ -1,0 +1,8 @@
+@model string
+<nav class="para-category-shortcuts" aria-label="Explorar tipos de lugar">
+  <a href="/busca" aria-current="@(string.IsNullOrWhiteSpace(Model)?"page":null)">@T["AtlasAllFlavours"]</a>
+  @foreach (var item in BelemRestaurantes.Web.Models.CatalogCategories.Featured)
+  {
+    <a href="/busca?category=@Uri.EscapeDataString(item.Name)" aria-current="@(string.Equals(Model,item.Name,StringComparison.OrdinalIgnoreCase)?"page":null)">@await Html.PartialAsync("_ParaIcon",item.Icon)<span>@T[item.LabelKey]</span></a>
+  }
+</nav>

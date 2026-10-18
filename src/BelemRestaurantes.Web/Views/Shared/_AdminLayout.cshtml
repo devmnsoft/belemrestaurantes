@@ -5,15 +5,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>@ViewData["Title"] · Painel MNSOFT</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="~/css/design-v3.css" asp-append-version="true" />
-  <link rel="stylesheet" href="~/css/design-v4.css" asp-append-version="true" />
-  <link rel="stylesheet" href="~/css/cuia-v5.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/para.css" asp-append-version="true" />
 </head>
-<body style="background-color: var(--creme-bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;">
+<body class="para-admin" style="background-color: var(--creme-bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;">
 
+  <a class="skip-link" href="#admin-main">Pular para o conteúdo</a>
   <!-- Topbar Administrativa MNSOFT -->
   <header style="background-color: var(--forest-950); border-bottom: 2px solid var(--tucupi-500); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000;">
     <div style="display: flex; align-items: center; gap: 16px;">
@@ -25,7 +21,7 @@
         </div>
       </a>
       <span class="badge-tag-v3" style="background: rgba(229,169,59,0.2); color: var(--tucupi-300); border: 1px solid rgba(229,169,59,0.4); font-size: 11px;">
-        🛡️ Ambiente Seguro
+        Gestão do catálogo
       </span>
     </div>
 
@@ -67,7 +63,7 @@
             </a>
           </li>
           <li>
-            <a href="/admin/discovery" class="admin-nav-item-v3">
+            <a href="/admin/suggestions" class="admin-nav-item-v3"><span>✦</span> Indicações da Comunidade</a></li><li><a href="/admin/discovery" class="admin-nav-item-v3">
               <span>🔍</span> Descoberta Automática
             </a>
           </li>
@@ -159,13 +155,12 @@
 
       <div style="margin-top: 36px; padding: 14px; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; color: #a4b8ad;">
         <strong style="color: var(--tucupi-400);">MNSOFT Soluções</strong><br />
-        Belém Restaurantes V3.6<br />
-        ASP.NET Core 10 · MySQL
+        Cuidando dos sabores do Pará
       </div>
     </aside>
 
     <!-- Conteúdo Principal -->
-    <main class="admin-content-v3" role="main">
+    <main id="admin-main" tabindex="-1" class="admin-content-v3" role="main">
       @if (TempData["Flash"] is string flash)
       {
         <div style="background: rgba(13,56,38,0.1); border: 1px solid var(--forest-600); border-left: 5px solid var(--forest-600); padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; font-weight: 600; color: var(--forest-900);">
@@ -189,6 +184,7 @@
     </main>
   </div>
 
+  <script src="~/js/para.js" asp-append-version="true" defer></script>
   @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

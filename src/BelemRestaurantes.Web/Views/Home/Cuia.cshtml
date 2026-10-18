@@ -1,0 +1,13 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.CuiaBadgeView>
+@{ ViewData["Title"] = "Selo Cuia — experiências que contam"; }
+<section class="para-section para-container">
+  <span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon", "cuia")</span><span class="para-eyebrow">QUEM PROVA, CONTA</span>
+  <h1 class="para-editorial-title">Um reconhecimento<br /><em>da nossa mesa.</em></h1>
+  <p class="para-intro">O Selo Cuia reúne avaliações aprovadas da comunidade. Sabor, atendimento, ambiente e custo-benefício ajudam a contar a experiência de cada lugar.</p>
+  <div class="para-story"><h2>Como o ranking funciona</h2><p class="para-recipe-note">A pontuação considera a qualidade e a quantidade de avaliações com ajuste bayesiano. Isso equilibra as notas de lugares com poucas opiniões. Relatos passam por moderação antes de compor os resultados.</p><a href="/community" class="para-text-link">Conheça as experiências ↗</a></div>
+  <h2>Restaurantes reconhecidos</h2>
+  @if (Model.Count == 0)
+  { <div class="para-empty"><p>@(ViewData["Unavailable"] is true ? "O ranking está temporariamente indisponível. Tente novamente em alguns instantes." : "Ainda não há restaurantes classificados neste ranking. As avaliações aprovadas vão construir esta história.")</p></div> }
+  else
+  { <div class="para-restaurant-grid">@foreach (var item in Model) { <article class="para-story"><span class="para-eyebrow">SELO CUIA · @item.Score.ToString("F1")</span><h3><a href="/establishment/@item.RestaurantId">@item.RestaurantName</a></h3><p class="para-recipe-note">@item.RestaurantCity · @item.ApprovedReviewsCount avaliações aprovadas</p></article> }</div> }
+</section>

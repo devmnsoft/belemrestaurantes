@@ -71,7 +71,10 @@ public sealed record ExperiencePhotoView(
     string ModerationStatus,
     int Width,
     int Height
-);
+)
+{
+    public ExperiencePhotoView() : this(0, 0, 0, "", "", null, "", "", 0, 0) { }
+}
 
 public sealed record CommentView(
     long Id,
@@ -80,7 +83,10 @@ public sealed record CommentView(
     string AuthorName,
     string CommentText,
     DateTimeOffset CreatedAt
-);
+)
+{
+    public CommentView() : this(0, 0, "", "", "", default) { }
+}
 
 public interface IExperienceService
 {

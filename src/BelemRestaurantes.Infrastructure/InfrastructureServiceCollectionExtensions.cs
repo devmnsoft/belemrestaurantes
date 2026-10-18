@@ -30,7 +30,14 @@ public static class InfrastructureServiceCollectionExtensions
         googleOptions.ApiKey = Environment.GetEnvironmentVariable("GOOGLE_PLACES_API_KEY") ?? googleOptions.ApiKey;
         services.AddSingleton(googleOptions);
 
-        services.AddSingleton<IPlaceDiscoveryProvider>(sp => new GooglePlacesClient(
+        services.AddScoped<IOpenDataCache, MySqlOpenDataCache>();
+        services.AddSingleton<IPlaceDiscoveryProvider>(sp => configuration["Discovery:Provider"] == "OpenStreetMap"
+            ? new OpenData.OpenStreetMapDiscoveryClient(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient("opendata"),
+                // Cache não mantém conexões abertas; a fábrica é singleton.
+                new MySqlOpenDataCache(sp.GetRequiredService<MySqlConnectionFactory>()),
+                sp.GetRequiredService<IClock>(), sp.GetRequiredService<ILogger<OpenData.OpenStreetMapDiscoveryClient>>())
+            : new GooglePlacesClient(
             sp.GetRequiredService<IHttpClientFactory>().CreateClient("googleplaces"),
             sp.GetRequiredService<GooglePlacesOptions>(),
             sp.GetRequiredService<IClock>(),
@@ -81,10 +88,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IEmailDispatcher, Members.MySqlEmailDispatcher>();
 
         // Persistência.
-        services.AddSingleton(_ =>
+        services.AddSingleton(sp =>
         {
             var connectionString = configuration.GetConnectionString("MySql");
-            return new MySqlConnectionFactory(connectionString ?? string.Empty);
+            return new MySqlConnectionFactory(connectionString ?? string.Empty,
+                sp.GetService<Microsoft.Extensions.Hosting.IHostEnvironment>()?.EnvironmentName);
         });
 
         services.AddScoped<IRestaurantReadRepository, MySqlRestaurantReadRepository>();
@@ -148,6 +156,15 @@ public static class InfrastructureServiceCollectionExtensions
             client.DefaultRequestHeaders.UserAgent.ParseAdd("BelemRestaurantes/2.0 (+discovery)");
         });
         services.AddHttpClient("ai", client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddHttpClient("opendata", client =>
+        {
+            var endpoint = new Uri(configuration["OpenData:Endpoint"] ?? "https://overpass-api.de/api/interpreter");
+            if (endpoint.Scheme != "https" || !string.IsNullOrEmpty(endpoint.UserInfo))
+                throw new InvalidOperationException("OpenData:Endpoint exige HTTPS sem credenciais na URL.");
+            client.BaseAddress = endpoint;
+            client.Timeout = TimeSpan.FromSeconds(40);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("BelemRestaurantes/3.0 (+https://belemrestaurantes.com.br)");
+        });
 
         return services;
     }
@@ -164,7 +181,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         return new AiProviderOptions
         {
-            ApiKey = Environment.GetEnvironmentVariable($"{sectionName.ToUpperInvariant()}_API_KEY"),
+            ApiKey = Environment.GetEnvironmentVariable($"{sectionName.ToUpperInvariant()}_API_KEY") ?? section["ApiKey"],
             BaseUrl = section["BaseUrl"] ?? defaultBaseUrl,
             Model = section["Model"] ?? defaultModel,
             InputMicrosPerThousand = inputMicrosPerThousand,

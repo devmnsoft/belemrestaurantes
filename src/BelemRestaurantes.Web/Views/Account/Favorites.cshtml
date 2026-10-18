@@ -1,0 +1,11 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Models.RestaurantView>
+@{ ViewData["Title"] = "Meus favoritos"; }
+<section class="para-section para-container">
+  <span class="para-eyebrow">OS LUGARES QUE FICAM</span><h1 class="para-editorial-title">Sua lista de<br /><em>bons encontros.</em></h1>
+  <p class="para-intro">Seus restaurantes favoritos, reunidos para a próxima vontade de sair.</p>
+  @if (Model.Count == 0)
+  { <div class="para-empty"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon", "cuia")</span><div><h2>Sua próxima descoberta está por vir.</h2><p>Abra o perfil de um restaurante e salve nos favoritos.</p><a href="/busca" class="para-text-link">Escolher um sabor ↗</a></div></div> }
+  else
+  { <div class="para-restaurant-grid">@foreach (var restaurant in Model) { <div>@await Html.PartialAsync("_RestaurantCard", restaurant)<form method="post" action="/account/favorites/@restaurant.Id/remove">@Html.AntiForgeryToken()<button class="cuia-btn cuia-btn-outline" type="submit">Remover dos favoritos <span class="sr-only">@restaurant.Name</span></button></form></div> }</div> }
+  <a href="/account" class="para-text-link">Voltar ao perfil ↗</a>
+</section>

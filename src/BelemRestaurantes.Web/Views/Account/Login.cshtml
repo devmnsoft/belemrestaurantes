@@ -1,6 +1,8 @@
 @model BelemRestaurantes.Web.Models.MemberLoginInput
 @{ ViewData["Title"] = T["SignIn"].Value; }
-<section class="shell section narrow"><h1>@T["SignIn"]</h1>
+<section class="para-container para-auth">
+@await Html.PartialAsync("_AuthStory")
+<div class="para-auth-content"><h1>@T["SignIn"]</h1>
 <form method="post" action="/account/login" class="panel">
   @Html.AntiForgeryToken()
   <input asp-for="ReturnUrl" type="hidden" />
@@ -9,4 +11,5 @@
   <label class="check-label"><input asp-for="Remember" type="checkbox" /> @T["Remember"]</label>
   <div asp-validation-summary="All" role="alert"></div><button type="submit">@T["SignIn"]</button>
   <a href="/account/forgot">@T["ForgotPassword"]</a><a href="/account/resend">@T["ResendEmail"]</a><a href="/account/register">@T["Register"]</a>
-</form></section>
+</form></div>
+</section>

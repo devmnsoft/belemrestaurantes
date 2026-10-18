@@ -1,0 +1,12 @@
+@model IReadOnlyList<BelemRestaurantes.Web.Controllers.AdminSuggestionsController.SuggestionRow>
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Indicações da comunidade"; }
+<span class="para-eyebrow">O GUIA CRESCE COM QUEM CONHECE</span><h1>Boas dicas merecem atenção.</h1><p>Indicações e correções enviadas pela comunidade. Encaminhar uma indicação cria um cadastro pendente; a publicação continua na triagem de restaurantes.</p>
+@if(Model.Count==0) { <div class="para-empty"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon","market")</span><div><h2>Nenhuma indicação aguardando revisão.</h2><p>As próximas dicas aparecerão aqui.</p></div></div> }
+<div class="para-suggestions-grid">
+@foreach(var suggestion in Model)
+{
+  <article class="para-story"><span class="para-eyebrow">#@suggestion.Id · @suggestion.City</span><h2>@suggestion.Name</h2>@if(suggestion.TargetRestaurantId is {} target){<p class="para-recipe-note">Correção do cadastro #@target. Nome, cidade e site serão atualizados após sua revisão.</p>}<p class="para-recipe-note">@suggestion.Notes</p>
+  @if(BelemRestaurantes.Domain.Rules.SocialLinkRules.TryValidate(suggestion.Website,out var website)) { <a href="@website" target="_blank" rel="noopener noreferrer" class="para-text-link">Consultar site informado ↗</a> }
+  <div class="para-suggestion-review-actions"><form method="post" action="/admin/suggestions/@suggestion.Id/accept">@Html.AntiForgeryToken()<button type="submit" class="para-button">@(suggestion.TargetRestaurantId is null ? "Encaminhar para triagem" : "Aplicar correção revisada")</button></form><form method="post" action="/admin/suggestions/@suggestion.Id/reject" data-confirm="Rejeitar esta indicação?">@Html.AntiForgeryToken()<button type="submit" class="cuia-btn cuia-btn-outline">Rejeitar</button></form></div></article>
+}
+</div>

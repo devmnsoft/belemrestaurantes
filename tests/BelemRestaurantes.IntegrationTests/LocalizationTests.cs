@@ -52,6 +52,24 @@ public sealed class LocalizationTests : IDisposable
     }
 
     [Theory]
+    [InlineData("pt-BR","À flor do paladar.","Antes de sair de casa")]
+    [InlineData("en","A taste of the Amazon.","Before you go")]
+    [InlineData("es","Un viaje de sabores.","Antes de salir")]
+    public async Task EditorialHomeGuideAndDestinationFilterWorkInMainVisitorLanguages(string culture,string headline,string visit)
+    {
+        using var client=Client();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd(culture);
+        var home=WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+        Assert.Contains(headline,home);Assert.DoesNotContain("AtlasHeadline",home);
+        var guide=WebUtility.HtmlDecode(await client.GetStringAsync("/guia"));
+        Assert.Contains(visit,guide);
+        var cities=WebUtility.HtmlDecode(await client.GetStringAsync("/cidades?q=santarem"));
+        Assert.Contains("/cidade/santarem",cities);Assert.DoesNotContain("/cidade/soure",cities);
+        var empty=await client.GetStringAsync("/cidades?region=RegiaoInexistente");
+        Assert.DoesNotContain("class=\"atlas-city-card\"",empty);
+    }
+
+    [Theory]
     [InlineData("zh-CN", "zh-Hans")]
     [InlineData("zh-SG", "zh-Hans")]
     [InlineData("fr-CA", "fr")]

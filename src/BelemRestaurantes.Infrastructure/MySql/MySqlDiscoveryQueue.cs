@@ -12,6 +12,16 @@ namespace BelemRestaurantes.Infrastructure.MySql;
 /// </summary>
 public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock clock, Microsoft.Extensions.Configuration.IConfiguration configuration) : IDiscoveryQueue
 {
+    public async Task<int> RetryDeadLettersAsync(string city, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        return await connection.ExecuteAsync(new CommandDefinition("""
+            UPDATE discovery_jobs j JOIN discovery_targets t ON t.id=j.target_id
+            SET j.state='pending',j.attempts=0,j.next_attempt_at=@now,j.last_error=NULL,
+                j.locked_until=NULL,j.locked_by=NULL,j.completed_at=NULL
+            WHERE t.normalized_city=@city AND t.enabled=TRUE AND j.state IN ('dead_lettered','failed')
+            """, new { city = NameNormalizer.Normalize(city), now = clock.UtcNow }, cancellationToken: ct));
+    }
     public async Task<IReadOnlyList<DiscoveryWorkItem>> ClaimDueAsync(int batchSize, string instanceId, TimeSpan lockDuration, CancellationToken ct)
     {
         for (var attempt = 0; ; attempt++)
@@ -83,7 +93,7 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
             UPDATE discovery_targets t JOIN discovery_jobs j ON j.target_id = t.id
             SET t.next_run_at = @nextRun, t.last_success_at = @now, t.locked_until = NULL, t.last_error = NULL
             WHERE j.id = @jobId AND j.state = 'running'
-            """, new { jobId, now = clock.UtcNow, nextRun = clock.UtcNow.AddMinutes(Math.Max(10, configuration.GetValue<int>("Discovery:TargetRefreshMinutes", 10080))) },
+            """, new { jobId, now = clock.UtcNow, nextRun = clock.UtcNow.AddMinutes(Math.Max(1, configuration.GetValue<int>("Discovery:TargetRefreshMinutes", 10080))) },
             transaction, cancellationToken: ct));
         await connection.ExecuteAsync(new CommandDefinition(
             """

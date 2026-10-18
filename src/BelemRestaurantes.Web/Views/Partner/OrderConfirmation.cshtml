@@ -40,7 +40,7 @@
                         <label class="form-label small fw-bold text-muted">Chave PIX Oficial (CNPJ):</label>
                         <div class="input-group">
                             <input type="text" class="form-control form-control-sm bg-white" value="@Model.PixCnpj" id="pixCnpjInput" readonly />
-                            <button class="btn btn-outline-forest btn-sm" type="button" onclick="navigator.clipboard.writeText(document.getElementById('pixCnpjInput').value); alert('Chave CNPJ copiada!');">
+                            <button class="btn btn-outline-forest btn-sm" type="button" data-copy-target="pixCnpjInput">
                                 Copiar Chave
                             </button>
                         </div>
@@ -52,7 +52,7 @@
                             <label class="form-label small fw-bold text-muted">Código PIX Copia e Cola:</label>
                             <div class="input-group">
                                 <textarea class="form-control form-control-sm bg-white" rows="2" id="pixCopyInput" readonly>@Model.PixCopyPaste</textarea>
-                                <button class="btn btn-outline-forest btn-sm" type="button" onclick="navigator.clipboard.writeText(document.getElementById('pixCopyInput').value); alert('Código PIX copiado!');">
+                                <button class="btn btn-outline-forest btn-sm" type="button" data-copy-target="pixCopyInput">
                                     Copiar Código
                                 </button>
                             </div>

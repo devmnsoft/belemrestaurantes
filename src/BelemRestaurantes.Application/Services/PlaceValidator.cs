@@ -64,9 +64,12 @@ public static class PlaceValidator
             return PlaceValidationResult.Reject("Município ausente.");
         }
 
+        if (place.State is not null && NameNormalizer.Normalize(place.State) is not ("para" or "pa"))
+            return PlaceValidationResult.Reject("Estado informado pela fonte fora do Pará.");
+
         // Localização precisa estar no Pará; um resultado fora do estado indica
         // casamento errado na consulta de texto e deve ser descartado.
-        if (place.Latitude is { } lat && (lat < -4.0 || lat > 2.5))
+        if (place.Latitude is { } lat && (lat < -10.0 || lat > 2.6))
         {
             return PlaceValidationResult.Reject($"Latitude {lat:F3} fora do Pará.");
         }

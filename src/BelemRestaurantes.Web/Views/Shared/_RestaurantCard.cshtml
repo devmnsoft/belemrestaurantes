@@ -1,0 +1,12 @@
+@model BelemRestaurantes.Application.Models.RestaurantView
+@{ var categoryLabel=BelemRestaurantes.Web.Models.CatalogCategories.Featured.FirstOrDefault(c=>string.Equals(c.Name,Model.Category,StringComparison.OrdinalIgnoreCase))?.LabelKey; }
+<article class="para-restaurant">
+  <a href="/establishment/@Model.Id" class="para-restaurant-media" tabindex="-1" aria-hidden="true">
+  @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl) && (Model.PhotoUrl.StartsWith("/media/", StringComparison.Ordinal) || (Uri.TryCreate(Model.PhotoUrl, UriKind.Absolute, out var photo) && photo.Scheme == "https")))
+  { <img src="@Model.PhotoUrl" alt="" loading="lazy" width="640" height="420" /> }
+  else
+  { <div class="para-restaurant-placeholder">@await Html.PartialAsync("_ParaIcon", "cuia")<span>@T["CardFlavour"]</span><small>@T["CardNoPhoto"]</small></div> }
+  </a>
+  @if (Model.DistanceKm is { } distance) { <span class="para-distance">@T["CardDistance",distance.ToString("N1")]</span> }
+  <div class="para-restaurant-body"><span class="para-eyebrow">@(categoryLabel is not null?T[categoryLabel].Value:Model.Category ?? "Gastronomia paraense")</span><h3><a href="/establishment/@Model.Id">@Model.Name</a></h3><p>@Model.City @(!string.IsNullOrWhiteSpace(Model.Neighborhood) ? "· " + Model.Neighborhood : "")</p><div><span>@(Model.Address ?? T["CardAddressPending"].Value)</span><a href="/establishment/@Model.Id" aria-label="@T["CardView",Model.Name]">↗</a></div></div>
+</article>
