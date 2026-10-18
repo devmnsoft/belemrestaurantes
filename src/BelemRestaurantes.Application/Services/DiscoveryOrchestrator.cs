@@ -44,7 +44,7 @@ public sealed class DiscoveryOrchestrator(
             logger.LogError(
                 ex, "Falha ao consultar {Provider} para {City}/{Category}",
                 provider.Name, work.City, work.Category);
-            return metrics.ToSnapshot();
+            return metrics.ToSnapshot() with { Source = provider.Name };
         }
 
         metrics.Discovered = search.Places.Count;
@@ -63,7 +63,7 @@ public sealed class DiscoveryOrchestrator(
 
             try
             {
-                await IngestAsync(place, metrics, ct);
+                await IngestAsync(place, metrics, search.QueriedAt, ct);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -79,10 +79,10 @@ public sealed class DiscoveryOrchestrator(
 
         logger.LogInformation("Discovery {City}/{Category} fonte={Provider}: encontrados={Found}, novos={Created}, atualizados={Updated}, descartados={Skipped}, falhas={Failed}",
             work.City, work.Category, provider.Name, metrics.Discovered, metrics.Created, metrics.Updated, metrics.Skipped, metrics.Failed);
-        return metrics.ToSnapshot();
+        return metrics.ToSnapshot() with { Source = provider.Name };
     }
 
-    private async Task IngestAsync(DiscoveredPlace place, MutableMetrics metrics, CancellationToken ct)
+    private async Task IngestAsync(DiscoveredPlace place, MutableMetrics metrics, DateTimeOffset sourceFetchedAt, CancellationToken ct)
     {
         // 1. Compara com o catálogo antes de escrever qualquer coisa.
         var candidates = await ingestion.FindDuplicationCandidatesAsync(
@@ -93,7 +93,7 @@ public sealed class DiscoveryOrchestrator(
 
         // 2. Incerteza pedida: a IA ajuda, mas continua sem publicar.
         AiClassification? suggestion = null;
-        if (dedup.RequiresHumanReview)
+        if (dedup.RequiresHumanReview && provider.Name is not ("openstreetmap" or "minha_receita"))
         {
             suggestion = await aiRouter.ClassifyAsync("dedup-review", BuildReviewPayload(place, dedup), ct);
         }
@@ -112,7 +112,7 @@ public sealed class DiscoveryOrchestrator(
             place.ExternalId,
             place.GoogleMapsUri,
             ComputePayloadHash(place),
-            now,
+            sourceFetchedAt,
             ct);
 
         // 3. Tudo que não tem certeza alta vira pendência explícita de moderação.

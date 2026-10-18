@@ -30,7 +30,8 @@ public sealed class GooglePlacesOptions
     /// </summary>
     public bool RequestRichContent { get; set; }
 
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiKey);
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiKey) && !ApiKey.Trim().StartsWith("GOCSPX-", StringComparison.Ordinal)
+        && !ApiKey.Trim().StartsWith("SUA_CHAVE", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -122,7 +123,9 @@ public sealed class GooglePlacesClient(
 
     public async Task<DiscoveredPlace?> GetDetailsAsync(string externalId, CancellationToken ct)
     {
-        if (!IsConfigured || string.IsNullOrWhiteSpace(externalId))
+        if (!IsConfigured || string.IsNullOrWhiteSpace(externalId) ||
+            externalId.StartsWith("osm:", StringComparison.Ordinal) || externalId.StartsWith("crawler:", StringComparison.Ordinal) ||
+            externalId.StartsWith("suggestion:", StringComparison.Ordinal) || externalId.StartsWith("cnpj:", StringComparison.Ordinal))
         {
             return null;
         }

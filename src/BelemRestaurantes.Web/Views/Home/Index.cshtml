@@ -1,84 +1,43 @@
 @model BelemRestaurantes.Web.Models.HomeViewModel
 @{
-    ViewData["Title"] = "O Pará tem sabor";
-    ViewData["MetaDescription"] = "Encontre restaurantes, descubra os sabores de Belém e viaje pela gastronomia do Pará. Da feira à mesa, uma experiência da nossa terra.";
+    ViewData["Title"] = T["AtlasTitle"].Value;
+    ViewData["AtlasEditorial"] = true;
+    ViewData["MetaDescription"] = T["AtlasMeta"].Value;
 }
-<section class="para-hero">
-  <div class="para-container para-hero-grid">
-    <div class="para-hero-copy">
-      <span class="para-eyebrow">DA NOSSA TERRA. PRA SUA MESA.</span>
-      <h1>É de dar água<br />na boca.<br /><em>É do Pará.</em></h1>
-      <p>Tem o cheiro do tacacá, o açaí de verdade e aquele lugar que só quem é daqui conhece. Bora descobrir?</p>
-      <a class="para-text-link" href="#catalogo">Encontre seu próximo sabor <span aria-hidden="true">↘</span></a>
-    </div>
-    <figure class="para-hero-art">
-      <img src="~/images/belem-sabores-editorial.png" width="1536" height="1024" fetchpriority="high" alt="Ilustração de uma cuia de tacacá, açaí e peixe à beira da baía, com o mercado do Ver-o-Peso ao fundo." />
-      <figcaption>Belém, onde a Amazônia vira sabor. <span>Ilustração editorial</span></figcaption>
-      <span class="para-art-stamp" aria-hidden="true">PARÁ<br /><strong>feito de<br />encontros</strong>✦</span>
-    </figure>
+<section class="atlas-hero">
+  <div class="para-container atlas-hero-grid">
+    <div class="atlas-hero-copy"><span class="para-eyebrow">@T["AtlasEyebrow"]</span><h1>@T["AtlasHeadline"]<br /><em>@T["AtlasHeadlineAccent"]</em></h1><p>@T["AtlasIntro"]</p><div class="atlas-hero-actions"><a class="para-button" href="#catalogo">@T["AtlasExplore"] <span aria-hidden="true">↗</span></a><a class="para-text-link" href="/cidades">@T["AtlasChooseDestination"] ↗</a></div><div class="atlas-hero-note"><span aria-hidden="true">01 / 144</span><span>@T["AtlasOfficialTerritory"]</span></div></div>
+    <figure class="atlas-hero-art"><img src="~/images/para-atlas-editorial-v1.webp" width="1536" height="1024" fetchpriority="high" alt="@T["AtlasArtAlt"]" /><figcaption>@T["AtlasIllustration"]</figcaption><span class="atlas-art-seal" aria-hidden="true">PARÁ<br /><em>à mesa</em><span>AMAZÔNIA · BRASIL</span></span></figure>
   </div>
-  <div class="para-container">
+  <div class="para-container atlas-search-container">
     <form action="/busca" method="get" class="para-search" role="search">
-      <div class="para-search-query"><label for="heroQuery">Qual é a sua vontade de hoje?</label><input id="heroQuery" name="q" type="search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" placeholder="Tacacá, restaurante, bairro…" autocomplete="off" aria-controls="heroAutocomplete" aria-expanded="false" aria-describedby="search-status" /><div id="heroAutocomplete" class="para-autocomplete" role="listbox" aria-label="Sugestões de busca" hidden></div></div>
-      <div><label for="heroCity">Por onde vamos?</label><select id="heroCity" name="city"><option value="">Todo o Pará</option>@foreach (var city in Model.Cities) { <option value="@city">@city</option> }</select></div>
+      <div class="para-search-query"><label for="heroQuery">@T["AtlasSearchLabel"]</label><input id="heroQuery" name="q" type="search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" placeholder="@T["AtlasSearchPlaceholder"]" autocomplete="off" aria-controls="heroAutocomplete" aria-expanded="false" aria-describedby="search-status" /><div id="heroAutocomplete" class="para-autocomplete" role="listbox" aria-label="@T["AtlasSuggestions"]" hidden></div></div>
+      <div><label for="heroCity">@T["AtlasDestinationLabel"]</label><select id="heroCity" name="city"><option value="">@T["AtlasAllPara"]</option>@foreach(var city in Model.Cities){<option value="@city">@city</option>}</select></div>
       <button type="submit" class="para-button" id="go">@T["Search"]</button>
-    </form>
-    <p id="search-status" class="para-search-status" role="status" aria-live="polite"></p>
-    <div class="para-popular"><span>Tá na vontade de…</span><a href="/busca?q=Tacac%C3%A1">Tacacá</a><a href="/busca?q=A%C3%A7a%C3%AD">Açaí com peixe</a><a href="/busca?q=Filhote">Filhote</a><a href="/busca?q=Mani%C3%A7oba">Maniçoba</a></div>
+    </form><p id="search-status" class="para-search-status" role="status" aria-live="polite"></p>
+    <div class="para-popular"><span>@T["AtlasCraving"]</span><a href="/busca?category=Tacac%C3%A1">Tacacá</a><a href="/busca?category=A%C3%A7a%C3%AD">Açaí</a><a href="/busca?category=Feira%20e%20mercado">@T["Category_market"]</a><a href="/busca?category=Pizzaria">@T["Category_pizza"]</a></div>
   </div>
 </section>
+<div class="atlas-flavour-line" aria-hidden="true"><span>TUCUPI</span><i>✦</i><span>JAMBU</span><i>✦</i><span>AÇAÍ</span><i>✦</i><span>FARINHA D’ÁGUA</span><i>✦</i><span>CUPUAÇU</span><i>✦</i><span>ENCONTROS</span></div>
 <section class="para-section para-container" aria-labelledby="sabores-title">
-  <div class="para-section-heading"><div><span class="para-eyebrow">CADA VONTADE, UM CAMINHO</span><h2 id="sabores-title">O que te traz à mesa?</h2></div><a href="/busca" class="para-text-link">Explorar sabores ↗</a></div>
-  <div class="para-categories">
-    <a href="/busca?q=Tacac%C3%A1"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon", "cuia")</span><strong>Na cuia</strong><span>Tacacá &amp; tucupi</span></a>
-    <a href="/busca?q=Peixe"><span class="para-category-icon para-blue">@await Html.PartialAsync("_ParaIcon", "fish")</span><strong>Dos nossos rios</strong><span>Peixes &amp; caldeiradas</span></a>
-    <a href="/busca?q=A%C3%A7a%C3%AD"><span class="para-category-icon para-green">@await Html.PartialAsync("_ParaIcon", "leaf")</span><strong>Da floresta</strong><span>Açaí &amp; sabores da terra</span></a>
-    <a href="/busca?category=Restaurante"><span class="para-category-icon para-red">@await Html.PartialAsync("_ParaIcon", "plate")</span><strong>Comida de casa</strong><span>Restaurantes &amp; encontros</span></a>
-    <a href="/busca?category=Cafeteria"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon", "market")</span><strong>Uma boa prosa</strong><span>Cafés &amp; lanches</span></a>
-    <a href="/roteiros"><span class="para-category-icon para-blue">@await Html.PartialAsync("_ParaIcon", "river")</span><strong>Além da cidade</strong><span>Ilhas &amp; roteiros</span></a>
-  </div>
+  <div class="para-section-heading"><div><span class="para-eyebrow">@T["AtlasCategoriesEyebrow"]</span><h2 id="sabores-title">@T["AtlasCategoriesTitle"]</h2></div><a href="/busca" class="para-text-link">@T["AtlasSeeAll"] ↗</a></div>
+  <div class="para-categories para-categories-expanded">@foreach(var item in BelemRestaurantes.Web.Models.CatalogCategories.Featured){<a href="/busca?category=@Uri.EscapeDataString(item.Name)"><span class="para-category-icon para-@item.Tone">@await Html.PartialAsync("_ParaIcon",item.Icon)</span><strong>@T[item.LabelKey]</strong><span>@T[item.DescriptionKey]</span><b aria-hidden="true">↗</b></a>}</div>
 </section>
-<section id="catalogo" class="para-section para-catalog">
-  <div class="para-container">
-    <div class="para-section-heading"><div><span class="para-eyebrow">CHEGA MAIS, ESCOLHE UM LUGAR</span><h2>Uma mesa te espera.</h2><p>Descubra os estabelecimentos publicados no nosso guia.</p></div><a href="/busca" class="para-text-link">Ver restaurantes ↗</a></div>
-    @if (Model.FeaturedRestaurants.Count > 0)
-    {
-      <div class="para-restaurant-grid">@foreach (var restaurant in Model.FeaturedRestaurants) { @await Html.PartialAsync("_RestaurantCard", restaurant) }</div>
-    }
-    else
-    {
-      <div class="para-empty"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon", "cuia")</span><div><h3>O guia está ganhando novos sabores.</h3><p>Os restaurantes aparecem aqui depois da revisão do cadastro. Explore por cidade ou faça parte da comunidade.</p><a href="/cidades" class="para-text-link">Passear pelo Pará ↗</a></div></div>
-    }
-  </div>
+<section class="atlas-manifesto"><div class="para-container atlas-manifesto-grid"><div><span class="para-eyebrow">@T["AtlasManifestoEyebrow"]</span><h2>@T["AtlasManifestoTitle"]<br /><em>@T["AtlasManifestoAccent"]</em></h2></div><div><p>@T["AtlasManifestoText"]</p><a href="/guia" class="para-text-link">@T["AtlasGuideLink"] ↗</a></div><div class="atlas-manifesto-mark" aria-hidden="true">@await Html.PartialAsync("_ParaIcon","cuia")</div></div></section>
+<section class="para-section para-container" aria-labelledby="destinations-title">
+  <div class="para-section-heading"><div><span class="para-eyebrow">@T["AtlasDestinationsEyebrow"]</span><h2 id="destinations-title">@T["AtlasDestinationsTitle"]</h2><p>@T["AtlasDestinationsText"]</p></div><a href="/cidades" class="para-text-link">@T["Atlas144Cities"] ↗</a></div>
+  <div class="atlas-destinations">@foreach(var destination in BelemRestaurantes.Web.Models.ParaDestinations.Featured){<a class="atlas-destination atlas-tone-@destination.Tone" href="/busca?city=@Uri.EscapeDataString(destination.City)"><div class="atlas-destination-top"><span>@T[destination.RegionKey]</span>@await Html.PartialAsync("_ParaIcon",destination.Icon)</div><div><h3>@destination.City</h3><p>@T[destination.DescriptionKey]</p></div><span class="atlas-destination-arrow" aria-hidden="true">↗</span></a>}</div>
 </section>
-<section class="para-section para-container">
-  <div class="para-section-heading"><div><span class="para-eyebrow">DA FEIRA AO RIO</span><h2>Belém é só o começo.</h2><p>Cada canto do Pará tem uma história para saborear.</p></div><a href="/cidades" class="para-text-link">Explorar cidades ↗</a></div>
-  <div class="para-destinations">
-    <a class="para-destination para-destination-market" href="/busca?city=Bel%C3%A9m">@await Html.PartialAsync("_ParaIcon", "market")<span>ENTRE FEIRAS E CASARÕES</span><h3>Belém</h3><p>Ver-o-Peso, Cidade Velha e o sabor de casa.</p><b aria-hidden="true">↗</b></a>
-    <a class="para-destination para-destination-river" href="/busca?q=Combu">@await Html.PartialAsync("_ParaIcon", "river")<span>O RIO CHAMA</span><h3>Ilhas &amp; beiras</h3><p>Combu e os encontros à beira d’água.</p><b aria-hidden="true">↗</b></a>
-    <a class="para-destination para-destination-land" href="/cidades">@await Html.PartialAsync("_ParaIcon", "leaf")<span>UM ESTADO DE SABORES</span><h3>Todo o Pará</h3><p>Do Marajó ao Tapajós. Qual o próximo destino?</p><b aria-hidden="true">↗</b></a>
-  </div>
-</section>
-@if (Model.CuiaHighlights.Count > 0)
-{
-  <section class="para-section para-catalog"><div class="para-container"><div class="para-section-heading"><div><span class="para-eyebrow">QUEM PROVA, CONTA</span><h2>Reconhecidos pelo Selo Cuia</h2></div><a href="/selo-cuia" class="para-text-link">Como funciona ↗</a></div><div class="para-restaurant-grid">
-  @foreach (var item in Model.CuiaHighlights)
-  { <article class="para-story"><span class="para-eyebrow">SELO CUIA · @item.Score.ToString("F1")</span><h3><a href="/establishment/@item.RestaurantId">@item.RestaurantName</a></h3><p>@item.RestaurantCity · @item.ApprovedReviewsCount avaliações aprovadas</p></article> }
-  </div></div></section>
-}
-<section class="para-section para-container para-community">
-  <div><span class="para-eyebrow">SABOR BOM É SABOR COMPARTILHADO</span><h2>A melhor dica vem<br />de quem sentou à mesa.</h2><p>Uma lembrança, um prato inesquecível, um cantinho especial. Compartilhe sua experiência e ajude outras pessoas a descobrir o Pará.</p><a href="/community" class="para-button">Conhecer a comunidade ↗</a></div>
-  <div class="para-community-stories">
-  @if (Model.RecentExperiences.Count > 0)
-  {
-    @foreach (var experience in Model.RecentExperiences.Take(2))
-    { <article class="para-story"><span class="para-eyebrow">EXPERIÊNCIA DA COMUNIDADE</span><p>“@(experience.ReviewText?.Length > 170 ? experience.ReviewText[..170] + "…" : experience.ReviewText)”</p><strong>@experience.AuthorName</strong><a href="/experience/@experience.Id" class="para-text-link">Ler experiência ↗</a></article> }
-  }
-  else
-  { <div class="para-story para-community-invite">@await Html.PartialAsync("_ParaIcon", "cuia")<h3>Tem uma história com sabor de Pará?</h3><p>Seu relato pode ser o começo da próxima descoberta de alguém.</p><a href="/experience/create" class="para-text-link">Compartilhar experiência ↗</a></div> }
-  </div>
-</section>
-<section class="para-mobility"><div class="para-container para-mobility-inner">@await Html.PartialAsync("_ParaIcon", "mobility")<div><h2>O caminho também faz parte.</h2><p>Escolha um restaurante e consulte as opções de como chegar no perfil. Para trajetos pelas ilhas, confirme a travessia com o operador local.</p></div><a href="/roteiros" class="para-button para-button-light">Planejar um roteiro ↗</a></div></section>
-<section class="para-section para-container"><div class="para-partner"><div><span class="para-eyebrow">QUEM FAZ O SABOR ACONTECER</span><h2>Seu restaurante tem<br />lugar nessa história.</h2><p>Cuide do seu perfil, apresente seu cardápio e se aproxime de quem quer conhecer sua cozinha.</p><a href="/partner/dashboard" class="para-button">Sou dono de restaurante ↗</a></div><div class="para-partner-art" aria-hidden="true">@await Html.PartialAsync("_ParaIcon", "cuia")<span>DAQUI.<br />COM GOSTO.</span></div></div></section>
-
-<div id="client-text" hidden data-loading="@T["CatalogLoading"]" data-unavailable="@T["CatalogUnavailable"]"></div>
+<section id="catalogo" class="para-section atlas-catalog"><div class="para-container">
+  <div class="para-section-heading"><div><span class="para-eyebrow">@T["AtlasCatalogEyebrow"]</span><h2>@T["AtlasCatalogTitle"]</h2><p>@T["AtlasCatalogText"]</p></div><a href="/busca?sort=recent" class="para-text-link">@T["AtlasExplore"] ↗</a></div>
+  @if(Model.FeaturedRestaurants.Count>0){<div class="para-restaurant-grid">@foreach(var restaurant in Model.FeaturedRestaurants){@await Html.PartialAsync("_RestaurantCard",restaurant)}</div>}
+  else{<div class="atlas-catalog-empty"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon","cuia")</span><div><h3>@T["AtlasEmptyTitle"]</h3><p>@T["AtlasEmptyText"]</p><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div><a href="/guia" class="para-button">@T["AtlasGuideLink"]</a></div>}
+</div></section>
+@if(Model.CuiaHighlights.Count>0)
+{<section class="para-section para-container"><div class="para-section-heading"><h2>@T["CuiaBadge"]</h2><a href="/selo-cuia" class="para-text-link">@T["CuiaMethodology"] ↗</a></div><div class="para-restaurant-grid">@foreach(var item in Model.CuiaHighlights){<article class="para-story"><span class="para-eyebrow">Selo Cuia · @item.Score.ToString("F1")</span><h3><a href="/establishment/@item.RestaurantId">@item.RestaurantName</a></h3><p>@item.RestaurantCity</p></article>}</div></section>}
+<section class="para-section para-container atlas-community"><div><span class="para-eyebrow">@T["AtlasCommunityEyebrow"]</span><h2>@T["AtlasCommunityTitle"]</h2><p>@T["AtlasCommunityText"]</p><div class="atlas-hero-actions"><a class="para-button" href="/community">@T["NavCommunity"] ↗</a><a class="para-text-link" href="/account/favorites">@T["AtlasFavorites"] ↗</a></div></div><div class="atlas-community-card">@await Html.PartialAsync("_ParaIcon","market")<span class="para-eyebrow">@T["AtlasLocalTip"]</span><h3>@T["AtlasLocalTipTitle"]</h3><p>@T["AtlasLocalTipText"]</p><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div></section>
+@if(Model.RecentExperiences.Count>0)
+{<section class="para-section para-container"><div class="para-section-heading"><h2>@T["CommunityFeedTitle"]</h2><a href="/community" class="para-text-link">@T["NavCommunity"] ↗</a></div><div class="para-restaurant-grid">@foreach(var item in Model.RecentExperiences.Take(3)){<article class="para-story"><p>@(item.ReviewText?.Length>170?item.ReviewText[..170]+"…":item.ReviewText)</p><strong>@item.AuthorName</strong><a href="/experience/@item.Id" class="para-text-link">@T["NavCommunity"] ↗</a></article>}</div></section>}
+<section class="atlas-trust"><div class="para-container atlas-trust-grid"><article><span>01</span><h3>@T["AtlasTrustSource"]</h3><p>@T["AtlasTrustSourceText"]</p></article><article><span>02</span><h3>@T["AtlasTrustReview"]</h3><p>@T["AtlasTrustReviewText"]</p></article><article><span>03</span><h3>@T["AtlasTrustCommunity"]</h3><p>@T["AtlasTrustCommunityText"]</p></article></div></section>
+<section class="para-section para-container"><div class="atlas-partner"><div><span class="para-eyebrow">@T["AtlasPartnerEyebrow"]</span><h2>@T["AtlasPartnerTitle"]</h2><p>@T["AtlasPartnerText"]</p><a href="/partner/dashboard" class="para-button">@T["AtlasPartnerButton"] ↗</a></div><span class="atlas-partner-mark" aria-hidden="true">DAQUI.<br /><em>PARA O<br />MUNDO.</em></span></div></section>
+<div id="client-text" hidden data-loading="@T["CatalogLoading"]" data-unavailable="@T["CatalogUnavailable"]" data-autocomplete-loading="@T["AtlasAutocompleteLoading"]" data-autocomplete-count="@T["AtlasAutocompleteCount"]" data-autocomplete-empty="@T["AtlasAutocompleteEmpty"]" data-autocomplete-error="@T["AtlasAutocompleteError"]"></div>

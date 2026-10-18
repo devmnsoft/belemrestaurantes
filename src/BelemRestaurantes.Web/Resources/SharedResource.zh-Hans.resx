@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -543,4 +543,165 @@
   <data name="CuiaRecalculated" xml:space="preserve">
     <value>Cuia美食榜单已完成重新计算。</value>
   </data>
+  <data name="AtlasTitle" xml:space="preserve"><value>Pará, a taste of the Amazon</value></data>
+  <data name="AtlasMeta" xml:space="preserve"><value>Discover the food of Belém and Pará. Restaurants, açaí, markets and memorable moments around the table.</value></data>
+  <data name="AtlasEyebrow" xml:space="preserve"><value>FROM THE AMAZON. TO THE WORLD.</value></data>
+  <data name="AtlasHeadline" xml:space="preserve"><value>Pará.</value></data>
+  <data name="AtlasHeadlineAccent" xml:space="preserve"><value>A taste of the Amazon.</value></data>
+  <data name="AtlasIntro" xml:space="preserve"><value>Follow the rivers, meet the flavours and find your place at the table. Your next food discovery starts in Pará.</value></data>
+  <data name="AtlasExplore" xml:space="preserve"><value>Explore flavours</value></data>
+  <data name="AtlasChooseDestination" xml:space="preserve"><value>Choose a destination</value></data>
+  <data name="AtlasOfficialTerritory" xml:space="preserve"><value>144 official municipalities. A state to discover.</value></data>
+  <data name="AtlasArtAlt" xml:space="preserve"><value>Editorial illustration of açaí, fish and tacacá beside a river, with palms and Belém's market.</value></data>
+  <data name="AtlasIllustration" xml:space="preserve"><value>Pará at the table · AI-created editorial illustration</value></data>
+  <data name="AtlasSearchLabel" xml:space="preserve"><value>What are you craving?</value></data>
+  <data name="AtlasSearchPlaceholder" xml:space="preserve"><value>Restaurant, açaí, neighbourhood…</value></data>
+  <data name="AtlasSuggestions" xml:space="preserve"><value>Search suggestions</value></data>
+  <data name="AtlasDestinationLabel" xml:space="preserve"><value>Where shall we go?</value></data>
+  <data name="AtlasAllPara" xml:space="preserve"><value>All of Pará</value></data>
+  <data name="AtlasCraving" xml:space="preserve"><value>Start with a craving</value></data>
+  <data name="AtlasCategoriesEyebrow" xml:space="preserve"><value>A FLAVOUR FOR EVERY MOOD</value></data>
+  <data name="AtlasCategoriesTitle" xml:space="preserve"><value>What brings you to the table?</value></data>
+  <data name="AtlasSeeAll" xml:space="preserve"><value>Explore all flavours</value></data>
+  <data name="AtlasManifestoEyebrow" xml:space="preserve"><value>MUCH MORE THAN A DISH</value></data>
+  <data name="AtlasManifestoTitle" xml:space="preserve"><value>Every flavour has a story.</value></data>
+  <data name="AtlasManifestoAccent" xml:space="preserve"><value>Every table is an invitation.</value></data>
+  <data name="AtlasManifestoText" xml:space="preserve"><value>From a market stall to a family kitchen. From pizza with friends to everyday açaí. We bring together the people who cook, taste and come to discover.</value></data>
+  <data name="AtlasGuideLink" xml:space="preserve"><value>How the guide works</value></data>
+  <data name="AtlasDestinationsEyebrow" xml:space="preserve"><value>FIND YOUR PARÁ</value></data>
+  <data name="AtlasDestinationsTitle" xml:space="preserve"><value>One state. So many journeys.</value></data>
+  <data name="AtlasDestinationsText" xml:space="preserve"><value>Across cities and rivers, one discovery at a time.</value></data>
+  <data name="Atlas144Cities" xml:space="preserve"><value>Explore all 144 municipalities</value></data>
+  <data name="AtlasCatalogEyebrow" xml:space="preserve"><value>PLACES PUBLISHED IN THE GUIDE</value></data>
+  <data name="AtlasCatalogTitle" xml:space="preserve"><value>Your next place at the table.</value></data>
+  <data name="AtlasCatalogText" xml:space="preserve"><value>Listings reviewed for inclusion in the guide. Check the details before visiting.</value></data>
+  <data name="AtlasEmptyTitle" xml:space="preserve"><value>New discoveries are on their way.</value></data>
+  <data name="AtlasEmptyText" xml:space="preserve"><value>Places appear here after their listing is reviewed. Meanwhile, explore the destinations and share a local tip.</value></data>
+  <data name="AtlasCommunityEyebrow" xml:space="preserve"><value>LOCAL STORIES, SHARED AT THE TABLE</value></data>
+  <data name="AtlasCommunityTitle" xml:space="preserve"><value>Good food. Even better stories.</value></data>
+  <data name="AtlasCommunityText" xml:space="preserve"><value>Save your favourites, share your experience and discover Pará with respect for the people who live and cook here.</value></data>
+  <data name="AtlasFavorites" xml:space="preserve"><value>My favourites</value></data>
+  <data name="AtlasLocalTip" xml:space="preserve"><value>FROM THOSE WHO KNOW THE WAY</value></data>
+  <data name="AtlasLocalTipTitle" xml:space="preserve"><value>Some places deserve to be discovered.</value></data>
+  <data name="AtlasLocalTipText" xml:space="preserve"><value>The corner bakery, the neighbourhood pizzeria, a market stall. Share a place and help our guide grow.</value></data>
+  <data name="AtlasTrustSource" xml:space="preserve"><value>Transparent sources</value></data>
+  <data name="AtlasTrustSourceText" xml:space="preserve"><value>Open data and attributed contributions. You can check where a listing came from.</value></data>
+  <data name="AtlasTrustReview" xml:space="preserve"><value>Review before publication</value></data>
+  <data name="AtlasTrustReviewText" xml:space="preserve"><value>Discovery is the first step. New listings await moderation before publication.</value></data>
+  <data name="AtlasTrustCommunity" xml:space="preserve"><value>A guide that listens</value></data>
+  <data name="AtlasTrustCommunityText" xml:space="preserve"><value>Community tips and corrections help keep the guide useful for visitors.</value></data>
+  <data name="AtlasPartnerEyebrow" xml:space="preserve"><value>FOR THE PEOPLE BEHIND THE FLAVOURS</value></data>
+  <data name="AtlasPartnerTitle" xml:space="preserve"><value>Your place belongs in this story.</value></data>
+  <data name="AtlasPartnerText" xml:space="preserve"><value>Introduce your business, manage its listing and share your menu in the Partner Portal.</value></data>
+  <data name="AtlasPartnerButton" xml:space="preserve"><value>Partner Portal</value></data>
+  <data name="AtlasAutocompleteLoading" xml:space="preserve"><value>Looking for suggestions…</value></data>
+  <data name="AtlasAutocompleteCount" xml:space="preserve"><value>{count} suggestions. Use the down arrow to browse.</value></data>
+  <data name="AtlasAutocompleteEmpty" xml:space="preserve"><value>No suggestions. You can still search using your own words.</value></data>
+  <data name="AtlasAutocompleteError" xml:space="preserve"><value>Suggestions are unavailable. Enter your words and use Search.</value></data>
+  <data name="AtlasAllFlavours" xml:space="preserve"><value>All flavours</value></data>
+  <data name="AtlasSkip" xml:space="preserve"><value>Skip to content</value></data>
+  <data name="AtlasRibbon" xml:space="preserve"><value>Made in Belém. Flavoured by all of Pará.</value></data>
+  <data name="NavEat" xml:space="preserve"><value>Where to eat</value></data>
+  <data name="NavPara" xml:space="preserve"><value>Explore Pará</value></data>
+  <data name="NavTrails" xml:space="preserve"><value>Food trails</value></data>
+  <data name="NavCommunity" xml:space="preserve"><value>Community</value></data>
+  <data name="NavRecipes" xml:space="preserve"><value>Recipes</value></data>
+  <data name="NavGuide" xml:space="preserve"><value>The guide</value></data>
+  <data name="AtlasFooterTagline" xml:space="preserve"><value>A taste of Pará.</value></data>
+  <data name="AtlasFooterText" xml:space="preserve"><value>From market to table, from city to island. Every good story starts with good food.</value></data>
+  <data name="AtlasJoin" xml:space="preserve"><value>Be part of the story</value></data>
+  <data name="AtlasGuideEyebrow" xml:space="preserve"><value>CLARITY IN EVERY DISCOVERY</value></data>
+  <data name="AtlasGuideTitle" xml:space="preserve"><value>A guide built with care.</value></data>
+  <data name="AtlasGuideIntro" xml:space="preserve"><value>We show where information comes from, listen to the community and review discoveries before publication.</value></data>
+  <data name="AtlasGuideSources" xml:space="preserve"><value>We use OpenStreetMap and public business records from Receita Federal through Minha Receita. An active business registration does not confirm that a place is open to visitors. Information may be incomplete or outdated.</value></data>
+  <data name="AtlasGuideReview" xml:space="preserve"><value>New listings are pending until moderation decides whether to publish them. Inclusion is not a health certification, quality guarantee or confirmation of opening hours.</value></data>
+  <data name="AtlasGuideVisitTitle" xml:space="preserve"><value>Before you go</value></data>
+  <data name="AtlasGuideVisitText" xml:space="preserve"><value>Confirm the address, opening hours, bookings and dietary options directly with the business. For island crossings, check with the local operator.</value></data>
+  <data name="AtlasGuideHelpTitle" xml:space="preserve"><value>Your perspective helps the guide</value></data>
+  <data name="AtlasGuideHelpText" xml:space="preserve"><value>Found an incorrect detail or know a place we missed? Send a suggestion or use the correction option on its profile. Photos require an authorised source.</value></data>
+  <data name="AtlasCitiesTitle" xml:space="preserve"><value>144 municipalities. Endless flavours.</value></data>
+  <data name="AtlasCitiesIntro" xml:space="preserve"><value>Choose a city and start exploring. From Marajó to the Tapajós, every part of Pará has a story to bring to the table.</value></data>
+  <data name="AtlasCitySearchLabel" xml:space="preserve"><value>Find a municipality</value></data>
+  <data name="AtlasRegionLabel" xml:space="preserve"><value>Territorial catalogue region</value></data>
+  <data name="AtlasAllRegions" xml:space="preserve"><value>All regions</value></data>
+  <data name="AtlasClear" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="AtlasCitiesCount" xml:space="preserve"><value>{0} municipalities in this selection</value></data>
+  <data name="AtlasCountsNote" xml:space="preserve"><value>counts include published places only</value></data>
+  <data name="AtlasCityEmpty" xml:space="preserve"><value>No municipalities match this selection.</value></data>
+  <data name="AtlasPublishedCount" xml:space="preserve"><value>{0} published places</value></data>
+  <data name="AtlasCatalogGrowing" xml:space="preserve"><value>Listings in preparation</value></data>
+  <data name="AtlasIslandsEyebrow" xml:space="preserve"><value>THE RIVER IS A JOURNEY TOO</value></data>
+  <data name="AtlasIslandsTitle" xml:space="preserve"><value>Islands, districts and discoveries.</value></data>
+  <data name="AtlasIslandsText" xml:space="preserve"><value>These localities are part of municipalities. Islands and districts are listed separately from cities.</value></data>
+  <data name="DestinationBelemRegion" xml:space="preserve"><value>AMAZONIAN CITY</value></data>
+  <data name="DestinationBelemText" xml:space="preserve"><value>Markets, neighbourhoods and tables to share.</value></data>
+  <data name="DestinationSantaremRegion" xml:space="preserve"><value>LOWER AMAZON</value></data>
+  <data name="DestinationSantaremText" xml:space="preserve"><value>An invitation to discover the Tapajós.</value></data>
+  <data name="DestinationSoureRegion" xml:space="preserve"><value>MARAJÓ</value></data>
+  <data name="DestinationSoureText" xml:space="preserve"><value>Take your time with the island's flavours.</value></data>
+  <data name="DestinationSalinasRegion" xml:space="preserve"><value>PARÁ'S ATLANTIC COAST</value></data>
+  <data name="DestinationSalinasText" xml:space="preserve"><value>From coast to table, at your own pace.</value></data>
+  <data name="DestinationMarabaRegion" xml:space="preserve"><value>SOUTHEASTERN PARÁ</value></data>
+  <data name="DestinationMarabaText" xml:space="preserve"><value>Flavours and journeys where rivers meet.</value></data>
+  <data name="DestinationAltamiraRegion" xml:space="preserve"><value>SOUTHWESTERN PARÁ</value></data>
+  <data name="DestinationAltamiraText" xml:space="preserve"><value>An invitation to explore the Xingu.</value></data>
+  <data name="Category_plate" xml:space="preserve"><value>Restaurants</value></data>
+  <data name="Category_cuia" xml:space="preserve"><value>Açaí</value></data>
+  <data name="Category_pizza" xml:space="preserve"><value>Pizzerias</value></data>
+  <data name="Category_snack" xml:space="preserve"><value>Snack bars</value></data>
+  <data name="Category_market" xml:space="preserve"><value>Markets</value></data>
+  <data name="Category_bread" xml:space="preserve"><value>Bakeries</value></data>
+  <data name="Category_cup" xml:space="preserve"><value>Cafés</value></data>
+  <data name="Category_icecream" xml:space="preserve"><value>Ice cream shops</value></data>
+  <data name="CategoryDescription_plate" xml:space="preserve"><value>Where lunch becomes an occasion</value></data>
+  <data name="CategoryDescription_cuia" xml:space="preserve"><value>A taste of our land, your way</value></data>
+  <data name="CategoryDescription_pizza" xml:space="preserve"><value>Made for sharing</value></data>
+  <data name="CategoryDescription_snack" xml:space="preserve"><value>A flavourful little break</value></data>
+  <data name="CategoryDescription_market" xml:space="preserve"><value>From stall to table</value></data>
+  <data name="CategoryDescription_bread" xml:space="preserve"><value>Fresh bread and good company</value></data>
+  <data name="CategoryDescription_cup" xml:space="preserve"><value>Time for a good coffee</value></data>
+  <data name="CategoryDescription_icecream" xml:space="preserve"><value>A refreshing stop along the way</value></data>
+  <data name="SearchPageTitle" xml:space="preserve"><value>Where to eat in Pará</value></data>
+  <data name="SearchEyebrow" xml:space="preserve"><value>YOUR NEXT GREAT DISCOVERY</value></data>
+  <data name="SearchHeadline" xml:space="preserve"><value>A new flavour</value></data>
+  <data name="SearchHeadlineAccent" xml:space="preserve"><value>is waiting for you.</value></data>
+  <data name="SearchIntro" xml:space="preserve"><value>From a bowl of tacacá to a long lunch. Find your place in Pará.</value></data>
+  <data name="SearchNearby" xml:space="preserve"><value>Near me</value></data>
+  <data name="SearchNearbyActive" xml:space="preserve"><value>Searching within {0} km. Straight-line distances.</value></data>
+  <data name="SearchNearbyHelp" xml:space="preserve"><value>Use your location to find nearby places, with your browser's permission.</value></data>
+  <data name="SearchFilters" xml:space="preserve"><value>Filter and sort places</value></data>
+  <data name="SearchYourWay" xml:space="preserve"><value>Your way.</value></data>
+  <data name="SearchQueryLabel" xml:space="preserve"><value>Restaurant, dish or neighbourhood</value></data>
+  <data name="SearchType" xml:space="preserve"><value>Type of place</value></data>
+  <data name="SearchNeighbourhood" xml:space="preserve"><value>Neighbourhood</value></data>
+  <data name="SearchAllNeighbourhoods" xml:space="preserve"><value>All neighbourhoods</value></data>
+  <data name="SearchSort" xml:space="preserve"><value>Sort by</value></data>
+  <data name="SearchSortName" xml:space="preserve"><value>Name: A to Z</value></data>
+  <data name="SearchSortRecent" xml:space="preserve"><value>Recently updated</value></data>
+  <data name="SearchSortCity" xml:space="preserve"><value>City</value></data>
+  <data name="SearchSortNearby" xml:space="preserve"><value>Nearest to me</value></data>
+  <data name="SearchWithPhoto" xml:space="preserve"><value>With a photo</value></data>
+  <data name="SearchDistance" xml:space="preserve"><value>Maximum distance</value></data>
+  <data name="SearchSubmit" xml:space="preserve"><value>Find my place</value></data>
+  <data name="SearchResultsEyebrow" xml:space="preserve"><value>FROM OUR LAND</value></data>
+  <data name="SearchResultCount" xml:space="preserve"><value>{0} places to discover</value></data>
+  <data name="SearchPageCount" xml:space="preserve"><value>Page {0} of {1}</value></data>
+  <data name="SearchView" xml:space="preserve"><value>Results view</value></data>
+  <data name="SearchGrid" xml:space="preserve"><value>Grid view</value></data>
+  <data name="SearchList" xml:space="preserve"><value>List view</value></data>
+  <data name="SearchTerm" xml:space="preserve"><value>Search</value></data>
+  <data name="SearchWithin" xml:space="preserve"><value>Within {0} km</value></data>
+  <data name="SearchEmptyTitle" xml:space="preserve"><value>That flavour is still on its way.</value></data>
+  <data name="SearchEmptyText" xml:space="preserve"><value>Try different words, a wider distance or another city. Know a place that should be here?</value></data>
+  <data name="SearchPagination" xml:space="preserve"><value>Pages of places</value></data>
+  <data name="SearchPrevious" xml:space="preserve"><value>Previous</value></data>
+  <data name="SearchNext" xml:space="preserve"><value>Next</value></data>
+  <data name="SearchLocationUnavailable" xml:space="preserve"><value>Location unavailable. Use the city and neighbourhood filters.</value></data>
+  <data name="SearchLocationLoading" xml:space="preserve"><value>Requesting your location from the browser…</value></data>
+  <data name="SearchLocationError" xml:space="preserve"><value>Unable to get your location. Search by city and neighbourhood.</value></data>
+  <data name="CardNoPhoto" xml:space="preserve"><value>Photo not yet available</value></data>
+  <data name="CardFlavour" xml:space="preserve"><value>Flavours of our land</value></data>
+  <data name="CardAddressPending" xml:space="preserve"><value>Address under review</value></data>
+  <data name="CardView" xml:space="preserve"><value>View {0}</value></data>
+  <data name="CardDistance" xml:space="preserve"><value>{0} km · straight-line distance</value></data>
 </root>

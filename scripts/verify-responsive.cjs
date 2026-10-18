@@ -4,15 +4,17 @@ const moduleRoot = process.env.VISUAL_TEST_MODULES || path.resolve('artifacts/ui
 const { chromium } = require(path.join(moduleRoot, 'playwright'));
 const AxeBuilder = require(path.join(moduleRoot, '@axe-core/playwright')).default;
 const base = process.env.VISUAL_TEST_BASE_URL || 'http://localhost:5180';
-const output = path.resolve('artifacts/test-results/visual');
+const output = path.resolve(process.env.VISUAL_TEST_OUTPUT || 'artifacts/test-results/visual');
 const onlyAuth = process.env.VISUAL_TEST_SCOPE === 'authenticated';
-const routes = onlyAuth ? [] : ['/', '/busca', '/cidades', '/community', '/roteiros', '/receitas', '/selo-cuia', '/account/login', '/account/register', '/account/forgot', '/admin/login'];
+const changedOnly = process.env.VISUAL_TEST_SCOPE === 'changed';
+const routes = onlyAuth ? [] : changedOnly ? ['/roteiros'] : ['/', '/busca', '/cidades', '/guia', '/community', '/roteiros', '/receitas', '/selo-cuia', '/account/login', '/account/register', '/account/forgot', '/admin/login', '/sugerir'];
 const widths = [360, 390, 768, 1024, 1440];
+let browser;
 (async () => {
   fs.mkdirSync(output, {recursive:true});
-  const browser = await chromium.launch({headless:true});
+  browser = await chromium.launch({headless:true});
   const previous = path.join(output, 'report.json');
-  const results = onlyAuth && fs.existsSync(previous) ? JSON.parse(fs.readFileSync(previous, 'utf8')).filter(result => !result.mode) : [];
+  const results = (onlyAuth || changedOnly) && fs.existsSync(previous) ? JSON.parse(fs.readFileSync(previous, 'utf8')).filter(result => changedOnly ? result.route !== '/roteiros' && result.mode !== 'controlled-fixture-snapshot' : !result.mode) : [];
   for (const width of widths) {
     const context = await browser.newContext({viewport:{width,height:1000}});
     const page = await context.newPage();
@@ -21,6 +23,8 @@ const widths = [360, 390, 768, 1024, 1440];
       const handler = error => errors.push(error.message);
       page.on('pageerror', handler);
       const response = await page.goto(base+route, {waitUntil:'networkidle'});
+      // Fluxos de conta têm limite próprio. Espaçar os casos preserva as proteções reais.
+      await page.waitForTimeout(1300);
       const overflow = await page.evaluate(() => ({width:window.innerWidth,scroll:document.documentElement.scrollWidth,
         elements:[...document.querySelectorAll('main *')].filter(e=>{const r=e.getBoundingClientRect();return r.width && r.right>innerWidth+2}).slice(0,8).map(e=>({tag:e.tagName,cls:e.className}))}));
       const violations = width===360 ? (await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze()).violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})) : [];
@@ -29,7 +33,7 @@ const widths = [360, 390, 768, 1024, 1440];
       results.push({route,width,status:response.status(),overflow,errors,violations});
       page.off('pageerror',handler);
     }
-    if (width===390 && !onlyAuth) {
+    if (width===390 && routes.includes('/')) {
       await page.goto(base, {waitUntil:'networkidle'});
       const menu=page.getByRole('button',{name:'Menu'});
       await menu.click();
@@ -44,7 +48,7 @@ const widths = [360, 390, 768, 1024, 1440];
       if (await page.locator('#heroAutocomplete a').evaluate(e=>e!==document.activeElement)) throw new Error('Autocomplete keyboard failed');
     }
     const snapshots = path.resolve('artifacts/test-results/admin-snapshots');
-    for (const route of ['/admin/discovery','/admin/crawler','/admin/discovery360','/account','/account/favorites','/partner/dashboard']) {
+    for (const route of changedOnly ? [] : ['/admin/discovery','/admin/crawler','/admin/discovery360','/admin/suggestions','/account','/account/favorites','/partner/dashboard']) {
       const filename = path.join(snapshots, route.replaceAll('/','-').slice(1)+'.html');
       if (!fs.existsSync(filename)) continue;
       const html = fs.readFileSync(filename, 'utf8');
@@ -57,6 +61,18 @@ const widths = [360, 390, 768, 1024, 1440];
       results.push({route,width,status:200,mode:'test-authenticated-snapshot',overflow,errors,violations});
       page.off('pageerror',handler);
     }
+    for (const [name, route] of [['restaurant-sample','/__visual/restaurant'],['catalog-sample','/__visual/catalog']]) {
+      const filename=path.resolve('artifacts/test-results/admin-snapshots',name+'.html');
+      if (!fs.existsSync(filename)) continue;
+      await page.route(base+route,request=>request.fulfill({status:200,contentType:'text/html; charset=utf-8',body:fs.readFileSync(filename,'utf8')}));
+      const errors=[];const handler=error=>errors.push(error.message);page.on('pageerror',handler);
+      await page.goto(base+route,{waitUntil:'networkidle'});
+      const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+      const violations=width===360 ? (await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze()).violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})) : [];
+      await page.screenshot({path:path.join(output,name+'-'+width+'.png'),fullPage:true});
+      results.push({route:name,width,status:200,mode:'controlled-fixture-snapshot',overflow,errors,violations});
+      page.off('pageerror',handler);
+    }
     await context.close();
   }
   await browser.close();
@@ -64,4 +80,4 @@ const widths = [360, 390, 768, 1024, 1440];
   const failures=results.filter(r=>r.status!==200 || r.overflow.scroll>r.width+2 || r.errors.length || r.violations.length);
   console.log(JSON.stringify({cases:results.length,failures:failures.map(f=>({route:f.route,width:f.width,status:f.status,overflow:f.overflow.scroll,errors:f.errors,violations:f.violations}))},null,2));
   if (failures.length) process.exitCode=1;
-})().catch(error=>{console.error(error);process.exitCode=1});
+})().catch(async error=>{console.error(error);await browser?.close();process.exitCode=1});

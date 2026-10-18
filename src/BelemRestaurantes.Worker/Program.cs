@@ -32,6 +32,30 @@ public class Program
             DiscoveryEvidence.PrintAsync(host.Services).GetAwaiter().GetResult();
             return;
         }
+        if (args.Contains("--retry-discovery-belem", StringComparer.Ordinal))
+        {
+            using var scope = host.Services.CreateScope();
+            var count = scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Application.Abstractions.IDiscoveryQueue>()
+                .RetryDeadLettersAsync("Belém", default).GetAwaiter().GetResult();
+            Console.WriteLine($"Belém: {count} jobs esgotados reagendados. Jobs em execução foram preservados.");
+            return;
+        }
+        if (args.Contains("--import-open-data", StringComparer.Ordinal))
+        {
+            var city = args.FirstOrDefault(a => a.StartsWith("--city=", StringComparison.Ordinal))?[7..]
+                ?? throw new ArgumentException("Informe --city=Município para importar a fonte aberta.");
+            Environment.ExitCode = OpenDataImport.RunAsync(host.Services, city,
+                args.Contains("--refresh-open-data", StringComparer.Ordinal)).GetAwaiter().GetResult();
+            return;
+        }
+        if (args.Contains("--import-food-registry", StringComparer.Ordinal))
+        {
+            var path=args.FirstOrDefault(a=>a.StartsWith("--file=",StringComparison.Ordinal))?[7..]
+                ?? throw new ArgumentException("Informe --file=arquivo.ndjson coletado da fonte cadastral.");
+            var limit=args.FirstOrDefault(a=>a.StartsWith("--max-new=",StringComparison.Ordinal))?[10..]??"5000";
+            Environment.ExitCode=FoodRegistryImport.RunAsync(host.Services,path,int.Parse(limit,System.Globalization.CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+            return;
+        }
         host.Run();
     }
 }

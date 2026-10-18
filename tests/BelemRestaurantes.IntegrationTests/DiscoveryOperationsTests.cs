@@ -15,29 +15,83 @@ namespace BelemRestaurantes.IntegrationTests;
 [Collection("MySql")]
 public sealed class DiscoveryOperationsTests
 {
+    [Fact]
+    public async Task ManualImportTelemetryDoesNotRequireOrConsumeScheduledJob()
+    {
+        using var factory = CreateFactory();
+        using var scope = factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.Migrations.MigrationRunner>().ApplyAsync(default);
+        var telemetry=scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Application.Abstractions.ICycleTelemetryRepository>();
+        await using var connection=await scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory>().OpenAsync(default);
+        var id=await telemetry.StartCycleAsync("fixture-manual-import",DateTimeOffset.UtcNow,default);
+        try
+        {
+            var work=new BelemRestaurantes.Application.Models.DiscoveryWorkItem(0,0,"Belém","regional",1);
+            var metrics=BelemRestaurantes.Application.Models.DiscoveryCycleMetrics.Empty with { Source="openstreetmap" };
+            await telemetry.RecordTargetAsync(id,work,metrics,default);
+            Assert.Equal(1,await Dapper.SqlMapper.ExecuteScalarAsync<int>(connection,
+                "SELECT COUNT(*) FROM discovery_target_runs WHERE cycle_id=@id AND job_id IS NULL AND source='openstreetmap'",new{id}));
+        }
+        finally
+        {
+            await Dapper.SqlMapper.ExecuteAsync(connection,"DELETE FROM discovery_target_runs WHERE cycle_id=@id",new{id});
+            await Dapper.SqlMapper.ExecuteAsync(connection,"DELETE FROM discovery_cycle_runs WHERE id=@id",new{id});
+        }
+    }
+
+    [Fact]
+    public async Task ReviewedCorrectionUpdatesOriginal_AndNewSuggestionRemainsPendingPublication()
+    {
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
+        using var scope = factory.Services.CreateScope();
+        var ingestion = scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Application.Abstractions.IRestaurantIngestionRepository>();
+        var moderation = scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Application.Abstractions.IModerationRepository>();
+        var suggestions = scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Application.Abstractions.ISuggestionRepository>();
+        await using var connection = await scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory>().OpenAsync(default);
+        var marker = Guid.NewGuid().ToString("N");
+        var restaurantIds = new List<long>(); var suggestionIds = new List<long>();
+        try
+        {
+            var place = new BelemRestaurantes.Application.Models.DiscoveredPlace("fixture-review-" + marker, "Original " + marker, null, "Belém", "Restaurante", null, null, null, null, null, null, null, ["restaurant"]);
+            var original = await ingestion.UpsertDiscoveredAsync(place,"test_fixture",DateTimeOffset.UtcNow,default);
+            restaurantIds.Add(original);
+            Assert.True(await moderation.ApproveAsync(original,"fixture-review",default));
+            var correction = await suggestions.AddAsync("Corrigido " + marker,"Belém",null,"Revisão controlada.",default,original);
+            suggestionIds.Add(correction);
+            var html = await client.GetStringAsync("/admin/suggestions");
+            var token = WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Match(html,"name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
+            Assert.False(string.IsNullOrWhiteSpace(token));
+            var response = await client.PostAsync($"/admin/suggestions/{correction}/accept",new FormUrlEncodedContent(new Dictionary<string,string>{{"__RequestVerificationToken",token}}));
+            Assert.Equal(HttpStatusCode.Redirect,response.StatusCode);
+            Assert.Equal("Corrigido " + marker, await Dapper.SqlMapper.ExecuteScalarAsync<string>(connection,"SELECT name FROM restaurants WHERE id=@original",new{original}));
+            Assert.Equal(0,await Dapper.SqlMapper.ExecuteScalarAsync<int>(connection,"SELECT COUNT(*) FROM restaurants WHERE google_place_id=@external",new{external="suggestion:"+correction}));
+            var fresh = await suggestions.AddAsync("Novo " + marker,"Belém",null,null,default);
+            suggestionIds.Add(fresh);
+            response = await client.PostAsync($"/admin/suggestions/{fresh}/accept",new FormUrlEncodedContent(new Dictionary<string,string>{{"__RequestVerificationToken",token}}));
+            Assert.Equal(HttpStatusCode.Redirect,response.StatusCode);
+            var pendingId = await Dapper.SqlMapper.ExecuteScalarAsync<long>(connection,"SELECT id FROM restaurants WHERE google_place_id=@external",new{external="suggestion:"+fresh});
+            restaurantIds.Add(pendingId);
+            Assert.Equal("pending",await Dapper.SqlMapper.ExecuteScalarAsync<string>(connection,"SELECT status FROM restaurants WHERE id=@pendingId",new{pendingId}));
+        }
+        finally
+        {
+            if(suggestionIds.Count>0) await Dapper.SqlMapper.ExecuteAsync(connection,"DELETE FROM suggestions WHERE id IN @suggestionIds",new{suggestionIds});
+            if(restaurantIds.Count>0) await Dapper.SqlMapper.ExecuteAsync(connection,"DELETE FROM restaurants WHERE id IN @restaurantIds",new{restaurantIds});
+        }
+    }
+
     [Theory]
     [InlineData("/admin/discovery", "Descoberta por cidade e fonte")]
     [InlineData("/admin/crawler", "Cuia Crawler")]
     [InlineData("/admin/discovery360", "Discovery")]
+    [InlineData("/admin/suggestions", "Boas dicas")]
     [InlineData("/account", "Perfil")]
     [InlineData("/account/favorites", "favoritos")]
     [InlineData("/partner/dashboard", "Parceiro")]
     public async Task Operator_views_render_real_database_metrics(string route, string expected)
     {
-        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
-            builder.UseEnvironment("Development")
-                .ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
-                { ["ConnectionStrings:MySql"] = DatabaseEnvironment.ConnectionString() }))
-                .ConfigureServices(services =>
-                {
-                    services.AddAuthentication(options =>
-                    {
-                        options.DefaultAuthenticateScheme = "test-operator";
-                        options.DefaultChallengeScheme = "test-operator";
-                    }).AddScheme<AuthenticationSchemeOptions, OperatorHandler>("test-operator", _ => { });
-                    services.PostConfigure<AuthenticationOptions>(options =>
-                        options.Schemes.First(s => s.Name == BelemRestaurantes.Application.Abstractions.MemberAuth.Scheme).HandlerType = typeof(OperatorHandler));
-                }));
+        using var factory = CreateFactory();
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
         var response = await client.GetAsync(route);
         var html = await response.Content.ReadAsStringAsync();
@@ -52,6 +106,21 @@ public sealed class DiscoveryOperationsTests
             await File.WriteAllTextAsync(Path.Combine(output, route.Replace('/', '-').TrimStart('-') + ".html"), html);
         }
     }
+
+    private static WebApplicationFactory<Program> CreateFactory() => new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+            builder.UseEnvironment("Development")
+                .ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
+                { ["ConnectionStrings:MySql"] = DatabaseEnvironment.ConnectionString() }))
+                .ConfigureServices(services =>
+                {
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = "test-operator";
+                        options.DefaultChallengeScheme = "test-operator";
+                    }).AddScheme<AuthenticationSchemeOptions, OperatorHandler>("test-operator", _ => { });
+                    services.PostConfigure<AuthenticationOptions>(options =>
+                        options.Schemes.First(s => s.Name == BelemRestaurantes.Application.Abstractions.MemberAuth.Scheme).HandlerType = typeof(OperatorHandler));
+                }));
 
     private sealed class OperatorHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger, UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)

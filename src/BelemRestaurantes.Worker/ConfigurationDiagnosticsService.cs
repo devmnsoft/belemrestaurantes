@@ -16,8 +16,9 @@ public sealed class ConfigurationDiagnosticsService(IConfiguration configuration
             logger.LogInformation("Configuração {Key}: {State}", key,
                 string.IsNullOrWhiteSpace(configuration[key]) ? "ausente" : "presente (valor protegido)");
         var placesKey = configuration["GooglePlaces:ApiKey"]?.Trim();
+        logger.LogInformation("Fonte de descoberta selecionada: {Source}", configuration["Discovery:Provider"] ?? "GooglePlaces");
         if (placesKey?.StartsWith("GOCSPX-", StringComparison.Ordinal) == true)
-            logger.LogError("GooglePlaces:ApiKey contém um segredo OAuth; a Places API exige uma chave de API válida. A descoberta não poderá consultar a fonte com esta credencial.");
+            logger.LogWarning("GooglePlaces:ApiKey contém um segredo OAuth; Google Places continua indisponível. A fonte alternativa selecionada pode operar sem essa credencial.");
         return Task.CompletedTask;
     }
 

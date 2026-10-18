@@ -76,7 +76,8 @@ public sealed class CatalogJourneyTests
             Assert.Equal(id, await ingestion.UpsertDiscoveredAsync(place, "test_fixture", DateTimeOffset.UtcNow, default));
             await ingestion.RecordObservationAsync(id, "test_fixture", place.ExternalId, null, "fixture-hash", DateTimeOffset.UtcNow, default);
             Assert.Null(await catalog.GetPublishedAsync(id, default));
-            Assert.Contains((await moderation.ListPendingAsync(1, 100, default)).Items, item => item.Id == id);
+            var lastPendingPage = Math.Max(1, ((await moderation.CountPendingAsync(default)) + 99) / 100);
+            Assert.Contains((await moderation.ListPendingAsync(lastPendingPage, 100, default)).Items, item => item.Id == id);
             Assert.True(await moderation.ApproveAsync(id, "test-moderator", default));
             var published = await catalog.GetPublishedAsync(id, default);
             Assert.NotNull(published);
@@ -93,5 +94,55 @@ public sealed class CatalogJourneyTests
                 await connection.ExecuteAsync("DELETE FROM restaurants WHERE id=@id", new { id });
             }
         }
+    }
+
+    [Fact]
+    public async Task PendingModerationFiltersPreservePagingAndDoNotInterpretSqlOrLikeWildcards()
+    {
+        using var provider = (ServiceProvider)ServiceContainer.Build();
+        await provider.GetRequiredService<MigrationRunner>().ApplyAsync(default);
+        var ingestion=provider.GetRequiredService<IRestaurantIngestionRepository>();
+        var moderation=provider.GetRequiredService<IModerationRepository>();
+        var marker=Guid.NewGuid().ToString("N");
+        var ids=new List<long>();
+        await using var connection=await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
+        try
+        {
+            foreach(var item in new[]{("Lanche "+marker,"Lanchonete"),("Feira "+marker,"Feira e mercado")})
+            {
+                var place=new DiscoveredPlace("fixture-"+Guid.NewGuid().ToString("N"),item.Item1,"Nazaré","Belém",item.Item2,
+                    "Rua de teste",-1.45,-48.49,null,null,null,null,["restaurant"]) { Phone="(91) 3333-4444" };
+                ids.Add(await ingestion.UpsertDiscoveredAsync(place,"test_fixture",DateTimeOffset.UtcNow,default));
+            }
+            var results=await moderation.ListPendingAsync(1,1,default,marker,"Belém");
+            Assert.Equal(2,results.TotalCount);Assert.Single(results.Items);Assert.Equal(2,results.TotalPages);
+            Assert.Equal(ids[1],Assert.Single((await moderation.ListPendingAsync(2,1,default,marker,"Belém")).Items).Id);
+            var feira=Assert.Single((await moderation.ListPendingAsync(1,30,default,marker,"Belém","feira")).Items);
+            Assert.Equal("Feira e mercado",feira.Category);Assert.Equal("Rua de teste",feira.Address);Assert.Equal("(91) 3333-4444",feira.Phone);
+            Assert.Empty((await moderation.ListPendingAsync(1,30,default,marker,"Ananindeua")).Items);
+            Assert.Empty((await moderation.ListPendingAsync(1,30,default,"%' OR 1=1 --")).Items);
+            Assert.Empty((await moderation.ListPendingAsync(1,30,default,marker+"%")).Items);
+        }
+        finally { if(ids.Count>0) await connection.ExecuteAsync("DELETE FROM restaurants WHERE id IN @ids",new{ids}); }
+    }
+
+    [Fact]
+    public async Task TerritorialCountsExcludePendingImportsUntilModerationPublishesThem()
+    {
+        using var provider=(ServiceProvider)ServiceContainer.Build();
+        await provider.GetRequiredService<MigrationRunner>().ApplyAsync(default);
+        var catalog=provider.GetRequiredService<IRestaurantReadRepository>();
+        var before=(await catalog.CountPublishedByCityAsync(default)).GetValueOrDefault("belem");
+        var marker=Guid.NewGuid().ToString("N");
+        var place=new DiscoveredPlace("fixture-atlas-"+marker,"Atlas "+marker,null,"Belém","Restaurante",null,null,null,null,null,null,null,["restaurant"]);
+        var id=await provider.GetRequiredService<IRestaurantIngestionRepository>().UpsertDiscoveredAsync(place,"test_fixture",DateTimeOffset.UtcNow,default);
+        await using var connection=await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
+        try
+        {
+            Assert.Equal(before,(await catalog.CountPublishedByCityAsync(default)).GetValueOrDefault("belem"));
+            Assert.True(await provider.GetRequiredService<IModerationRepository>().ApproveAsync(id,"fixture-atlas",default));
+            Assert.Equal(before+1,(await catalog.CountPublishedByCityAsync(default)).GetValueOrDefault("belem"));
+        }
+        finally { await connection.ExecuteAsync("DELETE FROM restaurants WHERE id=@id",new{id}); }
     }
 }

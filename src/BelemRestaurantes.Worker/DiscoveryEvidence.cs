@@ -27,7 +27,16 @@ internal static class DiscoveryEvidence
         var crawler = await connection.QueryAsync("""
             SELECT * FROM crawler_runs ORDER BY id DESC LIMIT 10
             """);
-        Console.WriteLine(JsonSerializer.Serialize(new { capturedAtUtc = DateTimeOffset.UtcNow, catalog, cycles, targets, crawler },
+        var categories = await connection.QueryAsync("SELECT category, status, COUNT(*) AS total FROM restaurants GROUP BY category, status ORDER BY total DESC, category");
+        var cities = await connection.QueryAsync("SELECT city, status, COUNT(*) AS total FROM restaurants GROUP BY city, status ORDER BY total DESC, city");
+        var imports = await connection.QueryAsync("""
+            SELECT c.id, c.started_at, c.completed_at, t.source, COUNT(DISTINCT t.city) AS municipalities,
+                   SUM(t.found_count) AS found_count, SUM(t.created_count) AS created_count,
+                   SUM(t.updated_count) AS updated_count, SUM(t.skipped_count) AS skipped_count, SUM(t.failed_count) AS failed_count
+            FROM discovery_cycle_runs c JOIN discovery_target_runs t ON t.cycle_id=c.id
+            WHERE t.job_id IS NULL GROUP BY c.id,c.started_at,c.completed_at,t.source ORDER BY c.id DESC LIMIT 10
+            """);
+        Console.WriteLine(JsonSerializer.Serialize(new { capturedAtUtc = DateTimeOffset.UtcNow, catalog, categories, cities, imports, cycles, targets, crawler },
             new JsonSerializerOptions { WriteIndented = true }));
     }
 }

@@ -84,7 +84,7 @@ public sealed class MySqlRestaurantIngestionRepository(MySqlConnectionFactory fa
                 {
                     // Fontes externas não sobrescrevem os dados de um parceiro verificado.
                     await connection.ExecuteAsync(new CommandDefinition(
-                        "UPDATE restaurants SET last_seen_at=@now WHERE id=@ownedId",
+                        "UPDATE restaurants SET last_seen_at=@now, updated_at=updated_at WHERE id=@ownedId",
                         new { ownedId, now }, transaction, cancellationToken: ct));
                     await transaction.CommitAsync(ct);
                     return (ownedId, false);
@@ -97,11 +97,11 @@ public sealed class MySqlRestaurantIngestionRepository(MySqlConnectionFactory fa
                 INSERT INTO restaurants (
                     id, name, normalized_name, city, normalized_city, neighborhood, neighborhood_normalized,
                     category, address, latitude, longitude, website, phone, instagram, facebook, tiktok, youtube, google_place_id, created_source_url,
-                    google_rating, google_rating_count, business_status, status, last_seen_at)
+                    google_rating, google_rating_count, business_status, status, last_seen_at, created_at, updated_at)
                 VALUES (
                     @existingId, @name, @normalizedName, @city, @normalizedCity, @neighborhood, @neighborhoodNormalized,
                     @category, @address, @latitude, @longitude, @website, @phone, @instagram, @facebook, @tiktok, @youtube, @googlePlaceId, @sourceUrl,
-                    @rating, @ratingCount, COALESCE(@businessStatus, 'operational'), 'pending', @now)
+                    @rating, @ratingCount, COALESCE(@businessStatus, 'operational'), 'pending', @now, @now, @now)
                 ON DUPLICATE KEY UPDATE
                     id = LAST_INSERT_ID(id),
                     name = VALUES(name),
@@ -122,7 +122,8 @@ public sealed class MySqlRestaurantIngestionRepository(MySqlConnectionFactory fa
                     google_place_id = COALESCE(google_place_id, VALUES(google_place_id)),
                     google_rating = COALESCE(VALUES(google_rating), google_rating),
                     google_rating_count = COALESCE(VALUES(google_rating_count), google_rating_count),
-                    last_seen_at = VALUES(last_seen_at)
+                    last_seen_at = VALUES(last_seen_at),
+                    updated_at = @now
                 """;
 
             var parameters = new

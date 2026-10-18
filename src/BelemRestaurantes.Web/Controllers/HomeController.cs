@@ -41,7 +41,8 @@ public sealed class HomeController(
         }
         var cuiaTask = LoadAsync(() => cuiaService.GetTopRankingsAsync("melhores_belem", 6, ct), cuiaBadges, "Selo Cuia");
         var expTask = LoadAsync(() => experienceService.ListPublicFeedAsync(1, 4, null, null, ct), experiences, "Comunidade");
-        var citiesTask = LoadAsync(() => restaurantRepository.ListCitiesAsync(ct), cities, "Cidades");
+        var citiesTask = Task.FromResult<IReadOnlyList<string>>(BelemRestaurantes.Domain.Data.ParaOfficialCatalog.Municipalities
+            .Select(c=>c.Name).OrderBy(n=>n).ToArray());
         var catTask = LoadAsync(() => restaurantRepository.ListCategoriesAsync(ct), categories, "Categorias");
         var trailsTask = LoadAsync(() => trailService.ListTrailsAsync(ct), trails, "Roteiros");
         var featuredTask = LoadAsync(async () => (await restaurantRepository.SearchAsync(new RestaurantSearchQuery(Page: 1, PageSize: 6), ct)).Items, featured, "Restaurantes");
@@ -61,6 +62,9 @@ public sealed class HomeController(
 
     [HttpGet("receitas")]
     public IActionResult Recipes() => View();
+
+    [HttpGet("guia")]
+    public IActionResult Guide() => View();
 
     [HttpGet("selo-cuia")]
     public async Task<IActionResult> Cuia(CancellationToken ct)

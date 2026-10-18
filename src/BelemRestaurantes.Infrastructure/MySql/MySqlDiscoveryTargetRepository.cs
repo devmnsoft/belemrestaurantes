@@ -133,9 +133,9 @@ public sealed class MySqlCycleTelemetryRepository(MySqlConnectionFactory factory
         await connection.ExecuteAsync(new CommandDefinition("""
             INSERT INTO discovery_target_runs
                 (cycle_id, job_id, city, category, source, found_count, created_count, updated_count, skipped_count, failed_count)
-            VALUES (@cycleId, @JobId, @City, @Category, 'google_places', @PlacesDiscovered,
+            VALUES (@cycleId, NULLIF(@JobId, 0), @City, @Category, @Source, @PlacesDiscovered,
                     @RestaurantsCreated, @RestaurantsUpdated, @PlacesSkipped, @JobsFailed)
-            """, new { cycleId, work.JobId, work.City, work.Category, metrics.PlacesDiscovered,
+            """, new { cycleId, work.JobId, work.City, work.Category, metrics.Source, metrics.PlacesDiscovered,
                 metrics.RestaurantsCreated, metrics.RestaurantsUpdated, metrics.PlacesSkipped, metrics.JobsFailed }, cancellationToken: ct));
     }
 

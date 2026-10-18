@@ -21,6 +21,7 @@
   const dropdown = document.getElementById('heroAutocomplete');
   const status = document.getElementById('search-status');
   if (!input || !dropdown || !status) return;
+  const messages=document.getElementById('client-text')?.dataset || {};
   let timer, request;
   let version = 0;
   const close = () => { dropdown.hidden = true; input.setAttribute('aria-expanded', 'false'); };
@@ -35,7 +36,7 @@
     if (query.length < 2) return;
     timer = setTimeout(async () => {
       request = new AbortController();
-      status.textContent = 'Procurando sugestões…';
+      status.textContent = messages.autocompleteLoading || 'Procurando sugestões…';
       try {
         const response = await fetch('/api/search/autocomplete?q=' + encodeURIComponent(query), { signal: request.signal });
         if (!response.ok) throw new Error('autocomplete unavailable');
@@ -58,12 +59,12 @@
         }
         dropdown.replaceChildren(fragment);
         const count = dropdown.children.length;
-        status.textContent = count ? `${count} sugestões. Use a seta para baixo para navegar.` : 'Nenhuma sugestão. Você ainda pode buscar pelo termo digitado.';
+        status.textContent = count ? (messages.autocompleteCount || '{count} sugestões. Use a seta para baixo para navegar.').replace('{count}',String(count)) : (messages.autocompleteEmpty || 'Nenhuma sugestão. Você ainda pode buscar pelo termo digitado.');
         dropdown.hidden = count === 0;
         input.setAttribute('aria-expanded', String(count > 0));
       } catch (error) {
         if (error.name !== 'AbortError' && version === current) {
-          close(); status.textContent = 'Sugestões indisponíveis. Digite o termo e use Bora encontrar.';
+          close(); status.textContent = messages.autocompleteError || 'Sugestões indisponíveis. Digite o termo e use a busca.';
         }
       }
     }, 280);

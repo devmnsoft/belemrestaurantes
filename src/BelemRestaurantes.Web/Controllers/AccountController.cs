@@ -182,9 +182,11 @@ public sealed class AccountController(
 
     [HttpPost("favorites/{id:long}/add")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddFavorite(long id, [FromServices] IFavoriteRepository favorites, CancellationToken ct)
+    public async Task<IActionResult> AddFavorite(long id, [FromServices] IFavoriteRepository favorites,
+        [FromServices] IRestaurantReadRepository catalog, CancellationToken ct)
     {
         if (id <= 0) return BadRequest();
+        if (await catalog.GetPublishedAsync(id, ct) is null) return NotFound();
         await favorites.AddAsync(Subject(), id, ct);
         return RedirectToAction(nameof(Favorites));
     }

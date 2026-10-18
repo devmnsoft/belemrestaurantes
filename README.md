@@ -5,7 +5,7 @@ Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10
 **E-mail Oficial:** `comercial@belemrestaurantes.com.br`  
 **Ambiente:** VPS Windows + IIS 10; Publicação manual pelo Visual Studio Community 2026; Descoberta autônoma contínua via Windows Service `BelemRestauranteCuiaDiscovery`.
 
-> **Sprint 12 — validação de 17/10/2026:** identidade Pará e correções do Discovery/Crawler implementadas. Worker Development com intervalo de 1 minuto. A descoberta externa permanece bloqueada pela chave inválida do Google Places (HTTP 400); zero restaurantes reais comprovados nesta sessão. Consulte [relatório e evidências](docs/SPRINT12-REPORT.md).
+> **Sprint 15 — validação de 18/10/2026:** adicionados **5.266 cadastros reais de empresas do setor de alimentação**, totalizando **5.747 em 135 municípios do Pará**, pendentes de moderação. Nova identidade editorial “O Pará. À flor do paladar.”, arte amazônica original, explorador de municípios, busca e entrada em PT/EN/ES. Consulte [relatório, evidências e limites da fonte](docs/SPRINT15-REPORT.md). Histórico: [Sprint 14](docs/SPRINT14-REPORT.md), [Sprint 13](docs/SPRINT13-REPORT.md) e [Sprint 12](docs/SPRINT12-REPORT.md).
 
 
 ---

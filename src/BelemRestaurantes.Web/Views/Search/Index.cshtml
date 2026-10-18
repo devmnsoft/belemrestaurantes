@@ -1,118 +1,58 @@
 @model BelemRestaurantes.Application.Models.PagedResult<BelemRestaurantes.Application.Models.RestaurantView>
+@using BelemRestaurantes.Application.Models
+@using System.Globalization
 @{
-    ViewData["Title"] = "Busca Gastronômica — Belém Restaurantes";
-    var filters = (BelemRestaurantes.Application.Abstractions.SearchFilterOptions?)ViewBag.FilterOptions;
-    var searchTerm = (string?)ViewBag.SearchTerm;
-    var selectedCity = (string?)ViewBag.SelectedCity;
-    var selectedCategory = (string?)ViewBag.SelectedCategory;
-    var selectedNeighborhood = (string?)ViewBag.SelectedNeighborhood;
+    ViewData["Title"] = T["SearchPageTitle"].Value;
+    ViewData["AtlasEditorial"] = true;
+    var filters = ViewBag.FilterOptions as BelemRestaurantes.Application.Abstractions.SearchFilterOptions;
+    var query = ViewData["Query"] as RestaurantSearchQuery ?? new RestaurantSearchQuery(City: (string?)ViewBag.SelectedCity, Category: (string?)ViewBag.SelectedCategory, Page: Model.Page);
+    var term = (string?)ViewBag.SearchTerm ?? query.Term;
+    string PageUrl(int page) => "/busca" + Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?> {
+        ["q"]=term,["city"]=query.City,["category"]=query.Category,["neighborhood"]=query.Neighborhood,
+        ["sort"]=query.SafeSort,["photosOnly"]=query.PhotosOnly.ToString(),["page"]=page.ToString(),
+        ["lat"]=query.HasLocation?query.Latitude?.ToString(CultureInfo.InvariantCulture):null,
+        ["lng"]=query.HasLocation?query.Longitude?.ToString(CultureInfo.InvariantCulture):null,
+        ["radius"]=query.SafeRadiusKm.ToString(CultureInfo.InvariantCulture)
+    });
 }
-
-<div class="cuia-container cuia-section">
-    <!-- Cabeçalho da Busca V5 -->
-    <div style="margin-bottom: 32px;">
-        <span class="cuia-tag cuia-tag-floresta" style="margin-bottom: 8px;">✦ Catálogo Gastronômico</span>
-        <h1 class="cuia-section-title" style="margin-top: 8px;">Restaurantes e Sabores do Pará</h1>
-        <p class="cuia-section-subtitle">
-            Encontre pratos típicos, restaurantes tradicionais, açaí, tacacá e especialidades paraenses em todo o estado.
-        </p>
-    </div>
-
-    <!-- Barra de Filtros Combinados V5 -->
-    <form method="get" action="/busca" class="cuia-card" style="margin-bottom: 32px; padding: 24px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
-            <div>
-                <label for="searchQuery" style="display: block; font-size: 13px; font-weight: 700; color: var(--texto-secundario, #4b635a); margin-bottom: 6px;">Termo ou Prato</label>
-                <input id="searchQuery" type="text" name="q" value="@searchTerm" placeholder="Ex: Filhote, Açaí, Tacacá..." class="cuia-input" style="width: 100%;" />
-            </div>
-
-            <div>
-                <label for="searchCity" style="display: block; font-size: 13px; font-weight: 700; color: var(--texto-secundario, #4b635a); margin-bottom: 6px;">Cidade</label>
-                <select id="searchCity" name="city" class="cuia-input" style="width: 100%;">
-                    <option value="">Todas as Cidades</option>
-                    @if (filters?.Cities != null)
-                    {
-                        foreach (var city in filters.Cities)
-                        {
-                            <option value="@city" selected="@(city == selectedCity)">@city</option>
-                        }
-                    }
-                </select>
-            </div>
-
-            <div>
-                <label for="searchCategory" style="display: block; font-size: 13px; font-weight: 700; color: var(--texto-secundario, #4b635a); margin-bottom: 6px;">Categoria</label>
-                <select id="searchCategory" name="category" class="cuia-input" style="width: 100%;">
-                    <option value="">Todas as Categorias</option>
-                    @if (filters?.Categories != null)
-                    {
-                        foreach (var cat in filters.Categories)
-                        {
-                            <option value="@cat" selected="@(cat == selectedCategory)">@cat</option>
-                        }
-                    }
-                </select>
-            </div>
-
-            <div style="display: flex; gap: 8px;">
-                <button type="submit" class="cuia-btn cuia-btn-secondary" style="flex: 1;">
-                    Filtrar
-                </button>
-                <a href="/busca" class="cuia-btn cuia-btn-outline" title="Limpar Filtros">Limpar</a>
-            </div>
-        </div>
-    </form>
-
-    <!-- Resumo dos Resultados -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <p style="margin: 0; color: var(--texto-secundario, #4b635a); font-size: 15px;">
-            Exibindo <strong>@Model.Items.Count</strong> de <strong>@Model.TotalCount</strong> estabelecimentos encontrados.
-        </p>
-    </div>
-
-    <!-- Resultados -->
+<section class="para-explore-hero"><div class="para-container">
+  <span class="para-eyebrow">@T["SearchEyebrow"]</span><h1>@T["SearchHeadline"]<br /><em>@T["SearchHeadlineAccent"]</em></h1>
+  <p>@T["SearchIntro"]</p>
+  <div class="para-explore-actions"><button type="button" class="para-button" data-nearby data-location-unavailable="@T["SearchLocationUnavailable"]" data-location-loading="@T["SearchLocationLoading"]" data-location-error="@T["SearchLocationError"]">@await Html.PartialAsync("_ParaIcon", "mobility") @T["SearchNearby"]</button><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div>
+  <p id="nearby-status" role="status" aria-live="polite" class="para-nearby-status">@(query.HasLocation ? T["SearchNearbyActive",query.SafeRadiusKm].Value : T["SearchNearbyHelp"].Value)</p>
+</div></section>
+<div class="para-container">@await Html.PartialAsync("_CategoryShortcuts",query.Category ?? "")</div>
+<section class="para-container para-explore-layout">
+  <aside class="para-filter-panel" aria-label="@T["SearchFilters"]">
+    <details class="para-filter-disclosure" open><summary>@T["SearchFilters"]</summary><form action="/busca" method="get" id="catalog-filters">
+      <div class="para-filter-heading"><h2>@T["SearchYourWay"]</h2><a href="/busca">@T["AtlasClear"]</a></div>
+      <label for="searchQuery">@T["SearchQueryLabel"]</label><input id="searchQuery" name="q" type="search" value="@term" placeholder="@T["AtlasSearchPlaceholder"]" maxlength="160" />
+      <label for="searchCity">@T["AtlasDestinationLabel"]</label><select id="searchCity" name="city"><option value="">@T["AtlasAllPara"]</option>
+        @if (!string.IsNullOrEmpty(query.City) && !(filters?.Cities.Contains(query.City) ?? false)) { <option value="@query.City" selected>@query.City</option> }
+        @foreach (var city in filters?.Cities ?? []) { <option value="@city" selected="@(city==query.City)">@city</option> }
+      </select>
+      <label for="searchCategory">@T["SearchType"]</label><select id="searchCategory" name="category"><option value="">@T["AtlasAllFlavours"]</option>@if(!string.IsNullOrWhiteSpace(query.Category) && !(filters?.Categories.Contains(query.Category) ?? false)){<option value="@query.Category" selected>@query.Category</option>}@foreach (var category in filters?.Categories ?? []) { <option value="@category" selected="@(category==query.Category)">@category</option> }</select>
+      <label for="searchNeighborhood">@T["SearchNeighbourhood"]</label><select id="searchNeighborhood" name="neighborhood"><option value="">@T["SearchAllNeighbourhoods"]</option>@foreach (var neighborhood in filters?.Neighborhoods ?? []) { <option value="@neighborhood" selected="@(neighborhood==query.Neighborhood)">@neighborhood</option> }</select>
+      <label for="searchSort">@T["SearchSort"]</label><select id="searchSort" name="sort"><option value="name" selected="@(query.SafeSort=="name")">@T["SearchSortName"]</option><option value="recent" selected="@(query.SafeSort=="recent")">@T["SearchSortRecent"]</option><option value="city" selected="@(query.SafeSort=="city")">@T["SearchSortCity"]</option>@if(query.HasLocation) { <option value="nearby" selected="@(query.SafeSort=="nearby")">@T["SearchSortNearby"]</option> }</select>
+      <label class="para-filter-check"><input type="checkbox" name="photosOnly" value="true" checked="@query.PhotosOnly" /> @T["SearchWithPhoto"]</label>
+      @if (query.HasLocation)
+      {
+        <input type="hidden" name="lat" value="@query.Latitude?.ToString(CultureInfo.InvariantCulture)" /><input type="hidden" name="lng" value="@query.Longitude?.ToString(CultureInfo.InvariantCulture)" />
+        <label for="searchRadius">@T["SearchDistance"]</label><select id="searchRadius" name="radius">@foreach(var radius in new[] { 2, 5, 10, 25, 50, 100 }) { <option value="@radius" selected="@(radius==query.SafeRadiusKm)">@radius km</option> }</select>
+      }
+      <button type="submit" class="para-button">@T["SearchSubmit"] ↗</button>
+    </form></details>
+  </aside>
+  <div class="para-results">
+    <div class="para-results-bar"><div><span class="para-eyebrow">@T["SearchResultsEyebrow"]</span><h2>@T["SearchResultCount",Model.TotalCount]</h2><p>@(query.City ?? T["AtlasAllPara"].Value) · @T["SearchPageCount",Model.Page,Math.Max(1,Model.TotalPages)]</p></div><div class="para-view-toggle" role="group" aria-label="@T["SearchView"]"><button type="button" data-catalog-view="grid" aria-pressed="true" aria-label="@T["SearchGrid"]">▦</button><button type="button" data-catalog-view="list" aria-pressed="false" aria-label="@T["SearchList"]">☷</button></div></div>
+    @if (!string.IsNullOrWhiteSpace(term) || query.HasLocation || query.PhotosOnly)
+    { <div class="para-active-filters">@if(!string.IsNullOrWhiteSpace(term)){<span>@T["SearchTerm"]: @term</span>}@if(query.HasLocation){<span>@T["SearchWithin",query.SafeRadiusKm]</span>}@if(query.PhotosOnly){<span>@T["SearchWithPhoto"]</span>}</div> }
     @if (Model.Items.Count == 0)
-    {
-        <div class="cuia-card" style="text-align: center; padding: 60px 20px; margin: 20px 0;">
-            <div style="font-size: 36px; margin-bottom: 12px; color: var(--tucupi-600, #c48b28);">✦</div>
-            <h3 style="font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 8px; font-size: 20px;">Nenhum restaurante encontrado</h3>
-            <p style="color: var(--texto-secundario, #4b635a); max-width: 500px; margin: auto; font-size: 14px;">
-                Tente ajustar os termos da busca, selecionar outra cidade ou limpar os filtros para ver mais opções da culinária paraense.
-            </p>
-            <div style="margin-top: 24px;">
-                <a href="/busca" class="cuia-btn cuia-btn-secondary">Ver Todos os Restaurantes</a>
-            </div>
-        </div>
-    }
+    { <div class="para-empty para-search-empty"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon", "cuia")</span><div><h3>@T["SearchEmptyTitle"]</h3><p>@T["SearchEmptyText"]</p><a href="/busca" class="para-button">@T["AtlasSeeAll"]</a><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div></div> }
     else
-    {
-        <div class="para-restaurant-grid">
-            @foreach (var restaurant in Model.Items)
-            { @await Html.PartialAsync("_RestaurantCard", restaurant) }
-        </div>
-
-        <!-- Paginação V5 -->
-        @if (Model.TotalPages > 1)
-        {
-            <div style="display: flex; justify-content: center; gap: 8px; margin-top: 40px; align-items: center;">
-                @if (Model.Page > 1)
-                {
-                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&neighborhood=@Uri.EscapeDataString(selectedNeighborhood ?? "")&page=@(Model.Page - 1)" class="cuia-btn cuia-btn-outline cuia-btn-sm">
-                        ← Anterior
-                    </a>
-                }
-
-                <span style="font-size: 14px; color: var(--texto-secundario, #4b635a); padding: 0 12px;">
-                    Página <strong>@Model.Page</strong> de <strong>@Model.TotalPages</strong>
-                </span>
-
-                @if (Model.Page < Model.TotalPages)
-                {
-                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&neighborhood=@Uri.EscapeDataString(selectedNeighborhood ?? "")&page=@(Model.Page + 1)" class="cuia-btn cuia-btn-outline cuia-btn-sm">
-                        Próxima →
-                    </a>
-                }
-            </div>
-        }
-    }
-</div>
+    { <div class="para-restaurant-grid" id="catalog-results">@foreach(var restaurant in Model.Items) { @await Html.PartialAsync("_RestaurantCard",restaurant) }</div> }
+    @if(Model.TotalPages>1)
+    { <nav class="para-pagination" aria-label="@T["SearchPagination"]">@if(Model.Page>1){<a href="@PageUrl(Model.Page-1)">← @T["SearchPrevious"]</a>}<span aria-current="page">@Model.Page / @Model.TotalPages</span>@if(Model.Page<Model.TotalPages){<a href="@PageUrl(Model.Page+1)">@T["SearchNext"] →</a>}</nav> }
+  </div>
+</section>
+@section Scripts { <script src="~/js/catalog.js" asp-append-version="true" defer></script> }
