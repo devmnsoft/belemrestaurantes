@@ -6,6 +6,35 @@
     var currentPage = ViewData["Page"] as int? ?? 1;
 }
 
+@{
+    var cycles = ViewData["DiscoveryCycles"] as IReadOnlyList<BelemRestaurantes.Web.Models.DiscoveryCycleView> ?? [];
+    var targets = ViewData["TargetRuns"] as IReadOnlyList<BelemRestaurantes.Web.Models.DiscoveryTargetRunView> ?? [];
+}
+<section class="para-operations">
+  <span class="para-eyebrow">CUIA · OPERAÇÃO DE DESCOBERTA</span>
+  <h1>Da descoberta à mesa.</h1>
+  <p>Resultados gravados pelo Worker independente. Novos cadastros passam pela triagem antes de aparecer no portal.</p>
+  <div class="para-stat-row">
+    <article><strong>@cycles.Sum(c => c.Found)</strong><span>Encontrados nos ciclos abaixo</span></article>
+    <article><strong>@cycles.Sum(c => c.Created)</strong><span>Novos registros</span></article>
+    <article><strong>@cycles.Sum(c => c.Updated)</strong><span>Registros atualizados</span></article>
+    <article><strong>@totalPending</strong><span>Aguardando moderação</span></article>
+  </div>
+  <h2>Últimos ciclos do Discovery</h2>
+  <div class="para-table-wrap" role="region" tabindex="0" aria-label="Ciclos de descoberta"><table><caption class="sr-only">Execuções persistidas do Discovery. Horários em UTC.</caption><thead><tr><th scope="col">Ciclo / início UTC</th><th scope="col">Estado</th><th scope="col">Encontrados</th><th scope="col">Novos</th><th scope="col">Atualizados</th><th scope="col">Falhas</th></tr></thead><tbody>
+  @foreach (var cycle in cycles)
+  { <tr><td>#@cycle.Id · @cycle.StartedAt.ToString("dd/MM HH:mm:ss")</td><td>@(cycle.CompletedAt is null ? "Sem conclusão registrada" : cycle.Failed > 0 ? "Concluído com falhas" : "Concluído")</td><td>@cycle.Found</td><td>@cycle.Created</td><td>@cycle.Updated</td><td>@cycle.Failed</td></tr> }
+  @if (cycles.Count == 0) { <tr><td colspan="6">Nenhum ciclo registrado. Consulte o diagnóstico e os logs do Worker.</td></tr> }
+  </tbody></table></div>
+  <h2>Descoberta por cidade e fonte</h2>
+  <div class="para-table-wrap" role="region" tabindex="0" aria-label="Resultados por cidade e fonte"><table><caption class="sr-only">Últimas consultas por cidade e fonte</caption><thead><tr><th scope="col">Ciclo</th><th scope="col">Cidade / categoria</th><th scope="col">Fonte</th><th scope="col">Encontrados</th><th scope="col">Novos / atualizados</th><th scope="col">Descartados / falhas</th></tr></thead><tbody>
+  @foreach (var target in targets)
+  { <tr><td>#@target.CycleId</td><td>@target.City · @target.Category</td><td>@target.Source</td><td>@target.Found</td><td>@target.Created / @target.Updated</td><td>@target.Skipped / @target.Failed</td></tr> }
+  @if (targets.Count == 0) { <tr><td colspan="6">Nenhuma consulta registrada após a migration 017. Ausência de dados não comprova execução.</td></tr> }
+  </tbody></table></div>
+  <p><a href="/admin/diagnostics" class="para-text-link">Diagnóstico ↗</a> · <a href="/admin/crawler" class="para-text-link">Ciclos do Crawler ↗</a></p>
+</section>
+
 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
   <div>
     <span class="badge-tag-v3" style="margin-bottom: 8px;">✦ Worker de Descoberta & Google Places</span>

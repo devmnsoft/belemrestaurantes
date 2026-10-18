@@ -8,6 +8,10 @@ namespace BelemRestaurantes.Domain.Entities;
 /// </summary>
 public sealed class Restaurant
 {
+    // Materialização do catálogo pelo Dapper; construção pública continua
+    // passando pelas validações do construtor de domínio.
+    private Restaurant() { }
+
     public long Id { get; private set; }
 
     public string Name { get; private set; } = string.Empty;

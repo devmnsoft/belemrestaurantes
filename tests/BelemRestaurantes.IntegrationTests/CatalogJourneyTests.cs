@@ -11,6 +11,53 @@ namespace BelemRestaurantes.IntegrationTests;
 public sealed class CatalogJourneyTests
 {
     [Fact]
+    public async Task Ingestion_counts_commits_preserves_contacts_and_separates_branches()
+    {
+        using var provider = (ServiceProvider)ServiceContainer.Build();
+        await provider.GetRequiredService<MigrationRunner>().ApplyAsync(default);
+        var ingestion = provider.GetRequiredService<IRestaurantIngestionRepository>();
+        var marker = Guid.NewGuid().ToString("N");
+        var place = new DiscoveredPlace("fixture-" + marker, "Sabores " + marker, "Nazaré", "Belém", "restaurante",
+            "Endereço fixture " + marker, -1.45, -48.49, null, null, null, null, ["restaurant"])
+            { Phone = "(91) 3333-4444", Instagram = "https://www.instagram.com/fixture" };
+        var ids = new List<long>();
+        await using var connection = await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
+        try
+        {
+            var first = await ingestion.UpsertWithOutcomeAsync(place, "test_fixture", DateTimeOffset.UtcNow, default);
+            ids.Add(first.Id);
+            Assert.True(first.Created);
+            var repeat = await ingestion.UpsertWithOutcomeAsync(place, "test_fixture", DateTimeOffset.UtcNow, default);
+            Assert.Equal(first.Id, repeat.Id);
+            Assert.False(repeat.Created);
+            var otherSource = await ingestion.UpsertWithOutcomeAsync(place with { ExternalId = "fixture-other-" + marker }, "test_fixture", DateTimeOffset.UtcNow, default);
+            Assert.Equal(first.Id, otherSource.Id);
+            Assert.False(otherSource.Created);
+            Assert.Equal(place.Phone, await connection.ExecuteScalarAsync<string>("SELECT phone FROM restaurants WHERE id=@id", new { id = first.Id }));
+            Assert.Equal(place.Instagram, await connection.ExecuteScalarAsync<string>("SELECT instagram FROM restaurants WHERE id=@id", new { id = first.Id }));
+            var branch = await ingestion.UpsertWithOutcomeAsync(place with { ExternalId = "fixture-branch-" + marker, Address = "Outra rua " + marker }, "test_fixture", DateTimeOffset.UtcNow, default);
+            ids.Add(branch.Id);
+            Assert.True(branch.Created);
+            Assert.NotEqual(first.Id, branch.Id);
+            await connection.ExecuteAsync("INSERT INTO restaurant_owners(restaurant_id,user_id) VALUES(@id,@user)", new { id = first.Id, user = "fixture-" + marker });
+            var owned = await provider.GetRequiredService<IPartnerPortalService>().ListOwnedRestaurantsAsync("fixture-" + marker, default);
+            Assert.Equal(first.Id, Assert.Single(owned).Id);
+            Assert.Equal(place.Name, owned[0].Name);
+            await ingestion.UpsertWithOutcomeAsync(place with { Name = "Nome externo divergente", Phone = "000" }, "test_fixture", DateTimeOffset.UtcNow, default);
+            Assert.Equal(place.Name, await connection.ExecuteScalarAsync<string>("SELECT name FROM restaurants WHERE id=@id", new { id = first.Id }));
+            Assert.Equal(place.Phone, await connection.ExecuteScalarAsync<string>("SELECT phone FROM restaurants WHERE id=@id", new { id = first.Id }));
+        }
+        finally
+        {
+            if (ids.Count > 0)
+            {
+                await connection.ExecuteAsync("DELETE FROM restaurant_owners WHERE restaurant_id IN @ids", new { ids });
+                await connection.ExecuteAsync("DELETE FROM restaurants WHERE id IN @ids", new { ids });
+            }
+        }
+    }
+
+    [Fact]
     public async Task Fixture_place_is_deduplicated_moderated_published_and_audited_in_mysql()
     {
         using var provider = (ServiceProvider)ServiceContainer.Build();

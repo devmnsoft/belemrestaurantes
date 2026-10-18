@@ -77,7 +77,7 @@
 
     <div>
       <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Tipo de Fonte</label>
-      <select name="sourceType" class="input-v3" style="width: 100%;">
+      <select name="sourceType" aria-label="Tipo de fonte" class="input-v3" style="width: 100%;">
         <option value="sitemap_xml">Sitemap XML</option>
         <option value="rss_feed">Feed RSS / Atom</option>
         <option value="structured_data">Página com Schema.org</option>
@@ -109,7 +109,7 @@
     Fontes de Rastreamento Cadastradas (@Model.Count)
   </h2>
 
-  <div class="table-v3-wrapper">
+  <div class="table-v3-wrapper" role="region" tabindex="0" aria-label="Fontes de rastreamento">
     <table class="table-v3">
       <thead>
         <tr>
@@ -203,7 +203,7 @@
     Histórico de Consultas Executadas Recentes (@recentRuns.Count)
   </h2>
 
-  <div class="table-v3-wrapper">
+  <div class="table-v3-wrapper" role="region" tabindex="0" aria-label="Histórico do Crawler">
     <table class="table-v3">
       <thead>
         <tr>

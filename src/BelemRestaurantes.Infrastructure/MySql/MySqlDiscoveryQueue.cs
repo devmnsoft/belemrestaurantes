@@ -83,7 +83,7 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
             UPDATE discovery_targets t JOIN discovery_jobs j ON j.target_id = t.id
             SET t.next_run_at = @nextRun, t.last_success_at = @now, t.locked_until = NULL, t.last_error = NULL
             WHERE j.id = @jobId AND j.state = 'running'
-            """, new { jobId, now = clock.UtcNow, nextRun = clock.UtcNow.AddMinutes(Math.Max(10, configuration.GetValue<int>("Discovery:TargetRefreshMinutes", 10080))) },
+            """, new { jobId, now = clock.UtcNow, nextRun = clock.UtcNow.AddMinutes(Math.Max(1, configuration.GetValue<int>("Discovery:TargetRefreshMinutes", 10080))) },
             transaction, cancellationToken: ct));
         await connection.ExecuteAsync(new CommandDefinition(
             """

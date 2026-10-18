@@ -47,6 +47,7 @@ public sealed class DiscoveryOrchestrator(
             return metrics.ToSnapshot();
         }
 
+        metrics.Discovered = search.Places.Count;
         foreach (var place in search.Places)
         {
             ct.ThrowIfCancellationRequested();
@@ -76,6 +77,8 @@ public sealed class DiscoveryOrchestrator(
             }
         }
 
+        logger.LogInformation("Discovery {City}/{Category} fonte={Provider}: encontrados={Found}, novos={Created}, atualizados={Updated}, descartados={Skipped}, falhas={Failed}",
+            work.City, work.Category, provider.Name, metrics.Discovered, metrics.Created, metrics.Updated, metrics.Skipped, metrics.Failed);
         return metrics.ToSnapshot();
     }
 
@@ -96,7 +99,12 @@ public sealed class DiscoveryOrchestrator(
         }
 
         var now = clock.UtcNow;
-        var restaurantId = await ingestion.UpsertDiscoveredAsync(place, provider.Name, now, ct);
+        var write = await ingestion.UpsertWithOutcomeAsync(place, provider.Name, now, ct);
+        var restaurantId = write.Id;
+        // O commit já ocorreu. Falhas posteriores de proveniência/moderação
+        // não podem apagar a contagem de registros realmente persistidos.
+        if (write.Created) metrics.Created++;
+        else metrics.Updated++;
 
         await ingestion.RecordObservationAsync(
             restaurantId,
@@ -128,16 +136,6 @@ public sealed class DiscoveryOrchestrator(
                 ct);
         }
 
-        if (dedup.Outcome == MatchOutcome.New)
-        {
-            metrics.Created++;
-        }
-        else
-        {
-            metrics.Updated++;
-        }
-
-        metrics.Discovered++;
     }
 
     private static string BuildReviewPayload(DiscoveredPlace place, DeduplicationResult dedup) =>

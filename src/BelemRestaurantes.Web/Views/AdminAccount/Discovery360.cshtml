@@ -150,7 +150,7 @@
     </div>
   </div>
 
-  <div style="overflow-x: auto;">
+  <div role="region" tabindex="0" aria-label="Cobertura territorial" style="overflow-x: auto;">
     <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
       <thead>
         <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); color: var(--forest-900);">
@@ -229,7 +229,7 @@
   }
   else
   {
-    <div class="grid-cards-v3" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    <div class="grid-cards-v3" style="grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px;">
       @foreach (var m in pendingMedias)
       {
         <div style="border: 1px solid rgba(0,0,0,0.1); border-radius: var(--radius-sm); overflow: hidden; background: #fff; display: flex; flex-direction: column;">
@@ -279,7 +279,7 @@
     Registro auditável de cada campo descoberto ou modificado com procedência e score de confiança.
   </p>
 
-  <div style="overflow-x: auto;">
+  <div role="region" tabindex="0" aria-label="Histórico de alterações" style="overflow-x: auto;">
     <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
       <thead>
         <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); color: var(--forest-900);">
@@ -408,7 +408,7 @@
   }
   else
   {
-    <div style="overflow-x: auto;">
+    <div role="region" tabindex="0" aria-label="Faturas e planos" style="overflow-x: auto;">
       <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
         <thead>
           <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); color: var(--forest-900);">

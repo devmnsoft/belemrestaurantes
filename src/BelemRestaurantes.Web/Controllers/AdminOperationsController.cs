@@ -79,6 +79,20 @@ public sealed class AdminOperationsController(
         ViewData["Page"] = page;
         ViewData["TotalPending"] = pendingCount;
 
+        await using var connection = await factory.OpenAsync(ct);
+        ViewData["DiscoveryCycles"] = (await connection.QueryAsync<Models.DiscoveryCycleView>(new CommandDefinition("""
+            SELECT id AS Id, started_at AS StartedAt, completed_at AS CompletedAt,
+                   places_discovered AS Found, restaurants_created AS Created,
+                   restaurants_updated AS Updated, jobs_failed AS Failed
+            FROM discovery_cycle_runs ORDER BY id DESC LIMIT 12
+            """, cancellationToken: ct))).AsList();
+        ViewData["TargetRuns"] = (await connection.QueryAsync<Models.DiscoveryTargetRunView>(new CommandDefinition("""
+            SELECT cycle_id AS CycleId, city AS City, category AS Category, source AS Source,
+                   found_count AS Found, created_count AS Created, updated_count AS Updated,
+                   skipped_count AS Skipped, failed_count AS Failed, recorded_at AS RecordedAt
+            FROM discovery_target_runs ORDER BY id DESC LIMIT 30
+            """, cancellationToken: ct))).AsList();
+
         return View("~/Views/AdminAccount/Discovery.cshtml", pending);
     }
 

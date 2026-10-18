@@ -100,7 +100,7 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="approve" value="false" />
                                 <input type="text" name="rejectionReason" class="form-control form-control-sm" placeholder="Motivo da rejeição..." required style="min-width: 220px;" />
-                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Confirmar rejeição desta reivindicação?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" data-confirm="Confirmar rejeição desta reivindicação?">
                                     <i class="bi bi-x-circle me-1"></i>Rejeitar
                                 </button>
                             </form>
@@ -109,7 +109,7 @@
                             <form method="post" action="/admin/partner/claims/@claim.Id/review">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="approve" value="true" />
-                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Deseja APROVAR esta reivindicação? O usuário receberá acesso total à gestão deste restaurante.');">
+                                <button type="submit" class="btn btn-success btn-sm" data-confirm="Deseja APROVAR esta reivindicação? O usuário receberá acesso total à gestão deste restaurante.">
                                     <i class="bi bi-check-circle me-1"></i>Aprovar Vínculo
                                 </button>
                             </form>

@@ -20,6 +20,13 @@ public interface IRestaurantReadRepository
 /// <summary>Operações de ingested do catálogo usadas pelo worker.</summary>
 public interface IRestaurantIngestionRepository
 {
+    async Task<(long Id, bool Created)> UpsertWithOutcomeAsync(DiscoveredPlace place, string provider, DateTimeOffset now, CancellationToken ct)
+    {
+        var candidates = await FindDuplicationCandidatesAsync(place.NormalizedName, place.ResolvedCity, place.ExternalId, ct);
+        var id = await UpsertDiscoveredAsync(place, provider, now, ct);
+        return (id, !candidates.Any(c => c.Id == id));
+    }
+
     /// <summary>
     /// Busca candidatos para deduplicação numa janela de nomes/cidade.
     /// <paramref name="externalId"/> habilita a comparação por Place ID, que é
@@ -110,6 +117,9 @@ public interface IDiscoveryTargetRepository
 /// <summary>Registro das execuções de ciclo, para o dashboard.</summary>
 public interface ICycleTelemetryRepository
 {
+    Task RecordTargetAsync(long cycleId, DiscoveryWorkItem work, DiscoveryCycleMetrics metrics, CancellationToken ct)
+        => Task.CompletedTask;
+
     Task<long> StartCycleAsync(string instanceId, DateTimeOffset now, CancellationToken ct);
 
     Task CompleteCycleAsync(

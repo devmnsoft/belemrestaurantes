@@ -16,7 +16,7 @@
       <p class="muted">Metodologia bayesiana transparente, antifraude e categorizada.</p>
     </div>
     <div style="display:flex;gap:10px;">
-      <form method="post" action="/admin/cuia/recalculate" onsubmit="return confirm('Deseja recalcular todas as posições do Selo Cuia a partir das avaliações aprovadas?');">
+      <form method="post" action="/admin/cuia/recalculate" data-confirm="Deseja recalcular todas as posições do Selo Cuia a partir das avaliações aprovadas?">
         @Html.AntiForgeryToken()
         <button type="submit" style="background:#174b3c;">🔄 Recalcular Rankings</button>
       </form>

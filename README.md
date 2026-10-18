@@ -5,6 +5,9 @@ Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10
 **E-mail Oficial:** `comercial@belemrestaurantes.com.br`  
 **Ambiente:** VPS Windows + IIS 10; Publicação manual pelo Visual Studio Community 2026; Descoberta autônoma contínua via Windows Service `BelemRestauranteCuiaDiscovery`.
 
+> **Sprint 12 — validação de 17/10/2026:** identidade Pará e correções do Discovery/Crawler implementadas. Worker Development com intervalo de 1 minuto. A descoberta externa permanece bloqueada pela chave inválida do Google Places (HTTP 400); zero restaurantes reais comprovados nesta sessão. Consulte [relatório e evidências](docs/SPRINT12-REPORT.md).
+
+
 ---
 
 ## 🌟 Principais Módulos da Plataforma (Sprints 09, 10 e 11)
@@ -52,12 +55,12 @@ Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10
    ```powershell
    dotnet build BelemRestaurantes.sln -c Release
    ```
-3. **Executar Testes Automatizados (168 testes aprovados):**
+3. **Executar Testes Automatizados:**
    ```powershell
-   # Testes Unitários (149 testes)
+   # Testes Unitários
    dotnet test tests/BelemRestaurantes.UnitTests -c Release
 
-   # Testes de Integração de Localização (19 testes)
+   # Testes de Integração de Localização
    dotnet test tests/BelemRestaurantes.IntegrationTests --filter "FullyQualifiedName~LocalizationTests" -c Release
    ```
 4. **Executar Migrações do MySQL:**

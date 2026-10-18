@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="appsettings*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BelemRestaurantes.Application\BelemRestaurantes.Application.csproj" />
     <ProjectReference Include="..\BelemRestaurantes.Infrastructure\BelemRestaurantes.Infrastructure.csproj" />
   </ItemGroup>

@@ -30,7 +30,7 @@ public sealed class DiscoveryHostedService(
             return;
         }
 
-        var every = TimeSpan.FromMinutes(Math.Max(10, configuration.GetValue<int>("Discovery:IntervalMinutes", 10)));
+        var every = TimeSpan.FromMinutes(Math.Max(1, configuration.GetValue<int>("Discovery:IntervalMinutes", 10)));
         var batchSize = Math.Clamp(configuration.GetValue<int>("Discovery:BatchSize", 5), 1, 50);
         var maxAttempts = 3;
 
@@ -63,13 +63,12 @@ public sealed class DiscoveryHostedService(
     private async Task RunCycleAsync(int batchSize, int maxAttempts, CancellationToken ct)
     {
         var startedAt = DateTimeOffset.UtcNow;
+        logger.LogInformation("Discovery: início de ciclo às {StartedAt}", startedAt);
 
         try
         {
             using var scope = scopeFactory.CreateScope();
             var queue = scope.ServiceProvider.GetRequiredService<IDiscoveryQueue>();
-            var targets = scope.ServiceProvider.GetRequiredService<IDiscoveryTargetRepository>();
-            var orchestratorFactory = scope.ServiceProvider.GetRequiredService<IServiceProvider>();
             var teleportory = scope.ServiceProvider.GetRequiredService<ICycleTelemetryRepository>();
             var clock = scope.ServiceProvider.GetRequiredService<IClock>();
 
@@ -106,6 +105,7 @@ public sealed class DiscoveryHostedService(
                     timeout.CancelAfter(TimeSpan.FromMinutes(3));
                     var discovered = await ProcessOneAsync(scope, job, timeout.Token);
                     metricsTotal.Add(discovered);
+                    await teleportory.RecordTargetAsync(cycleId, job, discovered, ct);
                     if (discovered.JobsFailed > 0) throw new InvalidOperationException("O processamento teve falhas; reagendado para nova tentativa.");
 
                     await queue.CompleteAsync(job.JobId, ct);
@@ -123,6 +123,8 @@ public sealed class DiscoveryHostedService(
             }
 
             var duration = DateTimeOffset.UtcNow - startedAt;
+            if (processedJobs == 0)
+                logger.LogInformation("Discovery sem tarefas elegíveis: verifique alvos habilitados, próxima execução e jobs em retry/dead-letter.");
 
             await teleportory.CompleteCycleAsync(
                 cycleId,

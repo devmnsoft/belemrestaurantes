@@ -1,5 +1,7 @@
-@{ Layout = "_AdminLayout"; ViewData["Title"] = T["SignIn"].Value; }
-<section class="shell section narrow">
+@{ Layout = "_Layout"; ViewData["Title"] = T["SignIn"].Value; }
+<section class="para-container para-auth">
+@await Html.PartialAsync("_AuthStory")
+<div class="para-auth-content"><span class="para-eyebrow">MNSOFT · GESTÃO DO CATÁLOGO</span>
   <h1>@T["AdminTitle"]</h1>
   <p class="muted">@T["AdminIntro"]</p>
   @if (Context.Request.Query.ContainsKey("expired"))
@@ -15,4 +17,4 @@
     @Html.ValidationSummary()
   </form>
 
-</section>
+</div></section>

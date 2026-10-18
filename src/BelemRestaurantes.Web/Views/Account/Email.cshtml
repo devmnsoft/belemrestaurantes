@@ -1,8 +1,11 @@
 @model BelemRestaurantes.Web.Models.EmailInput
 @{ var confirm = ViewData["ConfirmEmail"] is true; ViewData["Title"] = T[confirm ? "ResendEmail" : "ForgotPassword"].Value; }
-<section class="shell section narrow"><h1>@ViewData["Title"]</h1>
+<section class="para-container para-auth">
+@await Html.PartialAsync("_AuthStory")
+<div class="para-auth-content"><h1>@ViewData["Title"]</h1>
 <form method="post" action="@(confirm ? "/account/resend" : "/account/forgot")" class="panel">
   @Html.AntiForgeryToken()
   <label>@T["Email"]<input asp-for="Email" type="email" autocomplete="email" required maxlength="200" /></label>
   <button type="submit">@ViewData["Title"]</button><a href="/account/login">@T["SignIn"]</a>
-</form></section>
+</form></div>
+</section>

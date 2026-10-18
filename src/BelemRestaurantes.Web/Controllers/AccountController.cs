@@ -158,6 +158,37 @@ public sealed class AccountController(
         return View(sessions);
     }
 
+    [HttpGet("favorites")]
+    public async Task<IActionResult> Favorites([FromServices] IFavoriteRepository favorites,
+        [FromServices] IRestaurantReadRepository catalog, CancellationToken ct)
+    {
+        var ids = await favorites.ListAsync(Subject(), ct);
+        var restaurants = new List<Application.Models.RestaurantView>();
+        foreach (var id in ids)
+        {
+            var restaurant = await catalog.GetPublishedAsync(id, ct);
+            if (restaurant is not null) restaurants.Add(restaurant);
+        }
+        return View(restaurants);
+    }
+
+    [HttpPost("favorites/{id:long}/remove")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveFavorite(long id, [FromServices] IFavoriteRepository favorites, CancellationToken ct)
+    {
+        await favorites.RemoveAsync(Subject(), id, ct);
+        return RedirectToAction(nameof(Favorites));
+    }
+
+    [HttpPost("favorites/{id:long}/add")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddFavorite(long id, [FromServices] IFavoriteRepository favorites, CancellationToken ct)
+    {
+        if (id <= 0) return BadRequest();
+        await favorites.AddAsync(Subject(), id, ct);
+        return RedirectToAction(nameof(Favorites));
+    }
+
     [HttpPost("profile")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile([FromForm] string fullName, [FromForm] string? bio, CancellationToken ct)

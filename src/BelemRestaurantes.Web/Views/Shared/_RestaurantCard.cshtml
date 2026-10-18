@@ -1,0 +1,10 @@
+@model BelemRestaurantes.Application.Models.RestaurantView
+<article class="para-restaurant">
+  <a href="/establishment/@Model.Id" class="para-restaurant-media" tabindex="-1" aria-hidden="true">
+  @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl) && (Model.PhotoUrl.StartsWith("/media/", StringComparison.Ordinal) || (Uri.TryCreate(Model.PhotoUrl, UriKind.Absolute, out var photo) && photo.Scheme == "https")))
+  { <img src="@Model.PhotoUrl" alt="" loading="lazy" width="640" height="420" /> }
+  else
+  { <div class="para-restaurant-placeholder">@await Html.PartialAsync("_ParaIcon", "cuia")<span>Sabores da nossa terra</span><small>Foto ainda não disponível</small></div> }
+  </a>
+  <div class="para-restaurant-body"><span class="para-eyebrow">@(Model.Category ?? "Gastronomia paraense")</span><h3><a href="/establishment/@Model.Id">@Model.Name</a></h3><p>@Model.City @(!string.IsNullOrWhiteSpace(Model.Neighborhood) ? "· " + Model.Neighborhood : "")</p><div><span>@(Model.Address ?? "Endereço em revisão")</span><a href="/establishment/@Model.Id" aria-label="Ver @Model.Name">↗</a></div></div>
+</article>

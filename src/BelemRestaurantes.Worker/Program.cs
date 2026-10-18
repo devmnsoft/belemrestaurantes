@@ -12,20 +12,27 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Host.CreateDefaultBuilder(args)
+        using var host = Host.CreateDefaultBuilder(args)
+            .UseContentRoot(AppContext.BaseDirectory)
             .UseWindowsService(options => options.ServiceName = "BelemRestauranteCuiaDiscovery")
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddApplication();
                 services.AddInfrastructure(hostContext.Configuration);
+                services.AddHostedService<ConfigurationDiagnosticsService>();
                 services.AddHostedService<MigrationHostedService>();
                 services.AddHostedService<DiscoveryHostedService>();
                 services.AddHostedService<EmailHostedService>();
                 services.AddHostedService<CrawlerHostedService>();
             })
             .ConfigureLogging(logging => logging.AddConsole())
-            .Build()
-            .Run();
+            .Build();
+        if (args.Contains("--verify-discovery", StringComparer.Ordinal))
+        {
+            DiscoveryEvidence.PrintAsync(host.Services).GetAwaiter().GetResult();
+            return;
+        }
+        host.Run();
     }
 }
 

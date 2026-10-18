@@ -86,59 +86,9 @@
     }
     else
     {
-        <div class="cuia-grid-cards">
-            @foreach (var res in Model.Items)
-            {
-                <article class="cuia-establishment-card">
-                    <div class="cuia-establishment-media">
-                        @if (!string.IsNullOrEmpty(res.PhotoUrl))
-                        {
-                            <img src="@res.PhotoUrl" alt="@res.Name" loading="lazy" />
-                        }
-                        else
-                        {
-                            <div style="height: 100%; display: grid; place-items: center; color: var(--tucupi-500, #e8ad46); font-size: 32px; background: linear-gradient(135deg, #113F32, #1b5e4b);">
-                                ✦
-                            </div>
-                        }
-
-                        <div class="cuia-card-badge-top">
-                            @if (!string.IsNullOrEmpty(res.Category))
-                            {
-                                <span class="cuia-tag cuia-tag-floresta">@res.Category</span>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="cuia-establishment-content">
-                        <div>
-                            <h3 class="cuia-establishment-name">
-                                <a href="/estabelecimento/@res.Id" class="cuia-establishment-link">@res.Name</a>
-                            </h3>
-
-                            <div class="cuia-establishment-meta">
-                                <span>@res.Neighborhood, @res.City</span>
-                            </div>
-
-                            @if (!string.IsNullOrEmpty(res.Address))
-                            {
-                                <div style="font-size: 13px; color: var(--texto-secundario, #4b635a); margin-top: 4px;">
-                                    @res.Address
-                                </div>
-                            }
-                        </div>
-
-                        <div class="cuia-establishment-actions">
-                            <a href="/cardapio/@res.Id" class="cuia-btn cuia-btn-primary cuia-btn-sm">
-                                Cardápio
-                            </a>
-                            <a href="/estabelecimento/@res.Id" class="cuia-btn cuia-btn-outline cuia-btn-sm">
-                                Detalhes →
-                            </a>
-                        </div>
-                    </div>
-                </article>
-            }
+        <div class="para-restaurant-grid">
+            @foreach (var restaurant in Model.Items)
+            { @await Html.PartialAsync("_RestaurantCard", restaurant) }
         </div>
 
         <!-- Paginação V5 -->
@@ -147,7 +97,7 @@
             <div style="display: flex; justify-content: center; gap: 8px; margin-top: 40px; align-items: center;">
                 @if (Model.Page > 1)
                 {
-                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&page=@(Model.Page - 1)" class="cuia-btn cuia-btn-outline cuia-btn-sm">
+                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&neighborhood=@Uri.EscapeDataString(selectedNeighborhood ?? "")&page=@(Model.Page - 1)" class="cuia-btn cuia-btn-outline cuia-btn-sm">
                         ← Anterior
                     </a>
                 }
@@ -158,7 +108,7 @@
 
                 @if (Model.Page < Model.TotalPages)
                 {
-                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&page=@(Model.Page + 1)" class="cuia-btn cuia-btn-outline cuia-btn-sm">
+                    <a href="/busca?q=@Uri.EscapeDataString(searchTerm ?? "")&city=@Uri.EscapeDataString(selectedCity ?? "")&category=@Uri.EscapeDataString(selectedCategory ?? "")&neighborhood=@Uri.EscapeDataString(selectedNeighborhood ?? "")&page=@(Model.Page + 1)" class="cuia-btn cuia-btn-outline cuia-btn-sm">
                         Próxima →
                     </a>
                 }

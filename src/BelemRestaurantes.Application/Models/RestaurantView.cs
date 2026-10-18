@@ -64,6 +64,14 @@ public sealed record DiscoveredPlace(
     int? GoogleRatingCount,
     IReadOnlyList<string> Types)
 {
+    public string? Phone { get; init; }
+    public string? State { get; init; }
+    public string? BusinessStatus { get; init; }
+    public string? Instagram { get; init; }
+    public string? Facebook { get; init; }
+    public string? TikTok { get; init; }
+    public string? YouTube { get; init; }
+
     /// <summary>Nome normalizado, usado como chave de deduplicação.</summary>
     public string NormalizedName => NameNormalizer.Normalize(Name);
 

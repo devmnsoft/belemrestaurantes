@@ -81,10 +81,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IEmailDispatcher, Members.MySqlEmailDispatcher>();
 
         // Persistência.
-        services.AddSingleton(_ =>
+        services.AddSingleton(sp =>
         {
             var connectionString = configuration.GetConnectionString("MySql");
-            return new MySqlConnectionFactory(connectionString ?? string.Empty);
+            return new MySqlConnectionFactory(connectionString ?? string.Empty,
+                sp.GetService<Microsoft.Extensions.Hosting.IHostEnvironment>()?.EnvironmentName);
         });
 
         services.AddScoped<IRestaurantReadRepository, MySqlRestaurantReadRepository>();
@@ -164,7 +165,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         return new AiProviderOptions
         {
-            ApiKey = Environment.GetEnvironmentVariable($"{sectionName.ToUpperInvariant()}_API_KEY"),
+            ApiKey = Environment.GetEnvironmentVariable($"{sectionName.ToUpperInvariant()}_API_KEY") ?? section["ApiKey"],
             BaseUrl = section["BaseUrl"] ?? defaultBaseUrl,
             Model = section["Model"] ?? defaultModel,
             InputMicrosPerThousand = inputMicrosPerThousand,

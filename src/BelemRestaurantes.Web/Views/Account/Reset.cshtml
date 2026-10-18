@@ -1,11 +1,14 @@
 @model BelemRestaurantes.Web.Models.ResetInput
 @{ ViewData["Title"] = T["NewPassword"].Value; }
-<section class="shell section narrow"><h1>@T["NewPassword"]</h1>
+<section class="para-container para-auth">
+@await Html.PartialAsync("_AuthStory")
+<div class="para-auth-content"><h1>@T["NewPassword"]</h1>
 <form method="post" action="/account/reset" class="panel" data-token-form>
   @Html.AntiForgeryToken()<input asp-for="Token" type="hidden" data-account-token />
   <label>@T["Password"]<input name="Password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></label>
   <label>@T["ConfirmPassword"]<input name="ConfirmPassword" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></label>
   <p class="muted">@T["PasswordRules"]</p><div asp-validation-summary="All" role="alert"></div>
   <button type="submit" disabled>@T["NewPassword"]</button>
-</form></section>
+</form></div>
+</section>
 @section Scripts { <script src="~/js/account.js" asp-append-version="true"></script> }

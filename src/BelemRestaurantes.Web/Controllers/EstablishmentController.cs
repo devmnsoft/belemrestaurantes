@@ -19,6 +19,7 @@ public sealed class EstablishmentController(
     private string? ViewerUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier);
 
     [HttpGet("{id:long}")]
+    [HttpGet("/estabelecimento/{id:long}")]
     public async Task<IActionResult> Details(long id, CancellationToken ct)
     {
         var establishment = await repo.GetPublishedAsync(id, ct);

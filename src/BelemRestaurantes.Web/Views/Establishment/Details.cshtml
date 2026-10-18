@@ -38,7 +38,7 @@
 
   <!-- Banner Principal do Restaurante V5 -->
   <div class="cuia-card" style="padding: 0; overflow: hidden; margin-bottom: 32px;">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));">
       <!-- Foto de Capa -->
       <div style="height: 360px; background: var(--floresta-900, #113F32); position: relative;">
         @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
@@ -94,10 +94,11 @@
           <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">
             Como Chegar (Mapa) ↗
           </a>
-          <button type="button" class="cuia-btn cuia-btn-outline cuia-btn-sm" onclick="navigator.clipboard.writeText(window.location.href); alert('Link do restaurante copiado!');">
+          <button type="button" class="cuia-btn cuia-btn-outline cuia-btn-sm" data-copy-url="true">
             Compartilhar
           </button>
-          <a href="/#indicacao" class="cuia-btn cuia-btn-outline cuia-btn-sm" style="color: var(--texto-secundario);">
+          <form method="post" action="/account/favorites/@Model.Id/add">@Html.AntiForgeryToken()<button type="submit" class="cuia-btn cuia-btn-outline cuia-btn-sm">Salvar nos favoritos</button></form>
+          <a href="mailto:comercial@belemrestaurantes.com.br" class="cuia-btn cuia-btn-outline cuia-btn-sm" style="color: var(--texto-secundario);">
             Sugerir Correção
           </a>
         </div>
@@ -105,7 +106,7 @@
     </div>
   </div>
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; align-items: start;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 32px; align-items: start;">
     <!-- Coluna Esquerda: Informações & Mobilidade -->
     <div>
       <!-- Cardápio Digital Rápido -->
