@@ -11,7 +11,7 @@ namespace BelemRestaurantes.Worker;
 
 /// <summary>
 /// Cuia Crawler como serviço autônomo em background no Worker/Windows Service.
-/// Executa ciclos a cada 10 minutos para pesquisa e extração contínua e gentil de fontes públicas.
+/// Executa ciclos com frequência configurável, respeitando limites e regras das fontes públicas.
 /// </summary>
 public sealed class CrawlerHostedService : BackgroundService
 {
@@ -38,7 +38,7 @@ public sealed class CrawlerHostedService : BackgroundService
             return;
         }
 
-        var intervalMinutes = Math.Max(5, _configuration.GetValue<int>("Crawler:IntervalMinutes", 10));
+        var intervalMinutes = Math.Max(1, _configuration.GetValue<int>("Crawler:IntervalMinutes", 10));
         var every = TimeSpan.FromMinutes(intervalMinutes);
         var maxTasks = Math.Clamp(_configuration.GetValue<int>("Crawler:MaxTasksPerCycle", 10), 1, 30);
 
