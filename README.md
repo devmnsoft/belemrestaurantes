@@ -5,6 +5,8 @@ Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10
 **E-mail Oficial:** `comercial@belemrestaurantes.com.br`  
 **Ambiente:** VPS Windows + IIS 10; Publicação manual pelo Visual Studio Community 2026; Descoberta autônoma contínua via Windows Service `BelemRestauranteCuiaDiscovery`.
 
+> **Sprints 16 e 17 — operação e visitas:** central de aprovação em lote, monitoramento do Worker, três contas reais de homologação com MFA e troca inicial, gestão de acessos e conteúdo editorial, Cuia Rotas, horários com procedência e administração de fontes/tarifas. Consulte [funcionalidades, acesso local, testes e pendências externas](docs/SPRINT16-17-REPORT.md). O planejamento não inventa linhas, tarifas ou funcionamento; integrações externas ainda não homologadas estão identificadas no relatório.
+
 > **Sprint 15 — validação de 18/10/2026:** adicionados **5.266 cadastros reais de empresas do setor de alimentação**, totalizando **5.747 em 135 municípios do Pará**, pendentes de moderação. Nova identidade editorial “O Pará. À flor do paladar.”, arte amazônica original, explorador de municípios, busca e entrada em PT/EN/ES. Consulte [relatório, evidências e limites da fonte](docs/SPRINT15-REPORT.md). Histórico: [Sprint 14](docs/SPRINT14-REPORT.md), [Sprint 13](docs/SPRINT13-REPORT.md) e [Sprint 12](docs/SPRINT12-REPORT.md).
 
 
