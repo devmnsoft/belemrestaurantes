@@ -68,7 +68,7 @@ Google Routes requer `GoogleRoutes:Enabled=true`, `GoogleRoutes:ApiKey` válida 
 
 Build Release: **zero avisos e zero erros**. Migrações 021–023 aplicadas e reaplicação idempotente verificada, sem alterar scripts anteriores ou recriar o banco.
 
-- **210 testes unitários aprovados**: parsing de turnos, intervalos, madrugada, exceções, fechamento temporário, reserva, estados desconhecidos, links sem origem e respostas de transporte sem tarifa inventada.
+- **213 testes unitários aprovados**: parsing de turnos, intervalos, madrugada, exceções, fechamento temporário, reserva, estados desconhecidos, links sem origem e respostas de transporte sem tarifa inventada.
 - **87 testes de integração aprovados**, na seleção que inclui migrações, localização, endpoints, segurança, ingestão, moderação, proximidade e novas jornadas. Novos testes verificam seleção fixa, revalidação após alterações, isolamento por ator, auditoria, idempotência, publicação real, precedência do parceiro, histórico e versão dos horários, tarifas vencidas, criação de alvo oficial e rejeição de município inexistente.
 - As três contas solicitadas foram verificadas com `BELRESTAURANTES_VERIFY_HOMOLOGATION=true`, lendo o arquivo DPAPI sem imprimir senhas. Os testes completos de cookies reais, senha incorreta, bloqueio, matrícula e verificação TOTP, troca obrigatória, logout e restrições de papel usam três contas temporárias persistidas, removidas ao final. MFA não foi cadastrado em nome do operador nas contas definitivas.
 - **175 casos responsivos aprovados**, em 360, 390, 768, 1024 e 1440 pixels. Incluem páginas públicas, HTML administrativo capturado em host de teste autorizado e fixtures controladas de catálogo, restaurante, formulário de horários e planejador. Sem overflow horizontal, erros JavaScript ou violações detectadas no conjunto de regras axe WCAG A/AA usado. A inspeção não constitui certificação WCAG completa.
@@ -96,3 +96,10 @@ O primeiro envio da branch local foi bloqueado pela proteção de segredos do Gi
 O histórico local foi preservado. A branch de revisão `sprint17/cuia-mobilidade-revisao` usa uma fotografia saneada da base local com ancestral remoto limpo, seguida dos commits por módulo. O plano de recuperação já presente no remoto também foi preservado. A comparação das árvores Git verifica que a publicação contém os mesmos arquivos validados neste ambiente. Não há force push nem alteração da branch principal.
 
 Foram verificados os 396 arquivos então rastreados, sem os padrões de credenciais GCP, Groq, OAuth ou GitHub nos arquivos atuais. Isso não substitui a revogação das credenciais antigas pelo titular.
+
+
+## Compatibilidade de instalação nova no MySQL 8
+
+O CI com banco vazio identificou sintaxe `ADD COLUMN IF NOT EXISTS` nas migrações históricas 014 e 015, aceita no MariaDB e incompatível com MySQL 8. O migrador agora executa essas adições condicionalmente por coluna, consultando `information_schema` sob o mesmo bloqueio de migrações. O adaptador é restrito a esses dois scripts e preserva seus conteúdos e checksums; não libera automaticamente tentativas interrompidas. Três testes adicionais verificam as sete adições, a preservação do ENUM com vírgulas e a restrição do adaptador aos scripts legados.
+
+A validação remota usa MySQL 8.4 em instância efêmera. Os resultados do CI são consultáveis em [GitHub Actions da branch de revisão](https://github.com/devmnsoft/belemrestaurantes/actions?query=branch%3Asprint17%2Fcuia-mobilidade-revisao). Os 87 testes de integração locais foram executados no banco MariaDB existente; a suíte completa de concorrência é reservada ao banco isolado do CI.
