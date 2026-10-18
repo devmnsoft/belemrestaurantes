@@ -2,7 +2,7 @@ namespace BelemRestaurantes.Application.Models;
 
 public sealed record ModerationFilter(string? Term = null, string? City = null, string? Category = null,
     string? Source = null, string? Completeness = null, string? Duplicate = null,
-    DateTime? From = null, DateTime? Until = null,string? Stage=null,string? Sort=null);
+    DateTime? From = null, DateTime? Until = null,string? Stage=null,string? Sort=null,int PageSize=30);
 public sealed class ModerationCandidate
 {
     public long Id { get; set; }

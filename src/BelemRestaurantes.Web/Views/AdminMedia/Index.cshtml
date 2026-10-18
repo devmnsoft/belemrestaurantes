@@ -1,0 +1,16 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantMedia>
+@{Layout="_AdminLayout";ViewData["Title"]="Vídeos do restaurante";var restaurantId=(long)ViewData["RestaurantId"]!;}
+<section class="para-operations"><span class="para-eyebrow">CUIA · IMAGENS EM MOVIMENTO</span><h1>Vídeos de @ViewData["RestaurantName"]</h1><p>Relacione apenas vídeos cuja fonte e ligação com o estabelecimento você conferiu. O link não transfere os direitos autorais do conteúdo.</p>
+<a href="/admin/restaurants">Voltar ao catálogo</a>
+<form method="post" action="/admin/midias/video" class="panel media-editor">@Html.AntiForgeryToken()<input type="hidden" name="restaurantId" value="@restaurantId"/>
+<label for="video-title">Título e autoria</label><input id="video-title" name="title" maxlength="255" required/>
+<label for="video-url">Link do vídeo</label><input id="video-url" name="url" type="url" maxlength="500" required aria-describedby="video-help"/><p id="video-help">YouTube, Instagram, TikTok ou Globoplay. Use o link de um vídeo, não de um perfil.</p>
+<label for="video-source">Página que confirma a fonte e a relação com o restaurante</label><input id="video-source" name="sourceUrl" type="url" maxlength="255" required/>
+<label><input type="checkbox" name="reviewed" value="true" required/> Conferi a autoria, o conteúdo e a relação com este restaurante.</label><button class="para-button">Enviar para revisão</button></form>
+<h2>Biblioteca de vídeos</h2>
+@if(!Model.Any(m=>m.MediaType=="video_embed")){<p class="para-empty">Nenhum vídeo cadastrado. Adicione o primeiro link verificado acima.</p>}
+<div class="para-review-grid">@foreach(var item in Model.Where(m=>m.MediaType=="video_embed")){<article class="para-review-card"><h3>@item.AttributionText</h3><p>Situação: @(item.Status=="approved"?"Aprovado":item.Status=="rejected"?"Rejeitado":"Aguardando revisão")</p>
+@if(BelemRestaurantes.Web.Models.RestaurantVideo.From(item.MediaUrl) is {} video){<a href="@video.Url" target="_blank" rel="noopener noreferrer">Conferir no @video.Platform ↗</a>}
+@if(Uri.TryCreate(item.SourceOrigin,UriKind.Absolute,out var source)&&source.Scheme=="https"){<p><a href="@source.AbsoluteUri" target="_blank" rel="noopener noreferrer">Conferir fonte ↗</a></p>}
+@if(User.IsInRole(AdminRoles.PlatformAdmin)||User.IsInRole(AdminRoles.Moderator)){<form method="post" action="/admin/midias/decidir">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@item.Id"/><input type="hidden" name="restaurantId" value="@restaurantId"/><button name="decision" value="approved">Aprovar vídeo</button><button name="decision" value="rejected">Rejeitar ou retirar</button></form>}
+</article>}</div></section>

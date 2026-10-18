@@ -1,0 +1,44 @@
+@model string
+@{var art=BelemRestaurantes.Web.Models.CategoryArtwork.For(Model);}
+<figure class="category-artwork category-artwork-@art.Key">
+<svg viewBox="0 0 640 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração de categoria: @art.Label">
+  <rect width="640" height="420" fill="#e9e5d5" />
+  <path d="M0 0H640V110C450 5 230 225 0 110Z" fill="#143f32" />
+  <path d="M0 330Q180 220 350 340T640 330V420H0Z" fill="#b6c6ac" />
+  <path d="M20 370Q180 260 350 380T660 370M-20 390Q180 280 350 400T660 390" fill="none" stroke="#526e56" stroke-width="2" />
+  <circle cx="560" cy="77" r="24" fill="#efb645" />
+  <path d="M68 110L84 126L68 142L52 126ZM100 142L116 158L100 174L84 158Z" fill="none" stroke="#a63725" stroke-width="4" />
+  <ellipse cx="330" cy="330" rx="178" ry="25" fill="#143f32" opacity=".16" />
+  @switch(art.Key)
+  {
+    case "pizza":
+      <g stroke="#743e24" stroke-width="7" stroke-linejoin="round"><circle cx="326" cy="223" r="123" fill="#dca35a"/><circle cx="326" cy="223" r="105" fill="#f4ce72"/><path d="M326 118V328M221 223H431M250 148L400 298M250 298L400 148" fill="none" stroke="#c98d36" stroke-width="3"/><g fill="#a63725" stroke="none"><circle cx="282" cy="172" r="18"/><circle cx="366" cy="184" r="18"/><circle cx="292" cy="264" r="18"/><circle cx="370" cy="268" r="18"/></g><path d="M322 176Q340 200 312 213Q290 196 322 176M245 228Q270 210 275 236Q259 258 245 228M347 298Q319 301 324 276Q351 275 347 298" fill="#356044" stroke="none"/></g>
+      break;
+    case "acai":
+      <g><path d="M187 210Q200 346 330 346Q448 346 467 210Z" fill="#b27741" stroke="#694b2b" stroke-width="7"/><ellipse cx="327" cy="209" rx="140" ry="48" fill="#563153" stroke="#694b2b" stroke-width="7"/><path d="M217 265Q327 320 438 265M239 305Q327 341 414 305" fill="none" stroke="#e3b16f" stroke-width="6"/><path d="M358 182L411 85" stroke="#e8c68d" stroke-width="15" stroke-linecap="round"/><g fill="#382738"><circle cx="274" cy="192" r="17"/><circle cx="299" cy="182" r="15"/><circle cx="290" cy="213" r="16"/></g><path d="M260 156Q235 100 204 118Q210 155 260 156" fill="#356044"/></g>
+      break;
+    case "coffee":
+      <g stroke="#143f32" stroke-width="7"><ellipse cx="320" cy="320" rx="145" ry="24" fill="#c2996c"/><path d="M401 183Q476 180 457 232Q444 262 401 253" fill="none" stroke-width="15"/><path d="M217 185H413L399 270Q382 318 315 316Q243 315 230 270Z" fill="#fff6df"/><ellipse cx="315" cy="185" rx="98" ry="26" fill="#67432e"/><path d="M275 140Q251 120 275 98M321 135Q297 110 321 86M364 138Q340 113 364 91" fill="none" stroke="#7c8d70" stroke-width="5" stroke-linecap="round"/></g>
+      break;
+    case "bread":
+      <g transform="rotate(-12 320 230)"><ellipse cx="321" cy="246" rx="162" ry="90" fill="#ac6a34"/><ellipse cx="321" cy="222" rx="158" ry="87" fill="#e7b36a" stroke="#743e24" stroke-width="7"/><path d="M250 163L226 230M320 148L291 230M387 167L358 243" stroke="#fff0c4" stroke-width="18" stroke-linecap="round"/><path d="M200 269Q320 317 439 269" fill="none" stroke="#743e24" stroke-width="5"/></g>
+      break;
+    case "snack":
+      <g stroke="#743e24" stroke-width="6" stroke-linejoin="round"><path d="M191 210Q203 111 321 111Q438 111 452 210Z" fill="#e7b36a"/><path d="M193 226L230 211L270 233L312 212L353 233L394 214L449 231L443 252H199Z" fill="#547441"/><rect x="195" y="250" width="253" height="36" rx="18" fill="#67432e"/><path d="M197 247H444L381 270L320 247L261 266Z" fill="#efb645"/><path d="M195 294H448Q443 336 407 337H234Q199 337 195 294Z" fill="#e7b36a"/><path d="M269 150L278 153M324 138L334 142M373 159L384 160" stroke="#fff0c4" stroke-width="8" stroke-linecap="round"/></g>
+      break;
+    case "icecream":
+      <g stroke="#743e24" stroke-width="6" stroke-linejoin="round"><path d="M245 221H403L325 374Z" fill="#dca35a"/><path d="M273 240L343 337M306 230L364 301M378 243L304 333M348 231L286 300" stroke="#ac6a34" stroke-width="3"/><circle cx="276" cy="210" r="51" fill="#ead1ac"/><circle cx="370" cy="210" r="51" fill="#b66866"/><circle cx="323" cy="140" r="55" fill="#694267"/></g>
+      break;
+    case "bar":
+      <g stroke="#143f32" stroke-width="7" stroke-linejoin="round"><path d="M243 149H404L383 328H264Z" fill="#efb645"/><path d="M250 208H398M271 281L264 206M376 281L383 206" fill="none" stroke="#fff0c4" stroke-width="10"/><path d="M235 150Q224 118 257 112Q266 84 292 107Q321 74 342 106Q381 80 394 112Q430 110 413 150Z" fill="#fff6df"/></g>
+      break;
+    default:
+      <g><ellipse cx="324" cy="228" rx="160" ry="110" fill="#fff6df" stroke="#143f32" stroke-width="7"/><ellipse cx="324" cy="228" rx="135" ry="88" fill="none" stroke="#b6c6ac" stroke-width="3"/>
+      @if(art.Key=="fish") { <path d="M216 227Q290 139 387 223L437 188V268L387 233Q290 318 216 227Z" fill="#c2996c" stroke="#743e24" stroke-width="6"/><circle cx="251" cy="216" r="6" fill="#143f32"/><path d="M287 197L306 226L287 256M316 190L338 226L316 264" fill="none" stroke="#743e24" stroke-width="4"/> }
+      else { <ellipse cx="290" cy="222" rx="68" ry="47" fill="#dca35a"/><path d="M303 252Q325 187 380 191Q420 227 369 265Z" fill="#a63725"/><path d="M241 245Q208 202 242 176Q287 166 288 211Q267 242 241 245M332 175Q352 135 385 156Q392 187 355 194Z" fill="#547441"/> }
+      </g>
+      break;
+  }
+</svg>
+<figcaption>Ilustração de categoria · @art.Label</figcaption>
+</figure>

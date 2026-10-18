@@ -17,9 +17,11 @@ if (!string.IsNullOrWhiteSpace(keysPath))
 
 builder.Services.AddControllersWithViews(options =>
 {
+    options.MaxModelBindingCollectionSize = 2000;
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
     // Revalida conta (ativa/bloqueada/papéis) a cada acesso por cookie admin.
 });
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options => options.ValueCountLimit = 4096);
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
@@ -144,7 +146,7 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=(self)";
     context.Response.Headers["Content-Security-Policy"] =
-        "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src https://www.openstreetmap.org; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
+        "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
     await next();
 });
 app.UseStaticFiles();

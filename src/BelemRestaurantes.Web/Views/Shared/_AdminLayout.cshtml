@@ -10,6 +10,7 @@
 <body class="para-admin" style="background-color: var(--creme-bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;">
 
   <a class="skip-link" href="#admin-main">Pular para o conteúdo</a>
+  @await Html.PartialAsync("_ReadingTools")
   <!-- Topbar Administrativa MNSOFT -->
   <header style="background-color: var(--forest-950); border-bottom: 2px solid var(--tucupi-500); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000;">
     <div style="display: flex; align-items: center; gap: 16px;">
@@ -194,6 +195,7 @@
   </div>
 
   <script src="~/js/para.js" asp-append-version="true" defer></script>
+  <script src="~/js/accessibility.js" asp-append-version="true" defer></script>
   @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

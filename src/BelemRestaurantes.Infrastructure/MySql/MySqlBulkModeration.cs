@@ -7,7 +7,7 @@ namespace BelemRestaurantes.Infrastructure.MySql;
 
 public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfiguration configuration)
 {
-    public int Limit => Math.Clamp(configuration.GetValue("Moderation:BatchLimit", 500), 1, 1000);
+    public int Limit => Math.Clamp(configuration.GetValue("Moderation:BatchLimit", 1000), 1, 2000);
     internal const string Select = """
         SELECT r.id Id,r.name Name,r.city City,r.category Category,r.address Address,r.neighborhood Neighborhood,
         r.phone Phone,r.created_source_url SourceUrl,r.google_place_id ExternalId,r.status Status,r.created_at DiscoveredAt,
@@ -27,10 +27,12 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
         var sql=FilteredSql(filter);
         var parameters=Parameters(filter);
         var count=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM ("+sql+") filtered",parameters,cancellationToken:ct));
-        page=Math.Clamp(page,1,Math.Max(1,(count+29)/30));
-        parameters.Add("offset",(page-1)*30);
-        var rows=(await db.QueryAsync<ModerationCandidate>(new CommandDefinition(sql+Order(filter)+" LIMIT 30 OFFSET @offset",parameters,cancellationToken:ct))).AsList();
-        return new(rows,page,30,count);
+        var pageSize = Math.Clamp(filter.PageSize, 30, 120);
+        page=Math.Clamp(page,1,Math.Max(1,(count+pageSize-1)/pageSize));
+        parameters.Add("offset",(page-1)*pageSize);
+        parameters.Add("pageSize",pageSize);
+        var rows=(await db.QueryAsync<ModerationCandidate>(new CommandDefinition(sql+Order(filter)+" LIMIT @pageSize OFFSET @offset",parameters,cancellationToken:ct))).AsList();
+        return new(rows,page,pageSize,count);
     }
     private async Task<List<ModerationCandidate>> CandidatesAsync(ModerationFilter f, CancellationToken ct)
     {
@@ -52,7 +54,7 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
         return new DynamicParameters(new { term=string.IsNullOrWhiteSpace(f.Term)?null:"%"+MySqlRestaurantReadRepository.EscapeLike(f.Term.Trim()[..Math.Min(f.Term.Trim().Length,160)])+"%",
             city=Clean(f.City),category=Clean(f.Category),source=Clean(f.Source),from=f.From?.Date,until=f.Until?.Date.AddDays(1),
             duplicate=f.Duplicate=="yes"?(bool?)true:f.Duplicate=="no"?false:null,
-            eligible=f.Completeness=="eligible"?(bool?)true:f.Completeness=="incomplete"?false:null,limit=Limit+1,
+            eligible=f.Completeness=="eligible"?(bool?)true:f.Completeness=="incomplete"?false:null,limit=Limit,
             stage=f.Stage is "approved" or "published" or "rejected" or "archived" or "blocked"?f.Stage:"pending" });
     }
     private static string Order(ModerationFilter f)=>f.Sort switch{"name"=>" ORDER BY Name,Id","recent"=>" ORDER BY DiscoveredAt DESC,Id DESC","city"=>" ORDER BY City,Name,Id",_=>" ORDER BY DiscoveredAt,Id"};

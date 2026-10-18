@@ -32,6 +32,7 @@
 </head>
 <body class="para-public">
 <a class="skip-link" href="#main-content">@T["AtlasSkip"]</a>
+@await Html.PartialAsync("_ReadingTools")
 <div class="para-ribbon" lang="@editorialLanguage">@T["AtlasRibbon"]</div>
 <header class="para-header">
   <a asp-controller="Home" asp-action="Index" class="para-brand">
@@ -67,6 +68,7 @@
   <div class="para-container para-footer-bottom"><span>Belém Restaurantes · MNSOFT</span><small>@T["ExternalNotice"]</small></div>
 </footer>
 <script src="~/js/para.js" asp-append-version="true" defer></script>
+<script src="~/js/accessibility.js" asp-append-version="true" defer></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>

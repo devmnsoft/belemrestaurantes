@@ -52,7 +52,11 @@ public sealed class AdminOperationsController(
         var total = await connection.ExecuteScalarAsync<int>(new CommandDefinition(countSql, new { Query = query, City = city }, cancellationToken: ct));
 
         const string listSql = """
-            SELECT id, name, city, neighborhood, category, price_range, state, cuia_score, updated_at, phone, address
+            SELECT id, name, city, neighborhood, category,
+                   CASE WHEN price_min IS NULL AND price_max IS NULL THEN NULL
+                        ELSE CONCAT(COALESCE(CAST(price_min AS CHAR),'?'),' – ',COALESCE(CAST(price_max AS CHAR),'?')) END AS price_range,
+                   status AS state, (SELECT MAX(c.score) FROM cuia_rankings c WHERE c.restaurant_id=restaurants.id) AS cuia_score,
+                   updated_at, phone, address
             FROM restaurants
             WHERE (@Query IS NULL OR name LIKE CONCAT('%', @Query, '%'))
               AND (@City IS NULL OR city = @City)
@@ -61,7 +65,8 @@ public sealed class AdminOperationsController(
             """;
 
         const int pageSize = 30;
-        var offset = Math.Max(0, (page - 1) * pageSize);
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(total / (double)pageSize)));
+        var offset = (page - 1) * pageSize;
 
         var list = (await connection.QueryAsync<RestaurantAdminRow>(new CommandDefinition(
             listSql,
@@ -480,7 +485,7 @@ public sealed class RestaurantAdminRow
     public string? category { get; set; }
     public string? price_range { get; set; }
     public string state { get; set; } = "";
-    public decimal cuia_score { get; set; }
+    public decimal? cuia_score { get; set; }
     public DateTimeOffset updated_at { get; set; }
     public string? phone { get; set; }
     public string? address { get; set; }

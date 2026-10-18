@@ -23,7 +23,7 @@
       @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl) && (Model.PhotoUrl.StartsWith("/media/", StringComparison.Ordinal) || (Uri.TryCreate(Model.PhotoUrl, UriKind.Absolute, out var heroPhotoUri) && heroPhotoUri.Scheme == "https")))
       { <img src="@Model.PhotoUrl" alt="Foto de @Model.Name" width="900" height="700" fetchpriority="high" /> }
       else
-      { <div class="para-detail-placeholder">@await Html.PartialAsync("_ParaIcon", "cuia")<strong>O sabor mora aqui.</strong><span>Este lugar ainda não tem foto no guia.</span></div> }
+      { @await Html.PartialAsync("_CategoryArtwork",Model.Category ?? "Restaurante") }
       @if(cuiaBadges.Count>0) { <div class="para-detail-badges">@foreach(var badge in cuiaBadges) { <span class="cuia-tag cuia-tag-tucupi">Selo Cuia · @badge.BadgeTitle</span> }</div> }
     </div>
     <div class="para-detail-info"><span class="para-eyebrow">@Model.Category · @Model.City</span><h1>@Model.Name</h1><p class="para-detail-address">@(Model.Address ?? "Endereço completo em revisão") @(!string.IsNullOrWhiteSpace(Model.Neighborhood) ? "· " + Model.Neighborhood : "")</p>
@@ -44,6 +44,7 @@
     </div>
   </article>
   <div class="para-detail-quick-links"><a href="/cardapio/@Model.Id">Ver cardápio ↗</a><a href="/experience/create?restaurantId=@Model.Id">Contar minha experiência ↗</a><a href="/partner/claim/@Model.Id">Esse restaurante é seu? Reivindique ↗</a></div>
+  @await Html.PartialAsync("_RestaurantVideos", ViewData["MediaList"] as IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantMedia> ?? [])
   <section class="visit-panel" lang="pt-BR" aria-labelledby="visit-section"><span class="para-eyebrow">CUIA MOBILIDADE 360</span><h2 id="visit-section">Como chegar e quando visitar</h2><p class="visit-status">@((ViewData["OpeningAssessment"] as BelemRestaurantes.Application.Models.OpeningAssessment)?.Message??"Horário não confirmado")</p><p>Ônibus, BRT, caminhada, bicicleta, carro e referências de transporte fluvial. Confira trajetos, funcionamento e informações disponíveis antes de sair.</p><a href="/cuia-rotas?restaurantId=@Model.Id" class="para-button">Planejar minha visita →</a></section>
   <details class="visit-panel"><summary>Ver localização no mapa</summary>@if(Model.Latitude is {} lat && Model.Longitude is {} lng){<p>O mapa externo carrega após seu clique e mostra somente o destino informado pela fonte.</p><button type="button" class="visit-text-button" data-load-map="@FormattableString.Invariant($"https://www.openstreetmap.org/export/embed.html?bbox={lng-0.006}%2C{lat-0.004}%2C{lng+0.006}%2C{lat+0.004}&layer=mapnik&marker={lat}%2C{lng}")">Carregar mapa interativo</button><div id="visit-map"></div><p>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></p>}else{<p>Coordenadas não confirmadas. Consulte o endereço e planeje a visita no Cuia Rotas.</p>}</details>
   @if(recipes.Count>0){<section class="recipe-related"><div class="para-section-heading"><div><span class="para-eyebrow">O PARÁ NA SUA COZINHA</span><h2>Quer fazer algo parecido em casa?</h2><p>Adaptações editoriais relacionadas ao tema. Não reproduzem receitas oficiais deste estabelecimento.</p></div><a href="/receitas?RestaurantId=@Model.Id" class="para-text-link">Ver receitas relacionadas ↗</a></div><div class="recipe-grid">@foreach(var recipe in recipes){@await Html.PartialAsync("_RecipeCard",recipe)}</div></section>}
@@ -116,10 +117,10 @@
         {
           <h4 style="font-size: 14px; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Mídias Licenciadas & Experiências</h4>
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 18px;">
-            @foreach (var m in mediaList)
+            @foreach (var m in mediaList.Where(m=>m.MediaType!="video_embed" && Uri.TryCreate(m.MediaUrl,UriKind.Absolute,out var photoUri) && photoUri.Scheme=="https"))
             {
               <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--borda-suave, #e2e8df); background: #f9fafb;" title="@m.AttributionText (@m.LicenseType)">
-                <img src="@m.MediaUrl" alt="Mídia de @Model.Name" style="width: 100%; height: 90px; object-fit: cover;" loading="lazy" onerror="this.src='/images/placeholder-restaurant.jpg';" />
+                <img src="@m.MediaUrl" alt="Mídia de @Model.Name" style="width: 100%; height: 90px; object-fit: cover;" loading="lazy" />
                 <div style="font-size: 10px; color: var(--texto-secundario, #4b635a); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                   @m.AttributionText
                 </div>
@@ -246,4 +247,4 @@
     </div>
   </div>
 </div>
-@section Scripts{<script src="~/js/visit.js" asp-append-version="true" defer></script>}
+@section Scripts{<script src="~/js/videos.js" asp-append-version="true" defer></script><script src="~/js/visit.js" asp-append-version="true" defer></script>}

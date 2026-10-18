@@ -15,10 +15,10 @@ namespace BelemRestaurantes.IntegrationTests;
 [Collection("MySql")]
 public sealed class AdminLifecycleTests
 {
-    [Theory][InlineData("superadmin.mnsoft",AdminRoles.PlatformAdmin)][InlineData("operador.teste",AdminRoles.Operator)][InlineData("editor.teste",AdminRoles.Editor)]
+    [LocalHomologationTheory][InlineData("superadmin.mnsoft",AdminRoles.PlatformAdmin)][InlineData("operador.teste",AdminRoles.Operator)][InlineData("editor.teste",AdminRoles.Editor)]
     public async Task RequestedPersistentAccountsHaveValidProtectedCredentialsAndPasswordChallenge(string name,string role)
     {
-        if(!OperatingSystem.IsWindows()||Environment.GetEnvironmentVariable("BELRESTAURANTES_VERIFY_HOMOLOGATION")!="true")return;
+        if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException("DPAPI exige Windows.");
         using var app=Factory();using var scope=app.Services.CreateScope();
         var path=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"MNSOFT","BelemRestaurantes","homologacao.credentials.dpapi");
         var bytes=ProtectedData.Unprotect(await File.ReadAllBytesAsync(path),null,DataProtectionScope.CurrentUser);
@@ -86,4 +86,13 @@ public sealed class AdminLifecycleTests
     private static string Token(string html)=>WebUtility.HtmlDecode(Regex.Match(html,"name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
     private static FormUrlEncodedContent Form(string token,params (string Key,string Value)[] pairs)=>new(pairs.Select(p=>new KeyValuePair<string,string>(p.Key,p.Value)).Append(new("__RequestVerificationToken",token)));
     private static WebApplicationFactory<Program> Factory()=>new WebApplicationFactory<Program>().WithWebHostBuilder(builder=>builder.UseEnvironment("Development").ConfigureAppConfiguration((_,config)=>config.AddInMemoryCollection(new Dictionary<string,string?>{["ConnectionStrings:MySql"]=DatabaseEnvironment.ConnectionString()})));
+}
+
+public sealed class LocalHomologationTheoryAttribute : TheoryAttribute
+{
+    public LocalHomologationTheoryAttribute()
+    {
+        if(!OperatingSystem.IsWindows()||Environment.GetEnvironmentVariable("BELRESTAURANTES_VERIFY_HOMOLOGATION")!="true")
+            Skip="Verificação opcional das credenciais iniciais das contas reais não habilitada.";
+    }
 }
