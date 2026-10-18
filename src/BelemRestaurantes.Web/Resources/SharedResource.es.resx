@@ -709,4 +709,22 @@
   <data name="VisitHomeText" xml:space="preserve"><value>Planifica cómo llegar, consulta los horarios y la información disponible para tu visita.</value></data>
   <data name="VisitHomeAction" xml:space="preserve"><value>Planificar mi visita</value></data>
   <data name="VisitBusAction" xml:space="preserve"><value>¿Qué autobús tomo?</value></data>
+  <data name="ExpeditionEyebrow" xml:space="preserve"><value>EXPLORA EL TERRITORIO</value></data>
+  <data name="ExpeditionTitle" xml:space="preserve"><value>Todo Pará por descubrir.</value></data>
+  <data name="ExpeditionAccent" xml:space="preserve"><value>Tu próxima mesa.</value></data>
+  <data name="ExpeditionIntro" xml:space="preserve"><value>De los sabores de la capital a los encuentros del interior. Elige una región y descubre Pará a tu ritmo.</value></data>
+  <data name="ExpeditionMunicipalities" xml:space="preserve"><value>municipios para explorar</value></data>
+  <data name="ExpeditionTerritoryNote" xml:space="preserve"><value>El territorio oficial de Pará, organizado por región. La disponibilidad de establecimientos varía según el municipio.</value></data>
+  <data name="ExpeditionAllCities" xml:space="preserve"><value>Conoce los destinos</value></data>
+  <data name="ExpeditionRegionCount" xml:space="preserve"><value>{0} municipios · explorar región</value></data>
+  <data name="ExpeditionYourWay" xml:space="preserve"><value>A TU MANERA</value></data>
+  <data name="ExpeditionFormTitle" xml:space="preserve"><value>¿Adónde te lleva el sabor?</value></data>
+  <data name="ExpeditionFormNote" xml:space="preserve"><value>Busca establecimientos publicados. Confirma la atención antes de salir.</value></data>
+  <data name="ExpeditionCraving" xml:space="preserve"><value>¿Qué quieres probar?</value></data>
+  <data name="ExpeditionFind" xml:space="preserve"><value>Encontrar sabores</value></data>
+
+  <data name="RecipesHomeEyebrow" xml:space="preserve"><value>SABORES EN CASA</value></data>
+  <data name="RecipesHomeTitle" xml:space="preserve"><value>De Pará a tu cocina.</value></data>
+  <data name="RecipesHomeText" xml:space="preserve"><value>Una cuia, una historia y las ganas de cocinar. Abre nuestro cuaderno de adaptaciones inspiradas en los sabores de Pará.</value></data>
+  <data name="RecipesHomeAction" xml:space="preserve"><value>Explorar recetas</value></data>
 </root>

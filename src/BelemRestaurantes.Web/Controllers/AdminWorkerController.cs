@@ -10,12 +10,39 @@ namespace BelemRestaurantes.Web.Controllers;
 [Authorize(Policy="PlatformOperator"),Route("admin/operacao")]
 public sealed class AdminWorkerController(MySqlConnectionFactory factory,IDiscoveryQueue queue):Controller
 {
+    [HttpPost("manutencao"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> Maintenance(string kind,[FromServices] MySqlMaintenanceJobs jobs,CancellationToken ct)
+    {if(kind is not("hours" or "mobility"))return BadRequest();var id=await jobs.EnqueueAsync(kind,User.Identity!.Name!,ct);TempData["Flash"]=$"Verificação #{id} enfileirada. O Worker conferirá vigência e pendências dos dados cadastrados; esta ação não importa horários ou tarifas de fontes externas.";return RedirectToAction(nameof(Index));}
+    [HttpPost("plano-estadual"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> Statewide([FromServices] MySqlStatewideDiscoveryPlan plan,CancellationToken ct)
+    {var count=await plan.ConfigureAsync(User.Identity!.Name!,ct);TempData["Flash"]=$"Plano estadual configurado para {count} municípios. Novos alvos escalonados a cada dois minutos, atualização semanal e execução pelo Worker.";return RedirectToAction(nameof(Index));}
+    [HttpPost("enriquecer"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> Enrich(CancellationToken ct)
+    {
+        await using var db=await factory.OpenAsync(ct);
+        var locked=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT GET_LOCK('belrestaurante:manual-enrichment',5)",cancellationToken:ct));
+        if(locked!=1)return Conflict("Outra seleção de enriquecimento está em preparação.");
+        try{
+        await using var tx=await db.BeginTransactionAsync(ct);
+        var count=await db.ExecuteAsync(new CommandDefinition("""
+            INSERT INTO restaurant_enrichment_queue(restaurant_id,priority,state,next_attempt_at)
+            SELECT r.id,1,'pending',UTC_TIMESTAMP(6) FROM restaurants r
+            WHERE r.status IN ('pending','published') AND r.website IS NOT NULL
+              AND NOT EXISTS(SELECT 1 FROM restaurant_enrichment_queue q WHERE q.restaurant_id=r.id AND q.state IN ('pending','running'))
+              AND NOT EXISTS(SELECT 1 FROM restaurant_owners o WHERE o.restaurant_id=r.id)
+            ORDER BY r.updated_at,r.id LIMIT 100
+            """,transaction:tx,cancellationToken:ct));
+        await db.ExecuteAsync(new CommandDefinition("INSERT INTO audit_events(actor_subject,action,entity_type,metadata,occurred_at) VALUES(@actor,'crawler.enrichment_enqueue','crawler',@metadata,UTC_TIMESTAMP(6))",new{actor=User.Identity!.Name,metadata=JsonSerializer.Serialize(new{count})},tx,cancellationToken:ct));
+        await tx.CommitAsync(ct);TempData["Flash"]=$"{count} cadastros enfileirados para enriquecimento pelo Worker. Fontes e regras de acesso serão verificadas antes da consulta.";return RedirectToAction(nameof(Index));
+        }finally{await db.ExecuteAsync(new CommandDefinition("SELECT RELEASE_LOCK('belrestaurante:manual-enrichment')",cancellationToken:CancellationToken.None));}
+    }
     [HttpGet]
     public async Task<IActionResult> Index(string? city=null,int page=1,CancellationToken ct=default)
     {
         await using var db=await factory.OpenAsync(ct);
         ViewData["Heartbeats"]=(await db.QueryAsync(new CommandDefinition("SELECT * FROM worker_heartbeats ORDER BY heartbeat_at DESC LIMIT 10",cancellationToken:ct))).AsList();
         ViewData["Queue"]=(await db.QueryAsync(new CommandDefinition("SELECT state,COUNT(*) total FROM discovery_jobs GROUP BY state",cancellationToken:ct))).AsList();
+        ViewData["Maintenance"]=(await db.QueryAsync(new CommandDefinition("SELECT id,kind,state,attempts,result_json,last_error,created_at,completed_at FROM operational_maintenance_jobs ORDER BY id DESC LIMIT 8",cancellationToken:ct))).AsList();
         var term=string.IsNullOrWhiteSpace(city)?null:"%"+city.Trim()[..Math.Min(city.Trim().Length,100)].Replace("\\","\\\\").Replace("%","\\%").Replace("_","\\_")+"%";
         var total=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM discovery_targets WHERE @term IS NULL OR city LIKE @term",new{term},cancellationToken:ct));
         page=Math.Clamp(page,1,Math.Max(1,(total+29)/30));

@@ -19,7 +19,7 @@ public sealed class EstablishmentController(
 {
     [HttpGet("{id:long}")]
     [HttpGet("/estabelecimento/{id:long}")]
-    public async Task<IActionResult> Details(long id, [FromServices] IFavoriteRepository favorites, [FromServices] IOperatingHoursRepository hours, CancellationToken ct)
+    public async Task<IActionResult> Details(long id, [FromServices] IFavoriteRepository favorites, [FromServices] IOperatingHoursRepository hours, [FromServices] IParaRecipes recipes, CancellationToken ct)
     {
         var establishment = await repo.GetPublishedAsync(id, ct);
 
@@ -46,6 +46,7 @@ public sealed class EstablishmentController(
         var operation=await hours.GetAsync(id,ct);
         ViewData["OperationSchedule"]=operation;
         ViewData["OpeningAssessment"]=OpeningHours.Evaluate(operation,DateTimeOffset.UtcNow,DateTimeOffset.UtcNow);
+        ViewData["Recipes"]=await recipes.ForRestaurantAsync(id,ct);
 
         return View(establishment);
     }

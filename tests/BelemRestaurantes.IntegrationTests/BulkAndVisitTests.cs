@@ -123,7 +123,7 @@ public sealed class BulkAndVisitTests
         finally{await Cleanup(db,[id]);}
     }
     [Theory]
-    [InlineData("/admin/moderacao")][InlineData("/admin/operacao")][InlineData("/admin/mobilidade")][InlineData("/admin/editorial")][InlineData("/admin/usuarios")][InlineData("/cuia-rotas")][InlineData("/qual-onibus")][InlineData("/sabores")][InlineData("/privacidade")][InlineData("/termos")]
+    [InlineData("/admin/receitas")][InlineData("/admin/moderacao")][InlineData("/admin/operacao")][InlineData("/admin/mobilidade")][InlineData("/admin/editorial")][InlineData("/admin/usuarios")][InlineData("/cuia-rotas")][InlineData("/qual-onibus")][InlineData("/sabores")][InlineData("/privacidade")][InlineData("/termos")]
     public async Task NewViewsRenderAndCaptureEvidence(string path)
     {
         using var app=Factory();using var client=app.CreateClient(new(){BaseAddress=new("https://localhost")});
@@ -133,7 +133,7 @@ public sealed class BulkAndVisitTests
         if(!string.IsNullOrWhiteSpace(output)){Directory.CreateDirectory(output);await File.WriteAllTextAsync(Path.Combine(output,path.Trim('/').Replace('/','-')+".html"),html);}
     }
     [Fact] public async Task BulkAndHoursRequireAntiforgery()
-    {using var app=Factory();using var client=app.CreateClient(new(){BaseAddress=new("https://localhost")});foreach(var path in new[]{"/admin/moderacao/confirmar","/admin/mobilidade/horarios","/cuia-rotas/consultar"})Assert.Equal(HttpStatusCode.BadRequest,(await client.PostAsync(path,new FormUrlEncodedContent([]))).StatusCode);}
+    {using var app=Factory();using var client=app.CreateClient(new(){BaseAddress=new("https://localhost")});foreach(var path in new[]{"/admin/moderacao/confirmar","/admin/mobilidade/horarios","/cuia-rotas/consultar","/admin/receitas/salvar","/admin/operacao/manutencao","/admin/operacao/enriquecer","/admin/operacao/plano-estadual"})Assert.Equal(HttpStatusCode.BadRequest,(await client.PostAsync(path,new FormUrlEncodedContent([]))).StatusCode);}
     [Theory]
     [InlineData(AdminRoles.Editor,"/admin/moderacao")][InlineData(AdminRoles.Editor,"/admin/operacao")][InlineData(AdminRoles.Editor,"/admin/usuarios")]
     [InlineData(AdminRoles.Operator,"/admin/moderacao")][InlineData(AdminRoles.Operator,"/admin/usuarios")][InlineData(AdminRoles.Moderator,"/admin/operacao")][InlineData(AdminRoles.Moderator,"/admin/usuarios")]

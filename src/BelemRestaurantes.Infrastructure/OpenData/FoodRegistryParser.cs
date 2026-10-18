@@ -40,16 +40,21 @@ public static class FoodRegistryParser
             {
                 5611201 => "Restaurante", 5611203 => "Lanchonete", 1091102 or 4721102 => "Padaria",
                 5611204 or 5611205 => "Bar", 5612100 => "Comida de rua", 5620104 => "Comida pronta", 4721104 => "Confeitaria",
+                5620101 => "Refeições coletivas", 5620102 => "Buffet", 5620103 => "Cantina",
+                4721103 => "Laticínios", 4729699 => "Loja de alimentos",
+                4711301 or 4711302 => "Supermercado", 4712100 => "Mercearia",
+                4722901 => "Açougue", 4722902 => "Peixaria", 4724500 => "Hortifrúti", 4723700 => "Loja de bebidas",
                 _ => null
             };
             if (category is null) continue;
             var plain = NameNormalizer.RemoveDiacritics(name).ToLowerInvariant();
             bool Named(string pattern) => Regex.IsMatch(plain,pattern,RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100));
-            if (category is "Restaurante" or "Lanchonete")
+            if (category is "Restaurante" or "Lanchonete" or "Loja de alimentos")
                 category = Named(@"\b(pizzaria|pizza)\b") ? "Pizzaria"
                     : Named(@"\b(acai|acaiteria|acailandia)\b") ? "Açaí"
                     : Named(@"\btacaca\b") ? "Tacacá"
                     : Named(@"\bhamburgueria\b") ? "Hamburgueria"
+                    : Named(@"\b(sorveteria|sorvetes|gelateria)\b") ? "Sorveteria"
                     : Named(@"\b(cafe|cafeteria)\b") ? "Cafeteria" : category;
             var street = string.Join(' ',new[]{Text("descricao_tipo_de_logradouro"),Text("logradouro")}.Where(s=>!string.IsNullOrWhiteSpace(s)));
             var address = string.IsNullOrWhiteSpace(Text("logradouro")) ? null

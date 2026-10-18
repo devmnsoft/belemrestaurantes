@@ -709,4 +709,22 @@
   <data name="VisitHomeText" xml:space="preserve"><value>Planeje como chegar, confira o funcionamento e consulte as informações disponíveis para a sua visita.</value></data>
   <data name="VisitHomeAction" xml:space="preserve"><value>Planejar minha visita</value></data>
   <data name="VisitBusAction" xml:space="preserve"><value>Qual ônibus eu pego?</value></data>
+  <data name="ExpeditionEyebrow" xml:space="preserve"><value>EXPLORE THE TERRITORY</value></data>
+  <data name="ExpeditionTitle" xml:space="preserve"><value>A whole state to discover.</value></data>
+  <data name="ExpeditionAccent" xml:space="preserve"><value>Your next table awaits.</value></data>
+  <data name="ExpeditionIntro" xml:space="preserve"><value>From the capital to the countryside, follow the flavours of Pará. Choose a region and explore at your own pace.</value></data>
+  <data name="ExpeditionMunicipalities" xml:space="preserve"><value>municipalities to explore</value></data>
+  <data name="ExpeditionTerritoryNote" xml:space="preserve"><value>The official territory of Pará, grouped by region. Establishment availability varies by municipality.</value></data>
+  <data name="ExpeditionAllCities" xml:space="preserve"><value>Explore the destinations</value></data>
+  <data name="ExpeditionRegionCount" xml:space="preserve"><value>{0} municipalities · explore region</value></data>
+  <data name="ExpeditionYourWay" xml:space="preserve"><value>YOUR OWN WAY</value></data>
+  <data name="ExpeditionFormTitle" xml:space="preserve"><value>Where will flavour take you?</value></data>
+  <data name="ExpeditionFormNote" xml:space="preserve"><value>Search published establishments. Confirm service before setting off.</value></data>
+  <data name="ExpeditionCraving" xml:space="preserve"><value>What would you like to try?</value></data>
+  <data name="ExpeditionFind" xml:space="preserve"><value>Find flavours</value></data>
+
+  <data name="RecipesHomeEyebrow" xml:space="preserve"><value>FLAVOURS AT HOME</value></data>
+  <data name="RecipesHomeTitle" xml:space="preserve"><value>From Pará to your kitchen.</value></data>
+  <data name="RecipesHomeText" xml:space="preserve"><value>A bowl, a story and the joy of cooking. Explore our original home adaptations inspired by the flavours of Pará.</value></data>
+  <data name="RecipesHomeAction" xml:space="preserve"><value>Explore recipes</value></data>
 </root>

@@ -60,9 +60,6 @@ public sealed class HomeController(
 
     public IActionResult Error() => Problem(statusCode: 500, title: "Não foi possível concluir esta solicitação");
 
-    [HttpGet("receitas")]
-    public IActionResult Recipes() => View();
-
     [HttpGet("guia")]
     public IActionResult Guide() => View();
 

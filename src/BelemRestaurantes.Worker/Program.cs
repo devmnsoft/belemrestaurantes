@@ -26,6 +26,7 @@ public class Program
                 services.AddHostedService<DiscoveryHostedService>();
                 services.AddHostedService<EmailHostedService>();
                 services.AddHostedService<CrawlerHostedService>();
+                services.AddHostedService<MaintenanceHostedService>();
             })
             .ConfigureLogging((context,logging) => {
                 logging.AddConsole();
@@ -38,6 +39,16 @@ public class Program
             DiscoveryEvidence.PrintAsync(host.Services).GetAwaiter().GetResult();
             return;
         }
+        if(args.Contains("--seed-para-recipes",StringComparer.Ordinal))
+        {EditorialHomologation.SeedAsync(host.Services,args).GetAwaiter().GetResult();return;}
+        if(args.Contains("--configure-statewide-discovery",StringComparer.Ordinal))
+        {EditorialHomologation.ConfigureCoverageAsync(host.Services,args).GetAwaiter().GetResult();return;}
+        if(args.Contains("--queue-maintenance-checks",StringComparer.Ordinal))
+        {EditorialHomologation.QueueChecksAsync(host.Services,args).GetAwaiter().GetResult();return;}
+        if(args.Contains("--curate-hours",StringComparer.Ordinal))
+        {EditorialHomologation.CurateHoursAsync(host.Services,args).GetAwaiter().GetResult();return;}
+        if(args.Contains("--review-local-catalog",StringComparer.Ordinal)||args.Contains("--publish-reviewed-catalog",StringComparer.Ordinal))
+        {EditorialHomologation.ReviewAsync(host.Services,args,args.Contains("--publish-reviewed-catalog",StringComparer.Ordinal)).GetAwaiter().GetResult();return;}
         if(args.Contains("--verify-operations",StringComparer.Ordinal))
         {OperationEvidence.PrintAsync(host.Services).GetAwaiter().GetResult();return;}
         if(args.Contains("--provision-homologation",StringComparer.Ordinal))

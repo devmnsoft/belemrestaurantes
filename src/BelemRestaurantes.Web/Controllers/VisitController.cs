@@ -23,6 +23,7 @@ public sealed class VisitController(IRestaurantReadRepository restaurants,IOpera
         Response.Headers["Cache-Control"]="private, no-store";Response.Headers["Referrer-Policy"]="no-referrer";
         if(request.Mode is not ("transit" or "walking" or "bicycling" or "driving" or "boat")||request.Origin?.Length>250
            ||request.MaxWalkMeters is <100 or >10000||request.Preference is not ("less_walking" or "less_transfers" or "lowest_cost")
+           ||request.Occasion is not("any" or "lunch" or "dinner" or "coffee" or "quick")||request.VisitMinutes is <15 or >180
            ||request.LocalTime is {} wall&&(wall<DateTime.UtcNow.AddDays(-1)||wall>DateTime.UtcNow.AddDays(100)))return BadRequest("Confira os dados e escolha uma data nos próximos 100 dias.");
         var restaurant=request.RestaurantId>0?await restaurants.GetPublishedAsync(request.RestaurantId,ct):null;
         if(request.RestaurantId>0&&restaurant is null)return NotFound();
@@ -34,6 +35,7 @@ public sealed class VisitController(IRestaurantReadRepository restaurants,IOpera
         if(consult&&restaurant is not null)routes=await mobility.PlanAsync(request,restaurant,ct);
         // A departure request does not itself establish restaurant arrival time.
         if(consult&&!request.Arrival)assessment=new("unknown","Funcionamento na chegada precisa ser conferido após consultar a duração do trajeto.");
+        ViewData["VisitWindows"]=request.Arrival?VisitWindows.Suggest(schedule,instant,DateTimeOffset.UtcNow,request.Occasion,request.VisitMinutes):Array.Empty<VisitWindow>();
         var choices=restaurant is null?(await restaurants.SearchAsync(new(Term:query,PageSize:30),ct)).Items:[];
         await using var db=await factory.OpenAsync(ct);
         var fares=(await db.QueryAsync<FareView>(new CommandDefinition("""
