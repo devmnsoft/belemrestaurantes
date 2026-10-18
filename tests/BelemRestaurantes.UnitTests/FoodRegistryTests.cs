@@ -51,6 +51,16 @@ public sealed class FoodRegistryTests
     [InlineData("Café da Vila",5611203,"Cafeteria")]
     [InlineData("Pães da Vila",1091102,"Padaria")]
     [InlineData("Lanche da Vila",5611203,"Lanchonete")]
+    [InlineData("Açaí da Vila",4729699,"Açaí")]
+    [InlineData("Sorvetes da Vila",4729699,"Sorveteria")]
+    [InlineData("Alimentos da Vila",4729699,"Loja de alimentos")]
+    [InlineData("Mercado da Vila",4712100,"Mercearia")]
+    [InlineData("Mercado da Vila",4711302,"Supermercado")]
+    [InlineData("Peixes da Vila",4722902,"Peixaria")]
+    [InlineData("Frutas da Vila",4724500,"Hortifrúti")]
+    [InlineData("Festa da Vila",5620102,"Buffet")]
+    [InlineData("Cantina da Vila",5620103,"Cantina")]
+    [InlineData("Espetinho da Vila",5612100,"Comida de rua")]
     public void CategoryUsesFoodActivityAndExplicitTradeName(string name,int cnae,string category)
     {
         var item=Item();item["nome_fantasia"]=name;item["cnae_fiscal"]=cnae;

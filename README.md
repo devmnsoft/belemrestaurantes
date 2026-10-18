@@ -1,5 +1,7 @@
 # Belém Restaurantes — O Pará tem sabor
 
+> **Expansão estadual e novo design:** coleta em 21 atividades econômicas, importação em lotes com checkpoint no banco, teto de 100 mil novos registros por comando e painel `/admin/cobertura`. Novo explorador das seis regiões, busca por município e tipo de comida em PT/EN/ES. A meta de 100 mil não representa cadastros já obtidos: consulte [quantidades verificadas, execução e limites](docs/EXPANSAO-PARA-100K.md).
+
 Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10 (`net10.0`), C#, MVC/Razor, Dapper e MySQL `belrestaurante`.  
 **Empresa / Proprietário:** MNSOFT Soluções em Tecnologia (CNPJ: `18.160.057/0001-13`)  
 **E-mail Oficial:** `comercial@belemrestaurantes.com.br`  

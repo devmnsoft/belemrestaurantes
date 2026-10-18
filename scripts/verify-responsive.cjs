@@ -49,7 +49,7 @@ let browser;
       if (await page.locator('#heroAutocomplete a').evaluate(e=>e!==document.activeElement)) throw new Error('Autocomplete keyboard failed');
     }
     const snapshots = path.resolve(process.env.VISUAL_TEST_SNAPSHOTS || 'artifacts/test-results/admin-snapshots');
-    for (const route of changedOnly ? [] : ['/admin/discovery','/admin/crawler','/admin/discovery360','/admin/suggestions','/account','/account/favorites','/partner/dashboard','/admin/moderacao','/admin/operacao','/admin/mobilidade','/admin/editorial','/admin/usuarios']) {
+    for (const route of changedOnly ? [] : ['/admin/discovery','/admin/crawler','/admin/discovery360','/admin/suggestions','/account','/account/favorites','/partner/dashboard','/admin/moderacao','/admin/operacao','/admin/mobilidade','/admin/editorial','/admin/usuarios','/admin/cobertura']) {
       const filename = path.join(snapshots, route.replaceAll('/','-').slice(1)+'.html');
       if (!fs.existsSync(filename)) continue;
       const html = fs.readFileSync(filename, 'utf8');

@@ -709,4 +709,17 @@
   <data name="VisitHomeText" xml:space="preserve"><value>Planeje como chegar, confira o funcionamento e consulte as informações disponíveis para a sua visita.</value></data>
   <data name="VisitHomeAction" xml:space="preserve"><value>Planejar minha visita</value></data>
   <data name="VisitBusAction" xml:space="preserve"><value>Qual ônibus eu pego?</value></data>
+  <data name="ExpeditionEyebrow" xml:space="preserve"><value>EXPLORE O TERRITÓRIO</value></data>
+  <data name="ExpeditionTitle" xml:space="preserve"><value>Um Pará inteiro.</value></data>
+  <data name="ExpeditionAccent" xml:space="preserve"><value>A sua próxima mesa.</value></data>
+  <data name="ExpeditionIntro" xml:space="preserve"><value>Dos sabores da capital aos encontros do interior. Escolha uma região, encontre seu destino e descubra o Pará no seu ritmo.</value></data>
+  <data name="ExpeditionMunicipalities" xml:space="preserve"><value>municípios para explorar</value></data>
+  <data name="ExpeditionTerritoryNote" xml:space="preserve"><value>O território oficial do Pará, organizado por região. A disponibilidade de estabelecimentos varia por município.</value></data>
+  <data name="ExpeditionAllCities" xml:space="preserve"><value>Conheça os destinos</value></data>
+  <data name="ExpeditionRegionCount" xml:space="preserve"><value>{0} municípios · explorar região</value></data>
+  <data name="ExpeditionYourWay" xml:space="preserve"><value>DO SEU JEITO</value></data>
+  <data name="ExpeditionFormTitle" xml:space="preserve"><value>Onde o sabor te leva?</value></data>
+  <data name="ExpeditionFormNote" xml:space="preserve"><value>Busque os estabelecimentos já publicados. Confirme o atendimento antes de sair.</value></data>
+  <data name="ExpeditionCraving" xml:space="preserve"><value>O que você quer provar?</value></data>
+  <data name="ExpeditionFind" xml:space="preserve"><value>Encontrar sabores</value></data>
 </root>

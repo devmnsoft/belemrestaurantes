@@ -16,6 +16,46 @@ namespace BelemRestaurantes.IntegrationTests;
 public sealed class DiscoveryOperationsTests
 {
     [Fact]
+    public async Task RegistryPageCheckpointIsDurableIdempotentAndScopedToPageContent()
+    {
+        using var provider=(ServiceProvider)ServiceContainer.Build();
+        await provider.GetRequiredService<BelemRestaurantes.Infrastructure.Migrations.MigrationRunner>().ApplyAsync(default);
+        var db=provider.GetRequiredService<BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory>();
+        var hash=BelemRestaurantes.Infrastructure.OpenData.RegistryImportLedger.HashPage(Guid.NewGuid().ToString());
+        var ledger=new BelemRestaurantes.Infrastructure.OpenData.RegistryImportLedger(db);
+        try
+        {
+            Assert.False(await ledger.IsCompletedAsync(hash,default));
+            await ledger.CompleteAsync(hash,1024,1,default);
+            await ledger.CompleteAsync(hash,1024,1,default);
+            Assert.True(await new BelemRestaurantes.Infrastructure.OpenData.RegistryImportLedger(db).IsCompletedAsync(hash,default));
+            Assert.False(await ledger.IsCompletedAsync(BelemRestaurantes.Infrastructure.OpenData.RegistryImportLedger.HashPage(hash),default));
+            await Assert.ThrowsAsync<ArgumentException>(()=>ledger.CompleteAsync(hash,1025,1,default));
+        }
+        finally
+        {
+            await using var connection=await db.OpenAsync(default);
+            await Dapper.SqlMapper.ExecuteAsync(connection,"DELETE FROM registry_import_pages WHERE page_sha256=@hash",new{hash});
+        }
+    }
+
+    [Fact]
+    public async Task CoverageShowsOfficialMunicipalitiesAndCombinesRegionWithAccentInsensitiveSearch()
+    {
+        using var factory=CreateFactory();
+        using var scope=factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.Migrations.MigrationRunner>().ApplyAsync(default);
+        using var client=factory.CreateClient(new WebApplicationFactoryClientOptions{BaseAddress=new Uri("https://localhost")});
+        var html=WebUtility.HtmlDecode(await client.GetStringAsync("/admin/cobertura"));
+        Assert.Equal(144,System.Text.RegularExpressions.Regex.Matches(html,"<th scope=\"row\">").Count);
+        html=WebUtility.HtmlDecode(await client.GetStringAsync("/admin/cobertura?region="+Uri.EscapeDataString("Baixo Amazonas")+"&q=santarem"));
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(html,"<th scope=\"row\">"));
+        Assert.Contains("<th scope=\"row\">Santarém",html);
+        html=await client.GetStringAsync("/admin/cobertura?region="+Uri.EscapeDataString("Marajó")+"&q=santarem");
+        Assert.Empty(System.Text.RegularExpressions.Regex.Matches(html,"<th scope=\"row\">"));
+    }
+
+    [Fact]
     public async Task ManualImportTelemetryDoesNotRequireOrConsumeScheduledJob()
     {
         using var factory = CreateFactory();
@@ -83,6 +123,7 @@ public sealed class DiscoveryOperationsTests
 
     [Theory]
     [InlineData("/admin/discovery", "Descoberta por cidade e fonte")]
+    [InlineData("/admin/cobertura", "Meta de expansão: 100 mil estabelecimentos reais")]
     [InlineData("/admin/crawler", "Cuia Crawler")]
     [InlineData("/admin/discovery360", "Discovery")]
     [InlineData("/admin/suggestions", "Boas dicas")]

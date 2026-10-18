@@ -71,6 +71,8 @@ public sealed class AdminLifecycleTests
             var editorial=await client.GetAsync("/admin/editorial");Assert.Equal(HttpStatusCode.OK,editorial.StatusCode);
             var moderation=await client.GetAsync("/admin/moderacao");
             if(role==AdminRoles.Editor)Assert.Contains("/admin/access-denied",moderation.Headers.Location!.ToString());else Assert.Equal(HttpStatusCode.OK,moderation.StatusCode);
+            var coverage=await client.GetAsync("/admin/cobertura");
+            if(role==AdminRoles.Editor)Assert.Contains("/admin/access-denied",coverage.Headers.Location!.ToString());else Assert.Equal(HttpStatusCode.OK,coverage.StatusCode);
             var logout=await client.PostAsync("/admin/logout",Form(Token(await editorial.Content.ReadAsStringAsync())));Assert.Equal(HttpStatusCode.Redirect,logout.StatusCode);
             Assert.Contains("/admin/login",(await client.GetAsync("/admin/editorial")).Headers.Location!.ToString());
         }
