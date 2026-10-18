@@ -1,5 +1,7 @@
 # Belém Restaurantes — O Pará tem sabor
 
+> **Sprint 25 — catálogo e leitura:** corrigida a consulta administrativa, com artes por categoria, controles para baixa visão, gestão de vídeos e lotes de 1.000 registros (teto configurável de 2.000). Consulte [funcionalidades, testes e limites da validação](docs/SPRINT25-PORTAL.md).
+
 > **Sprint 19 — receitas e operação estadual:** 12 receitas editoriais publicadas, CMS com versões, aprovação/publicação em etapas, dois estabelecimentos reais publicados após revisão, descoberta configurada para 144 municípios, rotinas de validade e novo visual de receitas e visitas. Consulte [relatório, testes, acesso local e pendências de produção](docs/SPRINT19-REPORT.md). A expansão rumo a 100 mil continua sujeita a fontes, deduplicação e moderação.
 
 > **Expansão estadual e novo design:** coleta em 21 atividades econômicas, importação em lotes com checkpoint no banco, teto de 100 mil novos registros por comando e painel `/admin/cobertura`. Novo explorador das seis regiões, busca por município e tipo de comida em PT/EN/ES. A meta de 100 mil não representa cadastros já obtidos: consulte [quantidades verificadas, execução e limites](docs/EXPANSAO-PARA-100K.md).
