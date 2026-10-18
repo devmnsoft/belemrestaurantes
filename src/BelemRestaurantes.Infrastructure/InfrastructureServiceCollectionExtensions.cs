@@ -31,6 +31,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton(googleOptions);
 
         services.AddScoped<IOpenDataCache, MySqlOpenDataCache>();
+        services.AddSingleton(sp=>new GooglePlacesClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient("googleplaces"),sp.GetRequiredService<GooglePlacesOptions>(),sp.GetRequiredService<IClock>(),sp.GetRequiredService<ILogger<GooglePlacesClient>>()));
+        services.AddSingleton(sp=>new OpenData.OpenStreetMapDiscoveryClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient("opendata"),new MySqlOpenDataCache(sp.GetRequiredService<MySqlConnectionFactory>()),sp.GetRequiredService<IClock>(),sp.GetRequiredService<ILogger<OpenData.OpenStreetMapDiscoveryClient>>()));
         services.AddSingleton<IPlaceDiscoveryProvider>(sp => configuration["Discovery:Provider"] == "OpenStreetMap"
             ? new OpenData.OpenStreetMapDiscoveryClient(
                 sp.GetRequiredService<IHttpClientFactory>().CreateClient("opendata"),
@@ -99,6 +101,13 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ISuggestionRepository, MySqlSuggestionRepository>();
         services.AddScoped<IRestaurantIngestionRepository, MySqlRestaurantIngestionRepository>();
         services.AddScoped<IModerationRepository, MySqlModerationRepository>();
+        services.AddScoped<MySqlBulkModeration>();
+        services.AddScoped<IParaRecipes,MySqlParaRecipes>();
+        services.AddScoped<MySqlStatewideDiscoveryPlan>();
+        services.AddScoped<MySqlMaintenanceJobs>();
+        services.AddScoped<IOperatingHoursRepository,MySqlOperatingHours>();
+        services.AddScoped<IMobilityProvider,Mobility.GoogleRoutesProvider>();
+        services.AddHttpClient("routes",client=>client.Timeout=TimeSpan.FromSeconds(15));
         services.AddScoped<IDiscoveryQueue, MySqlDiscoveryQueue>();
         services.AddScoped<IDiscoveryTargetRepository, MySqlDiscoveryTargetRepository>();
         services.AddScoped<IFavoriteRepository, MySqlFavoriteRepository>();

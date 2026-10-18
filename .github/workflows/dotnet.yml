@@ -20,6 +20,8 @@ jobs:
           --health-retries=10
     steps:
       - uses: actions/checkout@v4
+      - name: Validate resumable public-data collector
+        run: python3 scripts/test-food-registry.py
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'

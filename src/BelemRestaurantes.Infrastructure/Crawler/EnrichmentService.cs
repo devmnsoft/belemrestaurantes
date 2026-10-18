@@ -47,17 +47,18 @@ public sealed class EnrichmentService : IEnrichmentService
     public async Task<int> RunEnrichmentCycleAsync(int batchSize, CancellationToken ct)
     {
         var instanceId = $"{Environment.MachineName}-{Environment.ProcessId}";
-        var items = await _queue.ClaimDueEnrichmentsAsync(batchSize, instanceId, TimeSpan.FromMinutes(2), ct);
-        if (items.Count == 0) return 0;
-
         var processed = 0;
-        foreach (var item in items)
+        for(var index=0;index<Math.Clamp(batchSize,1,50);index++)
         {
             if (ct.IsCancellationRequested) break;
+            var items=await _queue.ClaimDueEnrichmentsAsync(1,instanceId,TimeSpan.FromMinutes(5),ct);
+            if(items.Count==0)break;
+            var item=items[0];
 
             try
             {
-                var success = await ProcessRestaurantEnrichmentAsync(item.RestaurantId, item.FieldsToEnrich, ct);
+                using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct);timeout.CancelAfter(TimeSpan.FromMinutes(2));
+                var success = await ProcessRestaurantEnrichmentAsync(item.RestaurantId, item.FieldsToEnrich, timeout.Token);
                 if (success)
                 {
                     await _queue.CompleteEnrichmentAsync(item.Id, ct);
@@ -102,7 +103,7 @@ public sealed class EnrichmentService : IEnrichmentService
         const string ownerSql = """
             SELECT COUNT(*)
             FROM restaurant_owners
-            WHERE restaurant_id = @restaurantId AND status = 'approved';
+            WHERE restaurant_id = @restaurantId;
             """;
         var isVerifiedOwner = await connection.ExecuteScalarAsync<int>(new CommandDefinition(ownerSql, new { restaurantId }, cancellationToken: ct)) > 0;
 
@@ -173,7 +174,7 @@ public sealed class EnrichmentService : IEnrichmentService
         }
 
         // 4. Reconhecimento de redes sociais estruturadas
-        if (string.IsNullOrWhiteSpace(currentInstagram) && !string.IsNullOrWhiteSpace(r.website))
+        if (!isVerifiedOwner && string.IsNullOrWhiteSpace(currentInstagram) && !string.IsNullOrWhiteSpace(r.website))
         {
             string website = r.website;
             if (website.Contains("instagram.com/", StringComparison.OrdinalIgnoreCase))

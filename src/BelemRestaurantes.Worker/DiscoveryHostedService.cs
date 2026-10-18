@@ -155,6 +155,14 @@ public sealed class DiscoveryHostedService(
     private async Task<DiscoveryCycleMetrics> ProcessOneAsync(IServiceScope scope, DiscoveryWorkItem job, CancellationToken ct)
     {
         var provider = scope.ServiceProvider.GetRequiredService<IPlaceDiscoveryProvider>();
+        await using var db=await scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory>().OpenAsync(ct);
+        var target=await Dapper.SqlMapper.QuerySingleAsync(db,new Dapper.CommandDefinition("SELECT provider,result_limit FROM discovery_targets WHERE id=@id",new{id=job.TargetId},cancellationToken:ct));
+        provider=(string)target.provider switch {
+            "openstreetmap"=>scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.OpenData.OpenStreetMapDiscoveryClient>(),
+            "googleplaces"=>scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.Google.GooglePlacesClient>(),
+            _=>provider
+        };
+        provider=new LimitedProvider(provider,(int)target.result_limit);
         var ingestion = scope.ServiceProvider.GetRequiredService<IRestaurantIngestionRepository>();
         var moderation = scope.ServiceProvider.GetRequiredService<IModerationRepository>();
         var router = scope.ServiceProvider.GetRequiredService<IAiRouter>();
@@ -185,5 +193,14 @@ public sealed class DiscoveryHostedService(
 
         public override string ToString() =>
             $"descobertos={Discovered} novos={Created} atualizados={Updated} ignorados={Skipped} falhas={Failed}";
+    }
+
+    private sealed class LimitedProvider(IPlaceDiscoveryProvider inner,int limit):IPlaceDiscoveryProvider
+    {
+        public string Name=>inner.Name;
+        public bool IsConfigured=>inner.IsConfigured;
+        public async Task<BelemRestaurantes.Application.Models.PlaceSearchResult> SearchAsync(string query,string? city,CancellationToken ct)
+        {var result=await inner.SearchAsync(query,city,ct);return result with{Places=result.Places.Take(limit).ToArray()};}
+        public Task<BelemRestaurantes.Application.Models.DiscoveredPlace?> GetDetailsAsync(string externalId,CancellationToken ct)=>inner.GetDetailsAsync(externalId,ct);
     }
 }

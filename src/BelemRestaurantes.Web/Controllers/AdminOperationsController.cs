@@ -116,6 +116,7 @@ public sealed class AdminOperationsController(
     }
 
     [HttpPost("discovery/{id:long}/approve")]
+    [Authorize(Policy = "RestaurantModerator")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApproveDiscovery(long id, CancellationToken ct)
     {
@@ -129,6 +130,7 @@ public sealed class AdminOperationsController(
     }
 
     [HttpPost("discovery/{id:long}/reject")]
+    [Authorize(Policy = "RestaurantModerator")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RejectDiscovery(long id, [FromForm] string reason, CancellationToken ct)
     {
@@ -447,74 +449,24 @@ public sealed class AdminOperationsController(
     }
 
     [HttpPost("diagnostics/activate-belem")]
+    [Authorize(Policy = "PlatformOperator")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ActivateBelemTargets(CancellationToken ct)
+    public async Task<IActionResult> ActivateBelemTargets([FromServices] IDiscoveryTargetRepository targets, CancellationToken ct)
     {
-        await using var connection = await factory.OpenAsync(ct);
-        const string updateSql = """
-            UPDATE discovery_targets 
-            SET enabled = TRUE, next_run_at = CURRENT_TIMESTAMP(6)
-            WHERE normalized_city = 'belem';
-
-            UPDATE api_budgets 
-            SET paused = FALSE, monthly_limit_requests = 1000
-            WHERE provider IN ('GooglePlaces', 'Gemini');
-
-            INSERT IGNORE INTO crawler_tasks (source_id, url, city, category, state, next_attempt_at)
-            SELECT id, base_url, 'Belém', default_category, 'pending', CURRENT_TIMESTAMP(6)
-            FROM crawler_sources
-            WHERE target_city = 'Belém' AND status = 'active';
-            """;
-        var affected = await connection.ExecuteAsync(new CommandDefinition(updateSql, cancellationToken: ct));
-
-        var queue = serviceProvider.GetService<IDiscoveryQueue>();
-        int enqueued = 0;
-        if (queue != null)
-        {
-            enqueued = await queue.EnqueueDueTargetsAsync(DateTimeOffset.UtcNow, ct);
-        }
-
-        TempData["Flash"] = $"Alvos e fontes de Belém ativados com sucesso! {enqueued} novos jobs de descoberta enfileirados na fila durável.";
+        await targets.SetEnabledForCityAsync("Belém",true,Actor(),ct);
+        var count=await serviceProvider.GetRequiredService<IDiscoveryQueue>().EnqueueDueTargetsAsync(DateTimeOffset.UtcNow,ct);
+        TempData["Flash"]=$"Alvos de Belém habilitados; {count} tarefas enfileiradas. Orçamentos e pausas de APIs foram preservados.";
         return RedirectToAction(nameof(Diagnostics));
     }
 
     [HttpPost("diagnostics/run-belem-now")]
+    [Authorize(Policy = "PlatformOperator")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RunBelemDiscoveryNow(CancellationToken ct)
     {
-        var placeProvider = serviceProvider.GetService<IPlaceDiscoveryProvider>();
-        var orchestrator = serviceProvider.GetService<DiscoveryOrchestrator>();
-
-        if (placeProvider == null || orchestrator == null)
-        {
-            TempData["ErrorMessage"] = "Serviços de descoberta não registrados no contêiner de injeção de dependência.";
-            return RedirectToAction(nameof(Diagnostics));
-        }
-
-        if (!placeProvider.IsConfigured)
-        {
-            TempData["ErrorMessage"] = "Google Places não configurado. Defina a variável GooglePlaces:ApiKey ou GOOGLEPLACES__APIKEY nas configurações de ambiente da VPS.";
-            return RedirectToAction(nameof(Diagnostics));
-        }
-
-        try
-        {
-            var workItem = new DiscoveryWorkItem(0, 1, "Belém", "Restaurante", 1);
-
-            var metrics = await orchestrator.RunTargetAsync(workItem, ct);
-
-            TempData["Flash"] = $"Descoberta em Belém executada com sucesso! " +
-                                $"Descobertos: {metrics.PlacesDiscovered}, " +
-                                $"Novos na Moderação: {metrics.RestaurantsCreated}, " +
-                                $"Atualizados: {metrics.RestaurantsUpdated}, " +
-                                $"Ignorados: {metrics.PlacesSkipped}, " +
-                                $"Falhas: {metrics.JobsFailed}.";
-        }
-        catch (Exception ex)
-        {
-            TempData["ErrorMessage"] = $"Erro ao executar descoberta de Belém: {ex.Message}";
-        }
-
+        var count=await serviceProvider.GetRequiredService<IDiscoveryQueue>().EnqueueDueTargetsAsync(DateTimeOffset.UtcNow,ct);
+        await serviceProvider.GetRequiredService<IAuditWriter>().WriteAsync("discovery.manual_enqueue","discovery",null,System.Text.Json.JsonSerializer.Serialize(new{count}),ct);
+        TempData["Flash"]=$"{count} tarefas elegíveis enfileiradas para o Worker. Consulte a operação para conferir alvos e próxima execução.";
         return RedirectToAction(nameof(Diagnostics));
     }
 }

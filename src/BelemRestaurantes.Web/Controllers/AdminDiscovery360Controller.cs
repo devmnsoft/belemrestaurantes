@@ -62,6 +62,7 @@ public sealed class AdminDiscovery360Controller(
     }
 
     [HttpPost("intelligence-batch")]
+    [Authorize(Policy = "PlatformOperator")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RunIntelligenceBatch(CancellationToken ct)
     {
@@ -88,6 +89,7 @@ public sealed class AdminDiscovery360Controller(
     }
 
     [HttpPost("invoice/{txid}/confirm")]
+    [Authorize(Policy = "PlatformAdmin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmInvoicePayment(string txid, [FromForm] string authHash, CancellationToken ct)
     {
@@ -109,6 +111,7 @@ public sealed class AdminDiscovery360Controller(
     }
 
     [HttpPost("enrich-batch")]
+    [Authorize(Policy = "PlatformOperator")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RunEnrichmentBatch(CancellationToken ct)
     {
@@ -128,6 +131,7 @@ public sealed class AdminDiscovery360Controller(
     }
 
     [HttpPost("media/{id:long}/approve")]
+    [Authorize(Policy = "RestaurantModerator")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApproveMedia(long id, CancellationToken ct)
     {
@@ -146,6 +150,7 @@ public sealed class AdminDiscovery360Controller(
     }
 
     [HttpPost("media/{id:long}/reject")]
+    [Authorize(Policy = "RestaurantModerator")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RejectMedia(long id, CancellationToken ct)
     {
@@ -164,6 +169,7 @@ public sealed class AdminDiscovery360Controller(
     }
 
     [HttpPost("prioritize-city")]
+    [Authorize(Policy = "PlatformOperator")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PrioritizeCity([FromForm] uint ibgeCode, CancellationToken ct)
     {

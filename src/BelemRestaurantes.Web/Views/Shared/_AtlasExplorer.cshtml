@@ -1,0 +1,23 @@
+@model BelemRestaurantes.Web.Models.HomeViewModel
+@using BelemRestaurantes.Domain.Data
+<section class="para-container para-section atlas-expedition" aria-labelledby="expedition-title">
+  <div class="atlas-expedition-heading"><div><span class="para-eyebrow">@T["ExpeditionEyebrow"]</span><h2 id="expedition-title">@T["ExpeditionTitle"]<br /><em>@T["ExpeditionAccent"]</em></h2></div><p>@T["ExpeditionIntro"]</p></div>
+  <div class="atlas-expedition-grid">
+    <div class="atlas-expedition-compass">
+      <span class="para-eyebrow">AMAZÔNIA · BRASIL</span>
+      <div class="atlas-river-drawing" aria-hidden="true"><svg viewBox="0 0 400 260" fill="none"><path d="M-20 240C130 230 20 130 180 145S270 15 430 35"/><path d="M-20 220C115 210 5 110 175 125S255-5 430 15"/><path d="M-20 260C145 250 35 150 185 165S285 35 430 55"/><path d="M185 145C170 90 105 95 90 30M265 120C315 165 345 140 410 190"/><circle cx="180" cy="145" r="8"/><circle cx="300" cy="55" r="6"/><circle cx="90" cy="30" r="5"/></svg><span>✦</span></div>
+      <strong>144<span>@T["ExpeditionMunicipalities"]</span></strong><p>@T["ExpeditionTerritoryNote"]</p><a href="/cidades" class="para-text-link">@T["ExpeditionAllCities"] ↗</a>
+    </div>
+    <div class="atlas-region-links">
+      @{ var index=0; }
+      @foreach(var region in ParaOfficialCatalog.Municipalities.GroupBy(m=>m.Mesoregion).OrderBy(g=>g.Key))
+      { index++; <a href="/cidades?region=@Uri.EscapeDataString(region.Key)"><span class="atlas-region-index">@index.ToString("D2")</span><div><h3>@region.Key</h3><p>@T["ExpeditionRegionCount",region.Count()]</p></div><span class="atlas-region-link-arrow" aria-hidden="true">↗</span></a> }
+    </div>
+  </div>
+  <form action="/busca" method="get" class="atlas-discovery-form" role="search" aria-label="@T["ExpeditionFormTitle"]">
+    <div class="atlas-discovery-intro"><span class="para-eyebrow">@T["ExpeditionYourWay"]</span><h3>@T["ExpeditionFormTitle"]</h3><p>@T["ExpeditionFormNote"]</p></div>
+    <div><label for="expedition-city">@T["AtlasDestinationLabel"]</label><select id="expedition-city" name="city"><option value="">@T["AtlasAllPara"]</option>@foreach(var city in Model.Cities){<option value="@city">@city</option>}</select></div>
+    <div><label for="expedition-category">@T["ExpeditionCraving"]</label><select id="expedition-category" name="category"><option value="">@T["AtlasAllFlavours"]</option>@foreach(var category in BelemRestaurantes.Web.Models.CatalogCategories.Featured){<option value="@category.Name">@T[category.LabelKey]</option>}</select></div>
+    <button type="submit" class="para-button">@T["ExpeditionFind"] ↗</button>
+  </form>
+</section>

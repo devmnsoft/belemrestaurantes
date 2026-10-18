@@ -64,6 +64,7 @@ public sealed class MySqlCrawlerTaskQueue : ICrawlerTaskQueue
                    last_error AS LastError, created_at AS CreatedAt
             FROM crawler_tasks
             WHERE state = 'pending'
+              AND EXISTS(SELECT 1 FROM crawler_sources source WHERE source.id=crawler_tasks.source_id AND source.status='active')
               AND next_attempt_at <= @Now
               AND (locked_until IS NULL OR locked_until <= @Now)
             ORDER BY next_attempt_at ASC, id ASC

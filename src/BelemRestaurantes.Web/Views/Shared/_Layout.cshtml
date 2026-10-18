@@ -41,7 +41,7 @@
   <div class="atlas-header-tools"><details class="atlas-language"><summary aria-label="@(T["Language"].Value + ": " + CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpperInvariant())">@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpperInvariant()</summary><form method="post" action="/language">@Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" /><button type="submit" name="culture" value="pt-BR" lang="pt-BR">Português</button><button type="submit" name="culture" value="en" lang="en">English</button><button type="submit" name="culture" value="es" lang="es">Español</button></form></details><button class="para-menu-toggle" type="button" aria-expanded="false" aria-controls="public-navigation">Menu @await Html.PartialAsync("_ParaIcon", "menu")</button></div>
   <nav id="public-navigation" class="para-navigation" lang="@editorialLanguage" aria-label="@T["Explore"]">
     <a href="/busca">@T["NavEat"]</a><a href="/cidades">@T["NavPara"]</a><a href="/roteiros">@T["NavTrails"]</a>
-    <a href="/community">@T["NavCommunity"]</a><a href="/receitas">@T["NavRecipes"]</a><a href="/guia">@T["NavGuide"]</a>
+    <a href="/community">@T["NavCommunity"]</a><a href="/receitas">@T["NavRecipes"]</a><a href="/cuia-rotas" lang="pt-BR">Cuia Rotas</a><a href="/guia">@T["NavGuide"]</a>
     <a href="/account" class="para-account">@T["MyAccount"] ↗</a>
   </nav>
 </header>
@@ -63,7 +63,7 @@
       </select><button type="submit">@T["Apply"]</button>
     </form>
   </div>
-  <p class="para-container para-data-credit">© <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap contributors</a> · <a href="/dados-abertos/openstreetmap">ODbL</a> · <a href="https://docs.minhareceita.org/" rel="noopener">Minha Receita / Receita Federal</a> · <a href="/guia">@T["AtlasGuideLink"]</a></p>
+  <p class="para-container para-data-credit">© <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap contributors</a> · <a href="/dados-abertos/openstreetmap">ODbL</a> · <a href="https://docs.minhareceita.org/" rel="noopener">Minha Receita / Receita Federal</a> · <a href="/guia">@T["AtlasGuideLink"]</a> · <a href="/privacidade">@T["Privacy"]</a> · <a href="/termos">@T["Terms"]</a></p>
   <div class="para-container para-footer-bottom"><span>Belém Restaurantes · MNSOFT</span><small>@T["ExternalNotice"]</small></div>
 </footer>
 <script src="~/js/para.js" asp-append-version="true" defer></script>

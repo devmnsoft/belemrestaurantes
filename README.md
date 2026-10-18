@@ -1,9 +1,15 @@
 # Belém Restaurantes — O Pará tem sabor
 
+> **Sprint 19 — receitas e operação estadual:** 12 receitas editoriais publicadas, CMS com versões, aprovação/publicação em etapas, dois estabelecimentos reais publicados após revisão, descoberta configurada para 144 municípios, rotinas de validade e novo visual de receitas e visitas. Consulte [relatório, testes, acesso local e pendências de produção](docs/SPRINT19-REPORT.md). A expansão rumo a 100 mil continua sujeita a fontes, deduplicação e moderação.
+
+> **Expansão estadual e novo design:** coleta em 21 atividades econômicas, importação em lotes com checkpoint no banco, teto de 100 mil novos registros por comando e painel `/admin/cobertura`. Novo explorador das seis regiões, busca por município e tipo de comida em PT/EN/ES. A meta de 100 mil não representa cadastros já obtidos: consulte [quantidades verificadas, execução e limites](docs/EXPANSAO-PARA-100K.md).
+
 Plataforma gastronômica e comunitária do Pará desenvolvida em ASP.NET Core 10 (`net10.0`), C#, MVC/Razor, Dapper e MySQL `belrestaurante`.  
 **Empresa / Proprietário:** MNSOFT Soluções em Tecnologia (CNPJ: `18.160.057/0001-13`)  
 **E-mail Oficial:** `comercial@belemrestaurantes.com.br`  
 **Ambiente:** VPS Windows + IIS 10; Publicação manual pelo Visual Studio Community 2026; Descoberta autônoma contínua via Windows Service `BelemRestauranteCuiaDiscovery`.
+
+> **Sprints 16 e 17 — operação e visitas:** central de aprovação em lote, monitoramento do Worker, três contas reais de homologação com MFA e troca inicial, gestão de acessos e conteúdo editorial, Cuia Rotas, horários com procedência e administração de fontes/tarifas. Consulte [funcionalidades, acesso local, testes e pendências externas](docs/SPRINT16-17-REPORT.md). O planejamento não inventa linhas, tarifas ou funcionamento; integrações externas ainda não homologadas estão identificadas no relatório.
 
 > **Sprint 15 — validação de 18/10/2026:** adicionados **5.266 cadastros reais de empresas do setor de alimentação**, totalizando **5.747 em 135 municípios do Pará**, pendentes de moderação. Nova identidade editorial “O Pará. À flor do paladar.”, arte amazônica original, explorador de municípios, busca e entrada em PT/EN/ES. Consulte [relatório, evidências e limites da fonte](docs/SPRINT15-REPORT.md). Histórico: [Sprint 14](docs/SPRINT14-REPORT.md), [Sprint 13](docs/SPRINT13-REPORT.md) e [Sprint 12](docs/SPRINT12-REPORT.md).
 

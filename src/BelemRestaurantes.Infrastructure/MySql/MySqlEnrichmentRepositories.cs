@@ -34,20 +34,33 @@ public sealed class MySqlEnrichmentQueueRepository(MySqlConnectionFactory factor
         await using var connection = await factory.OpenAsync(ct);
         var lockedUntil = DateTimeOffset.UtcNow.Add(lockDuration).UtcDateTime;
 
+        await connection.ExecuteAsync(new CommandDefinition("""
+            UPDATE restaurant_enrichment_queue SET state=CASE WHEN attempts>=4 THEN 'failed' ELSE 'pending' END,
+              attempts=attempts+1,locked_by=NULL,locked_until=NULL,last_error='Lease expirado; processo interrompido',
+              next_attempt_at=DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 1 MINUTE)
+            WHERE state='running' AND locked_until<UTC_TIMESTAMP(6)
+            """,cancellationToken:ct));
+        await using var transaction=await connection.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted,ct);
+        var ids=(await connection.QueryAsync<long>(new CommandDefinition("""
+            SELECT id FROM restaurant_enrichment_queue WHERE state='pending' AND next_attempt_at<=UTC_TIMESTAMP(6)
+            ORDER BY priority DESC,next_attempt_at,id LIMIT @batchSize FOR UPDATE SKIP LOCKED
+            """,new{batchSize=Math.Clamp(batchSize,1,100)},transaction,cancellationToken:ct))).ToArray();
+        if(ids.Length==0){await transaction.CommitAsync(ct);return [];}
+
         // Lock atômico por update
         const string updateSql = """
             UPDATE restaurant_enrichment_queue
             SET state = 'running',
                 locked_until = @lockedUntil,
                 locked_by = @instanceId
-            WHERE state = 'pending'
+            WHERE id IN @ids AND state = 'pending'
               AND next_attempt_at <= CURRENT_TIMESTAMP(6)
               AND (locked_until IS NULL OR locked_until < CURRENT_TIMESTAMP(6))
             ORDER BY priority DESC, next_attempt_at ASC
             LIMIT @batchSize;
             """;
 
-        await connection.ExecuteAsync(new CommandDefinition(updateSql, new { lockedUntil, instanceId, batchSize }, cancellationToken: ct));
+        await connection.ExecuteAsync(new CommandDefinition(updateSql, new { ids,lockedUntil, instanceId, batchSize },transaction,cancellationToken: ct));
 
         const string selectSql = """
             SELECT id AS Id,
@@ -63,12 +76,13 @@ public sealed class MySqlEnrichmentQueueRepository(MySqlConnectionFactory factor
                    created_at AS CreatedAt,
                    completed_at AS CompletedAt
             FROM restaurant_enrichment_queue
-            WHERE locked_by = @instanceId AND state = 'running'
+            WHERE id IN @ids AND locked_by = @instanceId AND state = 'running'
             LIMIT @batchSize;
             """;
 
         var list = await connection.QueryAsync<RestaurantEnrichmentQueueItem>(
-            new CommandDefinition(selectSql, new { instanceId, batchSize }, cancellationToken: ct));
+            new CommandDefinition(selectSql, new { ids,instanceId, batchSize },transaction,cancellationToken: ct));
+        await transaction.CommitAsync(ct);
         return list.AsList();
     }
 
