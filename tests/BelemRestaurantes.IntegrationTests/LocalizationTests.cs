@@ -11,7 +11,8 @@ using Microsoft.Extensions.Localization;
 
 namespace BelemRestaurantes.IntegrationTests;
 
-public sealed class LocalizationTests : IDisposable
+[Collection("MySql")]
+public sealed class LocalizationTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>()
         .WithWebHostBuilder(builder =>
@@ -156,5 +157,11 @@ public sealed class LocalizationTests : IDisposable
         { ["culture"] = culture, ["returnUrl"] = returnUrl, ["__RequestVerificationToken"] = WebUtility.HtmlDecode(token.Groups[1].Value) }));
     }
 
-    public void Dispose() => factory.Dispose();
+    public async Task InitializeAsync()
+    {
+        using var services=(ServiceProvider)ServiceContainer.Build();
+        await services.GetRequiredService<BelemRestaurantes.Infrastructure.Migrations.MigrationRunner>().ApplyAsync(default);
+    }
+
+    public async Task DisposeAsync() => await factory.DisposeAsync();
 }
