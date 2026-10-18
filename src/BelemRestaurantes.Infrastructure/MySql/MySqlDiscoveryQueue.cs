@@ -134,6 +134,17 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
             cancellationToken: ct));
     }
 
+    public async Task DeferAsync(long jobId, string error, DateTimeOffset retryAt, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition("""
+            UPDATE discovery_jobs
+            SET state = 'pending', next_attempt_at = @retryAt,
+                locked_until = NULL, locked_by = NULL, last_error = @error
+            WHERE id = @jobId AND state = 'running'
+            """, new { jobId, retryAt, error = error.Length > 500 ? error[..500] : error }, cancellationToken: ct));
+    }
+
     public async Task<int> ReleaseStaleLocksAsync(DateTimeOffset now, CancellationToken ct)
     {
         await using var connection = await factory.OpenAsync(ct);

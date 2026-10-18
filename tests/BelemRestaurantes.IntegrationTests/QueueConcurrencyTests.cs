@@ -10,6 +10,42 @@ namespace BelemRestaurantes.IntegrationTests;
 public sealed class QueueConcurrencyTests
 {
     [Fact]
+    public async Task ProviderOutageDefersRunningJobWithoutConsumingAttempts()
+    {
+        using var provider = (ServiceProvider)ServiceContainer.Build();
+        await provider.GetRequiredService<MigrationRunner>().ApplyAsync(default);
+        await using var connection = await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
+        var marker = "outage-" + Guid.NewGuid().ToString("N");
+        var targetId = await connection.ExecuteScalarAsync<long>("""
+            INSERT INTO discovery_targets(city, normalized_city, category, enabled, next_run_at)
+            VALUES ('Maracanã', @marker, 'regional', TRUE, UTC_TIMESTAMP(6));
+            SELECT LAST_INSERT_ID();
+            """, new { marker });
+        try
+        {
+            var jobId = await connection.ExecuteScalarAsync<long>("""
+                INSERT INTO discovery_jobs(target_id,city,category,state,attempts,locked_by,locked_until)
+                VALUES(@targetId,'Maracanã','regional','running',2,'test-outage',DATE_ADD(UTC_TIMESTAMP(6), INTERVAL 4 MINUTE));
+                SELECT LAST_INSERT_ID();
+                """, new { targetId });
+            var retryAt = DateTimeOffset.UtcNow.AddMinutes(2);
+            await provider.GetRequiredService<IDiscoveryQueue>().DeferAsync(jobId, "HTTP 502", retryAt, default);
+            var row = await connection.QuerySingleAsync("SELECT state, attempts, next_attempt_at, locked_by, locked_until, last_error FROM discovery_jobs WHERE id=@jobId", new { jobId });
+            Assert.Equal("pending", (string)row.state);
+            Assert.Equal(2, (int)row.attempts);
+            Assert.True((DateTime)row.next_attempt_at > DateTime.UtcNow.AddMinutes(1));
+            Assert.Null((object?)row.locked_by);
+            Assert.Null((object?)row.locked_until);
+            Assert.Equal("HTTP 502", (string)row.last_error);
+        }
+        finally
+        {
+            await connection.ExecuteAsync("DELETE FROM discovery_jobs WHERE target_id=@targetId", new { targetId });
+            await connection.ExecuteAsync("DELETE FROM discovery_targets WHERE id=@targetId", new { targetId });
+        }
+    }
+
+    [Fact]
     public async Task Concurrent_claims_are_distinct_failed_jobs_retry_then_reach_dead_letter_and_stale_jobs_recover()
     {
         using var provider = (ServiceProvider)ServiceContainer.Build();

@@ -32,13 +32,13 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddScoped<IOpenDataCache, MySqlOpenDataCache>();
         services.AddSingleton(sp=>new GooglePlacesClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient("googleplaces"),sp.GetRequiredService<GooglePlacesOptions>(),sp.GetRequiredService<IClock>(),sp.GetRequiredService<ILogger<GooglePlacesClient>>()));
-        services.AddSingleton(sp=>new OpenData.OpenStreetMapDiscoveryClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient("opendata"),new MySqlOpenDataCache(sp.GetRequiredService<MySqlConnectionFactory>()),sp.GetRequiredService<IClock>(),sp.GetRequiredService<ILogger<OpenData.OpenStreetMapDiscoveryClient>>()));
+        services.AddSingleton(sp=>new OpenData.OpenStreetMapDiscoveryClient(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient("opendata"),
+            new MySqlOpenDataCache(sp.GetRequiredService<MySqlConnectionFactory>()),
+            sp.GetRequiredService<IClock>(), sp.GetRequiredService<ILogger<OpenData.OpenStreetMapDiscoveryClient>>(),
+            configuration.GetSection("OpenData:FallbackEndpoints").Get<string[]>()?.Select(value => new Uri(value)).ToArray()));
         services.AddSingleton<IPlaceDiscoveryProvider>(sp => configuration["Discovery:Provider"] == "OpenStreetMap"
-            ? new OpenData.OpenStreetMapDiscoveryClient(
-                sp.GetRequiredService<IHttpClientFactory>().CreateClient("opendata"),
-                // Cache não mantém conexões abertas; a fábrica é singleton.
-                new MySqlOpenDataCache(sp.GetRequiredService<MySqlConnectionFactory>()),
-                sp.GetRequiredService<IClock>(), sp.GetRequiredService<ILogger<OpenData.OpenStreetMapDiscoveryClient>>())
+            ? sp.GetRequiredService<OpenData.OpenStreetMapDiscoveryClient>()
             : new GooglePlacesClient(
             sp.GetRequiredService<IHttpClientFactory>().CreateClient("googleplaces"),
             sp.GetRequiredService<GooglePlacesOptions>(),
@@ -171,7 +171,8 @@ public static class InfrastructureServiceCollectionExtensions
             if (endpoint.Scheme != "https" || !string.IsNullOrEmpty(endpoint.UserInfo))
                 throw new InvalidOperationException("OpenData:Endpoint exige HTTPS sem credenciais na URL.");
             client.BaseAddress = endpoint;
-            client.Timeout = TimeSpan.FromSeconds(40);
+            // Até três chamadas cabem no prazo de três minutos do job, com margem para backoff/ingestão.
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(configuration.GetValue("OpenData:TimeoutSeconds", 40), 10, 50));
             client.DefaultRequestHeaders.UserAgent.ParseAdd("BelemRestaurantes/3.0 (+https://belemrestaurantes.com.br)");
         });
 

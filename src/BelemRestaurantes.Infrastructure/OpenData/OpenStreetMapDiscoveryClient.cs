@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using BelemRestaurantes.Application.Models;
 using BelemRestaurantes.Domain.Data;
@@ -7,12 +8,17 @@ namespace BelemRestaurantes.Infrastructure.OpenData;
 /// <summary>Importação limitada por município, com cache durável de 24h.
 /// Dados ODbL isolados em open_data_snapshots e disponíveis para exportação.</summary>
 public sealed class OpenStreetMapDiscoveryClient(HttpClient http, IOpenDataCache cache, IClock clock,
-    ILogger<OpenStreetMapDiscoveryClient> logger) : IPlaceDiscoveryProvider
+    ILogger<OpenStreetMapDiscoveryClient> logger, IReadOnlyList<Uri>? fallbackEndpoints = null) : IPlaceDiscoveryProvider
 {
+    public static readonly Uri DefaultEndpoint = new("https://overpass-api.de/api/interpreter");
+    public static readonly Uri DefaultFallbackEndpoint = new("https://overpass.private.coffee/api/interpreter");
     public const int MaxElements = 2000;
     private const string Amenities = "restaurant|cafe|fast_food|bar|pub|ice_cream|food_court|marketplace";
     private const string Shops = "bakery|pastry|confectionery|deli|cheese|seafood|greengrocer|coffee|tea|chocolate|ice_cream|food";
     private readonly SemaphoreSlim gate = new(1, 1);
+    private readonly Uri[] endpoints = BuildEndpoints(http.BaseAddress ?? DefaultEndpoint, fallbackEndpoints);
+    // Protegido pelo gate compartilhado entre municípios e categorias.
+    private DiscoveryProviderUnavailableException? unavailable;
     public string Name => "openstreetmap";
     public bool IsConfigured => true;
 
@@ -35,10 +41,7 @@ public sealed class OpenStreetMapDiscoveryClient(HttpClient http, IOpenDataCache
             if (refresh || snapshot is null || clock.UtcNow - snapshot.FetchedAt >= TimeSpan.FromHours(24))
             {
                 var query = BuildQuery(city);
-                using var response = await http.PostAsync(http.BaseAddress ?? new Uri("https://overpass-api.de/api/interpreter"),
-                    new FormUrlEncodedContent(new Dictionary<string, string> { ["data"] = query }), ct);
-                response.EnsureSuccessStatusCode();
-                var payload = await response.Content.ReadAsStringAsync(ct);
+                var payload = await FetchAsync(query, city, ct);
                 if (payload.Length > 4_000_000) throw new InvalidOperationException("Resposta da fonte acima do limite de importação.");
                 // Valida antes de persistir; Overpass pode devolver um JSON parcial com remark.
                 _ = Parse(payload, city);
@@ -67,6 +70,76 @@ public sealed class OpenStreetMapDiscoveryClient(HttpClient http, IOpenDataCache
     }
 
     public Task<DiscoveredPlace?> GetDetailsAsync(string externalId, CancellationToken ct) => Task.FromResult<DiscoveredPlace?>(null);
+
+    private async Task<string> FetchAsync(string query, string city, CancellationToken ct)
+    {
+        if (unavailable is { } paused && clock.UtcNow < paused.RetryAt)
+            throw new DiscoveryProviderUnavailableException(Name, paused.RetryAt,
+                $"OpenStreetMap em pausa após falhas externas; consulta de {city} adiada. {paused.Message}");
+        const int maxAttempts = 3;
+        var retryAt = clock.UtcNow;
+        for (var attempt = 1; ; attempt++)
+        {
+            var endpoint = endpoints[(attempt - 1) % endpoints.Length];
+            TimeSpan? retryAfter = null;
+            try
+            {
+                using var content = new FormUrlEncodedContent(new Dictionary<string, string> { ["data"] = query });
+                using var response = await http.PostAsync(endpoint, content, ct);
+                retryAfter = response.Headers.RetryAfter?.Delta;
+                if (response.Headers.RetryAfter?.Date is { } headerRetryAt)
+                    retryAfter = headerRetryAt - clock.UtcNow;
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync(ct);
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested && attempt < maxAttempts && IsTransient(ex))
+            {
+                if (retryAfter is { } wait && clock.UtcNow.Add(wait) > retryAt)
+                    retryAt = clock.UtcNow.Add(wait);
+                // Esperas longas pertencem à fila durável, não ao prazo de execução do job.
+                if (retryAfter > TimeSpan.FromSeconds(30)) throw Pause(city, attempt, endpoint, retryAt, ex);
+                var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt) + Random.Shared.NextDouble());
+                if (retryAfter > delay) delay = retryAfter.Value;
+                logger.LogWarning("OpenStreetMap: falha temporária em {City} via {Endpoint}, tentativa {Attempt}/{MaxAttempts}; nova tentativa via {NextEndpoint} em {Delay:F1}s. {Reason}",
+                    city, endpoint.Host, attempt, maxAttempts, endpoints[attempt % endpoints.Length].Host, delay.TotalSeconds, ex.Message);
+                await Task.Delay(delay, ct);
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested && IsTransient(ex))
+            {
+                if (retryAfter is { } wait && clock.UtcNow.Add(wait) > retryAt)
+                    retryAt = clock.UtcNow.Add(wait);
+                throw Pause(city, attempt, endpoint, retryAt, ex);
+            }
+        }
+    }
+
+    private DiscoveryProviderUnavailableException Pause(string city, int attempt, Uri endpoint, DateTimeOffset retryAt, Exception error)
+    {
+        var minimum = clock.UtcNow.AddMinutes(2);
+        unavailable = new(Name, retryAt > minimum ? retryAt : minimum,
+            $"OpenStreetMap indisponível para {city} após {attempt} tentativas; último servidor: {endpoint.Host}. {error.Message}", error);
+        return unavailable;
+    }
+
+    private static Uri[] BuildEndpoints(Uri primary, IReadOnlyList<Uri>? fallbacks)
+    {
+        // Instância própria não envia consultas a terceiros sem configuração explícita.
+        fallbacks ??= primary == DefaultEndpoint ? [DefaultFallbackEndpoint] : [];
+        var result = new[] { primary }.Concat(fallbacks).Distinct().ToArray();
+        if (result.Any(uri => !uri.IsAbsoluteUri || uri.Scheme != "https" || !string.IsNullOrEmpty(uri.UserInfo)))
+            throw new InvalidOperationException("Endpoints OpenData exigem HTTPS sem credenciais na URL.");
+        return result;
+    }
+
+    private static bool IsTransient(Exception error) => error switch
+    {
+        HttpRequestException { StatusCode: null } => true,
+        HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests
+            or HttpStatusCode.InternalServerError or HttpStatusCode.BadGateway
+            or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout } => true,
+        OperationCanceledException => true, // Timeout HTTP; cancelamento do chamador é excluído pelo filtro.
+        _ => false
+    };
 
     public static string BuildQuery(string city)
     {

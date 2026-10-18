@@ -106,7 +106,21 @@ public sealed class DiscoveryHostedService(
                     var discovered = await ProcessOneAsync(scope, job, timeout.Token);
                     metricsTotal.Add(discovered);
                     await teleportory.RecordTargetAsync(cycleId, job, discovered, ct);
-                    if (discovered.JobsFailed > 0) throw new InvalidOperationException("O processamento teve falhas; reagendado para nova tentativa.");
+                    if (discovered.JobsFailed > 0)
+                    {
+                        var reason = discovered.FailureReason ?? "O processamento teve falhas de ingestão.";
+                        if (discovered.ProviderRetryAt is { } retryAt)
+                        {
+                            await queue.DeferAsync(job.JobId, reason, retryAt, ct);
+                            logger.LogWarning("Job {JobId} ({City}/{Category}) adiado até {RetryAt} por indisponibilidade da fonte; tentativas preservadas.",
+                                job.JobId, job.City, job.Category, retryAt);
+                            continue;
+                        }
+                        await queue.FailAsync(job.JobId, reason, TimeSpan.FromMinutes(Math.Pow(2, Math.Min(job.Attempt, 6))), maxAttempts, ct);
+                        logger.LogWarning("Job {JobId} ({City}/{Category}) registrado como falho: {Reason}",
+                            job.JobId, job.City, job.Category, reason);
+                        continue;
+                    }
 
                     await queue.CompleteAsync(job.JobId, ct);
                 }
