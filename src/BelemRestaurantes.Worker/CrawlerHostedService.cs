@@ -38,7 +38,7 @@ public sealed class CrawlerHostedService : BackgroundService
             return;
         }
 
-        var intervalMinutes = Math.Max(5, _configuration.GetValue<int>("Crawler:IntervalMinutes", 10));
+        var intervalMinutes = Math.Max(1, _configuration.GetValue<int>("Crawler:IntervalMinutes", 10));
         var every = TimeSpan.FromMinutes(intervalMinutes);
         var maxTasks = Math.Clamp(_configuration.GetValue<int>("Crawler:MaxTasksPerCycle", 10), 1, 30);
 
@@ -150,13 +150,15 @@ public sealed class CrawlerHostedService : BackgroundService
                 try
                 {
                     await telemetryRepo.RecordTelemetryAsync(
-                        serviceName: "Crawler & Intelligence",
+                        serviceName: "Crawler & Intelligence (tarefas)",
                         startedAt: startedAt,
                         finishedAt: finishedAt,
                         sourceQueried: "Sitemaps, Feeds & Schema.org",
-                        recordsCreated: crawlerProcessed,
-                        recordsUpdated: enrichedCount + intelJobs,
-                        apiUnitsConsumed: Math.Max(0, crawlerProcessed + enrichedCount),
+                        // Tarefas processadas não são restaurantes criados, nem unidades de API.
+                        // Os números de ingestão reais estão em crawler_runs.
+                        recordsCreated: 0,
+                        recordsUpdated: enrichedCount,
+                        apiUnitsConsumed: 0,
                         status: status,
                         errorMessage: errorMessage,
                         ct: CancellationToken.None);

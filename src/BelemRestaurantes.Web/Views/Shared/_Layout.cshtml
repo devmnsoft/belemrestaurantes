@@ -1,5 +1,9 @@
 @using System.Globalization
 @using BelemRestaurantes.Web.Localization
+@{
+    var primaryEditorialLanguage=CultureInfo.CurrentUICulture.TwoLetterISOLanguageName is "pt" or "en" or "es";
+    var editorialLanguage=primaryEditorialLanguage?CultureInfo.CurrentUICulture.Name:"en";
+}
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentUICulture.Name">
 <head>
@@ -23,42 +27,46 @@
       <meta name="twitter:description" content="@(ViewData["OgDescription"] ?? T["Description"].Value)" />
   }
 
-  <link rel="stylesheet" asp-append-version="true" href="~/css/site.css" />
-  <link rel="stylesheet" asp-append-version="true" href="~/css/design-v3.css" />
-  <link rel="stylesheet" asp-append-version="true" href="~/css/design-v4.css" />
-  <link rel="stylesheet" asp-append-version="true" href="~/css/cuia-v5.css" />
+  <link rel="stylesheet" asp-append-version="true" href="~/css/para.css" />
   @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-<header>
-  <a asp-controller="Home" asp-action="Index" class="brand"><span class="mark">✦</span> belém <strong>restaurantes</strong></a>
-  <nav aria-label="@T["Explore"]">
-    <a href="/#catalogo">@T["Explore"]</a>
-    <a href="/cidades">Cidades do Pará</a>
-    <a href="/busca">Buscar</a>
-    <a href="/community">@T["CommunityFeedTitle"]</a>
-    <a href="/roteiros">Roteiros</a>
-    <a href="/partner/dashboard">Portal Parceiro</a>
-    <a href="/account">@T["MyAccount"]</a>
+<body class="para-public">
+<a class="skip-link" href="#main-content">@T["AtlasSkip"]</a>
+<div class="para-ribbon" lang="@editorialLanguage">@T["AtlasRibbon"]</div>
+<header class="para-header">
+  <a asp-controller="Home" asp-action="Index" class="para-brand">
+    <span class="para-brand-mark">@await Html.PartialAsync("_ParaIcon", "cuia")</span>
+    <span>belém<span class="para-brand-small">RESTAURANTES</span></span>
+  </a>
+  <div class="atlas-header-tools"><details class="atlas-language"><summary aria-label="@(T["Language"].Value + ": " + CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpperInvariant())">@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpperInvariant()</summary><form method="post" action="/language">@Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" /><button type="submit" name="culture" value="pt-BR" lang="pt-BR">Português</button><button type="submit" name="culture" value="en" lang="en">English</button><button type="submit" name="culture" value="es" lang="es">Español</button></form></details><button class="para-menu-toggle" type="button" aria-expanded="false" aria-controls="public-navigation">Menu @await Html.PartialAsync("_ParaIcon", "menu")</button></div>
+  <nav id="public-navigation" class="para-navigation" lang="@editorialLanguage" aria-label="@T["Explore"]">
+    <a href="/busca">@T["NavEat"]</a><a href="/cidades">@T["NavPara"]</a><a href="/roteiros">@T["NavTrails"]</a>
+    <a href="/community">@T["NavCommunity"]</a><a href="/receitas">@T["NavRecipes"]</a><a href="/cuia-rotas" lang="pt-BR">Cuia Rotas</a><a href="/guia">@T["NavGuide"]</a>
+    <a href="/account" class="para-account">@T["MyAccount"] ↗</a>
   </nav>
-  <form method="post" action="/language" class="language-picker">
-    @Html.AntiForgeryToken()
-    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
-    <label for="language">@T["Language"]</label>
-    <select id="language" name="culture">
-      @foreach (var language in SupportedLanguages.All)
-      {
-        <option value="@language.Code" selected="@(language.Code == CultureInfo.CurrentUICulture.Name)">@language.Name</option>
-      }
-    </select>
-    <button type="submit">@T["Apply"]</button>
-  </form>
 </header>
-<main>@RenderBody()</main>
-<footer>
-  Belém Restaurantes · @T["Tagline"] · MNSOFT · <a href="mailto:comercial@belemrestaurantes.com.br">@T["Contact"]</a>
-  <br /><small>@T["ExternalNotice"]</small>
+@if(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName is not ("pt" or "en" or "es"))
+{ <p class="atlas-locale-note" lang="en">The new editorial pages are available in Português, English and Español. Other languages currently use English for these sections.</p> }
+<main id="main-content" tabindex="-1" lang="@(!primaryEditorialLanguage && ViewData["AtlasEditorial"] as bool? == true ? "en" : null)">@RenderBody()</main>
+<footer class="para-footer" lang="@editorialLanguage">
+  <div class="para-container para-footer-grid">
+    <div><a href="/" class="para-footer-brand">belém restaurantes<span>@T["AtlasFooterTagline"]</span></a><p>@T["AtlasFooterText"]</p></div>
+    <div><strong>@T["AtlasExplore"]</strong><a href="/busca">@T["NavEat"]</a><a href="/cidades">@T["NavPara"]</a><a href="/roteiros">@T["NavTrails"]</a><a href="/guia">@T["AtlasGuideLink"]</a></div>
+    <div><strong>@T["AtlasJoin"]</strong><a href="/community">@T["NavCommunity"]</a><a href="/sugerir">@T["Suggest"]</a><a href="/partner/dashboard">@T["AtlasPartnerButton"]</a><a href="mailto:comercial@belemrestaurantes.com.br">@T["Contact"]</a></div>
+    <form method="post" action="/language" class="para-language" lang="@CultureInfo.CurrentUICulture.Name">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+      <label for="language">@T["Language"]</label>
+      <select id="language" name="culture">
+        @foreach (var language in SupportedLanguages.All)
+        { <option value="@language.Code" selected="@(language.Code == CultureInfo.CurrentUICulture.Name)">@language.Name</option> }
+      </select><button type="submit">@T["Apply"]</button>
+    </form>
+  </div>
+  <p class="para-container para-data-credit">© <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap contributors</a> · <a href="/dados-abertos/openstreetmap">ODbL</a> · <a href="https://docs.minhareceita.org/" rel="noopener">Minha Receita / Receita Federal</a> · <a href="/guia">@T["AtlasGuideLink"]</a> · <a href="/privacidade">@T["Privacy"]</a> · <a href="/termos">@T["Terms"]</a></p>
+  <div class="para-container para-footer-bottom"><span>Belém Restaurantes · MNSOFT</span><small>@T["ExternalNotice"]</small></div>
 </footer>
+<script src="~/js/para.js" asp-append-version="true" defer></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>

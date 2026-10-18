@@ -30,7 +30,8 @@ public sealed class GooglePlacesOptions
     /// </summary>
     public bool RequestRichContent { get; set; }
 
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiKey);
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiKey) && !ApiKey.Trim().StartsWith("GOCSPX-", StringComparison.Ordinal)
+        && !ApiKey.Trim().StartsWith("SUA_CHAVE", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -53,7 +54,8 @@ public sealed class GooglePlacesClient(
     /// </summary>
     private const string SearchFieldMask =
         "places.id,places.displayName,places.formattedAddress,places.location,places.types," +
-        "places.googleMapsUri,places.websiteUri,places.rating,places.userRatingCount,nextPageToken";
+        "places.googleMapsUri,places.websiteUri,places.rating,places.userRatingCount," +
+        "places.addressComponents,places.nationalPhoneNumber,places.businessStatus,nextPageToken";
 
     public string Name => "google_places";
 
@@ -67,10 +69,11 @@ public sealed class GooglePlacesClient(
                 "Google Places não configurado. Defina GooglePlaces:ApiKey como segredo de ambiente.");
         }
 
-        var url = new Uri(new Uri(options.BaseUrl), "places:searchText");
+        // O prefixo ./ impede que o ':' seja interpretado como esquema de URI.
+        var url = new Uri(new Uri(options.BaseUrl), "./places:searchText");
 
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Headers.Add("X-Goog-Api-Key", options.ApiKey);
+        request.Headers.Add("X-Goog-Api-Key", options.ApiKey?.Trim());
         request.Headers.Add("X-Goog-FieldMask", SearchFieldMask);
 
         request.Content = JsonContent.Create(new
@@ -97,6 +100,7 @@ public sealed class GooglePlacesClient(
         }
 
         var places = ParseSearchResponse(body);
+        logger.LogInformation("Google Places: cidade={City}, encontrados={Count}", cityFilter, places.Count);
 
         return new PlaceSearchResult(places, ReadNextPageToken(body), clock.UtcNow);
     }
@@ -119,7 +123,9 @@ public sealed class GooglePlacesClient(
 
     public async Task<DiscoveredPlace?> GetDetailsAsync(string externalId, CancellationToken ct)
     {
-        if (!IsConfigured || string.IsNullOrWhiteSpace(externalId))
+        if (!IsConfigured || string.IsNullOrWhiteSpace(externalId) ||
+            externalId.StartsWith("osm:", StringComparison.Ordinal) || externalId.StartsWith("crawler:", StringComparison.Ordinal) ||
+            externalId.StartsWith("suggestion:", StringComparison.Ordinal) || externalId.StartsWith("cnpj:", StringComparison.Ordinal))
         {
             return null;
         }
@@ -129,8 +135,8 @@ public sealed class GooglePlacesClient(
         var url = new Uri(new Uri(options.BaseUrl), $"places/{Uri.EscapeDataString(externalId)}");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("X-Goog-Api-Key", options.ApiKey);
-        request.Headers.Add("X-Goog-FieldMask", SearchFieldMask.Replace("places.", ""));
+        request.Headers.Add("X-Goog-Api-Key", options.ApiKey?.Trim());
+        request.Headers.Add("X-Goog-FieldMask", SearchFieldMask.Replace(",nextPageToken", "").Replace("places.", ""));
 
         using var response = await httpClient.SendAsync(request, ct);
         if (response.StatusCode == HttpStatusCode.NotFound)
@@ -220,8 +226,8 @@ public sealed class GooglePlacesClient(
         return new DiscoveredPlace(
             id,
             name,
-            Neighborhood: null,
-            City: null,
+            Neighborhood: AddressComponent(place, "sublocality_level_1", "sublocality", "neighborhood"),
+            City: AddressComponent(place, "administrative_area_level_2", "locality", "postal_town"),
             Category: DeriveCategory(types),
             Address: place.TryGetProperty("formattedAddress", out var address) ? address.GetString() : null,
             Latitude: latitude,
@@ -234,7 +240,33 @@ public sealed class GooglePlacesClient(
             GoogleRatingCount: place.TryGetProperty("userRatingCount", out var count) && count.TryGetInt32(out var c)
                 ? c
                 : null,
-            types);
+            types)
+        {
+            Phone = place.TryGetProperty("nationalPhoneNumber", out var phone) ? phone.GetString() : null,
+            State = AddressComponent(place, "administrative_area_level_1"),
+            BusinessStatus = place.TryGetProperty("businessStatus", out var business) ? business.GetString() switch
+            {
+                "OPERATIONAL" => "operational",
+                "CLOSED_TEMPORARILY" => "temporarily_closed",
+                "CLOSED_PERMANENTLY" => "permanently_closed",
+                _ => null
+            } : null
+        };
+    }
+
+    private static string? AddressComponent(JsonElement place, params string[] preferredTypes)
+    {
+        if (!place.TryGetProperty("addressComponents", out var components) || components.ValueKind != JsonValueKind.Array)
+            return null;
+        foreach (var type in preferredTypes)
+        foreach (var component in components.EnumerateArray())
+        {
+            if (component.TryGetProperty("types", out var types) && types.ValueKind == JsonValueKind.Array &&
+                types.EnumerateArray().Any(t => t.GetString() == type) &&
+                component.TryGetProperty("longText", out var name))
+                return name.GetString();
+        }
+        return null;
     }
 
     /// <summary>

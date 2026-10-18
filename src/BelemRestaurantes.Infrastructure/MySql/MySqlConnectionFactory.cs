@@ -19,7 +19,7 @@ public sealed class MySqlConnectionFactory
     private readonly string _connectionString;
     private readonly MySqlConnectionStringBuilder _builder;
 
-    public MySqlConnectionFactory(string connectionString)
+    public MySqlConnectionFactory(string connectionString, string? environmentName = null)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
         {
@@ -33,7 +33,7 @@ public sealed class MySqlConnectionFactory
         if (!string.Equals(_builder.Database, "belrestaurante", StringComparison.Ordinal))
             throw new InvalidOperationException("Somente o banco belrestaurante é autorizado.");
         var local = _builder.Server is "localhost" or "127.0.0.1" or "::1";
-        var development = string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.Ordinal);
+        var development = string.Equals(environmentName ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development", StringComparison.Ordinal);
         var allowLocalPlaintext = local && development && _builder.SslMode == MySqlSslMode.None;
         if (!local && _builder.SslMode != MySqlSslMode.VerifyFull)
             throw new InvalidOperationException("MySQL remoto exige SslMode=VerifyFull e certificado confiável.");

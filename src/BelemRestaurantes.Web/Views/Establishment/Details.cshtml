@@ -13,99 +13,42 @@
     var cuiaBadges = ViewData["CuiaBadges"] as IReadOnlyList<CuiaBadgeView> ?? [];
     var gallery = ViewData["Gallery"] as RestaurantGallery;
     var experiences = ViewData["Experiences"] as IReadOnlyList<ExperienceView> ?? [];
+    var recipes=ViewData["Recipes"] as IReadOnlyList<BelemRestaurantes.Application.Models.ParaRecipe>??[];
 }
 
 <div class="cuia-container cuia-section">
-  <!-- Topo: Breadcrumb e Ações V5 -->
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 24px;">
-    <div>
-      <a href="/busca" class="cuia-btn cuia-btn-outline cuia-btn-sm">
-        ← Voltar para a busca
-      </a>
+  <nav class="para-breadcrumb" aria-label="Você está aqui"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/busca">Onde comer</a><span aria-hidden="true">/</span><span>@Model.Name</span></nav>
+  <article class="para-detail-hero">
+    <div class="para-detail-media">
+      @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl) && (Model.PhotoUrl.StartsWith("/media/", StringComparison.Ordinal) || (Uri.TryCreate(Model.PhotoUrl, UriKind.Absolute, out var heroPhotoUri) && heroPhotoUri.Scheme == "https")))
+      { <img src="@Model.PhotoUrl" alt="Foto de @Model.Name" width="900" height="700" fetchpriority="high" /> }
+      else
+      { <div class="para-detail-placeholder">@await Html.PartialAsync("_ParaIcon", "cuia")<strong>O sabor mora aqui.</strong><span>Este lugar ainda não tem foto no guia.</span></div> }
+      @if(cuiaBadges.Count>0) { <div class="para-detail-badges">@foreach(var badge in cuiaBadges) { <span class="cuia-tag cuia-tag-tucupi">Selo Cuia · @badge.BadgeTitle</span> }</div> }
     </div>
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-      <a href="/cardapio/@Model.Id" class="cuia-btn cuia-btn-primary">
-        Cardápio Digital
-      </a>
-      <a href="/experience/create?restaurantId=@Model.Id" class="cuia-btn cuia-btn-secondary">
-        ✦ @T["TellYourExperience"]
-      </a>
-      <a href="/partner/claim/@Model.Id" class="cuia-btn cuia-btn-outline">
-        Reivindicar Restaurante
-      </a>
-    </div>
-  </div>
-
-  <!-- Banner Principal do Restaurante V5 -->
-  <div class="cuia-card" style="padding: 0; overflow: hidden; margin-bottom: 32px;">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
-      <!-- Foto de Capa -->
-      <div style="height: 360px; background: var(--floresta-900, #113F32); position: relative;">
-        @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl))
-        {
-          <img src="@Model.PhotoUrl" alt="@T["AuthorizedPhoto", Model.Name]" style="width: 100%; height: 100%; object-fit: cover;" loading="eager" referrerpolicy="no-referrer" />
-        }
-        else
-        {
-          <div style="height: 100%; display: grid; place-items: center; color: var(--tucupi-500, #e8ad46); font-size: 48px; background: linear-gradient(135deg, #113F32, #1b5e4b);">
-            ✦
-          </div>
-        }
-
-        @if (cuiaBadges.Count > 0)
-        {
-          <div style="position: absolute; bottom: 16px; left: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
-            @foreach (var badge in cuiaBadges)
-            {
-              <span class="cuia-tag cuia-tag-tucupi" title="@badge.MethodologySummary">
-                Selo Cuia @badge.BadgeTitle • @badge.RankPosition º Lugar
-              </span>
-            }
-          </div>
-        }
+    <div class="para-detail-info"><span class="para-eyebrow">@Model.Category · @Model.City</span><h1>@Model.Name</h1><p class="para-detail-address">@(Model.Address ?? "Endereço completo em revisão") @(!string.IsNullOrWhiteSpace(Model.Neighborhood) ? "· " + Model.Neighborhood : "")</p>
+      @if(Model.BusinessStatus is "temporarily_closed" or "permanently_closed") { <p class="para-closed">@(Model.BusinessStatus=="temporarily_closed"?"Fonte informa fechamento temporário. Confirme antes de ir.":"Fonte informa encerramento das atividades.")</p> }
+      else { <p class="para-detail-note">Vai visitar? Confirme os horários e o funcionamento com o estabelecimento.</p> }
+      <div class="para-detail-main-actions">
+        <a href="https://www.google.com/maps/search/?api=1&amp;query=@Uri.EscapeDataString(Model.Latitude is not null && Model.Longitude is not null ? Model.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + "," + Model.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="para-button">@await Html.PartialAsync("_ParaIcon", "mobility") Como chegar ↗</a>
+        @if(!string.IsNullOrWhiteSpace(Model.Phone)) { <a class="para-text-link" href="tel:@(new string(Model.Phone.Where(c=>char.IsDigit(c)||c=='+').ToArray()))">Ligar: @Model.Phone</a> }
       </div>
-
-      <!-- Detalhes e Apresentação -->
-      <div style="padding: clamp(24px, 4vw, 36px); display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <span class="cuia-tag cuia-tag-floresta">@Model.Category</span>
-            <span style="font-size: 13px; color: var(--texto-secundario, #4b635a);">• Atualizado em @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("d")</span>
-          </div>
-
-          <h1 class="cuia-section-title" style="margin-bottom: 8px; font-size: clamp(26px, 3.5vw, 36px);">@Model.Name</h1>
-
-          <div style="font-size: 15px; color: var(--texto-secundario, #4b635a); margin-bottom: 16px;">
-            @(Model.Address ?? T["AddressChecking"].Value), @Model.Neighborhood, @Model.City
-          </div>
-
-          <!-- Redes Sociais Oficiais -->
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0;">
-            @if (Model.Website is not null) { <a href="@Model.Website" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">Site Oficial ↗</a> }
-            @if (Model.Instagram is not null) { <a href="@Model.Instagram" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">Instagram ↗</a> }
-            @if (Model.Facebook is not null) { <a href="@Model.Facebook" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">Facebook ↗</a> }
-            @if (Model.TikTok is not null) { <a href="@Model.TikTok" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">TikTok ↗</a> }
-            @if (Model.YouTube is not null) { <a href="@Model.YouTube" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">YouTube ↗</a> }
-          </div>
-        </div>
-
-        <!-- Barra de Ações Rápidas -->
-        <div style="padding-top: 16px; border-top: 1px solid var(--borda-suave, #e2e8df); display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-outline cuia-btn-sm">
-            Como Chegar (Mapa) ↗
-          </a>
-          <button type="button" class="cuia-btn cuia-btn-outline cuia-btn-sm" onclick="navigator.clipboard.writeText(window.location.href); alert('Link do restaurante copiado!');">
-            Compartilhar
-          </button>
-          <a href="/#indicacao" class="cuia-btn cuia-btn-outline cuia-btn-sm" style="color: var(--texto-secundario);">
-            Sugerir Correção
-          </a>
-        </div>
+      <div class="para-detail-links">
+        @foreach(var link in new[] { ("Site",Model.Website), ("Instagram",Model.Instagram), ("Facebook",Model.Facebook), ("TikTok",Model.TikTok), ("YouTube",Model.YouTube) })
+        { @if (link.Item2 is not null && Uri.TryCreate(link.Item2,UriKind.Absolute,out var safe) && safe.Scheme=="https") { <a href="@safe.AbsoluteUri" target="_blank" rel="noopener noreferrer">@link.Item1 ↗</a> } }
       </div>
+      <div class="para-detail-secondary-actions"><form method="post" action="/account/favorites/@Model.Id/@(ViewData["IsFavorite"] is true ? "remove" : "add")">@Html.AntiForgeryToken()<button type="submit" class="cuia-btn cuia-btn-outline" aria-pressed="@(ViewData["IsFavorite"] is true ? "true" : "false")">@(ViewData["IsFavorite"] is true ? "♥ Salvo nos favoritos" : "♡ Salvar nos favoritos")</button></form><button type="button" data-copy-url="true" class="cuia-btn cuia-btn-outline">Compartilhar</button></div>
+      <div class="para-detail-provenance"><span>Cadastro atualizado em @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy").</span>
+      @if (Model.SourceUrl is not null && Uri.TryCreate(Model.SourceUrl,UriKind.Absolute,out var source) && source.Scheme=="https") { <a href="@source.AbsoluteUri" target="_blank" rel="noopener noreferrer">Consultar fonte do cadastro ↗</a> }
+      <a href="/sugerir?restaurantId=@Model.Id">Sugerir uma correção</a></div>
     </div>
-  </div>
+  </article>
+  <div class="para-detail-quick-links"><a href="/cardapio/@Model.Id">Ver cardápio ↗</a><a href="/experience/create?restaurantId=@Model.Id">Contar minha experiência ↗</a><a href="/partner/claim/@Model.Id">Esse restaurante é seu? Reivindique ↗</a></div>
+  <section class="visit-panel" lang="pt-BR" aria-labelledby="visit-section"><span class="para-eyebrow">CUIA MOBILIDADE 360</span><h2 id="visit-section">Como chegar e quando visitar</h2><p class="visit-status">@((ViewData["OpeningAssessment"] as BelemRestaurantes.Application.Models.OpeningAssessment)?.Message??"Horário não confirmado")</p><p>Ônibus, BRT, caminhada, bicicleta, carro e referências de transporte fluvial. Confira trajetos, funcionamento e informações disponíveis antes de sair.</p><a href="/cuia-rotas?restaurantId=@Model.Id" class="para-button">Planejar minha visita →</a></section>
+  <details class="visit-panel"><summary>Ver localização no mapa</summary>@if(Model.Latitude is {} lat && Model.Longitude is {} lng){<p>O mapa externo carrega após seu clique e mostra somente o destino informado pela fonte.</p><button type="button" class="visit-text-button" data-load-map="@FormattableString.Invariant($"https://www.openstreetmap.org/export/embed.html?bbox={lng-0.006}%2C{lat-0.004}%2C{lng+0.006}%2C{lat+0.004}&layer=mapnik&marker={lat}%2C{lng}")">Carregar mapa interativo</button><div id="visit-map"></div><p>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></p>}else{<p>Coordenadas não confirmadas. Consulte o endereço e planeje a visita no Cuia Rotas.</p>}</details>
+  @if(recipes.Count>0){<section class="recipe-related"><div class="para-section-heading"><div><span class="para-eyebrow">O PARÁ NA SUA COZINHA</span><h2>Quer fazer algo parecido em casa?</h2><p>Adaptações editoriais relacionadas ao tema. Não reproduzem receitas oficiais deste estabelecimento.</p></div><a href="/receitas?RestaurantId=@Model.Id" class="para-text-link">Ver receitas relacionadas ↗</a></div><div class="recipe-grid">@foreach(var recipe in recipes){@await Html.PartialAsync("_RecipeCard",recipe)}</div></section>}
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; align-items: start;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 32px; align-items: start;">
     <!-- Coluna Esquerda: Informações & Mobilidade -->
     <div>
       <!-- Cardápio Digital Rápido -->
@@ -123,7 +66,7 @@
       <div class="cuia-card" style="margin-bottom: 24px; padding: 24px;">
         <h3 style="font-size: 18px; font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 12px;">Mobilidade Urbana & Como Chegar</h3>
         <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-          Localizado no bairro @(Model.Neighborhood ?? "Central") de @Model.City. Acesso pelas vias principais do município, com linhas de ônibus metropolitanas e paradas de integração regulares.
+          Use o endereço ou o ponto no mapa para planejar seu trajeto até @Model.City. Para transporte público ou travessias, confirme linhas, horários e pontos de embarque com os operadores.
         </p>
         <a href="https://www.google.com/maps/dir/?api=1&destination=@Uri.EscapeDataString(Model.Name + " " + Model.Address + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-secondary cuia-btn-sm" style="width: 100%; text-align: center;">
           Traçar Rota no Google Maps ↗
@@ -192,11 +135,11 @@
           Transparência & Procedência dos Dados
         </h4>
         <p style="font-size: 12.5px; color: var(--texto-secundario, #4b635a); line-height: 1.5; margin: 0 0 10px 0;">
-          As informações cadastrais deste estabelecimento foram auditadas no catálogo de @Model.City.
+          Este cadastro reúne informações de fontes externas e contribuições revisadas. Elas podem estar desatualizadas: confirme os detalhes com o estabelecimento antes da visita.
         </p>
         <div style="font-size: 11.5px; color: var(--texto-secundario, #4b635a); background: var(--palha-100, #f7f4eb); padding: 8px 12px; border-radius: 8px;">
           <div><strong>Última atualização:</strong> @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy HH:mm")</div>
-          <div style="margin-top: 2px;"><strong>Status:</strong> Cadastrado · Curadoria auditada</div>
+          <div style="margin-top: 2px;"><strong>Status:</strong> Publicado no guia · Funcionamento a confirmar</div>
         </div>
       </div>
     </div>
@@ -303,3 +246,4 @@
     </div>
   </div>
 </div>
+@section Scripts{<script src="~/js/visit.js" asp-append-version="true" defer></script>}

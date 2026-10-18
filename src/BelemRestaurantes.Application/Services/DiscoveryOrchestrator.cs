@@ -37,6 +37,20 @@ public sealed class DiscoveryOrchestrator(
         {
             throw;
         }
+        catch (DiscoveryProviderUnavailableException ex)
+        {
+            metrics.Failed++;
+            logger.LogWarning("Fonte {Provider} indisponível para {City}/{Category}; nova consulta após {RetryAt}: {Reason}",
+                provider.Name, work.City, work.Category, ex.RetryAt, ex.Message);
+            return metrics.ToSnapshot() with { Source = provider.Name, FailureReason = ex.Message, ProviderRetryAt = ex.RetryAt };
+        }
+        catch (TimeoutException ex)
+        {
+            metrics.Failed++;
+            logger.LogWarning("Fonte {Provider} temporariamente indisponível para {City}/{Category}: {Reason}",
+                provider.Name, work.City, work.Category, ex.Message);
+            return metrics.ToSnapshot() with { Source = provider.Name, FailureReason = ex.Message };
+        }
         catch (Exception ex)
         {
             // Falha de API não pode derrubar o ciclo: apenas este job é marcado como falho.
@@ -44,9 +58,10 @@ public sealed class DiscoveryOrchestrator(
             logger.LogError(
                 ex, "Falha ao consultar {Provider} para {City}/{Category}",
                 provider.Name, work.City, work.Category);
-            return metrics.ToSnapshot();
+            return metrics.ToSnapshot() with { Source = provider.Name, FailureReason = ex.Message };
         }
 
+        metrics.Discovered = search.Places.Count;
         foreach (var place in search.Places)
         {
             ct.ThrowIfCancellationRequested();
@@ -62,7 +77,7 @@ public sealed class DiscoveryOrchestrator(
 
             try
             {
-                await IngestAsync(place, metrics, ct);
+                await IngestAsync(place, metrics, search.QueriedAt, ct);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -76,10 +91,12 @@ public sealed class DiscoveryOrchestrator(
             }
         }
 
-        return metrics.ToSnapshot();
+        logger.LogInformation("Discovery {City}/{Category} fonte={Provider}: encontrados={Found}, novos={Created}, atualizados={Updated}, descartados={Skipped}, falhas={Failed}",
+            work.City, work.Category, provider.Name, metrics.Discovered, metrics.Created, metrics.Updated, metrics.Skipped, metrics.Failed);
+        return metrics.ToSnapshot() with { Source = provider.Name };
     }
 
-    private async Task IngestAsync(DiscoveredPlace place, MutableMetrics metrics, CancellationToken ct)
+    private async Task IngestAsync(DiscoveredPlace place, MutableMetrics metrics, DateTimeOffset sourceFetchedAt, CancellationToken ct)
     {
         // 1. Compara com o catálogo antes de escrever qualquer coisa.
         var candidates = await ingestion.FindDuplicationCandidatesAsync(
@@ -90,13 +107,18 @@ public sealed class DiscoveryOrchestrator(
 
         // 2. Incerteza pedida: a IA ajuda, mas continua sem publicar.
         AiClassification? suggestion = null;
-        if (dedup.RequiresHumanReview)
+        if (dedup.RequiresHumanReview && provider.Name is not ("openstreetmap" or "minha_receita"))
         {
             suggestion = await aiRouter.ClassifyAsync("dedup-review", BuildReviewPayload(place, dedup), ct);
         }
 
         var now = clock.UtcNow;
-        var restaurantId = await ingestion.UpsertDiscoveredAsync(place, provider.Name, now, ct);
+        var write = await ingestion.UpsertWithOutcomeAsync(place, provider.Name, now, ct);
+        var restaurantId = write.Id;
+        // O commit já ocorreu. Falhas posteriores de proveniência/moderação
+        // não podem apagar a contagem de registros realmente persistidos.
+        if (write.Created) metrics.Created++;
+        else metrics.Updated++;
 
         await ingestion.RecordObservationAsync(
             restaurantId,
@@ -104,7 +126,7 @@ public sealed class DiscoveryOrchestrator(
             place.ExternalId,
             place.GoogleMapsUri,
             ComputePayloadHash(place),
-            now,
+            sourceFetchedAt,
             ct);
 
         // 3. Tudo que não tem certeza alta vira pendência explícita de moderação.
@@ -128,16 +150,6 @@ public sealed class DiscoveryOrchestrator(
                 ct);
         }
 
-        if (dedup.Outcome == MatchOutcome.New)
-        {
-            metrics.Created++;
-        }
-        else
-        {
-            metrics.Updated++;
-        }
-
-        metrics.Discovered++;
     }
 
     private static string BuildReviewPayload(DiscoveredPlace place, DeduplicationResult dedup) =>

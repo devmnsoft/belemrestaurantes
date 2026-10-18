@@ -83,7 +83,16 @@ public static class CategoryRules
         ["padaria"] = "Padaria",
         ["hamburgueria"] = "Hamburgueria",
         ["pastelaria"] = "Pastelaria",
-        ["açaí e lanches"] = "Açaí"
+        ["açaí e lanches"] = "Açaí",
+        ["feira"] = "Feira e mercado",
+        ["feira livre"] = "Feira e mercado",
+        ["mercado"] = "Feira e mercado",
+        ["feira e mercado"] = "Feira e mercado",
+        ["açaiteria"] = "Açaí",
+        ["sorveteria"] = "Sorveteria",
+        ["confeitaria"] = "Confeitaria",
+        ["hortifruti"] = "Hortifruti",
+        ["peixaria"] = "Peixaria"
     };
 
     public static string? Clean(string? raw)

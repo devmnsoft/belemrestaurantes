@@ -1,0 +1,40 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const moduleRoot = process.env.VISUAL_TEST_MODULES || path.resolve('artifacts/ui-test/node_modules');
+const { chromium } = require(path.join(moduleRoot, 'playwright'));
+const AxeBuilder = require(path.join(moduleRoot, '@axe-core/playwright')).default;
+const base = process.env.VISUAL_TEST_BASE_URL || 'http://localhost:5180';
+const output = path.resolve(process.env.VISUAL_TEST_OUTPUT || 'artifacts/sprint18/expedition');
+let browser;
+(async () => {
+  fs.mkdirSync(output, { recursive: true });
+  browser = await chromium.launch({ headless: true });
+  const results = [];
+  for (const locale of ['pt-BR', 'en', 'es']) for (const width of [360, 1440]) {
+    const context = await browser.newContext({ locale, viewport: { width, height: 1000 } });
+    const page = await context.newPage();
+    await page.goto(base, { waitUntil: 'networkidle' });
+    const explorer = page.locator('.atlas-expedition');
+    const links = explorer.locator('.atlas-region-links a');
+    if (await links.count() !== 6) throw Error('The six official regions must be available');
+    const violations = (await new AxeBuilder({ page }).include('.atlas-expedition').withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze()).violations;
+    if (violations.length) throw Error(JSON.stringify(violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) }))));
+    await explorer.screenshot({ path: path.join(output, `explorer-${locale}-${width}.png`) });
+    await explorer.getByRole('link').filter({ hasText: 'Marajó' }).click();
+    await page.waitForURL('**/cidades?region=**');
+    if (await page.locator('.atlas-region-heading h2').innerText() !== 'Marajó') throw Error('Region selection did not filter the destination directory');
+    await page.goto(base, { waitUntil: 'networkidle' });
+    await page.locator('#expedition-city').selectOption('Ananindeua');
+    await page.locator('#expedition-category').selectOption('Padaria');
+    await page.locator('.atlas-discovery-form button').click();
+    await page.waitForURL('**/busca?**');
+    const url = new URL(page.url());
+    if (url.searchParams.get('city') !== 'Ananindeua' || url.searchParams.get('category') !== 'Padaria') throw Error('Combined discovery filters were lost');
+    if (await page.locator('#searchCity').inputValue() !== 'Ananindeua' || await page.locator('#searchCategory').inputValue() !== 'Padaria') throw Error('Search did not retain the selected destination and food type');
+    results.push({ locale, width, regionalNavigation: true, combinedSearch: true, accessibilityViolations: 0 });
+    await context.close();
+  }
+  fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(results, null, 2));
+  console.log(JSON.stringify({ cases: results.length, failures: 0 }));
+  await browser.close();
+})().catch(async error => { console.error(error); await browser?.close(); process.exitCode = 1; });

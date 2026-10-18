@@ -1,0 +1,24 @@
+.coverage-dashboard{max-width:1400px;margin:auto;padding:30px 24px;color:var(--para-ink)}
+.coverage-heading{display:flex;align-items:center;justify-content:space-between;gap:30px;margin-bottom:25px}
+.coverage-heading h1{font:400 clamp(32px,3.5vw,48px)/1.12 var(--para-serif);letter-spacing:-1px;margin:15px 0;max-width:700px}
+.coverage-heading p{font-size:13px;line-height:1.8;color:var(--para-muted);max-width:700px}
+.coverage-heading .para-button{flex-shrink:0;font-size:12px}
+.coverage-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin:22px 0}
+.coverage-stats article{border:1px solid var(--para-line);border-radius:12px;background:#fffdf8;padding:22px;display:flex;flex-direction:column;gap:12px}
+.coverage-stats article>span{font-size:12px;color:var(--para-muted)}.coverage-stats strong{font:400 37px/1 var(--para-serif)}.coverage-stats small{font-size:20px}
+.coverage-goal{padding:26px;background:#173f35;color:#fff5df;border-radius:12px;margin-bottom:25px}
+.coverage-goal>div{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;font-size:14px}.coverage-goal>div>span{color:#f1cb80}
+.coverage-goal progress{display:block;appearance:none;width:100%;height:12px;accent-color:#edc46e;background:#335d50;border:0;border-radius:9px;overflow:hidden;margin:20px 0}
+.coverage-goal progress::-webkit-progress-bar{background:#335d50}.coverage-goal progress::-webkit-progress-value{background:#edc46e}.coverage-goal progress::-moz-progress-bar{background:#edc46e}
+.coverage-goal p{font-size:12px;line-height:1.8;color:#e0e7d9;margin:0;max-width:850px}
+.coverage-region-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-bottom:30px}
+.coverage-region-grid>a{display:flex;flex-direction:column;gap:12px;padding:22px;background:#f1eadb;border:1px solid #d7cfbd;border-radius:12px;text-decoration:none;color:var(--para-forest)}
+.coverage-region-grid>a:nth-child(3n+2){background:#e4ece4}.coverage-region-grid>a:nth-child(3n){background:#ece3e9}
+.coverage-region-grid>a:hover{border-color:#526c54}.coverage-region-grid span{font:400 23px/1.2 var(--para-serif)}.coverage-region-grid strong{font-size:26px}.coverage-region-grid small{font-size:11px;color:#455b4f}
+.coverage-note{font-size:12px;color:var(--para-muted);margin:22px 0}
+.coverage-table-wrap{overflow:auto;contain:paint;border:1px solid var(--para-line);border-radius:12px;background:#fffdf8}
+.coverage-table{border-collapse:collapse;width:100%;font-size:13px}.coverage-table caption{text-align:left;font:400 24px var(--para-serif);padding:20px;color:var(--para-forest)}
+.coverage-table thead{background:#e6ece2}.coverage-table th,.coverage-table td{text-align:left;padding:15px;border-bottom:1px solid #e1e4d9}.coverage-table thead th{font-size:11px;color:#415b48}.coverage-table th>small{display:block;font-weight:400;font-size:10px;color:var(--para-muted);margin-top:4px}.coverage-table a{color:#235741;font-weight:650;white-space:nowrap}.coverage-table tbody tr:hover{background:#f5f3e9}
+.coverage-categories{margin-top:36px}.coverage-categories h2{font:400 32px var(--para-serif)}.coverage-categories>p{font-size:12px;color:var(--para-muted)}.coverage-categories>div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.coverage-categories article{background:#fffdf8;border:1px solid var(--para-line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:8px}.coverage-categories article>span{font-size:12px}.coverage-categories strong{font:400 29px var(--para-serif)}.coverage-categories small{font-size:11px;color:var(--para-muted)}
+@media(max-width:1000px){.coverage-stats,.coverage-categories>div{grid-template-columns:repeat(2,minmax(0,1fr))}.coverage-region-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.coverage-heading{display:block}.coverage-heading>.para-button{margin-top:10px}}
+@media(max-width:500px){.coverage-dashboard{padding:26px 16px}.coverage-stats{gap:10px}.coverage-stats article{padding:16px}.coverage-stats strong{font-size:31px}.coverage-stats article>span{font-size:11px}.coverage-region-grid{grid-template-columns:1fr}.coverage-goal{padding:22px}.coverage-goal>div{font-size:13px}.coverage-categories>div{grid-template-columns:1fr 1fr}.coverage-table th,.coverage-table td{padding:12px}.coverage-table caption{font-size:22px}}

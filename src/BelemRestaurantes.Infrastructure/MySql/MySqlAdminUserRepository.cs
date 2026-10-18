@@ -15,7 +15,7 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             """
             SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
                    two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
-                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt
+                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt,must_change_password AS MustChangePassword
             FROM admin_users WHERE user_name = @userName AND is_disabled = FALSE AND disabled = FALSE LIMIT 1
             """,
             new { userName },
@@ -31,7 +31,7 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             """
             SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
                    two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
-                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt
+                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt,must_change_password AS MustChangePassword
             FROM admin_users WHERE id = @id AND is_disabled = FALSE AND disabled = FALSE LIMIT 1
             """,
             new { id },
@@ -155,10 +155,11 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
         row.Secret,
         row.AccessFailedCount,
         row.LockoutEndAt,
-        null);
+        null) { MustChangePassword=row.MustChangePassword };
 
     private sealed class AdminRow
     {
+        public bool MustChangePassword { get; set; }
         public string Id { get; set; } = default!;
         public string UserName { get; set; } = default!;
         public string? Email { get; set; } = default!;

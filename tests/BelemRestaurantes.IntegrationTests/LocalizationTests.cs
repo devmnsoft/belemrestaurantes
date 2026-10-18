@@ -11,7 +11,8 @@ using Microsoft.Extensions.Localization;
 
 namespace BelemRestaurantes.IntegrationTests;
 
-public sealed class LocalizationTests : IDisposable
+[Collection("MySql")]
+public sealed class LocalizationTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>()
         .WithWebHostBuilder(builder =>
@@ -49,6 +50,24 @@ public sealed class LocalizationTests : IDisposable
         Assert.Contains($"id=\"go\">{search}</button>", html);
         Assert.Contains("id=\"client-text\"", html);
         Assert.Contains(culture, response.Content.Headers.ContentLanguage);
+    }
+
+    [Theory]
+    [InlineData("pt-BR","À flor do paladar.","Antes de sair de casa")]
+    [InlineData("en","A taste of the Amazon.","Before you go")]
+    [InlineData("es","Un viaje de sabores.","Antes de salir")]
+    public async Task EditorialHomeGuideAndDestinationFilterWorkInMainVisitorLanguages(string culture,string headline,string visit)
+    {
+        using var client=Client();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd(culture);
+        var home=WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+        Assert.Contains(headline,home);Assert.DoesNotContain("AtlasHeadline",home);
+        var guide=WebUtility.HtmlDecode(await client.GetStringAsync("/guia"));
+        Assert.Contains(visit,guide);
+        var cities=WebUtility.HtmlDecode(await client.GetStringAsync("/cidades?q=santarem"));
+        Assert.Contains("/cidade/santarem",cities);Assert.DoesNotContain("/cidade/soure",cities);
+        var empty=await client.GetStringAsync("/cidades?region=RegiaoInexistente");
+        Assert.DoesNotContain("class=\"atlas-city-card\"",empty);
     }
 
     [Theory]
@@ -138,5 +157,11 @@ public sealed class LocalizationTests : IDisposable
         { ["culture"] = culture, ["returnUrl"] = returnUrl, ["__RequestVerificationToken"] = WebUtility.HtmlDecode(token.Groups[1].Value) }));
     }
 
-    public void Dispose() => factory.Dispose();
+    public async Task InitializeAsync()
+    {
+        using var services=(ServiceProvider)ServiceContainer.Build();
+        await services.GetRequiredService<BelemRestaurantes.Infrastructure.Migrations.MigrationRunner>().ApplyAsync(default);
+    }
+
+    public async Task DisposeAsync() => await factory.DisposeAsync();
 }

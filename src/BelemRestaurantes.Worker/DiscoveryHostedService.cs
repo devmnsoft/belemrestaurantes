@@ -30,7 +30,7 @@ public sealed class DiscoveryHostedService(
             return;
         }
 
-        var every = TimeSpan.FromMinutes(Math.Max(10, configuration.GetValue<int>("Discovery:IntervalMinutes", 10)));
+        var every = TimeSpan.FromMinutes(Math.Max(1, configuration.GetValue<int>("Discovery:IntervalMinutes", 10)));
         var batchSize = Math.Clamp(configuration.GetValue<int>("Discovery:BatchSize", 5), 1, 50);
         var maxAttempts = 3;
 
@@ -63,13 +63,12 @@ public sealed class DiscoveryHostedService(
     private async Task RunCycleAsync(int batchSize, int maxAttempts, CancellationToken ct)
     {
         var startedAt = DateTimeOffset.UtcNow;
+        logger.LogInformation("Discovery: início de ciclo às {StartedAt}", startedAt);
 
         try
         {
             using var scope = scopeFactory.CreateScope();
             var queue = scope.ServiceProvider.GetRequiredService<IDiscoveryQueue>();
-            var targets = scope.ServiceProvider.GetRequiredService<IDiscoveryTargetRepository>();
-            var orchestratorFactory = scope.ServiceProvider.GetRequiredService<IServiceProvider>();
             var teleportory = scope.ServiceProvider.GetRequiredService<ICycleTelemetryRepository>();
             var clock = scope.ServiceProvider.GetRequiredService<IClock>();
 
@@ -106,7 +105,22 @@ public sealed class DiscoveryHostedService(
                     timeout.CancelAfter(TimeSpan.FromMinutes(3));
                     var discovered = await ProcessOneAsync(scope, job, timeout.Token);
                     metricsTotal.Add(discovered);
-                    if (discovered.JobsFailed > 0) throw new InvalidOperationException("O processamento teve falhas; reagendado para nova tentativa.");
+                    await teleportory.RecordTargetAsync(cycleId, job, discovered, ct);
+                    if (discovered.JobsFailed > 0)
+                    {
+                        var reason = discovered.FailureReason ?? "O processamento teve falhas de ingestão.";
+                        if (discovered.ProviderRetryAt is { } retryAt)
+                        {
+                            await queue.DeferAsync(job.JobId, reason, retryAt, ct);
+                            logger.LogWarning("Job {JobId} ({City}/{Category}) adiado até {RetryAt} por indisponibilidade da fonte; tentativas preservadas.",
+                                job.JobId, job.City, job.Category, retryAt);
+                            continue;
+                        }
+                        await queue.FailAsync(job.JobId, reason, TimeSpan.FromMinutes(Math.Pow(2, Math.Min(job.Attempt, 6))), maxAttempts, ct);
+                        logger.LogWarning("Job {JobId} ({City}/{Category}) registrado como falho: {Reason}",
+                            job.JobId, job.City, job.Category, reason);
+                        continue;
+                    }
 
                     await queue.CompleteAsync(job.JobId, ct);
                 }
@@ -123,6 +137,8 @@ public sealed class DiscoveryHostedService(
             }
 
             var duration = DateTimeOffset.UtcNow - startedAt;
+            if (processedJobs == 0)
+                logger.LogInformation("Discovery sem tarefas elegíveis: verifique alvos habilitados, próxima execução e jobs em retry/dead-letter.");
 
             await teleportory.CompleteCycleAsync(
                 cycleId,
@@ -153,6 +169,14 @@ public sealed class DiscoveryHostedService(
     private async Task<DiscoveryCycleMetrics> ProcessOneAsync(IServiceScope scope, DiscoveryWorkItem job, CancellationToken ct)
     {
         var provider = scope.ServiceProvider.GetRequiredService<IPlaceDiscoveryProvider>();
+        await using var db=await scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory>().OpenAsync(ct);
+        var target=await Dapper.SqlMapper.QuerySingleAsync(db,new Dapper.CommandDefinition("SELECT provider,result_limit FROM discovery_targets WHERE id=@id",new{id=job.TargetId},cancellationToken:ct));
+        provider=(string)target.provider switch {
+            "openstreetmap"=>scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.OpenData.OpenStreetMapDiscoveryClient>(),
+            "googleplaces"=>scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.Google.GooglePlacesClient>(),
+            _=>provider
+        };
+        provider=new LimitedProvider(provider,(int)target.result_limit);
         var ingestion = scope.ServiceProvider.GetRequiredService<IRestaurantIngestionRepository>();
         var moderation = scope.ServiceProvider.GetRequiredService<IModerationRepository>();
         var router = scope.ServiceProvider.GetRequiredService<IAiRouter>();
@@ -183,5 +207,14 @@ public sealed class DiscoveryHostedService(
 
         public override string ToString() =>
             $"descobertos={Discovered} novos={Created} atualizados={Updated} ignorados={Skipped} falhas={Failed}";
+    }
+
+    private sealed class LimitedProvider(IPlaceDiscoveryProvider inner,int limit):IPlaceDiscoveryProvider
+    {
+        public string Name=>inner.Name;
+        public bool IsConfigured=>inner.IsConfigured;
+        public async Task<BelemRestaurantes.Application.Models.PlaceSearchResult> SearchAsync(string query,string? city,CancellationToken ct)
+        {var result=await inner.SearchAsync(query,city,ct);return result with{Places=result.Places.Take(limit).ToArray()};}
+        public Task<BelemRestaurantes.Application.Models.DiscoveredPlace?> GetDetailsAsync(string externalId,CancellationToken ct)=>inner.GetDetailsAsync(externalId,ct);
     }
 }

@@ -107,26 +107,5 @@
 </section>
 
 @section Scripts {
-<script>
-  const photoInput = document.getElementById('photoInput');
-  const preview = document.getElementById('previewContainer');
-  if (photoInput && preview) {
-    photoInput.addEventListener('change', () => {
-      preview.innerHTML = '';
-      const files = Array.from(photoInput.files).slice(0, 5);
-      files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-          const img = document.createElement('img');
-          img.src = URL.createObjectURL(file);
-          img.style.width = '80px';
-          img.style.height = '80px';
-          img.style.objectFit = 'cover';
-          img.style.borderRadius = '8px';
-          img.style.border = '1px solid #dce7dc';
-          preview.appendChild(img);
-        }
-      });
-    });
-  }
-</script>
+<script src="~/js/experience.js" asp-append-version="true" defer></script>
 }

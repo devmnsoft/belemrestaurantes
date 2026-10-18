@@ -48,19 +48,14 @@ public sealed class AdminAccountController(
             return View("Login");
         }
 
-        TempData["PendingCredentialVersion"] = CredentialVersion(user);
-
         if (!user.TwoFactorEnabled)
         {
             var secret = totp.GenerateSecret();
-            TempData["PendingUntil"] = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds().ToString();
-            TempData["PendingEnrollmentSecret"] = secret;
-            TempData["PendingEnrollmentUser"] = user.Id;
+            SetChallenge(user,secret);
             return RedirectToAction("Enrol");
         }
 
-        TempData["PendingUntil"] = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds().ToString();
-        TempData["PendingUserId"] = user.Id;
+        SetChallenge(user,null);
         return RedirectToAction("VerifyMfa", new { returnUrl });
     }
 
@@ -68,7 +63,7 @@ public sealed class AdminAccountController(
     [HttpGet("mfa/verify")]
     public IActionResult VerifyMfa(string? returnUrl = null)
     {
-        if (TempData.Peek("PendingUserId") is not string)
+        if (ReadChallenge(false) is null)
         {
             return RedirectToAction("Login");
         }
@@ -82,14 +77,15 @@ public sealed class AdminAccountController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> VerifyMfaSubmit(string code, string? returnUrl, CancellationToken ct)
     {
-        if (TempData["PendingUserId"] is not string userId)
+        var challenge=ReadChallenge(false);
+        if (challenge is null)
         {
             return RedirectToAction("Login");
         }
 
-        if (!PendingValid()) return RedirectToAction("Login");
+        var userId=challenge.UserId;
         var user = await users.FindByIdAsync(userId, ct);
-        if (user is null || user.IsLockedOut(DateTimeOffset.UtcNow) || TempData.Peek("PendingCredentialVersion") as string != CredentialVersion(user) || !user.TwoFactorEnabled || user.TwoFactorSecret is null or { Length: 0 })
+        if (user is null || user.IsLockedOut(DateTimeOffset.UtcNow) || challenge.Version != CredentialVersion(user) || !user.TwoFactorEnabled || user.TwoFactorSecret is null or { Length: 0 })
         {
             return RedirectToAction("Login");
         }
@@ -105,8 +101,10 @@ public sealed class AdminAccountController(
         }
 
         if (!await ConsumeCodeAsync(user.Id, code, secret, ct)) return RedirectToAction("Login");
+        ClearChallenge();
         await users.ResetFailuresAsync(user.Id, DateTimeOffset.UtcNow, ct);
         await IssueCookieAsync(user, ct);
+        if(user.MustChangePassword)return RedirectToAction(nameof(ChangePassword));
         return RedirectSafe(returnUrl);
     }
 
@@ -114,12 +112,12 @@ public sealed class AdminAccountController(
     [HttpGet("mfa/enrol")]
     public IActionResult Enrol()
     {
-        if (TempData["PendingEnrollmentSecret"] is not string secret)
+        var challenge=ReadChallenge(true);
+        if (challenge?.Secret is not string secret)
         {
             return RedirectToAction("Login");
         }
 
-        TempData["PendingEnrollmentSecret"] = secret;
         ViewData["Secret"] = secret;
         return View("Enrol");
     }
@@ -129,39 +127,65 @@ public sealed class AdminAccountController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EnrolSubmit(string code, CancellationToken ct)
     {
-        if (TempData["PendingEnrollmentSecret"] is not string secret || TempData["PendingEnrollmentUser"] is not string userId)
+        var challenge=ReadChallenge(true);
+        if (challenge?.Secret is not string secret)
         {
+            await audit.WriteAsync("mfa_enrol_rejected", "admin_user", null, "{\"reason\":\"missing_context\"}", ct);
             return RedirectToAction("Login");
         }
 
-        if (!PendingValid()) return RedirectToAction("Login");
+        var userId=challenge.UserId;
         if (!totp.Validate(code, secret, DateTimeOffset.UtcNow))
         {
             await users.IncrementFailuresAsync(userId, DateTimeOffset.UtcNow.AddMinutes(15), ct);
-            TempData["PendingEnrollmentSecret"] = secret;
-            TempData["PendingEnrollmentUser"] = userId;
             ViewData["Secret"] = secret;
             ModelState.AddModelError(string.Empty, text["InvalidCode"].Value);
             return View("Enrol");
         }
 
         var pendingUser = await users.FindByIdAsync(userId, ct);
-        if (pendingUser is null || pendingUser.IsLockedOut(DateTimeOffset.UtcNow) || TempData.Peek("PendingCredentialVersion") as string != CredentialVersion(pendingUser) || pendingUser.TwoFactorEnabled)
-            return RedirectToAction("Login");
+        if (pendingUser is null || pendingUser.IsLockedOut(DateTimeOffset.UtcNow) || challenge.Version != CredentialVersion(pendingUser) || pendingUser.TwoFactorEnabled)
+        {await audit.WriteAsync("mfa_enrol_rejected","admin_user",null,"{\"reason\":\"user_state\"}",ct);return RedirectToAction("Login");}
         if (!await users.EnableTwoFactorAsync(userId, protection.CreateProtector("Admin.Totp.v1").Protect(System.Text.Encoding.UTF8.GetBytes(secret)), ct) ||
-            !await ConsumeCodeAsync(userId, code, secret, ct)) return RedirectToAction("Login");
+            !await ConsumeCodeAsync(userId, code, secret, ct)) {await audit.WriteAsync("mfa_enrol_rejected","admin_user",null,"{\"reason\":\"enable_or_replay\"}",ct);return RedirectToAction("Login");}
         var user = await users.FindByIdAsync(userId, ct);
+        ClearChallenge();
+        await users.ResetFailuresAsync(userId,DateTimeOffset.UtcNow,ct);
         if (user is not null)
         {
             await IssueCookieAsync(user, ct);
+            if(user.MustChangePassword)return RedirectToAction(nameof(ChangePassword));
         }
 
-        return RedirectToAction("Dashboard");
+        return RedirectSafe(null);
     }
 
     [AllowAnonymous]
     [HttpGet("access-denied")]
     public IActionResult AccessDenied() => Problem(statusCode: 403, title: text["AccessDenied"].Value);
+
+    [Authorize,HttpGet("change-password")]
+    public IActionResult ChangePassword()=>View();
+
+    [Authorize,HttpPost("change-password"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePasswordSubmit(string currentPassword,string password,string confirmation,
+        [FromServices] BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory factory,CancellationToken ct)
+    {
+        var user=await users.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!,ct);
+        if(user is null)return Challenge();
+        var errors=AdminPasswordPolicy.Validate(password??"");
+        if(!passwordVerifier.Verify(currentPassword??"",user.PasswordHash)||errors.Count>0||password!=confirmation||passwordVerifier.Verify(password??"",user.PasswordHash))
+        {ModelState.AddModelError("","Confira a senha atual, use uma nova senha forte e repita a confirmação.");return View("ChangePassword");}
+        await using var db=await factory.OpenAsync(ct);
+        await using var tx=await db.BeginTransactionAsync(ct);
+        var changed=await Dapper.SqlMapper.ExecuteAsync(db,new Dapper.CommandDefinition("UPDATE admin_users SET password_hash=@hash,must_change_password=FALSE,password_changed_at=UTC_TIMESTAMP(6) WHERE id=@id AND password_hash=@previous",new{id=user.Id,hash=passwordVerifier.Hash(password!),previous=user.PasswordHash},tx,cancellationToken:ct));
+        if(changed!=1)return Conflict();
+        await Dapper.SqlMapper.ExecuteAsync(db,new Dapper.CommandDefinition("INSERT INTO audit_events(actor_subject,action,entity_type,occurred_at) VALUES(@id,'admin.password_changed','admin_user',UTC_TIMESTAMP(6))",new{id=user.Id},tx,cancellationToken:ct));
+        await tx.CommitAsync(ct);
+        await HttpContext.SignOutAsync(AdminAuthDefaults.Scheme);
+        TempData["Flash"]="Senha alterada. Entre novamente com MFA.";
+        return RedirectToAction(nameof(Login));
+    }
 
     [HttpPost("logout")]
     [ValidateAntiForgeryToken]
@@ -186,6 +210,7 @@ public sealed class AdminAccountController(
             new(ClaimTypes.Name, user.UserName),
             new("sub", user.Id),
             new("amr", "mfa"),
+            new("must_change_password",user.MustChangePassword?"true":"false"),
             new("credential_version", Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(user.PasswordHash))))
         };
 
@@ -195,6 +220,7 @@ public sealed class AdminAccountController(
         }
 
         var identity = new ClaimsIdentity(claims, AdminAuthDefaults.Scheme);
+        HttpContext.User=new ClaimsPrincipal(identity);
         await HttpContext.SignInAsync(
             AdminAuthDefaults.Scheme,
             new ClaimsPrincipal(identity),
@@ -217,10 +243,31 @@ public sealed class AdminAccountController(
 
     private static string CredentialVersion(AdminUserRecord user) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(user.PasswordHash)));
 
-    private bool PendingValid() => long.TryParse(TempData.Peek("PendingUntil") as string, out var until) && until > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    private const string ChallengeCookie=".BelRest.AdminMfa";
+    private sealed record MfaChallenge(string UserId,string Version,string? Secret,DateTimeOffset Until);
+    private static CookieOptions ChallengeOptions()=>new(){HttpOnly=true,Secure=true,SameSite=SameSiteMode.Strict,Path="/admin/mfa",IsEssential=true};
+    private void SetChallenge(AdminUserRecord user,string? secret)
+    {
+        var value=new MfaChallenge(user.Id,CredentialVersion(user),secret,DateTimeOffset.UtcNow.AddMinutes(5));
+        var options=ChallengeOptions();options.MaxAge=TimeSpan.FromMinutes(5);
+        Response.Cookies.Append(ChallengeCookie,protection.CreateProtector("Admin.MfaChallenge.v1").Protect(System.Text.Json.JsonSerializer.Serialize(value)),options);
+    }
+    private MfaChallenge? ReadChallenge(bool enrollment)
+    {
+        if(!Request.Cookies.TryGetValue(ChallengeCookie,out var protectedValue))return null;
+        try
+        {
+            var value=System.Text.Json.JsonSerializer.Deserialize<MfaChallenge>(protection.CreateProtector("Admin.MfaChallenge.v1").Unprotect(protectedValue));
+            return value is not null&&value.Until>DateTimeOffset.UtcNow&&(value.Secret is not null)==enrollment?value:null;
+        }
+        catch(System.Security.Cryptography.CryptographicException){return null;}
+        catch(System.Text.Json.JsonException){return null;}
+    }
+    private void ClearChallenge()=>Response.Cookies.Delete(ChallengeCookie,ChallengeOptions());
 
     private IActionResult RedirectSafe(string? returnUrl)
     {
+        if(User.IsInRole(AdminRoles.Editor)&&!User.IsInRole(AdminRoles.PlatformAdmin)&&!User.IsInRole(AdminRoles.Moderator))return Redirect("/admin/editorial");
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
             return Redirect(returnUrl);

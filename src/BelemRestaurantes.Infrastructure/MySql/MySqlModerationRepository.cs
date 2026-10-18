@@ -13,16 +13,30 @@ public sealed class MySqlModerationRepository(
     MySqlConnectionFactory factory,
     IClock clock) : IModerationRepository
 {
-    public async Task<PagedResult<PendingApproval>> ListPendingAsync(int page, int pageSize, CancellationToken ct)
+    public async Task<PagedResult<PendingApproval>> ListPendingAsync(int page, int pageSize, CancellationToken ct,
+        string? term = null, string? city = null, string? category = null)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
         var offset = (page - 1) * pageSize;
 
         await using var connection = await factory.OpenAsync(ct);
+        const string where = """
+            r.status = 'pending'
+            AND (@term IS NULL OR r.name LIKE @term OR r.address LIKE @term OR r.neighborhood LIKE @term)
+            AND (@city IS NULL OR r.normalized_city = @city)
+            AND (@category IS NULL OR r.category = @category)
+            """;
+        var parameters = new
+        {
+            pageSize, offset,
+            term = string.IsNullOrWhiteSpace(term) ? null : "%" + MySqlRestaurantReadRepository.EscapeLike(term.Trim()[..Math.Min(term.Trim().Length,160)]) + "%",
+            city = string.IsNullOrWhiteSpace(city) ? null : NameNormalizer.Normalize(city),
+            category = CategoryRules.Clean(category)
+        };
 
         var total = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
-            "SELECT COUNT(*) FROM restaurants WHERE status = 'pending'", cancellationToken: ct));
+            $"SELECT COUNT(*) FROM restaurants r WHERE {where}", parameters, cancellationToken: ct));
 
         if (total == 0)
         {
@@ -30,20 +44,20 @@ public sealed class MySqlModerationRepository(
         }
 
         var items = await connection.QueryAsync<PendingApproval>(new CommandDefinition(
-            """
+            $"""
             SELECT r.id AS Id, r.name AS Name, r.city AS City, r.neighborhood AS Neighborhood,
-                   r.category AS Category, r.google_place_id AS GooglePlaceId,
+                   r.category AS Category, r.google_place_id AS GooglePlaceId, r.address AS Address, r.phone AS Phone,
                    r.created_source_url AS SourceUrl, r.created_at AS DiscoveredAt,
                    COALESCE(m.detail, '') AS ConflictReason,
                    NULL AS DedupConfidence, NULL AS AiSuggestion
             FROM restaurants r
-            LEFT JOIN moderation_queue m
-                   ON m.item_type = 'restaurant' AND m.item_id = r.id AND m.status = 'pending'
-            WHERE r.status = 'pending'
-            ORDER BY r.created_at
+            LEFT JOIN (SELECT item_id, MAX(detail) AS detail FROM moderation_queue
+                       WHERE item_type='restaurant' AND status='pending' GROUP BY item_id) m ON m.item_id=r.id
+            WHERE {where}
+            ORDER BY r.created_at, r.id
             LIMIT @pageSize OFFSET @offset
             """,
-            new { pageSize, offset },
+            parameters,
             cancellationToken: ct));
 
         return new PagedResult<PendingApproval>(items.AsList(), page, pageSize, total);
@@ -92,6 +106,14 @@ public sealed class MySqlModerationRepository(
 
         await using var connection = await factory.OpenAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
+
+        if(to=="published")
+        {
+            var candidate=await connection.QuerySingleOrDefaultAsync<ModerationCandidate>(new CommandDefinition(
+                MySqlBulkModeration.Select+" WHERE r.id=@id FOR UPDATE",new{id=restaurantId},transaction,cancellationToken:ct));
+            if(candidate is null||candidate.BlockReason is not null){await transaction.RollbackAsync(ct);return false;}
+        }
+        if(to is "rejected" or "suspended" && (string.IsNullOrWhiteSpace(reason)||reason.Length>500))return false;
 
         // A condição `status = @from` na própria cláusula WHERE torna a operação
         // idempotente e impede corrida entre dois moderadores (o segundo pega 0 linhas).

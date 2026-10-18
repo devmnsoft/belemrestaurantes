@@ -1,0 +1,58 @@
+@model string
+<svg class="para-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+@switch (Model)
+{
+    case "pizza":
+        <path d="M6 4q10 0 20 8L7 28Z M6 8q9 0 17 7" /><circle cx="12" cy="14" r="1.6" /><circle cx="16" cy="18" r="1.6" /><circle cx="10" cy="22" r="1" />
+        break;
+    case "bread":
+        <path d="M7 25C-2 15 12-1 23 7s-3 25-16 18Z M11 10l4 5 M17 7l4 5 M7 16l4 5" />
+        break;
+    case "cup":
+        <path d="M5 12h18v9c0 7-18 7-18 0Z M23 14h3c6 0 3 9-3 8 M4 29h22 M10 3c-4 3 3 3 0 6 M18 3c-4 3 3 3 0 6" />
+        break;
+    case "snack":
+        <path d="M5 12C5 1 27 1 27 12Z M4 17h24 M5 22h22v4H5Z M8 8h1 M16 6h1 M23 9h1 M6 17l5 4 6-4 5 4 5-4" />
+        break;
+    case "icecream":
+        <path d="m9 17 7 13 7-13Z M8 17c-9-6 0-15 5-10C14-2 27 2 24 10c8 4 1 11-3 7Z" />
+        break;
+    case "leaf":
+        <path d="M26 5C11 4 3 12 8 23c10 6 20-3 18-18Z M7 26 24 8 M13 20v-7 M18 15h6" />
+        break;
+    case "fish":
+        <path d="M5 16C12 5 22 6 27 16c-5 10-15 11-22 0Z M5 16l-3-5v10l3-5 M20 9v14 M13 10l2-5 4 4" /><circle cx="23" cy="15" r="1" fill="currentColor" />
+        break;
+    case "river":
+        <path d="M3 23q6-5 13 0t13 0 M3 28q6-5 13 0t13 0 M8 14h17l-4 6H12Z M16 14V3l8 10H16" />
+        break;
+    case "market":
+        <path d="M5 27V13h22v14 M3 13l5-8h16l5 8 M12 27v-9h8v9 M9 5v8 M16 5v8 M23 5v8 M3 27h26" />
+        break;
+    case "plate":
+        <circle cx="18" cy="16" r="10" /><circle cx="18" cy="16" r="6" /><path d="M3 3v9h3V3 M4.5 12v17" />
+        break;
+    case "mobility":
+    case "bus":
+        <rect x="6" y="4" width="20" height="23" rx="4" /><path d="M6 10h20 M6 19h20 M11 27v3 M21 27v3 M11 23h1 M20 23h1 M16 10v9" />
+        break;
+    case "boat":
+        <path d="M3 19l13-5 13 5-5 8H8Z M8 17V9h16v8 M12 9V4h8v5 M2 29q4-4 8 0t8 0t12 0 M16 14v10" />
+        break;
+    case "walk":
+        <circle cx="18" cy="5" r="3"/><path d="M14 11l6 2 4 7 M14 11l-5 8 M16 12l-3 10-5 8 M13 22l8 7 M16 12v8" />
+        break;
+    case "bike":
+        <circle cx="7" cy="23" r="6"/><circle cx="25" cy="23" r="6"/><path d="M7 23l6-12 6 12H7 M19 23l4-16h4 M10 11h7"/>
+        break;
+    case "car":
+        <path d="M4 16l4-9h16l4 9v10H4Z M4 16h24 M8 26v4 M24 26v4 M8 21h3 M21 21h3"/>
+        break;
+    case "menu":
+        <path d="M5 9h22 M5 16h22 M5 23h22" />
+        break;
+    default:
+        <path d="M3 15h26c-1 8-5 12-13 12S4 23 3 15Z M9 28h14 M11 4c-5 5 5 4 0 9 M20 3c-5 5 5 4 0 9" />
+        break;
+}
+</svg>
