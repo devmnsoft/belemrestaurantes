@@ -8,14 +8,15 @@ const output = path.resolve(process.env.VISUAL_TEST_OUTPUT || 'artifacts/test-re
 const onlyAuth = process.env.VISUAL_TEST_SCOPE === 'authenticated';
 const changedOnly = process.env.VISUAL_TEST_SCOPE === 'changed';
 const finalChanges = process.env.VISUAL_TEST_SCOPE === 'final-changes';
-const routes = onlyAuth ? [] : finalChanges ? ['/','/cuia-rotas','/privacidade','/termos'] : changedOnly ? ['/roteiros'] : ['/', '/busca', '/cidades', '/guia', '/community', '/roteiros', '/receitas', '/selo-cuia', '/account/login', '/account/register', '/account/forgot', '/admin/login', '/sugerir', '/cuia-rotas', '/qual-onibus', '/sabores','/privacidade','/termos'];
+const coverageOnly = process.env.VISUAL_TEST_SCOPE === 'coverage';
+const routes = onlyAuth || coverageOnly ? [] : finalChanges ? ['/','/cuia-rotas','/privacidade','/termos'] : changedOnly ? ['/roteiros'] : ['/', '/busca', '/cidades', '/guia', '/community', '/roteiros', '/receitas', '/selo-cuia', '/account/login', '/account/register', '/account/forgot', '/admin/login', '/sugerir', '/cuia-rotas', '/qual-onibus', '/sabores','/privacidade','/termos'];
 const widths = [360, 390, 768, 1024, 1440];
 let browser;
 (async () => {
   fs.mkdirSync(output, {recursive:true});
   browser = await chromium.launch({headless:true});
   const previous = path.join(output, 'report.json');
-  const results = (onlyAuth || changedOnly || finalChanges) && fs.existsSync(previous) ? JSON.parse(fs.readFileSync(previous, 'utf8')).filter(result => finalChanges ? !routes.includes(result.route) && !result.mode : changedOnly ? result.route !== '/roteiros' && result.mode !== 'controlled-fixture-snapshot' : !result.mode) : [];
+  const results = (onlyAuth || changedOnly || finalChanges || coverageOnly) && fs.existsSync(previous) ? JSON.parse(fs.readFileSync(previous, 'utf8')).filter(result => coverageOnly ? result.route !== '/admin/cobertura' : finalChanges ? !routes.includes(result.route) && !result.mode : changedOnly ? result.route !== '/roteiros' && result.mode !== 'controlled-fixture-snapshot' : !result.mode) : [];
   for (const width of widths) {
     const context = await browser.newContext({viewport:{width,height:1000}});
     const page = await context.newPage();
@@ -49,7 +50,7 @@ let browser;
       if (await page.locator('#heroAutocomplete a').evaluate(e=>e!==document.activeElement)) throw new Error('Autocomplete keyboard failed');
     }
     const snapshots = path.resolve(process.env.VISUAL_TEST_SNAPSHOTS || 'artifacts/test-results/admin-snapshots');
-    for (const route of changedOnly ? [] : ['/admin/discovery','/admin/crawler','/admin/discovery360','/admin/suggestions','/account','/account/favorites','/partner/dashboard','/admin/moderacao','/admin/operacao','/admin/mobilidade','/admin/editorial','/admin/usuarios','/admin/cobertura']) {
+    for (const route of changedOnly ? [] : coverageOnly ? ['/admin/cobertura'] : ['/admin/discovery','/admin/crawler','/admin/discovery360','/admin/suggestions','/account','/account/favorites','/partner/dashboard','/admin/moderacao','/admin/operacao','/admin/mobilidade','/admin/editorial','/admin/usuarios','/admin/cobertura']) {
       const filename = path.join(snapshots, route.replaceAll('/','-').slice(1)+'.html');
       if (!fs.existsSync(filename)) continue;
       const html = fs.readFileSync(filename, 'utf8');
@@ -57,12 +58,18 @@ let browser;
       const errors=[]; const handler=error=>errors.push(error.message); page.on('pageerror',handler);
       await page.goto(base+route,{waitUntil:'networkidle'});
       const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+      if(route==='/admin/cobertura') {
+        const canScroll=await page.locator('.coverage-table-wrap').evaluate(element=>{
+          element.scrollLeft=24;const result=element.scrollWidth<=element.clientWidth+2 || element.scrollLeft>0;element.scrollLeft=0;return result;
+        });
+        if(!canScroll)throw new Error('Coverage table must remain scrollable within its container');
+      }
       const violations=width===360 ? (await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze()).violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})) : [];
       await page.screenshot({path:path.join(output,route.replaceAll('/','-').slice(1)+'-'+width+'.png'),fullPage:true});
       results.push({route,width,status:200,mode:'test-authenticated-snapshot',overflow,errors,violations});
       page.off('pageerror',handler);
     }
-    for (const [name, route] of [['restaurant-sample','/__visual/restaurant'],['catalog-sample','/__visual/catalog'],['visit-destination','/__visual/visit-destination'],['visit-fallback','/__visual/visit-fallback'],['admin-hours-edit','/__visual/admin-hours-edit']]) {
+    for (const [name, route] of coverageOnly ? [] : [['restaurant-sample','/__visual/restaurant'],['catalog-sample','/__visual/catalog'],['visit-destination','/__visual/visit-destination'],['visit-fallback','/__visual/visit-fallback'],['admin-hours-edit','/__visual/admin-hours-edit']]) {
       const filename=path.resolve(process.env.VISUAL_TEST_SNAPSHOTS || 'artifacts/test-results/admin-snapshots',name+'.html');
       if (!fs.existsSync(filename)) continue;
       await page.route(base+route,request=>request.fulfill({status:200,contentType:'text/html; charset=utf-8',body:fs.readFileSync(filename,'utf8')}));

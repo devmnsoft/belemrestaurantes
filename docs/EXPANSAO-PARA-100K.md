@@ -4,11 +4,13 @@ Implementação de 18/10/2026, após as sprints 16 e 17. A meta é ampliar um ca
 
 ## Resultado verificado
 
+- Marco confirmado em **18/10/2026 às 10:15 de Belém**: **12.302 cadastros em 141 municípios**, todos pendentes de moderação. São **6.555 novos cadastros líquidos nesta rodada**, partindo de 5.747. A coleta permanece ativa, então o painel pode mostrar números maiores.
 - Base inicial: **5.747 cadastros**, todos pendentes de moderação.
 - Consulta original concluída até o fim do cursor: **71.565 registros examinados** nas quatro atividades originais; 7.446 candidatos ativos com nome comercial antes da validação completa; 7.354 aceitos pelo parser.
 - Importação da consulta original completa: **2.006 novos**, 5.348 atualizados, zero falhas, ciclo 1146. Total após essa etapa: **7.753**.
 - Primeiras 17 páginas da consulta ampliada: **1.692 novos**, dois atualizados, zero falhas, ciclo 1147. Total após essa etapa: **9.445**.
 - Replay real dessas 17 páginas em outro processo: **zero novos**, 17 páginas reconhecidas pelo checkpoint, zero falhas, ciclo 1149.
+- Aos primeiros 50 lotes de página da consulta ampliada, **51.200 registros examinados**, 4.623 candidatos ativos com nome comercial antes da validação completa; somados à consulta original, **122.765 registros examinados**. Estes números de consulta não são novos estabelecimentos. Importações subsequentes confirmadas nos ciclos 1151, 1152, 1154 e 1159, com zero falhas.
 - A coleta ampliada e as importações seguintes continuam em lotes. Os números acima são um marco confirmado, não o total final de uma coleta ainda ativa. O painel de cobertura mostra os totais atuais.
 - Nenhum desses resultados significa 100 mil cadastros obtidos ou publicados. A quantidade de linhas consultadas não é a quantidade de estabelecimentos adicionados.
 
@@ -68,6 +70,8 @@ O processo local independe do Visual Studio, mas não foi instalado como serviç
 - 90 testes de integração selecionados, incluindo migrações, autenticação/MFA/papéis, filtros e checkpoint; sem consumir filas operacionais.
 - Cinco testes offline do coletor: cursor opaco, minimização, troca de perfil proibida, retomada, cursor repetido e pausa por limite da API.
 - 40 casos visuais EN/ES e seis jornadas do novo explorador em PT/EN/ES, celular/desktop, com navegação regional e busca combinada.
-- A validação responsiva completa e a execução de CI desta revisão têm resultados registrados nos artefatos locais e no workflow do repositório; números finais são atualizados ao concluir esses checks.
+- **180 casos responsivos aprovados** em 360, 390, 768, 1024 e 1440 px. A tabela de cobertura usa contenção de pintura para não ampliar a página no Chromium móvel, preservando a rolagem interna e o foco por teclado. Os cinco casos dessa página foram repetidos após a correção, mantendo os outros 175 resultados.
+- [CI da implementação](https://github.com/devmnsoft/belemrestaurantes/actions/runs/39130363530): build sem avisos/erros, cinco testes Python, 223 unitários e **121 testes de integração completos em MySQL 8.4**, todos aprovados.
+- Evidências locais em `artifacts/sprint18`: TRX, relatórios visuais, snapshots autorizados de teste, `discovery-final.json`, `operations.json` e `health.json`. Portal local respondeu HTTP 200/Healthy; Worker com heartbeat ativo. Não houve implantação no IIS nem publicação automática dos cadastros.
 
 As pendências externas das sprints anteriores permanecem descritas no [relatório 16/17](SPRINT16-17-REPORT.md): chave válida de Places/Routes e dados oficiais de transporte, entre outras. Elas não impedem esta expansão cadastral. Atingir 100 mil locais elegíveis e publicar cadastros após revisão continuam sendo resultados dependentes dos dados e da operação, não fatos já alcançados.
