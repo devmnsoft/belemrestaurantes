@@ -88,3 +88,11 @@ Evidências locais (pasta ignorada pelo Git):
 - `artifacts/sprint17/locales/report.json`: 40 casos adicionais, zero falhas.
 
 Os scripts de verificação e os testes estão versionados. Dados de homologação não são apresentados como estabelecimentos reais nem incluídos na contagem do catálogo.
+
+## Publicação segura no GitHub
+
+O primeiro envio da branch local foi bloqueado pela proteção de segredos do GitHub: o commit antigo `7696f68` contém credenciais GCP e Groq, já ausentes dos arquivos atuais. A proteção não foi desativada nem contornada.
+
+O histórico local foi preservado. A branch de revisão `sprint17/cuia-mobilidade-revisao` usa uma fotografia saneada da base local com ancestral remoto limpo, seguida dos commits por módulo. O plano de recuperação já presente no remoto também foi preservado. A comparação das árvores Git verifica que a publicação contém os mesmos arquivos validados neste ambiente. Não há force push nem alteração da branch principal.
+
+Foram verificados os 396 arquivos então rastreados, sem os padrões de credenciais GCP, Groq, OAuth ou GitHub nos arquivos atuais. Isso não substitui a revogação das credenciais antigas pelo titular.
