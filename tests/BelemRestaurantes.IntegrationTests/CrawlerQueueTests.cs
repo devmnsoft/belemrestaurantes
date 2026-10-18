@@ -18,7 +18,7 @@ public sealed class CrawlerQueueTests
         var sources=scope.ServiceProvider.GetRequiredService<ICrawlerSourceRepository>();
         var queue=scope.ServiceProvider.GetRequiredService<ICrawlerTaskQueue>();
         var marker=Guid.NewGuid().ToString("N");
-        var id=await sources.CreateSourceAsync(new CrawlerSource{Name="Queue fixture "+marker,BaseUrl="https://example.org/"+marker,SourceType="html",TargetCity="Belém",Status="paused",CrawlDelaySeconds=5},default);
+        var id=await sources.CreateSourceAsync(new CrawlerSource{Name="Queue fixture "+marker,BaseUrl="https://example.org/"+marker,SourceType="html_directory",TargetCity="Belém",Status="paused",CrawlDelaySeconds=5},default);
         await using var db=await scope.ServiceProvider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
         try
         {
