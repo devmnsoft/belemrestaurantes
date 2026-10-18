@@ -19,17 +19,30 @@ public class Program
             {
                 services.AddApplication();
                 services.AddInfrastructure(hostContext.Configuration);
+                services.AddScoped<BelemRestaurantes.Application.Abstractions.IAdminUserRepository,BelemRestaurantes.Infrastructure.MySql.MySqlAdminUserRepository>();
                 services.AddHostedService<ConfigurationDiagnosticsService>();
                 services.AddHostedService<MigrationHostedService>();
+                services.AddHostedService<WorkerHealthService>();
                 services.AddHostedService<DiscoveryHostedService>();
                 services.AddHostedService<EmailHostedService>();
                 services.AddHostedService<CrawlerHostedService>();
             })
-            .ConfigureLogging(logging => logging.AddConsole())
+            .ConfigureLogging((context,logging) => {
+                logging.AddConsole();
+                var path=context.Configuration["Worker:LogDirectory"]??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"MNSOFT","BelemRestaurantes","logs");
+                logging.AddProvider(new WorkerFileLoggerProvider(Path.GetFullPath(path)));
+            })
             .Build();
         if (args.Contains("--verify-discovery", StringComparer.Ordinal))
         {
             DiscoveryEvidence.PrintAsync(host.Services).GetAwaiter().GetResult();
+            return;
+        }
+        if(args.Contains("--verify-operations",StringComparer.Ordinal))
+        {OperationEvidence.PrintAsync(host.Services).GetAwaiter().GetResult();return;}
+        if(args.Contains("--provision-homologation",StringComparer.Ordinal))
+        {
+            HomologationProvision.RunAsync(host.Services,args.Contains("--authorize-homologation",StringComparer.Ordinal),args.Contains("--reset-homologation",StringComparer.Ordinal)).GetAwaiter().GetResult();
             return;
         }
         if (args.Contains("--retry-discovery-belem", StringComparer.Ordinal))

@@ -107,6 +107,14 @@ public sealed class MySqlModerationRepository(
         await using var connection = await factory.OpenAsync(ct);
         await using var transaction = await connection.BeginTransactionAsync(ct);
 
+        if(to=="published")
+        {
+            var candidate=await connection.QuerySingleOrDefaultAsync<ModerationCandidate>(new CommandDefinition(
+                MySqlBulkModeration.Select+" WHERE r.id=@id FOR UPDATE",new{id=restaurantId},transaction,cancellationToken:ct));
+            if(candidate is null||candidate.BlockReason is not null){await transaction.RollbackAsync(ct);return false;}
+        }
+        if(to is "rejected" or "suspended" && (string.IsNullOrWhiteSpace(reason)||reason.Length>500))return false;
+
         // A condição `status = @from` na própria cláusula WHERE torna a operação
         // idempotente e impede corrida entre dois moderadores (o segundo pega 0 linhas).
         var sql = $"""
