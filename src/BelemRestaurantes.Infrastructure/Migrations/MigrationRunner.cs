@@ -97,6 +97,23 @@ public sealed class MigrationRunner(MySqlConnectionFactory connectionFactory, IL
 
                 foreach (var statement in SqlScriptSplitter.Split(script.Sql))
                 {
+                    var additions=LegacyConditionalColumns.Expand(script.Id,statement);
+                    if(additions is not null)
+                    {
+                        foreach(var addition in additions)
+                        {
+                            var exists=await connection.ExecuteScalarAsync<int>(new CommandDefinition("""
+                                SELECT COUNT(*) FROM information_schema.columns
+                                WHERE table_schema=DATABASE() AND table_name=@Table AND column_name=@Column
+                                """,new{addition.Table,addition.Column},cancellationToken:ct));
+                            if(exists>0)continue;
+                            await using var compatibleCommand=connection.CreateCommand();
+                            compatibleCommand.CommandText=addition.Sql;
+                            compatibleCommand.CommandTimeout=120;
+                            await compatibleCommand.ExecuteNonQueryAsync(ct);
+                        }
+                        continue;
+                    }
                     await using var command = connection.CreateCommand();
                     command.CommandText = statement;
                     command.CommandTimeout = 120;
