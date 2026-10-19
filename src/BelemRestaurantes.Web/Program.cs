@@ -6,6 +6,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddMemoryCache();
 var keysPath = builder.Configuration["DataProtection:KeysPath"]
     ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MNSOFT", "BelemRestaurantes", "keys");
 Directory.CreateDirectory(keysPath);
@@ -19,6 +20,7 @@ if (OperatingSystem.IsWindows())
 
 builder.Services.AddControllersWithViews(options =>
 {
+    options.Filters.Add<BelemRestaurantes.Web.Models.MapRenderTimingFilter>();
     options.MaxModelBindingCollectionSize = 2000;
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
     // Revalida conta (ativa/bloqueada/papéis) a cada acesso por cookie admin.

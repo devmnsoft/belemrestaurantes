@@ -35,19 +35,23 @@ public sealed class GoogleRoutesProvider(IHttpClientFactory clients,IConfigurati
         using var message=new HttpRequestMessage(HttpMethod.Post,"https://routes.googleapis.com/directions/v2:computeRoutes"){Content=JsonContent.Create(body)};
         message.Headers.Add("X-Goog-Api-Key",config["GoogleRoutes:ApiKey"]);
         message.Headers.Add("X-Goog-FieldMask","routes.description,routes.distanceMeters,routes.duration,routes.legs.steps.travelMode,routes.legs.steps.distanceMeters,routes.legs.steps.navigationInstruction.instructions,routes.legs.steps.transitDetails,routes.travelAdvisory.transitFare");
+        var watch=System.Diagnostics.Stopwatch.StartNew();
+        using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromSeconds(8));
         try
         {
-            using var response=await clients.CreateClient("routes").SendAsync(message,HttpCompletionOption.ResponseHeadersRead,ct);
+            using var response=await clients.CreateClient("routes").SendAsync(message,HttpCompletionOption.ResponseHeadersRead,timeout.Token);
             if(!response.IsSuccessStatusCode)
             {await FailAsync("HTTP "+(int)response.StatusCode,ct);return Fallback("error","O provedor não retornou o trajeto. Tente no Google Maps.");}
-            await using var stream=await response.Content.ReadAsStreamAsync(ct);
-            using var document=await JsonDocument.ParseAsync(stream,cancellationToken:ct);
+            await using var stream=await response.Content.ReadAsStreamAsync(timeout.Token);
+            using var document=await JsonDocument.ParseAsync(stream,cancellationToken:timeout.Token);
             var alternatives=Parse(document.RootElement,request.MaxWalkMeters);
             return new(Name,alternatives.Count==0?"unavailable":"available",alternatives.Count==0?"Nenhuma rota compatível com o limite de caminhada foi informada. Consulte alternativas no Maps.":"Estimativas fornecidas pelo Google Maps; confirme alterações, tarifas e acessibilidade com o operador.",DateTimeOffset.UtcNow,alternatives,link);
         }
         catch(OperationCanceledException) when(!ct.IsCancellationRequested){await FailAsync("timeout",ct);return Fallback("error","A consulta demorou além do limite. Continue no Google Maps.");}
         catch(HttpRequestException){await FailAsync("network",ct);return Fallback("error","Serviço de trajetos temporariamente indisponível.");}
         catch(JsonException){await FailAsync("invalid_response",ct);return Fallback("error","O provedor retornou informações incompletas.");}
+        finally { MapDiagnostics.RoutesMilliseconds.Record(watch.Elapsed.TotalMilliseconds); }
     }
     public static IReadOnlyList<RouteAlternative> Parse(JsonElement root,int maxWalkMeters)
     {

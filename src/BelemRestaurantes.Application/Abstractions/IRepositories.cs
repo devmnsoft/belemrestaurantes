@@ -21,6 +21,11 @@ public interface IRestaurantReadRepository
     Task<IReadOnlyList<CatalogMapPoint>> ListPublishedMapAsync(CancellationToken ct)
         => Task.FromResult<IReadOnlyList<CatalogMapPoint>>([]);
 
+    Task<MapPointPage> SearchMapAsync(MapQuery query, CancellationToken ct)
+        => Task.FromResult(new MapPointPage([], null));
+    Task<MapSummary> GetMapSummaryAsync(CancellationToken ct)
+        => Task.FromResult(new MapSummary(0, 0, []));
+
     Task<CatalogFactSheet?> GetFactSheetAsync(long id, CancellationToken ct)
         => Task.FromResult<CatalogFactSheet?>(null);
 }

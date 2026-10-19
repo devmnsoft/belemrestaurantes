@@ -166,22 +166,41 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
         return rows.ToDictionary(r=>r.City,r=>r.Total,StringComparer.Ordinal);
     }
 
+    private const string MapWhere = "status = 'published' AND latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180 AND NOT (ABS(latitude) < 0.000001 AND ABS(longitude) < 0.000001)";
+
     public async Task<IReadOnlyList<CatalogMapPoint>> ListPublishedMapAsync(CancellationToken ct)
+        => (await SearchMapAsync(new MapQuery(), ct)).Points;
+
+    public async Task<MapSummary> GetMapSummaryAsync(CancellationToken ct)
     {
         await using var connection = await factory.OpenAsync(ct);
-        var rows = await connection.QueryAsync<CatalogMapPoint>(new CommandDefinition(
-            """
-            SELECT id AS Id, name AS Name, city AS City, neighborhood AS Neighborhood,
-                   category AS Category, latitude AS Latitude, longitude AS Longitude,
-                   catalog_tier AS CatalogTier
-            FROM restaurants
-            WHERE status = 'published'
-              AND latitude IS NOT NULL AND longitude IS NOT NULL
-            ORDER BY city, name, id
-            LIMIT 500
-            """,
-            cancellationToken: ct));
-        return rows.AsList();
+        var rows = (await connection.QueryAsync<(string City, int Total, int Guides)>(new CommandDefinition(
+            $"SELECT city, COUNT(*), SUM(catalog_tier='guia') FROM restaurants WHERE {MapWhere} GROUP BY city ORDER BY city", cancellationToken: ct))).AsList();
+        return new(rows.Sum(r => r.Total), rows.Sum(r => r.Guides), rows.Select(r => r.City).ToList());
+    }
+
+    public async Task<MapPointPage> SearchMapAsync(MapQuery query, CancellationToken ct)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var where = new List<string> { MapWhere, "id > @after" };
+        var parameters = new DynamicParameters(new { after = query.SafeAfter, take = query.SafeLimit + 1 });
+        if (MapQuery.Clean(query.City) is {} city) { where.Add("normalized_city = @city"); parameters.Add("city", NameNormalizer.Normalize(city)); }
+        if (MapQuery.Clean(query.Neighborhood) is {} neighborhood) { where.Add("neighborhood_normalized = @neighborhood"); parameters.Add("neighborhood", NameNormalizer.Normalize(neighborhood)); }
+        if (MapQuery.Clean(query.Category) is {} category) { where.Add("category = @category"); parameters.Add("category", category); }
+        if (query.Tier is "ficha" or "guia") { where.Add("catalog_tier = @tier"); parameters.Add("tier", query.Tier); }
+        if (MapQuery.Clean(query.Term) is {} term) { where.Add("(name LIKE @term OR category LIKE @term OR neighborhood LIKE @term)"); parameters.Add("term", $"%{EscapeLike(term)}%"); }
+        if (query.Bounds is {} bounds) {
+            where.Add("latitude BETWEEN @south AND @north AND longitude BETWEEN @west AND @east");
+            parameters.Add("south", bounds.South); parameters.Add("north", bounds.North); parameters.Add("west", bounds.West); parameters.Add("east", bounds.East);
+        }
+        await using var connection = await factory.OpenAsync(ct);
+        var rows = (await connection.QueryAsync<CatalogMapPoint>(new CommandDefinition(
+            $"SELECT id, name, city, neighborhood, category, latitude, longitude, catalog_tier FROM restaurants WHERE {string.Join(" AND ", where)} ORDER BY id LIMIT @take",
+            parameters, cancellationToken: ct))).AsList();
+        MapDiagnostics.QueryMilliseconds.Record(watch.Elapsed.TotalMilliseconds);
+        var more = rows.Count > query.SafeLimit;
+        if (more) rows.RemoveAt(rows.Count - 1);
+        return new(rows, more ? rows[^1].Id : null);
     }
 
     public async Task<CatalogFactSheet?> GetFactSheetAsync(long id, CancellationToken ct)
