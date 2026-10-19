@@ -1,6 +1,7 @@
 using BelemRestaurantes.Application;
 using BelemRestaurantes.Application.Abstractions;
 using BelemRestaurantes.Application.Services;
+using BelemRestaurantes.Domain.Rules;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -30,19 +31,29 @@ public sealed class DiscoveryHostedService(
             return;
         }
 
-        var every = TimeSpan.FromMinutes(Math.Max(1, configuration.GetValue<int>("Discovery:IntervalMinutes", 10)));
+        var externalEvery = TimeSpan.FromMinutes(Math.Max(1, configuration.GetValue<int>("Discovery:IntervalMinutes", 10)));
+        var queueEvery = WorkerCadence.QueueCheck(configuration.GetValue<int?>("Discovery:QueueCheckMinutes"));
         var batchSize = Math.Clamp(configuration.GetValue<int>("Discovery:BatchSize", 5), 1, 50);
         var maxAttempts = 3;
 
         logger.LogInformation(
-            "Cuia Discovery iniciado: intervalo {Interval}min, lote {BatchSize}, instância {Instance}",
-            every.TotalMinutes, batchSize, InstanceId);
+            "Cuia Discovery iniciado: fila a cada {Queue}min, fonte externa a cada {Interval}min, lote {BatchSize}, instância {Instance}",
+            queueEvery.TotalMinutes, externalEvery.TotalMinutes, batchSize, InstanceId);
 
-        using var timer = new PeriodicTimer(every);
+        using var timer = new PeriodicTimer(queueEvery);
+        DateTimeOffset? lastExternal = null;
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await RunCycleAsync(batchSize, maxAttempts, stoppingToken);
+            if (WorkerCadence.ExternalDue(DateTimeOffset.UtcNow, lastExternal, externalEvery))
+            {
+                await RunCycleAsync(batchSize, maxAttempts, stoppingToken);
+                lastExternal = DateTimeOffset.UtcNow;
+            }
+            else
+            {
+                await MaintainQueueAsync(stoppingToken);
+            }
 
             try
             {
@@ -58,6 +69,29 @@ public sealed class DiscoveryHostedService(
         }
 
         logger.LogInformation("Cuia Discovery finalizado.");
+    }
+
+    private async Task MaintainQueueAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var scope = scopeFactory.CreateScope();
+            var queue = scope.ServiceProvider.GetRequiredService<IDiscoveryQueue>();
+            var clock = scope.ServiceProvider.GetRequiredService<IClock>();
+            var released = await queue.ReleaseStaleLocksAsync(clock.UtcNow, ct);
+            var enqueued = await queue.EnqueueDueTargetsAsync(clock.UtcNow, ct);
+            if (released > 0 || enqueued > 0)
+            {
+                logger.LogInformation("Fila de descoberta conferida sem consulta externa: {Released} travas liberadas, {Enqueued} alvos vencidos enfileirados.", released, enqueued);
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Não foi possível conferir a fila de descoberta. A próxima verificação segue normalmente.");
+        }
     }
 
     private async Task RunCycleAsync(int batchSize, int maxAttempts, CancellationToken ct)

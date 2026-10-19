@@ -601,12 +601,17 @@
   <data name="AtlasAllFlavours" xml:space="preserve"><value>Todos os sabores</value></data>
   <data name="AtlasSkip" xml:space="preserve"><value>Pular para o conteúdo</value></data>
   <data name="AtlasRibbon" xml:space="preserve"><value>Feito em Belém. Com o tempero de todo o Pará.</value></data>
-  <data name="NavEat" xml:space="preserve"><value>Onde comer</value></data>
+  <data name="NavEat" xml:space="preserve"><value>Onde comer?</value></data>
   <data name="NavPara" xml:space="preserve"><value>Pelo Pará</value></data>
   <data name="NavTrails" xml:space="preserve"><value>Roteiros</value></data>
   <data name="NavCommunity" xml:space="preserve"><value>Comunidade</value></data>
-  <data name="NavRecipes" xml:space="preserve"><value>Receitas</value></data>
+  <data name="NavRecipes" xml:space="preserve"><value>Receitas do Pará</value></data>
   <data name="NavGuide" xml:space="preserve"><value>O guia</value></data>
+  <data name="NavWhere" xml:space="preserve"><value>Onde comer?</value></data>
+  <data name="NavWhat" xml:space="preserve"><value>O que comer?</value></data>
+  <data name="NavArrive" xml:space="preserve"><value>Como chegar?</value></data>
+  <data name="NavFavorites" xml:space="preserve"><value>Meus favoritos</value></data>
+  <data name="NavMore" xml:space="preserve"><value>Mais</value></data>
   <data name="AtlasFooterTagline" xml:space="preserve"><value>O Pará tem sabor.</value></data>
   <data name="AtlasFooterText" xml:space="preserve"><value>Da feira à mesa, da cidade às ilhas. Uma boa história começa com comida boa.</value></data>
   <data name="AtlasJoin" xml:space="preserve"><value>Faça parte</value></data>

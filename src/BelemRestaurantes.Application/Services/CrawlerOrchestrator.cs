@@ -65,6 +65,9 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         _geoRepo = geoRepo;
     }
 
+    public async Task MaintainQueueAsync(CancellationToken ct) =>
+        await _taskQueue.ReleaseStaleLocksAsync(_clock.UtcNow, ct);
+
     public async Task<int> RunCrawlerCycleAsync(int maxTasks, CancellationToken ct)
     {
         var now = _clock.UtcNow;

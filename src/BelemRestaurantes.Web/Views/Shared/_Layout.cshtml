@@ -42,9 +42,23 @@
   </a>
   <div class="atlas-header-tools"><details class="atlas-language"><summary aria-label="@(T["Language"].Value + ": " + CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpperInvariant())">@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpperInvariant()</summary><form method="post" action="/language">@Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" /><button type="submit" name="culture" value="pt-BR" lang="pt-BR">Português</button><button type="submit" name="culture" value="en" lang="en">English</button><button type="submit" name="culture" value="es" lang="es">Español</button></form></details><button class="para-menu-toggle" type="button" aria-expanded="false" aria-controls="public-navigation">Menu @await Html.PartialAsync("_ParaIcon", "menu")</button></div>
   <nav id="public-navigation" class="para-navigation" lang="@editorialLanguage" aria-label="@T["Explore"]">
-    <a href="/busca">@T["NavEat"]</a><a href="/cidades">@T["NavPara"]</a><a href="/roteiros">@T["NavTrails"]</a>
-    <a href="/cuia-ia" class="para-nav-highlight">✨ Cuia IA</a>
-    <a href="/community">@T["NavCommunity"]</a><a href="/receitas">@T["NavRecipes"]</a><a href="/pratos" lang="pt-BR">Pratos</a><a href="/mapa" lang="pt-BR">Mapa</a><a href="/cuia-rotas" lang="pt-BR">Cuia Rotas</a><a href="/travessias" lang="pt-BR">Travessias</a><a href="/guia">@T["NavGuide"]</a>
+    <a href="/busca">@T["NavWhere"]</a>
+    <a href="/pratos">@T["NavWhat"]</a>
+    <a href="/cuia-rotas">@T["NavArrive"]</a>
+    <a href="/receitas">@T["NavRecipes"]</a>
+    <a href="/account/favorites">@T["NavFavorites"]</a>
+    <details class="para-nav-more">
+      <summary>@T["NavMore"]</summary>
+      <div class="para-nav-more-panel">
+        <a href="/cuia-ia">Cuia IA</a>
+        <a href="/community">@T["NavCommunity"]</a>
+        <a href="/roteiros">@T["NavTrails"]</a>
+        <a href="/cidades">@T["NavPara"]</a>
+        <a href="/mapa">Mapa</a>
+        <a href="/travessias">Travessias</a>
+        <a href="/guia">@T["NavGuide"]</a>
+      </div>
+    </details>
     <a href="/account" class="para-account">@T["MyAccount"] ↗</a>
   </nav>
 </header>
