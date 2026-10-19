@@ -36,9 +36,9 @@
                 <div>
                   <h3 style="margin:0 0 4px;">
                     <a href="/establishment/@exp.RestaurantId" target="_blank" style="color:#174b3c;">@exp.RestaurantName</a>
-                    <span style="font-size:14px;color:#547062;">(@exp.RestaurantCity)</span>
+                    <span style="font-size:1rem;color:#547062;">(@exp.RestaurantCity)</span>
                   </h3>
-                  <p style="margin:0;font-size:13px;color:#547062;">
+                  <p style="margin:0;font-size:1rem;color:#547062;">
                     Autor: <b>@exp.AuthorName</b> (ID: <code>@exp.UserId</code>) · Criada em: @exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")
                     · Visibilidade: <b>@exp.Visibility</b>
                     @if (exp.AppealStatus == "pending")
@@ -48,12 +48,12 @@
                   </p>
                 </div>
 
-                <div style="color:#e67e22;font-size:18px;">
+                <div style="color:#e67e22;font-size:1rem;">
                   @string.Concat(Enumerable.Repeat("★", exp.Stars)) (@exp.Stars / 5)
                 </div>
               </div>
 
-              <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;background:#f4f7f4;padding:8px 12px;border-radius:8px;margin:8px 0;">
+              <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:1rem;background:#f4f7f4;padding:8px 12px;border-radius:8px;margin:8px 0;">
                 <span>Atendimento: @exp.ServiceStars★</span>
                 <span>Sabor: @exp.FlavorStars★</span>
                 <span>Ambiente: @exp.AmbianceStars★</span>
@@ -70,7 +70,7 @@
 
               @if (!string.IsNullOrWhiteSpace(exp.ReviewText))
               {
-                  <p style="font-size:15px;line-height:1.5;margin:6px 0;background:#fff;padding:10px;border:1px solid #edf2ec;border-radius:8px;">
+                  <p style="font-size:1rem;line-height:1.5;margin:6px 0;background:#fff;padding:10px;border:1px solid #edf2ec;border-radius:8px;">
                     @exp.ReviewText
                   </p>
               }
@@ -96,12 +96,12 @@
                       <form method="post" action="/admin/experiences/@exp.Id/appeal-decision">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="accept" value="true" />
-                        <button type="submit" style="background:#1e8449;padding:6px 12px;font-size:13px;">Aceitar recurso (Aprovar)</button>
+                        <button type="submit" style="background:#1e8449;padding:6px 12px;font-size:1rem;">Aceitar recurso (Aprovar)</button>
                       </form>
                       <form method="post" action="/admin/experiences/@exp.Id/appeal-decision">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="accept" value="false" />
-                        <button type="submit" class="danger" style="padding:6px 12px;font-size:13px;">Recusar recurso (Manter rejeição)</button>
+                        <button type="submit" class="danger" style="padding:6px 12px;font-size:1rem;">Recusar recurso (Manter rejeição)</button>
                       </form>
                     </div>
                   </div>

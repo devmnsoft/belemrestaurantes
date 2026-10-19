@@ -134,7 +134,7 @@ body {
   color: var(--cuia-tucupi-dark);
   border: 1px solid rgba(232, 173, 70, 0.35);
   border-radius: var(--cuia-radius-full);
-  font-size: 12.5px;
+  font-size: 1rem;
   font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -167,7 +167,7 @@ body {
   flex: 1;
   border: none;
   padding: 12px 18px;
-  font-size: 15px;
+  font-size: 1rem;
   color: var(--cuia-text);
   outline: none;
   background: transparent;
@@ -178,7 +178,7 @@ body {
   border: none;
   border-left: 1px solid var(--cuia-border);
   padding: 12px 16px;
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--cuia-forest);
   background: transparent;
@@ -195,7 +195,7 @@ body {
   gap: 8px;
   padding: 12px 22px;
   font-family: var(--cuia-font-sans);
-  font-size: 14.5px;
+  font-size: 1rem;
   font-weight: 700;
   border-radius: var(--cuia-radius-sm);
   border: 1px solid transparent;
@@ -246,7 +246,7 @@ body {
 
 .cuia-btn-sm {
   padding: 8px 14px;
-  font-size: 13px;
+  font-size: 1rem;
   min-height: 36px;
 }
 
@@ -306,7 +306,7 @@ body {
 
 .cuia-card-title {
   font-family: var(--cuia-font-display);
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 800;
   color: var(--cuia-forest-dark);
   margin: 0 0 6px 0;
@@ -314,7 +314,7 @@ body {
 }
 
 .cuia-card-meta {
-  font-size: 13.5px;
+  font-size: 1rem;
   color: var(--cuia-text-muted);
   display: flex;
   align-items: center;
@@ -329,7 +329,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--cuia-forest);
 }
@@ -341,7 +341,7 @@ body {
   gap: 6px;
   padding: 4px 10px;
   border-radius: var(--cuia-radius-sm);
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -389,7 +389,7 @@ body {
   background-color: var(--cuia-white);
   border: 1px solid var(--cuia-border);
   border-radius: var(--cuia-radius-full);
-  font-size: 13.5px;
+  font-size: 1rem;
   font-weight: 650;
   color: var(--cuia-text);
   text-decoration: none;
@@ -417,7 +417,7 @@ body {
 }
 .cuia-empty-state h3 {
   font-family: var(--cuia-font-display);
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 750;
   color: var(--cuia-forest-dark);
   margin: 12px 0 6px 0;
@@ -434,7 +434,7 @@ body {
 .cuia-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 1rem;
   text-align: left;
 }
 .cuia-table th {
@@ -470,7 +470,7 @@ body {
 }
 .cuia-autocomplete-item {
   padding: 10px 16px;
-  font-size: 14px;
+  font-size: 1rem;
   cursor: pointer;
   border-bottom: 1px solid var(--cuia-border-subtle);
   color: var(--cuia-text);

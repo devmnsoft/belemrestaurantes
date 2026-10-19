@@ -92,18 +92,18 @@
       <!-- Cardápio Digital Rápido -->
       <div class="cuia-card" style="margin-bottom: 24px; padding: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-          <h3 style="font-size: 18px; font-weight: 800; color: var(--floresta-900, #113F32); margin: 0;">Cardápio Digital da Casa</h3>
+          <h3 style="font-size: 1rem; font-weight: 800; color: var(--floresta-900, #113F32); margin: 0;">Cardápio Digital da Casa</h3>
           <a href="/cardapio/@Model.Id" class="cuia-btn cuia-btn-primary cuia-btn-sm">Acessar Cardápio →</a>
         </div>
-        <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; margin: 0;">
+        <p style="color: var(--texto-secundario, #4b635a); font-size: 1rem; margin: 0;">
           O cardápio só lista o que o responsável publicou. Sem itens, a página avisa que não há cardápio.
         </p>
       </div>
 
       <!-- Como Chegar e Mobilidade -->
       <div class="cuia-card" style="margin-bottom: 24px; padding: 24px;">
-        <h3 style="font-size: 18px; font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 12px;">Mobilidade Urbana & Como Chegar</h3>
-        <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+        <h3 style="font-size: 1rem; font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 12px;">Mobilidade Urbana & Como Chegar</h3>
+        <p style="color: var(--texto-secundario, #4b635a); font-size: 1rem; line-height: 1.6; margin-bottom: 16px;">
           Use o endereço ou a coordenada informada para abrir o trajeto até @Model.City. Linha, horário de barco e tarifa só aparecem quando há fonte vigente.
         </p>
         <a href="https://www.google.com/maps/dir/?api=1&destination=@Uri.EscapeDataString(Model.Name + " " + Model.Address + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-secondary cuia-btn-sm" style="width: 100%; text-align: center;">
@@ -113,10 +113,10 @@
 
       <!-- Galeria de Fotos Segregada -->
       <div class="cuia-card" style="padding: 24px;">
-        <h3 style="font-size: 18px; font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 16px;">Fotografias do Restaurante</h3>
+        <h3 style="font-size: 1rem; font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 16px;">Fotografias do Restaurante</h3>
 
         <!-- Fotos da Comunidade -->
-        <h4 style="font-size: 14px; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Enviadas pela Comunidade</h4>
+        <h4 style="font-size: 1rem; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Enviadas pela Comunidade</h4>
         @if (gallery?.CommunityPhotos.Count > 0)
         {
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 18px;">
@@ -130,13 +130,13 @@
         }
         else
         {
-          <p style="font-size: 13px; color: var(--texto-secundario, #4b635a); margin-bottom: 18px;">Nenhuma foto enviada pela comunidade ainda.</p>
+          <p style="font-size: 1rem; color: var(--texto-secundario, #4b635a); margin-bottom: 18px;">Nenhuma foto enviada pela comunidade ainda.</p>
         }
 
         <!-- Fotos Oficiais -->
         @if (gallery?.OfficialPhotos.Count > 0)
         {
-          <h4 style="font-size: 14px; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Fotos Oficiais da Casa</h4>
+          <h4 style="font-size: 1rem; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Fotos Oficiais da Casa</h4>
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 18px;">
             @foreach (var photo in gallery.OfficialPhotos)
             {
@@ -152,13 +152,13 @@
         }
         @if (mediaList.Count > 0)
         {
-          <h4 style="font-size: 14px; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Mídias Licenciadas & Experiências</h4>
+          <h4 style="font-size: 1rem; color: var(--floresta-800, #165338); font-weight: 700; margin-bottom: 10px;">Mídias Licenciadas & Experiências</h4>
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 18px;">
             @foreach (var m in mediaList.Where(m=>m.MediaType!="video_embed" && Uri.TryCreate(m.MediaUrl,UriKind.Absolute,out var photoUri) && photoUri.Scheme=="https"))
             {
               <div style="border-radius: 10px; overflow: hidden; border: 1px solid var(--borda-suave, #e2e8df); background: #f9fafb;" title="@m.AttributionText (@m.LicenseType)">
                 <img src="@m.MediaUrl" alt="Mídia de @Model.Name" style="width: 100%; height: 90px; object-fit: cover;" loading="lazy" />
-                <div style="font-size: 10px; color: var(--texto-secundario, #4b635a); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                <div style="font-size: 1rem; color: var(--texto-secundario, #4b635a); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                   @m.AttributionText
                 </div>
               </div>
@@ -169,13 +169,13 @@
 
       <!-- Procedência & Transparência das Informações -->
       <div class="cuia-card" style="margin-top: 24px; padding: 20px;">
-        <h4 style="font-size: 14px; font-weight: 700; color: var(--floresta-900, #113F32); margin: 0 0 8px 0;">
+        <h4 style="font-size: 1rem; font-weight: 700; color: var(--floresta-900, #113F32); margin: 0 0 8px 0;">
           Transparência & Procedência dos Dados
         </h4>
-        <p style="font-size: 12.5px; color: var(--texto-secundario, #4b635a); line-height: 1.5; margin: 0 0 10px 0;">
+        <p style="font-size: 1rem; color: var(--texto-secundario, #4b635a); line-height: 1.5; margin: 0 0 10px 0;">
           Este cadastro reúne informações de fontes externas e contribuições revisadas. Elas podem estar desatualizadas: confirme os detalhes com o estabelecimento antes da visita.
         </p>
-        <div style="font-size: 11.5px; color: var(--texto-secundario, #4b635a); background: var(--palha-100, #f7f4eb); padding: 8px 12px; border-radius: 8px;">
+        <div style="font-size: 1rem; color: var(--texto-secundario, #4b635a); background: var(--palha-100, #f7f4eb); padding: 8px 12px; border-radius: 8px;">
           <div><strong>Última atualização:</strong> @Model.UpdatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy HH:mm")</div>
           <div style="margin-top: 2px;"><strong>Status:</strong> Publicado no guia · Funcionamento a confirmar</div>
         </div>
@@ -188,7 +188,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--borda-suave, #e2e8df);">
           <div>
             <h2 style="font-size: 22px; font-weight: 800; color: var(--floresta-900, #113F32); margin: 0;">Experiências da Comunidade</h2>
-            <span style="font-size: 14px; color: var(--texto-secundario, #4b635a);">@experiences.Count relatos reais compartilhados</span>
+            <span style="font-size: 1rem; color: var(--texto-secundario, #4b635a);">@experiences.Count relatos reais compartilhados</span>
           </div>
           <a href="/experience/create?restaurantId=@Model.Id" class="cuia-btn cuia-btn-secondary cuia-btn-sm">
             ✦ Avaliar Restaurante
@@ -200,7 +200,7 @@
           <div style="text-align: center; padding: 40px 16px; background: var(--palha-100, #f7f4eb); border-radius: 16px;">
             <div style="font-size: 32px; margin-bottom: 8px; color: var(--tucupi-600, #c48b28);">✦</div>
             <h4 style="font-weight: 700; color: var(--floresta-900, #113F32); margin-bottom: 6px;">Seja o primeiro a avaliar!</h4>
-            <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; max-width: 400px; margin: auto; margin-bottom: 16px;">
+            <p style="color: var(--texto-secundario, #4b635a); font-size: 1rem; max-width: 400px; margin: auto; margin-bottom: 16px;">
               Conte como foi seu atendimento, sabor dos pratos, ambiente e custo-benefício em @Model.Name.
             </p>
             <a href="/experience/create?restaurantId=@Model.Id" class="cuia-btn cuia-btn-secondary cuia-btn-sm">
@@ -216,8 +216,8 @@
               <div class="cuia-card" style="background: var(--palha-100, #f7f4eb); padding: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                   <div>
-                    <strong style="color: var(--floresta-900, #113F32); font-size: 15px;">@exp.AuthorName</strong>
-                    <div style="font-size: 12px; color: var(--texto-secundario, #4b635a);">@exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy HH:mm")</div>
+                    <strong style="color: var(--floresta-900, #113F32); font-size: 1rem;">@exp.AuthorName</strong>
+                    <div style="font-size: 1rem; color: var(--texto-secundario, #4b635a);">@exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("dd/MM/yyyy HH:mm")</div>
                   </div>
                   <div class="cuia-rating">
                     @for (int i = 1; i <= 5; i++)
@@ -228,7 +228,7 @@
                 </div>
 
                 <!-- Subcritérios de Nota -->
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; background: #ffffff; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--borda-suave, #e2e8df); margin-bottom: 12px;">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; font-size: 1rem; background: #ffffff; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--borda-suave, #e2e8df); margin-bottom: 12px;">
                   <span><b>Atendimento:</b> @exp.ServiceStars★</span>
                   <span><b>Sabor:</b> @exp.FlavorStars★</span>
                   <span><b>Ambiente:</b> @exp.AmbianceStars★</span>
@@ -241,14 +241,14 @@
 
                 @if (!string.IsNullOrWhiteSpace(exp.DishesConsumed))
                 {
-                  <div style="font-size: 13.5px; color: var(--floresta-900, #113F32); font-weight: 700; margin-bottom: 6px;">
+                  <div style="font-size: 1rem; color: var(--floresta-900, #113F32); font-weight: 700; margin-bottom: 6px;">
                     Prato: @exp.DishesConsumed
                   </div>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(exp.ReviewText))
                 {
-                  <p style="font-size: 14px; line-height: 1.5; color: var(--texto-principal, #17342d); margin: 0 0 12px;">
+                  <p style="font-size: 1rem; line-height: 1.5; color: var(--texto-principal, #17342d); margin: 0 0 12px;">
                     @exp.ReviewText
                   </p>
                 }
@@ -265,10 +265,10 @@
                   </div>
                 }
 
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--borda-suave, #e2e8df); font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--borda-suave, #e2e8df); font-size: 1rem;">
                   <form method="post" action="/experience/@exp.Id/like" style="display: inline;">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="cuia-btn cuia-btn-outline cuia-btn-sm" style="padding: 4px 10px; font-size: 12px;">
+                    <button type="submit" class="cuia-btn cuia-btn-outline cuia-btn-sm" style="padding: 4px 10px; font-size: 1rem;">
                       @(exp.HasLiked ? "♥" : "♡") Curtir (@exp.LikesCount)
                     </button>
                   </form>

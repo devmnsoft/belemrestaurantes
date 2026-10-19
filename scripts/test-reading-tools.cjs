@@ -6,11 +6,11 @@ const code = fs.readFileSync('src/BelemRestaurantes.Web/wwwroot/js/accessibility
 function fixture(initial, unavailable = false) {
   const classes = new Set(); const elements = new Map(); let saved = initial;
   function element(selector) {
-    if (!elements.has(selector)) elements.set(selector, { checked: false, value: '', textContent: '', handlers: {}, addEventListener(event, fn) { this.handlers[event] = fn; } });
+    if (!elements.has(selector)) elements.set(selector, { closest() { return null; }, checked: false, value: '', textContent: '', handlers: {}, addEventListener(event, fn) { this.handlers[event] = fn; } });
     return elements.get(selector);
   }
   const root = { dataset: {}, classList: { toggle(key, on) { on ? classes.add(key) : classes.delete(key); } } };
-  const tools = { querySelector: element };
+  const tools = { querySelector: element, addEventListener() {} };
   vm.runInNewContext(code, { document: { documentElement: root, querySelector: () => tools }, localStorage: {
     getItem() { if (unavailable) throw new Error('disabled'); return saved; },
     setItem(key, value) { if (unavailable) throw new Error('disabled'); saved = value; }
@@ -29,11 +29,13 @@ page.element('[data-reading-size]').handlers.change();
 assert.equal(page.root.dataset.textSize, '125');
 page.element('[data-reading-contrast]').handlers.change({ target: { checked: true } });
 assert.ok(page.classes.has('reading-contrast'));
-assert.ok(page.element('[data-reading-status]').textContent.includes('atualizadas'));
+assert.ok(page.element('[data-reading-status]').textContent.includes('Preferência alterada'));
 page = fixture(page.saved());
 assert.equal(page.root.dataset.textSize, '125');
 assert.ok(page.classes.has('reading-contrast'));
 assert.equal(fixture('{broken').root.dataset.textSize, '100');
 assert.equal(fixture(null, true).root.dataset.textSize, '100');
 assert.equal(fixture(JSON.stringify({ size: '900', contrast: 'true' })).root.dataset.textSize, '100');
+for (const size of ['100','125','150','175','200']) assert.equal(fixture(JSON.stringify({size})).root.dataset.textSize,size);
+assert.equal(fixture(JSON.stringify({size:'115'})).root.dataset.textSize,'125');
 console.log('Reading tools: persistence, reset, contrast, size, announcements and storage failures passed.');

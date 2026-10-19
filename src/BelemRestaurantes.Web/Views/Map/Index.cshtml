@@ -4,15 +4,25 @@
 @{
     ViewData["Title"] = "Mapa dos publicados";
     ViewData["MetaDescription"] = "Posição dos estabelecimentos publicados que já têm coordenada. A camada Guia só aparece quando há dono, horário, cardápio ou foto.";
+    var query = (MapQuery)ViewData["MapQuery"]!;
     string Coord(double value) => value.ToString("0.####", CultureInfo.InvariantCulture);
 }
-<section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">ONDE JÁ HÁ CADASTRO</span><h1>Mapa dos publicados</h1><p>@Model.PublishedWithCoordinates lugares publicados têm coordenada. @Model.GuideCount estão na camada Guia. O desenho usa só essas coordenadas: não é mapa de ruas e não inclui os cadastros pendentes.</p></div></section>
+<section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">ONDE JÁ HÁ CADASTRO</span><h1>Mapa dos publicados</h1><p>@Model.PublishedWithCoordinates lugares publicados têm coordenada. @Model.GuideCount estão na camada Guia. Explore as posições ou use a lista de fichas. Cadastros pendentes não aparecem.</p></div></section>
 <section class="para-container para-section">
   <form action="/mapa" method="get" class="para-search" role="search">
     <div class="para-search-query"><label for="mapQuery">Nome, bairro ou categoria</label><input id="mapQuery" name="q" type="search" value="@Model.Term" maxlength="80" /></div>
     <div><label for="mapCity">Município</label><select id="mapCity" name="city"><option value="">Todos</option>@foreach (var city in Model.Cities){<option value="@city" selected="@(string.Equals(city, Model.City, StringComparison.OrdinalIgnoreCase))">@city</option>}</select></div>
+    <div><label for="mapCategory">Categoria</label><input id="mapCategory" name="category" value="@query.Category" maxlength="80" /></div>
+    <div><label for="mapNeighborhood">Bairro</label><input id="mapNeighborhood" name="neighborhood" value="@query.Neighborhood" maxlength="80" /></div>
+    <div><label for="mapTier">Camada</label><select id="mapTier" name="tier"><option value="">Todas</option><option value="guia" selected="@(query.Tier == "guia")">Guia</option><option value="ficha" selected="@(query.Tier == "ficha")">Ficha</option></select></div>
     <button type="submit" class="para-button">Filtrar</button>
   </form>
+  <div class="map-actions"><button type="button" id="map-open" class="para-button">Explorar mapa interativo</button><button type="button" id="map-list-toggle" class="visit-text-button" aria-controls="map-results">Ver lista</button></div>
+  <p id="map-status" role="status">A lista está disponível sem carregar serviços externos. O mapa de ruas depende da disponibilidade do provedor.</p>
+  <div class="map-live-workspace"><div id="interactive-map" hidden data-lat="@(Model.Places.Count > 0 ? Coord(Model.Places[0].Latitude) : "-1.4558")" data-lng="@(Model.Places.Count > 0 ? Coord(Model.Places[0].Longitude) : "-48.4902")" data-tiles="@ViewData["MapTileUrl"]" data-attribution="@ViewData["MapAttribution"]" aria-label="Mapa interativo dos publicados"></div>
+  <ol id="map-live-list" class="catalog-map-list" hidden aria-label="Lugares na área visível"></ol></div>
+  <button type="button" id="map-retry" class="para-button" hidden>Tentar novamente</button>
+  <div id="map-results" class="map-results">
   @if (Model.Places.Count == 0)
   {
     <div class="para-empty"><div><h2>Nenhum publicado com coordenada neste filtro.</h2><p>A busca vazia é o resultado. O portal não completa o mapa com cadastro pendente.</p><a href="/mapa" class="para-text-link">Limpar filtro ↗</a></div></div>
@@ -20,7 +30,7 @@
   else
   {
     <figure class="catalog-map">
-      <svg viewBox="0 0 800 640" role="img" aria-labelledby="catalog-map-title">
+      <svg viewBox="0 0 800 640" role="group" aria-labelledby="catalog-map-title">
         <title id="catalog-map-title">Posição relativa de @Model.Plotted.Count estabelecimentos publicados</title>
         <rect width="800" height="640" fill="#f7f2e7" />
         @foreach (var point in Model.Plotted)
@@ -49,5 +59,10 @@
       }
     </ol>
   }
+  @if (ViewData["MapNext"] is long next)
+  { <a class="para-button" href="@Url.Action("Index", new { city=query.City, q=query.Term, category=query.Category, neighborhood=query.Neighborhood, tier=query.Tier, after=next })">Próximos lugares</a> }
+  </div>
   <p><a href="/busca" class="para-text-link">Voltar à busca ↗</a> <a href="/guia" class="para-text-link">Como a camada Guia é decidida ↗</a></p>
 </section>
+
+@section Scripts { <script src="~/js/catalog-map.js" asp-append-version="true" defer></script> }

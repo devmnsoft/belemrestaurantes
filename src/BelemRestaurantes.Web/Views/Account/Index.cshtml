@@ -47,7 +47,7 @@
 
       <div>
         <label for="profile-email"><b>@T["Email"]</b></label>
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div style="display:flex;flex-wrap:wrap;min-width:0;gap:10px;align-items:center;">
           <input id="profile-email" value="@profile?.Email" disabled style="background:#f4f7f4;color:#547062;" />
           @if (profile?.EmailConfirmed == true)
           {
@@ -71,7 +71,7 @@
   <div class="panel" style="margin-bottom:24px;">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
       <h2>@T["MyExperiences"] (@myExperiences.Count)</h2>
-      <a href="/#catalogo" class="button-link" style="padding:6px 14px;font-size:13px;">Avaliar novo restaurante</a>
+      <a href="/#catalogo" class="button-link" style="padding:6px 14px;font-size:1rem;">Avaliar novo restaurante</a>
     </div>
 
     @if (myExperiences.Count == 0)
@@ -87,7 +87,7 @@
                 <div>
                   <h4 style="margin:0 0 4px;">
                     <a href="/establishment/@exp.RestaurantId" style="color:#174b3c;text-decoration:none;">@exp.RestaurantName</a>
-                    <span style="color:#e67e22;font-size:14px;margin-left:6px;">@string.Concat(Enumerable.Repeat("★", exp.Stars))</span>
+                    <span style="color:#e67e22;font-size:1rem;margin-left:6px;">@string.Concat(Enumerable.Repeat("★", exp.Stars))</span>
                   </h4>
                   <small class="muted">
                     @exp.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("d") · 
@@ -99,8 +99,8 @@
                 </div>
 
                 <div style="display:flex;gap:8px;">
-                  <a href="/experience/@exp.Id" class="button-link ghost" style="padding:5px 10px;font-size:12px;">Visualizar</a>
-                  <a href="/experience/edit/@exp.Id" class="button-link" style="padding:5px 10px;font-size:12px;">@T["EditExperience"]</a>
+                  <a href="/experience/@exp.Id" class="button-link ghost" style="padding:5px 10px;font-size:1rem;">Visualizar</a>
+                  <a href="/experience/edit/@exp.Id" class="button-link" style="padding:5px 10px;font-size:1rem;">@T["EditExperience"]</a>
                 </div>
               </div>
           }
@@ -109,7 +109,7 @@
   </div>
 
   <!-- 3. Alteração de Senha & E-mail -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:18px;margin-bottom:24px;">
     <div class="panel">
       <h3>@T["ChangePassword"]</h3>
       <form method="post" action="/account/change-password" style="display:grid;gap:10px;">
@@ -123,7 +123,7 @@
 
     <div class="panel">
       <h3>@T["ChangeEmail"]</h3>
-      <p class="muted" style="font-size:13px;margin:0;">Para sua segurança, enviaremos um link de confirmação para o novo endereço antes de atualizar.</p>
+      <p class="muted" style="font-size:1rem;margin:0;">Para sua segurança, enviaremos um link de confirmação para o novo endereço antes de atualizar.</p>
       <form method="post" action="/account/change-email" style="display:grid;gap:10px;margin-top:10px;">
         @Html.AntiForgeryToken()
         <label>@T["NewEmail"]<input type="email" name="newEmail" required maxlength="200" placeholder="novo@exemplo.com" /></label>
@@ -138,7 +138,7 @@
     <ul style="padding-left:20px;margin:10px 0;">
       @foreach (var session in Model)
       {
-          <li style="margin-bottom:6px;font-size:14px;">
+          <li style="margin-bottom:6px;font-size:1rem;">
             @T["CreatedAt"]: @session.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g") · 
             @T["ExpiresAt"]: @session.ExpiresAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")
             @if (session.Current)
@@ -159,7 +159,7 @@
   <!-- 5. Central de Privacidade e LGPD -->
   <div class="panel" style="border-color:#bfe3c9;background:#fbfefb;">
     <h2 style="color:#174b3c;">🔒 Privacidade & Governança LGPD</h2>
-    <p style="font-size:14px;color:#547062;margin:4px 0 14px;">
+    <p style="font-size:1rem;color:#547062;margin:4px 0 14px;">
       Você tem total controle sobre seus dados pessoais no Belém Restaurantes, em conformidade com a LGPD (Lei 13.709/2018).
     </p>
 

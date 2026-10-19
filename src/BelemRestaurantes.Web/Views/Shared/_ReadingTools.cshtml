@@ -4,7 +4,7 @@
       @await Html.PartialAsync("_ParaIcon", "acessibilidade")
       <span>Cuia Acessível · Conforto de leitura</span>
     </span>
-    <span class="reading-badge" aria-hidden="true">Aa · WCAG 2.2 AA</span>
+    <span class="reading-badge" aria-hidden="true">Aa · Leitura</span>
   </summary>
   <div class="reading-controls" role="region" aria-label="Controles de acessibilidade e leitura">
     <p class="reading-intro">
@@ -17,9 +17,10 @@
         <button type="button" class="reading-btn" data-reading-decrease aria-label="Diminuir tamanho do texto">A−</button>
         <select id="reading-size" data-reading-size aria-label="Selecionar escala do texto">
           <option value="100">100% · Padrão</option>
-          <option value="115">115% · Conforto</option>
           <option value="125">125% · Maior</option>
-          <option value="150">150% · Máximo</option>
+          <option value="150">150% · Ampliado</option>
+          <option value="175">175% · Maior</option>
+          <option value="200">200% · Máximo</option>
         </select>
         <button type="button" class="reading-btn" data-reading-increase aria-label="Aumentar tamanho do texto">A+</button>
       </div>

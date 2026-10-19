@@ -4,7 +4,7 @@
   const tools = document.querySelector('.reading-tools');
   if (!tools) return;
 
-  const steps = ['100', '115', '125', '150'];
+  const steps = ['100', '125', '150', '175', '200'];
   const defaults = {
     size: '100',
     contrast: false,
@@ -20,6 +20,7 @@
   try {
     const saved = JSON.parse(localStorage.getItem('belem-reading') || 'null');
     if (saved && steps.includes(String(saved.size))) preferences.size = String(saved.size);
+    if (String(saved?.size) === '115') preferences.size = '125';
     for (const key of ['contrast', 'lineSpacing', 'letterSpacing', 'links', 'motion', 'distraction']) {
       preferences[key] = saved?.[key] === true;
     }

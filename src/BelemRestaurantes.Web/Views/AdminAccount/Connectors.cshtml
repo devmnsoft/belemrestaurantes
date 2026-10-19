@@ -10,7 +10,7 @@
     <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
       Status de Conectores & Cuia IA
     </h1>
-    <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
+    <p style="color: var(--text-muted); font-size: 1rem; margin: 4px 0 0 0;">
       Monitoramento real de conectores (Google Places, Gemini, Groq, DeepSeek e Redes Sociais). Segredos e tokens nunca são expostos.
     </p>
   </div>
@@ -20,27 +20,27 @@
 <!-- Banner com Resumo de Telemetria e Fila -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
   <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm);">
-    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Aguardando Moderação</div>
+    <div style="font-size: 1rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Aguardando Moderação</div>
     <div style="font-size: 28px; font-weight: 850; color: var(--forest-900); margin-top: 4px;">@Model.TotalPendingMod</div>
-    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Estabelecimentos pendentes de revisão</div>
+    <div style="font-size: 1rem; color: var(--text-muted); margin-top: 2px;">Estabelecimentos pendentes de revisão</div>
   </div>
 
   <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm);">
-    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Último Ciclo Worker</div>
+    <div style="font-size: 1rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Último Ciclo Worker</div>
     <div style="font-size: 20px; font-weight: 750; color: var(--forest-900); margin-top: 6px;">
       @(Model.LastWorkerCycle?.completed_at?.ToString("dd/MM/yyyy HH:mm") ?? "Nenhum ciclo registrado")
     </div>
-    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+    <div style="font-size: 1rem; color: var(--text-muted); margin-top: 2px;">
       @(Model.LastWorkerCycle != null ? $"{Model.LastWorkerCycle.places_discovered} novos locais descobertos" : "Aguardando agendador")
     </div>
   </div>
 
   <div style="background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 18px; box-shadow: var(--shadow-sm);">
-    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Segurança de Credenciais</div>
+    <div style="font-size: 1rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Segurança de Credenciais</div>
     <div style="font-size: 20px; font-weight: 750; color: var(--forest-800); margin-top: 6px;">
       🔒 100% Protegido
     </div>
-    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Chaves e segredos isolados fora da UI</div>
+    <div style="font-size: 1rem; color: var(--text-muted); margin-top: 2px;">Chaves e segredos isolados fora da UI</div>
   </div>
 </div>
 
@@ -65,49 +65,49 @@
         <tr>
           <td>
             <strong style="color: var(--forest-950);">@c.Name</strong>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">@c.ConfiguredDetails</div>
+            <div style="font-size: 1rem; color: var(--text-muted); margin-top: 2px;">@c.ConfiguredDetails</div>
           </td>
           <td>
-            <span class="badge-tag-v3" style="font-size: 11px;">@c.Category</span>
+            <span class="badge-tag-v3" style="font-size: 1rem;">@c.Category</span>
           </td>
           <td>
             @if (c.IsConfigured)
             {
-              <span style="color: var(--forest-800); font-weight: 700; font-size: 13px;">✓ Configurado</span>
+              <span style="color: var(--forest-800); font-weight: 700; font-size: 1rem;">✓ Configurado</span>
             }
             else
             {
-              <span style="color: var(--urucum-600); font-weight: 700; font-size: 13px;">✕ Não Configurado</span>
+              <span style="color: var(--urucum-600); font-weight: 700; font-size: 1rem;">✕ Não Configurado</span>
             }
           </td>
           <td>
             @if (c.HasVerifiedSuccess)
             {
-              <span style="display: inline-flex; align-items: center; gap: 4px; color: #166534; background: #dcfce7; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;">
+              <span style="display: inline-flex; align-items: center; gap: 4px; color: #166534; background: #dcfce7; padding: 3px 8px; border-radius: 999px; font-size: 1rem; font-weight: 700;">
                 ● Operacional Comprovado
               </span>
             }
             else
             {
-              <span style="display: inline-flex; align-items: center; gap: 4px; color: #854d0e; background: #fef9c3; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;">
+              <span style="display: inline-flex; align-items: center; gap: 4px; color: #854d0e; background: #fef9c3; padding: 3px 8px; border-radius: 999px; font-size: 1rem; font-weight: 700;">
                 ○ Sem Operação Recente
               </span>
             }
           </td>
-          <td style="font-size: 13px; color: var(--text-muted);">
+          <td style="font-size: 1rem; color: var(--text-muted);">
             @(c.LastSyncAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")
           </td>
-          <td style="font-size: 12px; color: @(c.RecentErrors.Contains("falha") || c.RecentErrors.Contains("rejeitada") ? "var(--urucum-600)" : "var(--text-muted)");">
+          <td style="font-size: 1rem; color: @(c.RecentErrors.Contains("falha") || c.RecentErrors.Contains("rejeitada") ? "var(--urucum-600)" : "var(--text-muted)");">
             @c.RecentErrors
           </td>
-          <td style="font-weight: 700; font-size: 13px; color: var(--forest-900);">
+          <td style="font-weight: 700; font-size: 1rem; color: var(--forest-900);">
             @(c.CostUsd.HasValue ? $"${c.CostUsd.Value:F4}" : "N/A")
           </td>
           <td>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               @foreach (var act in c.AllowedActions)
               {
-                <span class="badge-tag-v3" style="font-size: 10px; background: rgba(13,56,38,0.06); color: var(--forest-800); border-color: rgba(13,56,38,0.2);">
+                <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(13,56,38,0.06); color: var(--forest-800); border-color: rgba(13,56,38,0.2);">
                   @act
                 </span>
               }
@@ -119,6 +119,6 @@
   </table>
 </div>
 
-<div style="margin-top: 24px; padding: 18px; background: rgba(229,169,59,0.12); border: 1px solid var(--tucupi-400); border-radius: var(--radius-md); font-size: 13px; color: var(--forest-950);">
+<div style="margin-top: 24px; padding: 18px; background: rgba(229,169,59,0.12); border: 1px solid var(--tucupi-400); border-radius: var(--radius-md); font-size: 1rem; color: var(--forest-950);">
   <strong>Nota de Governança & Transparência:</strong> Conforme diretrizes da Sprint 06, nenhum conector é rotulado como "ativo" sem verificação comprovada no banco de dados. Credenciais de API são injetadas estritamente via variáveis de ambiente da VPS Windows e jamais enviadas para o cliente web.
 </div>

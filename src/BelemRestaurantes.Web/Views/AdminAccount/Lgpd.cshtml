@@ -33,7 +33,7 @@
         {
             <div class="panel" style="display:grid;gap:10px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span class="badge @(req.RequestType == "deletion" ? "red" : "green")" style="font-size:13px;">
+                <span class="badge @(req.RequestType == "deletion" ? "red" : "green")" style="font-size:1rem;">
                   Tipo: @req.RequestType.ToUpperInvariant()
                 </span>
                 <small class="muted">Solicitado em @req.RequestedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")</small>

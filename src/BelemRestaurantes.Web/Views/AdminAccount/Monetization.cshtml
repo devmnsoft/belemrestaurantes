@@ -11,7 +11,7 @@
     <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
       Planos Comerciais, Pedidos & Apoio PIX
     </h1>
-    <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
+    <p style="color: var(--text-muted); font-size: 1rem; margin: 4px 0 0 0;">
       Acompanhamento de assinaturas parceiras e dados oficiais de sustentabilidade MNSOFT.
     </p>
   </div>
@@ -28,7 +28,7 @@
       <h3 style="font-family: var(--font-display); font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 4px 0;">
         Apoie o Belém Restaurantes — O Pará Tem Sabor
       </h3>
-      <p style="font-size: 14px; color: #c9dbd1; margin: 0;">
+      <p style="font-size: 1rem; color: #c9dbd1; margin: 0;">
         Chave CNPJ MNSOFT Soluções: <strong>18.160.057/0001-13</strong> · Destinado à manutenção de infraestrutura, hospedagem IIS e inovação do catálogo.
       </p>
     </div>
@@ -45,17 +45,17 @@
     @foreach (var plan in plans)
     {
       <div class="card-restaurant-v3" style="padding: 20px;">
-        <span class="badge-tag-v3" style="font-size: 11px; margin-bottom: 8px;">@plan.Code</span>
-        <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 750; color: var(--forest-900); margin: 0 0 4px 0;">
+        <span class="badge-tag-v3" style="font-size: 1rem; margin-bottom: 8px;">@plan.Code</span>
+        <h3 style="font-family: var(--font-display); font-size: 1rem; font-weight: 750; color: var(--forest-900); margin: 0 0 4px 0;">
           @plan.Name
         </h3>
         <div style="font-size: 22px; font-weight: 850; color: var(--forest-950); margin-bottom: 8px;">
-          R$ @plan.MonthlyPrice.ToString("N2")<span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">/mês</span>
+          R$ @plan.MonthlyPrice.ToString("N2")<span style="font-size: 1rem; font-weight: 500; color: var(--text-muted);">/mês</span>
         </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">
+        <p style="font-size: 1rem; color: var(--text-muted); margin: 0 0 12px 0;">
           @plan.Description
         </p>
-        <ul style="font-size: 12px; color: var(--forest-900); padding-left: 18px; margin: 0;">
+        <ul style="font-size: 1rem; color: var(--forest-900); padding-left: 18px; margin: 0;">
           @if (plan.BadgeHighlight) { <li style="margin-bottom: 4px;">Destaque do Selo Cuia no catálogo</li> }
           @if (plan.MenuEnabled) { <li style="margin-bottom: 4px;">Cardápio Digital interativo completo</li> }
           @if (plan.SponsoredExposure) { <li style="margin-bottom: 4px;">Exposição patrocinada nas buscas</li> }
@@ -103,28 +103,28 @@
             <tr>
               <td><strong>@ord.order_number</strong></td>
               <td>#@ord.restaurant_id</td>
-              <td style="font-size: 12px;">@ord.user_id</td>
-              <td><span class="badge-tag-v3" style="font-size: 11px;">@ord.plan_code</span></td>
+              <td style="font-size: 1rem;">@ord.user_id</td>
+              <td><span class="badge-tag-v3" style="font-size: 1rem;">@ord.plan_code</span></td>
               <td style="font-weight: 700;">R$ @((ord.amount_cents / 100.0).ToString("N2"))</td>
               <td>
-                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; @(ord.status == "paid" ? "color: #166534; background: #dcfce7;" : "color: #854d0e; background: #fef9c3;")">
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 1rem; font-weight: 700; @(ord.status == "paid" ? "color: #166534; background: #dcfce7;" : "color: #854d0e; background: #fef9c3;")">
                   @ord.status
                 </span>
               </td>
-              <td style="font-size: 12px; color: var(--text-muted);">@ord.created_at.ToString("dd/MM/yyyy HH:mm")</td>
+              <td style="font-size: 1rem; color: var(--text-muted);">@ord.created_at.ToString("dd/MM/yyyy HH:mm")</td>
               <td>
                 @if (ord.status != "paid")
                 {
                   <form method="post" action="/admin/partner/orders/@ord.order_number/confirm" style="margin: 0;">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn-v3 btn-v3-primary btn-v3-sm" style="font-size: 11px; padding: 4px 8px;">
+                    <button type="submit" class="btn-v3 btn-v3-primary btn-v3-sm" style="font-size: 1rem; padding: 4px 8px;">
                       Confirmar Pagamento
                     </button>
                   </form>
                 }
                 else
                 {
-                  <span style="font-size: 12px; color: #166534;">✓ Pago em @ord.paid_at?.ToString("dd/MM/yyyy")</span>
+                  <span style="font-size: 1rem; color: #166534;">✓ Pago em @ord.paid_at?.ToString("dd/MM/yyyy")</span>
                 }
               </td>
             </tr>

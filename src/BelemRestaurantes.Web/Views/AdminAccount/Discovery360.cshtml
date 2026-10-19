@@ -21,7 +21,7 @@
     <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--forest-950); margin: 0;">
       Central de Operações Gastronômicas 360
     </h1>
-    <p style="color: var(--text-muted); font-size: 14px; margin: 4px 0 0 0;">
+    <p style="color: var(--text-muted); font-size: 1rem; margin: 4px 0 0 0;">
       Cobertura estadual integral de 144 municípios do Pará (IBGE), fila central de 8 tarefas, telemetria em tempo real e qualidade do catálogo.
     </p>
   </div>
@@ -50,37 +50,37 @@
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
     <div style="display: flex; align-items: center; gap: 8px;">
       <span style="font-size: 20px;">⏱️</span>
-      <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--forest-950); margin: 0;">
+      <h3 style="font-family: var(--font-display); font-size: 1rem; font-weight: 800; color: var(--forest-950); margin: 0;">
         Telemetria em Tempo Real do Worker (Ciclo de 10 min)
       </h3>
     </div>
-    <span class="badge-v4" style="background: rgba(30,122,84,0.12); color: var(--forest-900); font-size: 11px;">
+    <span class="badge-v4" style="background: rgba(30,122,84,0.12); color: var(--forest-900); font-size: 1rem;">
       Último Ciclo: @(telemetrySummary.LastExecutionAt?.ToString("dd/MM/yyyy HH:mm:ss") ?? "Aguardando primeira execução")
     </span>
   </div>
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
     <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
-      <div style="font-size: 10.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Fonte Consultada</div>
-      <div style="font-size: 13px; font-weight: 700; color: var(--forest-950); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+      <div style="font-size: 1rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Fonte Consultada</div>
+      <div style="font-size: 1rem; font-weight: 700; color: var(--forest-950); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
         @telemetrySummary.LastSourceQueried
       </div>
     </div>
     <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
-      <div style="font-size: 10.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Tempo de Resposta</div>
-      <div style="font-size: 14px; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
+      <div style="font-size: 1rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Tempo de Resposta</div>
+      <div style="font-size: 1rem; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
         @telemetrySummary.LastDurationMs ms
       </div>
     </div>
     <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
-      <div style="font-size: 10.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Criados / Atualizados Hoje</div>
-      <div style="font-size: 14px; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
+      <div style="font-size: 1rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Criados / Atualizados Hoje</div>
+      <div style="font-size: 1rem; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
         @telemetrySummary.TotalRecordsDiscoveredToday / @telemetrySummary.TotalRecordsUpdatedToday
       </div>
     </div>
     <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
-      <div style="font-size: 10.5px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Ciclos Executados Hoje</div>
-      <div style="font-size: 14px; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
-        @telemetrySummary.TotalCyclesToday <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(@telemetrySummary.FailedCyclesToday falhas)</span>
+      <div style="font-size: 1rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Ciclos Executados Hoje</div>
+      <div style="font-size: 1rem; font-weight: 800; color: var(--forest-900); margin-top: 3px;">
+        @telemetrySummary.TotalCyclesToday <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted);">(@telemetrySummary.FailedCyclesToday falhas)</span>
       </div>
     </div>
   </div>
@@ -89,49 +89,49 @@
 <!-- Cards de Indicadores Gerais da Sprint 09 -->
 <div class="grid-cards-v3" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 30px;">
   <div class="card-restaurant-v3" style="padding: 18px;">
-    <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+    <div style="font-size: 1rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
       Municípios Cadastrados (IBGE)
     </div>
     <div style="font-size: 32px; font-weight: 800; color: var(--forest-900); font-family: var(--font-display);">
       @coverageStats.Count
     </div>
-    <div style="font-size: 12px; color: var(--forest-700); margin-top: 4px;">
+    <div style="font-size: 1rem; color: var(--forest-700); margin-top: 4px;">
       ✓ Polos turísticos e cidades polo mapeadas
     </div>
   </div>
 
   <div class="card-restaurant-v3" style="padding: 18px;">
-    <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+    <div style="font-size: 1rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
       Total Descoberto Estadual
     </div>
     <div style="font-size: 32px; font-weight: 800; color: var(--forest-900); font-family: var(--font-display);">
       @coverageStats.Sum(x => x.TotalDiscovered)
     </div>
-    <div style="font-size: 12px; color: var(--forest-700); margin-top: 4px;">
+    <div style="font-size: 1rem; color: var(--forest-700); margin-top: 4px;">
       @coverageStats.Sum(x => x.TotalApproved) aprovados · @coverageStats.Sum(x => x.TotalPending) pendentes
     </div>
   </div>
 
   <div class="card-restaurant-v3" style="padding: 18px;">
-    <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+    <div style="font-size: 1rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
       Fila de Enriquecimento
     </div>
     <div style="font-size: 32px; font-weight: 800; color: var(--tucupi-600); font-family: var(--font-display);">
       @pendingEnrichments
     </div>
-    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+    <div style="font-size: 1rem; color: var(--text-muted); margin-top: 4px;">
       Telefones, redes e Cuia IA
     </div>
   </div>
 
   <div class="card-restaurant-v3" style="padding: 18px;">
-    <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+    <div style="font-size: 1rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
       Mídias Aguardando Moderação
     </div>
     <div style="font-size: 32px; font-weight: 800; color: var(--tucupi-600); font-family: var(--font-display);">
       @pendingMedias.Count
     </div>
-    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+    <div style="font-size: 1rem; color: var(--text-muted); margin-top: 4px;">
       Com atribuição e prioridade de tiers
     </div>
   </div>
@@ -144,14 +144,14 @@
       <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-900); margin: 0;">
         📍 Cobertura Territorial dos Municípios do Pará
       </h2>
-      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">
+      <p style="font-size: 1rem; color: var(--text-muted); margin: 4px 0 0 0;">
         Indicadores reais por cidade, densidade gastronômica, data da última consulta e ação de priorização.
       </p>
     </div>
   </div>
 
   <div role="region" tabindex="0" aria-label="Cobertura territorial" style="overflow-x: auto;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 1rem; text-align: left;">
       <thead>
         <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); color: var(--forest-900);">
           <th style="padding: 10px 12px;">Cód. IBGE</th>
@@ -178,11 +178,11 @@
             <td style="padding: 10px 12px; text-align: center;">
               @if (c.IsTouristPole)
               {
-                <span class="badge-tag-v3" style="background: rgba(229,169,59,0.15); color: var(--tucupi-800); border: 1px solid rgba(229,169,59,0.4); font-size: 10px;">⭐ POLO</span>
+                <span class="badge-tag-v3" style="background: rgba(229,169,59,0.15); color: var(--tucupi-800); border: 1px solid rgba(229,169,59,0.4); font-size: 1rem;">⭐ POLO</span>
               }
               else
               {
-                <span style="color: var(--text-muted); font-size: 11px;">Interior</span>
+                <span style="color: var(--text-muted); font-size: 1rem;">Interior</span>
               }
             </td>
             <td style="padding: 10px 12px; text-align: center; font-weight: 700;">@c.TotalDiscovered</td>
@@ -193,14 +193,14 @@
             <td style="padding: 10px 12px; text-align: center; color: @(c.TotalStale > 0 ? "#dc2626" : "var(--text-muted)");">
               @c.TotalStale
             </td>
-            <td style="padding: 10px 12px; color: var(--text-muted); font-size: 12px;">
+            <td style="padding: 10px 12px; color: var(--text-muted); font-size: 1rem;">
               @(c.LastScannedAt.HasValue ? c.LastScannedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Ainda não consultado")
             </td>
             <td style="padding: 10px 12px; text-align: right;">
               <form method="post" action="/admin/discovery360/prioritize-city" style="display: inline-block; margin: 0;">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="ibgeCode" value="@c.IbgeCode" />
-                <button type="submit" class="btn-v3 btn-v3-sm btn-v3-outline" style="font-size: 11px; padding: 4px 8px;">
+                <button type="submit" class="btn-v3 btn-v3-sm btn-v3-outline" style="font-size: 1rem; padding: 4px 8px;">
                   ⚡ Priorizar
                 </button>
               </form>
@@ -217,13 +217,13 @@
   <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
     📸 Motor de Fotografias & Vídeos · Moderação com Prioridade de Tiers
   </h2>
-  <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">
+  <p style="font-size: 1rem; color: var(--text-muted); margin: 0 0 16px 0;">
     Hierarquia obrigatória: 1. Proprietário verificado | 2. Comunidade aprovada | 3. Mídia externa licenciada | 4. Ilustração identificada.
   </p>
 
   @if (pendingMedias.Count == 0)
   {
-    <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 14px; background: rgba(0,0,0,0.02); border-radius: var(--radius-sm);">
+    <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 1rem; background: rgba(0,0,0,0.02); border-radius: var(--radius-sm);">
       ✓ Nenhuma mídia aguardando moderação no momento.
     </div>
   }
@@ -235,30 +235,30 @@
         <div style="border: 1px solid rgba(0,0,0,0.1); border-radius: var(--radius-sm); overflow: hidden; background: #fff; display: flex; flex-direction: column;">
           <div style="height: 180px; background: #f3f4f6; position: relative;">
             <img src="@m.MediaUrl" alt="Mídia de estabelecimento" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/images/placeholder-restaurant.jpg';" />
-            <span class="badge-tag-v3" style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px;">
+            <span class="badge-tag-v3" style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); color: #fff; font-size: 1rem;">
               Tier @m.PriorityTier · @m.MediaType
             </span>
           </div>
           <div style="padding: 14px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-              <div style="font-size: 12px; font-weight: 700; color: var(--forest-950);">Restaurante #@m.RestaurantId</div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+              <div style="font-size: 1rem; font-weight: 700; color: var(--forest-950);">Restaurante #@m.RestaurantId</div>
+              <div style="font-size: 1rem; color: var(--text-muted); margin-top: 4px;">
                 <strong>Atribuição:</strong> @m.AttributionText
               </div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+              <div style="font-size: 1rem; color: var(--text-muted); margin-top: 2px;">
                 <strong>Licença:</strong> @m.LicenseType
               </div>
             </div>
             <div style="display: flex; gap: 8px; margin-top: 14px;">
               <form method="post" action="/admin/discovery360/media/@m.Id/approve" style="flex: 1; margin: 0;">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn-v3 btn-v3-sm btn-v3-primary" style="width: 100%; font-size: 11px; padding: 6px;">
+                <button type="submit" class="btn-v3 btn-v3-sm btn-v3-primary" style="width: 100%; font-size: 1rem; padding: 6px;">
                   ✓ Aprovar
                 </button>
               </form>
               <form method="post" action="/admin/discovery360/media/@m.Id/reject" style="flex: 1; margin: 0;">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn-v3 btn-v3-sm btn-v3-outline" style="width: 100%; font-size: 11px; padding: 6px; color: #dc2626; border-color: rgba(220,38,38,0.3);">
+                <button type="submit" class="btn-v3 btn-v3-sm btn-v3-outline" style="width: 100%; font-size: 1rem; padding: 6px; color: #dc2626; border-color: rgba(220,38,38,0.3);">
                   ✕ Recusar
                 </button>
               </form>
@@ -275,12 +275,12 @@
   <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-900); margin: 0 0 6px 0;">
     🛡️ Histórico de Reconciliação & Rastreabilidade de Atributos
   </h2>
-  <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">
+  <p style="font-size: 1rem; color: var(--text-muted); margin: 0 0 16px 0;">
     Registro auditável de cada campo descoberto ou modificado com procedência e score de confiança.
   </p>
 
   <div role="region" tabindex="0" aria-label="Histórico de alterações" style="overflow-x: auto;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 1rem; text-align: left;">
       <thead>
         <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); color: var(--forest-900);">
           <th style="padding: 8px 10px;">Data/Hora</th>
@@ -310,18 +310,18 @@
               @h.SourceType (@h.SourceReference)
             </td>
             <td style="padding: 8px 10px; text-align: center;">
-              <span class="badge-tag-v3" style="font-size: 10px; background: rgba(30,122,84,0.1); color: var(--forest-800);">
+              <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(30,122,84,0.1); color: var(--forest-800);">
                 @((h.ConfidenceScore * 100).ToString("F0"))%
               </span>
             </td>
             <td style="padding: 8px 10px; text-align: center;">
               @if (h.RequiresModeration)
               {
-                <span class="badge-tag-v3" style="font-size: 10px; background: rgba(229,169,59,0.15); color: var(--tucupi-800);">⚠️ Pendente</span>
+                <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(229,169,59,0.15); color: var(--tucupi-800);">⚠️ Pendente</span>
               }
               else
               {
-                <span class="badge-tag-v3" style="font-size: 10px; background: rgba(30,122,84,0.15); color: var(--forest-800);">✓ Aplicado</span>
+                <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(30,122,84,0.15); color: var(--forest-800);">✓ Aplicado</span>
               }
             </td>
           </tr>
@@ -338,7 +338,7 @@
       <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-900); margin: 0 0 4px 0;">
         🧠 Fila Central Cuia Discovery Intelligence
       </h2>
-      <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+      <p style="font-size: 1rem; color: var(--text-muted); margin: 0;">
         Processamento autônomo e periódico: descoberta, atualização, encerramento de atividades, conflitos e revisão de mídia.
       </p>
     </div>
@@ -364,8 +364,8 @@
     {
       var count = intelligenceStats.TryGetValue(taskKey, out var c) ? c : 0;
       <div style="background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; padding: 12px; text-align: center;">
-        <div style="font-size: 18px; margin-bottom: 4px;">@icon</div>
-        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">@label</div>
+        <div style="font-size: 1rem; margin-bottom: 4px;">@icon</div>
+        <div style="font-size: 1rem; font-weight: 700; color: var(--text-muted);">@label</div>
         <div style="font-size: 20px; font-weight: 800; color: var(--forest-900); font-family: var(--font-display); margin-top: 2px;">
           @count
         </div>
@@ -373,7 +373,7 @@
     }
   </div>
 
-  <div style="display: flex; gap: 16px; font-size: 12px; color: var(--text-muted); background: rgba(30,122,84,0.05); padding: 10px 14px; border-radius: 8px;">
+  <div style="display: flex; gap: 16px; font-size: 1rem; color: var(--text-muted); background: rgba(30,122,84,0.05); padding: 10px 14px; border-radius: 8px;">
     <span><strong>Pending:</strong> @(intelligenceStats.TryGetValue("pending", out var pend) ? pend : 0)</span>
     <span>•</span>
     <span><strong>Completed:</strong> @(intelligenceStats.TryGetValue("completed", out var comp) ? comp : 0)</span>
@@ -391,7 +391,7 @@
       <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--forest-900); margin: 0 0 4px 0;">
         💳 Monetização Real & Faturas Comerciais PIX
       </h2>
-      <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+      <p style="font-size: 1rem; color: var(--text-muted); margin: 0;">
         Chave Oficial CNPJ MNSOFT: <code>18.160.057/0001-13</code> · Validação Segura com Assinatura HMAC-SHA256
       </p>
     </div>
@@ -402,14 +402,14 @@
 
   @if (recentInvoices.Count == 0)
   {
-    <div style="text-align: center; padding: 28px; background: rgba(0,0,0,0.02); border-radius: 10px; color: var(--text-muted); font-size: 13px;">
+    <div style="text-align: center; padding: 28px; background: rgba(0,0,0,0.02); border-radius: 10px; color: var(--text-muted); font-size: 1rem;">
       Nenhuma fatura comercial gerada recentemente no banco belrestaurante.
     </div>
   }
   else
   {
     <div role="region" tabindex="0" aria-label="Faturas e planos" style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 1rem; text-align: left;">
         <thead>
           <tr style="border-bottom: 2px solid rgba(0,0,0,0.08); color: var(--forest-900);">
             <th style="padding: 8px 10px;">Data</th>
@@ -429,15 +429,15 @@
               <td style="padding: 8px 10px; font-weight: 700;">#@inv.RestaurantId</td>
               <td style="padding: 8px 10px; font-weight: 600; color: var(--forest-800);">@inv.PlanCode</td>
               <td style="padding: 8px 10px; font-weight: 750; color: var(--forest-950);">R$ @((inv.AmountCents / 100.0m).ToString("F2"))</td>
-              <td style="padding: 8px 10px; font-family: monospace; font-size: 11px;">@inv.PixTxid</td>
+              <td style="padding: 8px 10px; font-family: monospace; font-size: 1rem;">@inv.PixTxid</td>
               <td style="padding: 8px 10px; text-align: center;">
                 @if (inv.PixStatus == "paid")
                 {
-                  <span class="badge-tag-v3" style="font-size: 10px; background: rgba(30,122,84,0.15); color: var(--forest-800);">✓ Pago</span>
+                  <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(30,122,84,0.15); color: var(--forest-800);">✓ Pago</span>
                 }
                 else
                 {
-                  <span class="badge-tag-v3" style="font-size: 10px; background: rgba(229,169,59,0.15); color: var(--tucupi-800);">⏳ Pendente</span>
+                  <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(229,169,59,0.15); color: var(--tucupi-800);">⏳ Pendente</span>
                 }
               </td>
               <td style="padding: 8px 10px; text-align: center;">
@@ -446,14 +446,14 @@
                   <form method="post" action="/admin/discovery360/invoice/@inv.PixTxid/confirm" style="display: inline; margin: 0;">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="authHash" value="@inv.AuthHash" />
-                    <button type="submit" class="btn-v4 btn-v4-primary" style="font-size: 11px; padding: 4px 10px;">
+                    <button type="submit" class="btn-v4 btn-v4-primary" style="font-size: 1rem; padding: 4px 10px;">
                       Confirmar Pagamento
                     </button>
                   </form>
                 }
                 else
                 {
-                  <span style="font-size: 11px; color: var(--text-muted);">Confirmado em @inv.PaidAt?.ToString("dd/MM HH:mm")</span>
+                  <span style="font-size: 1rem; color: var(--text-muted);">Confirmado em @inv.PaidAt?.ToString("dd/MM HH:mm")</span>
                 }
               </td>
             </tr>

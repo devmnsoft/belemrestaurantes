@@ -39,12 +39,12 @@
 
               <div>
                 <b>Alvo:</b> Tipo: <code>@report.TargetType</code> · ID: <b>@report.TargetId</b>
-                <a href="/experience/@report.TargetId" target="_blank" style="margin-left:8px;font-size:13px;">[Abrir alvo]</a>
+                <a href="/experience/@report.TargetId" target="_blank" style="margin-left:8px;font-size:1rem;">[Abrir alvo]</a>
               </div>
 
               @if (!string.IsNullOrWhiteSpace(report.Notes))
               {
-                  <p style="background:#fdf3f2;border:1px solid #f9d5d3;padding:10px;border-radius:8px;margin:4px 0;font-size:14px;">
+                  <p style="background:#fdf3f2;border:1px solid #f9d5d3;padding:10px;border-radius:8px;margin:4px 0;font-size:1rem;">
                     <b>Detalhes do denunciante:</b> @report.Notes
                   </p>
               }

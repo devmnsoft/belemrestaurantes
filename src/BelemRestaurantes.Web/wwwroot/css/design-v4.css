@@ -128,7 +128,7 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(7, 35, 23, 0.85);
   backdrop-filter: blur(4px);
   color: #fff;
-  font-size: 11px;
+  font-size: 1rem;
   font-weight: 700;
   padding: 4px 10px;
   border-radius: var(--radius-full);
@@ -144,7 +144,7 @@ h1, h2, h3, h4, h5, h6 {
   right: 10px;
   background: linear-gradient(135deg, var(--tucupi-500), var(--tucupi-600));
   color: #fff;
-  font-size: 11.5px;
+  font-size: 1rem;
   font-weight: 800;
   padding: 4px 10px;
   border-radius: var(--radius-full);
@@ -164,7 +164,7 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 1rem;
   font-weight: 700;
   padding: 3px 8px;
   border-radius: var(--radius-sm);
@@ -197,7 +197,7 @@ h1, h2, h3, h4, h5, h6 {
   justify-content: center;
   gap: 8px;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 700;
   padding: 10px 20px;
   border-radius: var(--radius-md);
@@ -272,7 +272,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  font-size: 14px;
+  font-size: 1rem;
   margin-bottom: 20px;
 }
 

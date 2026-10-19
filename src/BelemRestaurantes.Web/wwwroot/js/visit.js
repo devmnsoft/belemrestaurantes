@@ -39,9 +39,17 @@
     catch { document.querySelector('#visit-save-status').textContent = 'O navegador não permitiu salvar. Use o compartilhamento.'; }
   });
   document.querySelector('[data-load-map]')?.addEventListener('click', event => {
-    const iframe = document.createElement('iframe'); iframe.src = event.currentTarget.dataset.loadMap;
-    iframe.title = 'Localização do estabelecimento no OpenStreetMap'; iframe.loading = 'lazy'; iframe.referrerPolicy = 'no-referrer';
-    document.querySelector('#visit-map').replaceChildren(iframe); event.currentTarget.hidden = true;
+    const button=event.currentTarget, host=document.querySelector('#visit-map');
+    if(button.disabled)return;
+    const iframe=document.createElement('iframe'), status=document.createElement('p');
+    status.setAttribute('role','status'); status.textContent='Carregando mapa…';
+    iframe.title='Localização do estabelecimento no OpenStreetMap'; iframe.referrerPolicy='no-referrer';
+    button.disabled=true; const start=performance.now();
+    const fail=()=>{iframe.remove();status.textContent='Mapa indisponível. Abra o mapa no provedor ou tente novamente.';button.disabled=false;};
+    const timeout=setTimeout(fail,12000);
+    iframe.addEventListener('load',()=>{clearTimeout(timeout);status.textContent='Mapa externo carregado. Se não aparecer, use o link do provedor.';performance.measure('visit-iframe',{start,duration:performance.now()-start});button.disabled=false;},{once:true});
+    iframe.addEventListener('error',()=>{clearTimeout(timeout);fail();},{once:true});
+    iframe.src=button.dataset.loadMap;host.replaceChildren(status,iframe);
   });
   document.querySelector('#visit-form')?.addEventListener('submit', event => {
     const button = event.currentTarget.querySelector('[type=submit]'); button.textContent = 'Consultando o caminho…'; button.disabled = true;

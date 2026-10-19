@@ -98,17 +98,17 @@
   <div class="panel" style="margin-top:18px;">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #edf2ec;padding-bottom:14px;">
       <div>
-        <span style="font-size:13px;color:#547062;text-transform:uppercase;letter-spacing:1px;font-weight:700;">@T["OverallRating"]</span>
+        <span style="font-size:1rem;color:#547062;text-transform:uppercase;letter-spacing:1px;font-weight:700;">@T["OverallRating"]</span>
         <div style="font-size:26px;color:#e67e22;letter-spacing:3px;">
           @string.Concat(Enumerable.Repeat("★", Model.Stars))@string.Concat(Enumerable.Repeat("☆", 5 - Model.Stars))
-          <span style="font-size:18px;color:#203d33;font-weight:750;margin-left:6px;">@Model.Stars / 5</span>
+          <span style="font-size:1rem;color:#203d33;font-weight:750;margin-left:6px;">@Model.Stars / 5</span>
         </div>
       </div>
       @if (Model.PricePaid.HasValue)
       {
           <div style="background:#eafaf1;padding:8px 16px;border-radius:12px;border:1px solid #a9dfbf;">
-            <span style="font-size:12px;color:#1e8449;font-weight:700;">@T["PricePaid"]</span>
-            <div style="font-size:18px;font-weight:800;color:#145a32;">R$ @Model.PricePaid.Value.ToString("N2")</div>
+            <span style="font-size:1rem;color:#1e8449;font-weight:700;">@T["PricePaid"]</span>
+            <div style="font-size:1rem;font-weight:800;color:#145a32;">R$ @Model.PricePaid.Value.ToString("N2")</div>
           </div>
       }
     </div>
@@ -116,19 +116,19 @@
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;padding:12px 0;">
       <div style="background:#f4f7f4;padding:8px;border-radius:8px;">
         <small style="color:#547062;">@T["ServiceRating"]</small>
-        <div style="font-weight:800;color:#174b3c;font-size:16px;">@Model.ServiceStars ★</div>
+        <div style="font-weight:800;color:#174b3c;font-size:1rem;">@Model.ServiceStars ★</div>
       </div>
       <div style="background:#f4f7f4;padding:8px;border-radius:8px;">
         <small style="color:#547062;">@T["FlavorRating"]</small>
-        <div style="font-weight:800;color:#174b3c;font-size:16px;">@Model.FlavorStars ★</div>
+        <div style="font-weight:800;color:#174b3c;font-size:1rem;">@Model.FlavorStars ★</div>
       </div>
       <div style="background:#f4f7f4;padding:8px;border-radius:8px;">
         <small style="color:#547062;">@T["AmbianceRating"]</small>
-        <div style="font-weight:800;color:#174b3c;font-size:16px;">@Model.AmbianceStars ★</div>
+        <div style="font-weight:800;color:#174b3c;font-size:1rem;">@Model.AmbianceStars ★</div>
       </div>
       <div style="background:#f4f7f4;padding:8px;border-radius:8px;">
         <small style="color:#547062;">@T["CostBenefitRating"]</small>
-        <div style="font-weight:800;color:#174b3c;font-size:16px;">@Model.CostBenefitStars ★</div>
+        <div style="font-weight:800;color:#174b3c;font-size:1rem;">@Model.CostBenefitStars ★</div>
       </div>
     </div>
 
@@ -142,7 +142,7 @@
 
     @if (!string.IsNullOrWhiteSpace(Model.ReviewText))
     {
-        <div style="margin:12px 0;font-size:16px;line-height:1.6;color:#1e352b;white-space:pre-line;">
+        <div style="margin:12px 0;font-size:1rem;line-height:1.6;color:#1e352b;white-space:pre-line;">
           @Model.ReviewText
         </div>
     }
@@ -175,14 +175,14 @@
           </button>
         </form>
 
-        <span style="color:#547062;font-size:14px;">💬 @Model.CommentsCount @T["Comments"]</span>
+        <span style="color:#547062;font-size:1rem;">💬 @Model.CommentsCount @T["Comments"]</span>
       </div>
 
       <!-- Barra de Compartilhamento Social -->
       @if (Model.Visibility == "public" && Model.Status == "approved")
       {
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <span style="font-size:13px;font-weight:700;color:#547062;">@T["ShareExperience"]:</span>
+            <span style="font-size:1rem;font-weight:700;color:#547062;">@T["ShareExperience"]:</span>
             
             <a href="https://api.whatsapp.com/send?text=@Uri.EscapeDataString(shareText)" target="_blank" rel="noopener noreferrer" class="badge" style="background:#25d366;color:#fff;text-decoration:none;padding:6px 12px;" title="WhatsApp">
               WhatsApp
@@ -232,7 +232,7 @@
               <strong>@c.AuthorName</strong>
               <small class="muted">@c.CreatedAt.ToOffset(TimeSpan.FromHours(-3)).ToString("g")</small>
             </div>
-            <p style="margin:0;font-size:14px;color:#203d33;">@c.CommentText</p>
+            <p style="margin:0;font-size:1rem;color:#203d33;">@c.CommentText</p>
           </div>
       }
     </div>
@@ -243,7 +243,7 @@
   {
       <div style="margin-top:30px;text-align:right;">
         <details>
-          <summary style="cursor:pointer;font-size:13px;color:#b03a2e;">🚩 @T["ReportContent"]</summary>
+          <summary style="cursor:pointer;font-size:1rem;color:#b03a2e;">🚩 @T["ReportContent"]</summary>
           <form method="post" action="/experience/@Model.Id/report" class="panel" style="margin-top:10px;text-align:left;">
             @Html.AntiForgeryToken()
             <label>@T["ReportReason"]</label>
