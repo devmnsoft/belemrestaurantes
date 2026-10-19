@@ -182,10 +182,10 @@ html.recipe-kitchen .recipe-steps li span[aria-hidden]{font-size:1.8rem!importan
 
 .cuia-ai-page{padding-block:32px 72px;overflow-x:clip}
 .cuia-ai-page :is(h1,h2,h3){max-width:none;letter-spacing:0}
-.cuia-ai-hero{max-width:42rem;margin:0 0 28px}
+.cuia-ai-hero{position:static;top:auto;z-index:auto;display:block;background:transparent;border:0;padding:0;gap:0;max-width:40rem;margin:0 0 18px}
 .cuia-ai-badge{display:inline-flex;align-items:center;gap:8px;background:#143f32;color:#ffe2a0;border:1px solid #efb645;padding:6px 16px;border-radius:30px;font-size:.85rem;font-weight:700;margin:0 0 14px}
 .cuia-ai-badge .para-icon{width:20px;height:20px;color:#efb645}
-.cuia-ai-hero h1{font-family:var(--para-serif);font-size:clamp(2.1rem,5vw,3.6rem);font-weight:500;line-height:1.08;margin:0 0 14px;color:#143f32}
+.cuia-ai-hero h1{font-family:var(--para-serif);font-size:clamp(1.8rem,4vw,2.6rem);font-weight:500;line-height:1.15;margin:0 0 10px;color:#143f32}
 .cuia-ai-hero h1 em{font-style:italic;color:#a63725}
 .cuia-ai-hero p{font-size:1.05rem;color:#3d5045;line-height:1.6;max-width:40rem;margin:0}
 .cuia-ai-context{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;list-style:none;padding:0;margin:0 0 24px}
@@ -217,7 +217,7 @@ html.recipe-kitchen .recipe-steps li span[aria-hidden]{font-size:1.8rem!importan
 .cuia-ai-chip{background:rgba(239,182,69,0.12);color:#fff6df;border:1px solid #efb645;border-radius:20px;padding:6px 14px;font-size:.9rem;font-weight:600;cursor:pointer}
 .cuia-ai-chip:hover,.cuia-ai-chip:focus-visible{background:#efb645;color:#0d281e}
 .cuia-ai-page .cuia-ai-chip{border-radius:999px;padding:8px 14px;font-size:.9rem;font-weight:650;text-align:left;white-space:normal}
-.cuia-ai-loading{display:flex;align-items:center;gap:16px;padding:28px 0;justify-content:center}
+.cuia-ai-loading{display:flex;align-items:center;gap:16px;padding:28px 0;justify-content:center}.cuia-ai-loading[hidden]{display:none}
 .cuia-ai-spinner{width:32px;height:32px;border:4px solid rgba(239,182,69,0.25);border-top-color:#efb645;border-radius:50%;animation:cuia-spin 1s linear infinite}
 @keyframes cuia-spin{to{transform:rotate(360deg)}}
 .cuia-ai-results{margin-top:24px;border-top:1px solid #2d6150;padding-top:24px;min-width:0}
@@ -255,7 +255,7 @@ html.recipe-kitchen .recipe-steps li span[aria-hidden]{font-size:1.8rem!importan
 .cuia-ai-curiosities ul{margin:0;padding-left:18px}
 .cuia-ai-curiosities li{margin-bottom:6px;color:#f3eedc}
 .cuia-ai-followups{margin-top:20px}
-.cuia-ai-error{background:#3b1010;border:1px solid #f0a8a8;color:#fee2e2;padding:14px 18px;border-radius:10px}
+.cuia-ai-error{background:#3b1010;border:1px solid #f0a8a8;color:#fee2e2;padding:14px 18px;border-radius:10px}.cuia-ai-error p{margin:0 0 12px}.cuia-ai-retry{min-height:44px;padding:8px 16px;border-radius:10px;border:1px solid #efb645;background:#efb645;color:#0d281e;font-weight:800;cursor:pointer}
 @media(max-width:860px){
   .cuia-ai-layout,.cuia-ai-context,.cuia-ai-filters,.cuia-ai-input-wrapper{grid-template-columns:1fr}
   .cuia-ai-submit-btn{width:100%}

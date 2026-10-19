@@ -27,7 +27,7 @@
         <textarea id="cuia-widget-prompt" rows="3" maxlength="500" required placeholder="Ex.: Onde tomar tacacá em Belém?"></textarea>
         <button type="submit" class="cuia-widget-submit">Consultar</button>
       </form>
-      <div class="cuia-widget-loading" hidden role="status" aria-live="polite">Consultando a camada Guia…</div>
+      <div class="cuia-widget-loading" hidden role="status" aria-live="polite">Estamos buscando opções para você.</div>
       <div class="cuia-widget-results" aria-live="polite"></div>
     </section>
   `;
@@ -80,18 +80,35 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'RequestVerificationToken': token
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': token
         },
-        body: JSON.stringify({ prompt, city: null, occasion: null, dietary: null })
+        body: JSON.stringify({ prompt, city: null, occasion: null, dietary: null }),
+        redirect: 'manual'
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Não foi possível consultar a Cuia IA.');
+      if (response.type === 'opaqueredirect' || response.redirected || response.status === 0 || [301, 302, 303, 307, 308].includes(response.status)) {
+        throw Object.assign(new Error('Não conseguimos concluir sua pesquisa agora. Tente novamente.'), { cuiaPublic: true });
       }
-      const data = await response.json();
+      const body = await response.text();
+      let data = null;
+      try { data = body.trim() ? JSON.parse(body) : null; } catch { data = null; }
+      const html = (response.headers.get('content-type') || '').includes('text/html') || body.trim().startsWith('<');
+      if (html || !response.ok || !data) {
+        const detail = data && typeof data.detail === 'string' && data.code && !/[<>]|DOCTYPE|Exception|SQL/i.test(data.detail) ? data.detail : '';
+        const message = response.status === 429
+          ? 'Houve muitas consultas em pouco tempo. Espere alguns minutos e tente novamente.'
+          : response.status === 504 || response.status === 408
+            ? 'A consulta demorou mais do que o esperado.'
+            : response.status === 503 || response.status === 502
+              ? 'O serviço de recomendações está temporariamente indisponível.'
+              : detail || 'Não conseguimos concluir sua pesquisa agora. Tente novamente.';
+        throw Object.assign(new Error(message), { cuiaPublic: true });
+      }
       renderResults(data);
     } catch (err) {
-      resultsEl.innerHTML = `<p class="cuia-widget-error">${escapeHtml(err.message || 'Erro inesperado.')}</p>`;
+      loadingEl.hidden = true;
+      const message = err && err.cuiaPublic ? err.message : 'Não conseguimos concluir sua pesquisa agora. Tente novamente.';
+      resultsEl.innerHTML = `<p class="cuia-widget-error" role="alert">${escapeHtml(message)}</p>`;
       resultsEl.hidden = false;
     } finally {
       loadingEl.hidden = true;

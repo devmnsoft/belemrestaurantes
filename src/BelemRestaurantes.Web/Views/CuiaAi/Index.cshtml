@@ -2,8 +2,8 @@
 @using BelemRestaurantes.Application.Formatting
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Cuia IA — concierge do Pará";
-    ViewData["MetaDescription"] = "A Cuia IA responde com a camada Guia, as receitas editoriais e as travessias que têm fonte. Sem lugar conferido, a resposta diz isso.";
+    ViewData["Title"] = "Cuia IA — Seu guia de sabores do Pará";
+    ViewData["MetaDescription"] = "Conte o que você procura. A Cuia ajuda a encontrar restaurantes, pratos e experiências paraenses.";
     ViewData["AtlasEditorial"] = true;
     var cities = ViewData["Cities"] as IReadOnlyList<string> ?? [];
     var initialPrompt = ViewData["InitialPrompt"] as string ?? "";
@@ -18,16 +18,10 @@
     </nav>
 
     <header class="cuia-ai-hero">
-      <p class="cuia-ai-badge">@await Html.PartialAsync("_ParaIcon", "cuia") <span>Concierge da camada Guia</span></p>
-      <h1>Cuia IA · Seu Concierge da <em>Amazônia</em></h1>
-      <p>Pergunte o que comer e onde isso já está conferido. A resposta usa a camada Guia, o caderno de receitas e as travessias com fonte vigente.</p>
+      <p class="cuia-ai-badge">@await Html.PartialAsync("_ParaIcon", "cuia") <span>Guia de sabores do Pará</span></p>
+      <h1>Cuia IA — Seu guia de sabores do Pará</h1>
+      <p>Conte o que você procura. A Cuia ajuda a encontrar restaurantes, pratos e experiências paraenses.</p>
     </header>
-
-    <ul class="cuia-ai-context">
-      <li><strong>Guia</strong><span>Lugar só entra na recomendação depois de promoção humana.</span></li>
-      <li><strong>Limite</strong><span>Sem horário, preço, foto ou barco inventados.</span></li>
-      <li><strong>Caminho</strong><span>Prato, mapa, ficha e vídeo ficam nas páginas próprias.</span></li>
-    </ul>
 
     <div class="cuia-ai-layout">
       <div class="cuia-ai-card">
@@ -39,7 +33,7 @@
               <textarea id="ai-prompt" name="q" maxlength="500" rows="3" required placeholder="Ex.: Onde almoçar peixe na beira do rio no domingo?">@initialPrompt</textarea>
               <p id="ai-prompt-count" class="cuia-ai-count" aria-live="polite">@initialPrompt.Length / 500</p>
             </div>
-            <button type="submit" id="ai-submit" class="cuia-ai-submit-btn">Consultar</button>
+            <button type="submit" id="ai-submit" class="cuia-ai-submit-btn">Perguntar à Cuia</button>
           </div>
 
           <div class="cuia-ai-filters">
@@ -86,15 +80,14 @@
 
         <div id="ai-loading" class="cuia-ai-loading" role="status" aria-live="polite" hidden>
           <div class="cuia-ai-spinner" aria-hidden="true"></div>
-          <p>Consultando a camada Guia...</p>
+          <p>Estamos buscando opções para você.</p>
         </div>
 
         <div id="ai-results" class="cuia-ai-results" role="region" aria-live="polite" aria-label="Resposta da Cuia IA" tabindex="-1" @(Model == null ? "hidden" : "")>
           @if (Model != null)
           {
             <div class="cuia-ai-meta">
-              <span class="cuia-ai-engine">Motor: @Model.EngineUsed</span>
-              <span class="cuia-ai-guarantee">@Model.Recommendations.Count lugar(es) da camada Guia nesta resposta</span>
+              <span class="cuia-ai-guarantee">@(Model.Recommendations.Count > 0 ? $"Pesquisa concluída. Encontramos {Model.Recommendations.Count} estabelecimentos." : "Não encontramos restaurantes conferidos para essa busca. Veja outras opções no catálogo.")</span>
             </div>
             <div class="cuia-ai-response-body">
               <h2>Recomendações da Cuia IA</h2>
@@ -103,7 +96,7 @@
             @if (Model.Recommendations.Count > 0)
             {
               <div class="cuia-ai-section">
-                <h3>Estabelecimentos da camada Guia</h3>
+                <h3>Restaurantes com informações conferidas</h3>
                 <div class="cuia-ai-grid">
                   @foreach (var place in Model.Recommendations)
                   {
@@ -121,7 +114,7 @@
                       @if (!string.IsNullOrWhiteSpace(place.Address))
                       { <p class="cuia-ai-reco-address">@place.Address</p> }
                       <div class="cuia-ai-reco-actions">
-                        <a href="/estabelecimento/@place.Id" class="para-button">Abrir ficha</a>
+                        <a href="/estabelecimento/@place.Id" class="para-button">Ver restaurante</a>
                         <a href="/cuia-rotas?restaurantId=@place.Id" class="para-text-link">Como chegar</a>
                       </div>
                     </article>
@@ -167,13 +160,13 @@
       </div>
 
       <aside class="cuia-ai-aside" aria-label="Outras formas de decidir">
-        <h2>Se a Guia ainda não responder</h2>
+        <h2>Se não houver opção conferida</h2>
         <a href="/pratos">Pratos do Pará</a>
         <a href="/mapa">Mapa dos publicados</a>
         <a href="/busca?tier=ficha">Fichas, sem recomendação</a>
         <a href="/travessias">Travessias com fonte</a>
         <a href="/receitas">Receitas para fazer em casa</a>
-        <a href="/guia">Como a camada Guia é decidida</a>
+        <a href="/guia">Como um restaurante é conferido</a>
       </aside>
     </div>
   </div>

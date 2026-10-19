@@ -14,8 +14,8 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
     [HttpGet("/cuia-ia")]
     public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] string? city, [FromQuery] string? occasion, [FromQuery] string? dietary, CancellationToken ct)
     {
-        ViewData["Title"] = "Cuia IA — concierge do Pará";
-        ViewData["MetaDescription"] = "A Cuia IA responde com a camada Guia, as receitas editoriais e as travessias que têm fonte. Sem lugar conferido, a resposta diz isso.";
+        ViewData["Title"] = "Cuia IA — Seu guia de sabores do Pará";
+        ViewData["MetaDescription"] = "Conte o que você procura. A Cuia ajuda a encontrar restaurantes, pratos e experiências paraenses.";
 
         var cities = await restaurantRepo.ListCitiesAsync(ct);
         ViewData["Cities"] = cities;
@@ -40,12 +40,12 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
     {
         if (req == null || string.IsNullOrWhiteSpace(req.Prompt))
         {
-            return BadRequest(new { error = "Por favor, digite sua dúvida ou preferência gastronômica." });
+            return ApiProblems.Result(HttpContext, StatusCodes.Status400BadRequest, "prompt_required", "Por favor, digite sua dúvida ou preferência gastronômica.", false);
         }
 
         if (req.Prompt.Length > 500)
         {
-            return BadRequest(new { error = "A consulta pode ter no máximo 500 caracteres." });
+            return ApiProblems.Result(HttpContext, StatusCodes.Status400BadRequest, "prompt_too_long", "A consulta pode ter no máximo 500 caracteres.", false);
         }
 
         var response = await cuiaAi.AskAsync(new CuiaAiQuery(

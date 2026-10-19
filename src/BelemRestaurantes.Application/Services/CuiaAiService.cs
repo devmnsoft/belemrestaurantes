@@ -170,13 +170,19 @@ public sealed class CuiaAiService(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Gemini provider falhou na resposta do concierge. Acionando fallback autônomo Cuia Engine.");
+                logger.LogWarning("Provedor de recomendação falhou ({ExceptionType}). A resposta usa o catálogo.", ex.GetType().Name);
                 answer = GenerateAutonomousEditorialResponse(prompt, pLower, recommendations, matchingRecipes, detectedCity);
             }
         }
         else
         {
             answer = GenerateAutonomousEditorialResponse(prompt, pLower, recommendations, matchingRecipes, detectedCity);
+        }
+
+        if (recommendations.Count == 0 && engineUsed != "Cuia Guard")
+        {
+            answer = GenerateAutonomousEditorialResponse(prompt, pLower, recommendations, matchingRecipes, detectedCity);
+            engineUsed = "Cuia Knowledge Engine (Amazônia)";
         }
 
         return new CuiaAiResponse(
@@ -312,7 +318,7 @@ public sealed class CuiaAiService(
     {
         var where = string.IsNullOrWhiteSpace(r.Neighborhood) ? r.City : $"{r.Neighborhood}, {r.City}";
         var category = string.IsNullOrWhiteSpace(r.Category) ? "Cadastro" : r.Category;
-        return $"{category} na camada Guia, em {where}. Esta resposta não confirma horário, preço nem prato do dia.";
+        return $"{category} com informações conferidas, em {where}. Esta resposta não confirma horário, preço nem prato do dia.";
     }
 
     private static string GenerateAutonomousEditorialResponse(
@@ -354,20 +360,18 @@ public sealed class CuiaAiService(
         }
         else
         {
-            sb.AppendLine($"Para a sua busca sobre *\"{prompt}\"*, o Pará oferece sabores únicos que combinam técnicas milenares indígenas com influências ribeirinhas e contemporâneas.");
-            sb.AppendLine();
-            sb.AppendLine("Recomendamos começar pelos polos clássicos: a orla da **Estação das Docas** para alta gastronomia e vista da Baía do Guajará, os boxes do **Ver-o-Peso** para vivenciar o pulsar da cultura popular, e os charmosos bistrôs dos bairros **Nazaré** e **Umarizal**.");
+            sb.AppendLine($"A busca por *\"{prompt}\"* usou os restaurantes publicados com informações conferidas.");
         }
 
         if (recs.Count == 0)
         {
             sb.AppendLine();
-            sb.AppendLine("A camada **Guia** ainda não tem um lugar conferido para este pedido. Uma ficha cadastral não é recomendação de visita. Veja os pratos em [Pratos do Pará](/pratos) e as travessias com fonte vigente em [Travessias](/travessias).");
+            sb.AppendLine("Não encontramos restaurantes conferidos para essa busca. Veja outras opções no catálogo em [Pratos do Pará](/pratos) e na [busca](/busca).");
         }
         else
         {
             sb.AppendLine();
-            sb.AppendLine("### Lugares da camada Guia:");
+            sb.AppendLine("### Restaurantes com informações conferidas:");
             foreach (var r in recs)
             {
                 var loc = !string.IsNullOrWhiteSpace(r.Neighborhood) ? $"{r.Neighborhood}, {r.City}" : r.City;
