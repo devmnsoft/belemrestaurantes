@@ -36,21 +36,19 @@ public sealed class CuiaAiService(
                 Recipes: [],
                 RegionalCuriosities: [],
                 SuggestedFollowUps: GenerateFollowUps("", null),
-                EngineUsed: "Cuia Guard");
+                EngineUsed: "Cuia Guard",
+                AnswerKind: "limite");
         }
         var pLower = prompt.ToLowerInvariant();
 
         // 1. Identificar intenções culinárias e geográficas
         var detectedCategory = DetectCategory(pLower);
         var detectedCity = !string.IsNullOrWhiteSpace(query.City) ? query.City : DetectCity(pLower);
-        var isRiver = pLower.Contains("combu") || pLower.Contains("barco") || pLower.Contains("ilha") || pLower.Contains("rio");
         var isTacaca = pLower.Contains("tacacá") || pLower.Contains("tacaca") || pLower.Contains("jambu") || pLower.Contains("tucupi");
         var isAcai = pLower.Contains("açaí") || pLower.Contains("acai") || pLower.Contains("peixe frito");
         var isManicoba = pLower.Contains("maniçoba") || pLower.Contains("manicoba");
         var isFish = pLower.Contains("peixe") || pLower.Contains("filhote") || pLower.Contains("pirarucu") || pLower.Contains("tambaqui");
-        var isDocas = pLower.Contains("docas") || pLower.Contains("estação das docas");
-        var isVeroPeso = pLower.Contains("ver-o-peso") || pLower.Contains("mercado") || pLower.Contains("feira");
-        var isVegetarian = pLower.Contains("vegetariano") || pLower.Contains("vegano") || (query.Dietary?.Contains("veg", StringComparison.OrdinalIgnoreCase) == true);
+        var asksAccess = pLower.Contains("acessib");
 
         // 2. Buscar restaurantes reais publicados correspondentes no MariaDB
         var searchTerm = detectedCategory ?? (isFish ? "Peixe" : isTacaca ? "Tacacá" : isAcai ? "Açaí" : prompt);
@@ -73,8 +71,15 @@ public sealed class CuiaAiService(
             Reason: GenerateReasonForRestaurant(r, pLower),
             CuiaScore: null,
             PriceRange: null,
-            PhotoUrl: r.PhotoUrl
+            PhotoUrl: r.PhotoUrl,
+            Latitude: r.Latitude,
+            Longitude: r.Longitude
         )).ToList();
+
+        if (asksAccess)
+        {
+            recommendations = [];
+        }
 
         // 3. Buscar receitas regionais relacionadas
         var allRecipesResult = await recipesRepo.ListAsync(new RecipeFilter(), false, ct);
@@ -101,6 +106,7 @@ public sealed class CuiaAiService(
         // 5. Geração da Resposta (Gemini 2.0 Flash com fallback local autônomo)
         string answer;
         string engineUsed = "Cuia Knowledge Engine (Amazônia)";
+        var answerKind = "catalogo";
 
         if (_geminiProvider != null)
         {
@@ -110,7 +116,7 @@ public sealed class CuiaAiService(
                     Você é o Sommelier e Concierge da Cuia IA do portal 'Belém Restaurantes — O Pará tem sabor'.
                     Sua personalidade é acolhedora, vibrante, poética e conhecedora íntima dos ingredientes e tradições paraenses (tucupi, jambu, chicória do Pará, aviú, filhote na brasa, maniçoba cozida 7 dias, açaí puro batido com farinha d'água de Bragança).
                     Use formatação Markdown elegante (títulos com ##, negrito, listas). Seja objetivo e empolgante.
-                    Cite somente estabelecimentos da lista restaurantes_encontrados. Se a lista estiver vazia, diga que a camada Guia ainda não tem lugar conferido e aponte a busca por prato. Não invente horário de barco, tarifa, ponto de embarque nem prato que o cadastro não cita.
+                    Cite somente estabelecimentos da lista restaurantes_encontrados. Se a lista estiver vazia, diga que não há restaurante conferido para essa busca e aponte os pratos e a busca do portal. Não invente horário, preço, prato, nota, acessibilidade nem distância. Não use termos internos.
                     """;
 
                 var contextPayload = JsonSerializer.Serialize(new
@@ -145,10 +151,11 @@ public sealed class CuiaAiService(
                     Temperature: 0.3
                 ), ct);
 
-                if (!string.IsNullOrWhiteSpace(response.RawContent) && response.IsValid)
+                if (!string.IsNullOrWhiteSpace(response.RawContent) && response.IsValid && recommendations.Count > 0)
                 {
-                    answer = response.RawContent.Trim();
+                    answer = VisitorAnswer(response.RawContent.Trim());
                     engineUsed = $"Google Gemini ({_geminiProvider.Provider})";
+                    answerKind = "servico";
                     if (costLedger is not null)
                     {
                         await costLedger.RecordAsync(new AiCostEntry(
@@ -183,6 +190,7 @@ public sealed class CuiaAiService(
         {
             answer = GenerateAutonomousEditorialResponse(prompt, pLower, recommendations, matchingRecipes, detectedCity);
             engineUsed = "Cuia Knowledge Engine (Amazônia)";
+            answerKind = "catalogo";
         }
 
         return new CuiaAiResponse(
@@ -191,8 +199,17 @@ public sealed class CuiaAiService(
             Recipes: matchingRecipes,
             RegionalCuriosities: curiosities,
             SuggestedFollowUps: followUps,
-            EngineUsed: engineUsed
+            EngineUsed: engineUsed,
+            AnswerKind: answerKind
         );
+    }
+
+    private static string VisitorAnswer(string answer)
+    {
+        return answer
+            .Replace("camada Guia", "catálogo conferido", StringComparison.OrdinalIgnoreCase)
+            .Replace("Knowledge Engine", "catálogo", StringComparison.OrdinalIgnoreCase)
+            .Replace("ProviderChain", "catálogo", StringComparison.OrdinalIgnoreCase);
     }
 
     public CuiaAiStatus GetStatus()
@@ -352,11 +369,15 @@ public sealed class CuiaAiService(
         }
         else if (p.Contains("vegetariano") || p.Contains("vegano"))
         {
-            sb.AppendLine("Embora a mesa paraense celebre fartamente os pescados, as opções à base de plantas são fascinantes graças à exuberância botânica da floresta:");
-            sb.AppendLine();
-            sb.AppendLine("- **Arroz de Jambu e Castanha-do-Pará:** Um clássico aromático e reconfortante.");
-            sb.AppendLine("- **Caldeirada de Cogumelos ou Pupunha no Tucupi:** Alternativa vegetal rica em umami amazônico.");
-            sb.AppendLine("- **Açaí com tapioca e farinha d'água:** 100% vegano, energético e nutritivo.");
+            sb.AppendLine("O cadastro conferido não confirma, sozinho, um cardápio vegetariano. Quando uma casa publicada trouxer essa informação, ela entra na lista. Receitas do caderno, se houver para a busca, ficam separadas.");
+        }
+        else if (p.Contains("acessib"))
+        {
+            sb.AppendLine("Esta busca não confirma acessibilidade. Uma nota de acesso só vale quando está publicada na ficha do restaurante ou no planejamento da visita.");
+        }
+        else if (p.Contains("proxim") || p.Contains("perto de mim") || p.Contains("mais perto"))
+        {
+            sb.AppendLine("Sem a sua posição e sem coordenadas conferidas, a Cuia não ordena lugares por distância. A lista, quando existe, vem só do texto publicado.");
         }
         else
         {
@@ -394,20 +415,23 @@ public sealed class CuiaAiService(
 
     private static IReadOnlyList<string> SelectCuriosities(string p)
     {
-        var list = new List<string>
+        var list = new List<string>();
+        if (p.Contains("tacaca") || p.Contains("tacacá") || p.Contains("jambu") || p.Contains("tucupi"))
         {
-            "O jambu possui espilantol, uma substância bioativa que provoca uma leve e estimulante dormência na língua e estimula a salivação.",
-            "A farinha d'água de Bragança é considerada patrimônio imaterial paraense por seu processo artesanal de fermentação em água e torragem em forno de barro.",
-            "O tucupi é o sumo extraído da raiz da mandioca-brava. Como a raiz crua possui ácido cianídrico, o líquido precisa ser cozido por horas até tornar-se totalmente seguro e saboroso."
-        };
-
+            list.Add("O jambu possui espilantol, uma substância que provoca uma leve dormência na língua.");
+            list.Add("O tucupi é o sumo da mandioca-brava. O líquido precisa ser cozido até ficar próprio para consumo.");
+        }
+        if (p.Contains("farinha"))
+        {
+            list.Add("A farinha d'água de Bragança passa por fermentação em água e torragem em forno de barro.");
+        }
         if (p.Contains("combu") || p.Contains("cacau"))
         {
-            list.Insert(0, "A Ilha do Combu abriga plantações centenárias de cacau nativo da várzea amazônica, produzindo chocolates artesanais premiados internacionalmente.");
+            list.Add("A Ilha do Combu tem cacau de várzea. O portal só descreve a travessia quando há fonte vigente em Cuia Rotas.");
         }
         if (p.Contains("peixe") || p.Contains("filhote"))
         {
-            list.Insert(0, "O filhote (piraíba jovem) pode ultrapassar centenas de quilos no estado adulto, sendo um dos maiores peixes de água doce do planeta.");
+            list.Add("O filhote é a piraíba jovem, um peixe de água doce da Amazônia. Isso não confirma que uma casa o sirva hoje.");
         }
 
         return list.Take(3).ToList();
@@ -415,13 +439,14 @@ public sealed class CuiaAiService(
 
     private static IReadOnlyList<string> GenerateFollowUps(string p, string? city)
     {
-        var c = city ?? "Belém";
-        return
-        [
-            $"Onde encontrar o melhor tacacá tradicional em {c}?",
-            $"Como fazer a travessia para a Ilha do Combu?",
-            $"Quais pratos tradicionais experimentar além da maniçoba?",
-            "Quais as melhores opções de sobremesas com frutas amazônicas?"
-        ];
+        var list = new List<string>();
+        if (!string.IsNullOrWhiteSpace(p))
+        {
+            list.Add("Qual deles fica mais perto?");
+            list.Add("Como chego de ônibus?");
+        }
+        list.Add("Onde comer peixe?");
+        list.Add("Receitas para fazer em casa");
+        return list;
     }
 }

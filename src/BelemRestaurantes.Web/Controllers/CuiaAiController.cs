@@ -25,7 +25,7 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
         CuiaAiResponse? initialResponse = null;
         if (!string.IsNullOrWhiteSpace(q))
         {
-            initialResponse = await cuiaAi.AskAsync(new CuiaAiQuery(q, city, occasion, dietary), ct);
+            initialResponse = await AskMeasured(new CuiaAiQuery(q, city, occasion, dietary), ct);
         }
 
         return View(initialResponse);
@@ -48,7 +48,7 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
             return ApiProblems.Result(HttpContext, StatusCodes.Status400BadRequest, "prompt_too_long", "A consulta pode ter no máximo 500 caracteres.", false);
         }
 
-        var response = await cuiaAi.AskAsync(new CuiaAiQuery(
+        var response = await AskMeasured(new CuiaAiQuery(
             Prompt: req.Prompt,
             City: req.City,
             Occasion: req.Occasion,
@@ -57,6 +57,22 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
         ), ct);
 
         return Ok(response);
+    }
+
+    private async Task<CuiaAiResponse> AskMeasured(CuiaAiQuery query, CancellationToken ct)
+    {
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+        try
+        {
+            var response = await cuiaAi.AskAsync(query, ct);
+            CuiaAskMetrics.Record(response.AnswerKind, System.Diagnostics.Stopwatch.GetElapsedTime(started));
+            return response;
+        }
+        catch
+        {
+            CuiaAskMetrics.RecordFailure();
+            throw;
+        }
     }
 
     [HttpGet("/api/cuia-ia/dica-restaurante/{id:long}")]

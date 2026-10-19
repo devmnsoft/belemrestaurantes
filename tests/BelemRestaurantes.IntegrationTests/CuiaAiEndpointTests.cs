@@ -54,6 +54,8 @@ public sealed class CuiaAiEndpointTests : IClassFixture<WebApplicationFactory<Pr
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("Cuia IA", html);
         Assert.Contains("Cuia IA — Seu guia de sabores do Pará", html);
+        Assert.Contains("O que você pode perguntar", html);
+        Assert.Contains("Perguntar à Cuia", html);
         Assert.Contains("ai-prompt", html);
         Assert.Contains("cuia-ai.js", html);
     }
@@ -72,6 +74,23 @@ public sealed class CuiaAiEndpointTests : IClassFixture<WebApplicationFactory<Pr
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("Cuia IA", html);
         Assert.Contains("Recomendações da Cuia IA", html);
+        Assert.Contains("cuia-ai-kind", html);
+        Assert.Contains("Resposta feita com", html);
+    }
+
+    [Fact]
+    public async Task CuiaAi_ScriptInQuery_IsEncoded()
+    {
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost")
+        });
+
+        var response = await client.GetAsync("/cuia-ia?q=" + Uri.EscapeDataString("<script>alert(1)</script>"));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("<script>alert(1)</script>", html, StringComparison.Ordinal);
+        Assert.Contains("&lt;script&gt;alert(1)&lt;/script&gt;", html, StringComparison.Ordinal);
     }
 
     [Fact]

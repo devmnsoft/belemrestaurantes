@@ -22,7 +22,9 @@ public sealed record CuiaAiRecommendation(
     string Reason,
     double? CuiaScore,
     string? PriceRange,
-    string? PhotoUrl = null);
+    string? PhotoUrl = null,
+    double? Latitude = null,
+    double? Longitude = null);
 
 public sealed record CuiaAiRecipeMatch(
     string Slug,
@@ -37,7 +39,8 @@ public sealed record CuiaAiResponse(
     IReadOnlyList<CuiaAiRecipeMatch> Recipes,
     IReadOnlyList<string> RegionalCuriosities,
     IReadOnlyList<string> SuggestedFollowUps,
-    string EngineUsed);
+    string EngineUsed,
+    string AnswerKind = "catalogo");
 
 public sealed record CuiaAiProviderStatus(string Provider, bool Configured);
 
