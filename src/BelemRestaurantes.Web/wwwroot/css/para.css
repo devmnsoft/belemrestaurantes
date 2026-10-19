@@ -115,6 +115,10 @@ html.reading-contrast input,html.reading-contrast select,html.reading-contrast t
 html.reading-contrast button,.reading-contrast .reading-btn,.reading-contrast .reading-reset-btn{background:#000!important;color:#fff!important;border:2px solid #facc15!important}
 html.reading-contrast ::placeholder{color:#d5ded1!important}
 
+/* Renderização progressiva em telas pequenas e seções abaixo da dobra. */
+@media (max-width: 768px) {
+  .para-section, .para-restaurant, .video-card, .cuia-widget-panel { content-visibility: auto; contain-intrinsic-size: 1px 420px; }
+}
 /* Redução de movimentos */
 html.reading-motion *,html.reading-motion *::before,html.reading-motion *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

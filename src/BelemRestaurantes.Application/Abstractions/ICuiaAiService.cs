@@ -39,9 +39,17 @@ public sealed record CuiaAiResponse(
     IReadOnlyList<string> SuggestedFollowUps,
     string EngineUsed);
 
+public sealed record CuiaAiProviderStatus(string Provider, bool Configured);
+
+public sealed record CuiaAiStatus(
+    IReadOnlyList<CuiaAiProviderStatus> Providers,
+    bool PromptInjectionGuard,
+    string RateLimitPolicy);
+
 public interface ICuiaAiService
 {
     Task<CuiaAiResponse> AskAsync(CuiaAiQuery query, CancellationToken ct);
     Task<string> GetRestaurantAdviceAsync(long restaurantId, CancellationToken ct);
     Task<string> GetRecipeSubstitutionsAsync(string recipeSlug, CancellationToken ct);
+    CuiaAiStatus GetStatus();
 }

@@ -16,8 +16,10 @@ public sealed class CuiaAiService(
     IRestaurantReadRepository restaurantRepo,
     IParaRecipes recipesRepo,
     IEnumerable<IAiProvider> aiProviders,
-    ILogger<CuiaAiService> logger) : ICuiaAiService
+    ILogger<CuiaAiService> logger,
+    ICostLedger? costLedger = null) : ICuiaAiService
 {
+    private readonly IEnumerable<IAiProvider> _aiProviders = aiProviders;
     private readonly IAiProvider? _geminiProvider =
         aiProviders.FirstOrDefault(p => p.Provider == AiProvider.Gemini && p.IsConfigured)
         ?? aiProviders.FirstOrDefault(p => p.IsConfigured);
@@ -25,7 +27,17 @@ public sealed class CuiaAiService(
     public async Task<CuiaAiResponse> AskAsync(CuiaAiQuery query, CancellationToken ct)
     {
         var rawPrompt = (query.Prompt ?? "").Trim();
-        var prompt = rawPrompt.Length > 500 ? rawPrompt[..500] : rawPrompt;
+        var prompt = SanitizePrompt(rawPrompt.Length > 500 ? rawPrompt[..500] : rawPrompt);
+        if (IsPromptInjection(prompt))
+        {
+            return new CuiaAiResponse(
+                AnswerMarkdown: "Posso ajudar com restaurantes, pratos, receitas e rotas do Pará. Não posso seguir instruções que tentem alterar minhas regras ou revelar informações internas.",
+                Recommendations: [],
+                Recipes: [],
+                RegionalCuriosities: [],
+                SuggestedFollowUps: GenerateFollowUps("", null),
+                EngineUsed: "Cuia Guard");
+        }
         var pLower = prompt.ToLowerInvariant();
 
         // 1. Identificar intenções culinárias e geográficas
@@ -111,6 +123,20 @@ public sealed class CuiaAiService(
                     ocasiao = query.Occasion
                 });
 
+                var canCallProvider = true;
+                if (costLedger is not null)
+                {
+                    var spent = await costLedger.MonthToDateUsdAsync(_geminiProvider.Provider.ToString(), DateTimeOffset.UtcNow, ct);
+                    canCallProvider = await costLedger.HasBudgetRemaining(_geminiProvider.Provider.ToString(), spent, ct);
+                }
+
+                if (!canCallProvider)
+                {
+                    answer = GenerateAutonomousEditorialResponse(prompt, pLower, recommendations, matchingRecipes, detectedCity);
+                    engineUsed = "Cuia Knowledge Engine (orçamento pausado)";
+                }
+                else
+                {
                 var response = await _geminiProvider.CompleteAsync(new AiCompletionRequest(
                     SystemInstruction: systemPrompt,
                     UserPayload: $"Gere uma recomendação gastronômica sob medida para a seguinte consulta: {prompt}. Dados locais: {contextPayload}",
@@ -123,10 +149,23 @@ public sealed class CuiaAiService(
                 {
                     answer = response.RawContent.Trim();
                     engineUsed = $"Google Gemini ({_geminiProvider.Provider})";
+                    if (costLedger is not null)
+                    {
+                        await costLedger.RecordAsync(new AiCostEntry(
+                            0,
+                            _geminiProvider.Provider.ToString(),
+                            "cuia_concierge",
+                            response.InputTokens,
+                            response.OutputTokens,
+                            response.CostMicrosUsd,
+                            true,
+                            DateTimeOffset.UtcNow), ct);
+                    }
                 }
                 else
                 {
                     answer = GenerateAutonomousEditorialResponse(prompt, pLower, recommendations, matchingRecipes, detectedCity);
+                }
                 }
             }
             catch (Exception ex)
@@ -148,6 +187,14 @@ public sealed class CuiaAiService(
             SuggestedFollowUps: followUps,
             EngineUsed: engineUsed
         );
+    }
+
+    public CuiaAiStatus GetStatus()
+    {
+        return new CuiaAiStatus(
+            _aiProviders.Select(p => new CuiaAiProviderStatus(p.Provider.ToString(), p.IsConfigured)).ToArray(),
+            true,
+            "20 requests / 10 minutes");
     }
 
     public async Task<string> GetRestaurantAdviceAsync(long restaurantId, CancellationToken ct)
@@ -213,6 +260,30 @@ public sealed class CuiaAiService(
         sb.AppendLine("👨‍🍳 *Dica de ouro da Cuia IA: O segredo da culinária amazônica está no equilíbrio entre a acidez natural do tucupi e a pungência aromática da pimenta-de-cheiro!*");
 
         return sb.ToString();
+    }
+
+    private static string SanitizePrompt(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        var builder = new StringBuilder(value.Length);
+        foreach (var ch in value)
+        {
+            if (char.IsControl(ch) && ch != '\n' && ch != '\r' && ch != '\t') continue;
+            builder.Append(ch);
+        }
+        return builder.ToString().Trim();
+    }
+
+    private static bool IsPromptInjection(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        var normalized = value.ToLowerInvariant();
+        string[] suspicious =
+        [
+            "ignore previous", "ignore as instruções", "system prompt", "reveal", "bypass", "jailbreak",
+            "mostre o prompt", "ignore todas", "act as", "developer mode"
+        ];
+        return suspicious.Any(term => normalized.Contains(term, StringComparison.Ordinal));
     }
 
     private static string DetectCategory(string p)

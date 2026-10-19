@@ -198,20 +198,16 @@ public sealed class AdminAccountController(
     public IActionResult ChangePassword()=>View();
 
     [Authorize,HttpPost("change-password"),ValidateAntiForgeryToken]
-    public async Task<IActionResult> ChangePasswordSubmit(string currentPassword,string password,string confirmation,
-        [FromServices] BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory factory,CancellationToken ct)
+    public async Task<IActionResult> ChangePasswordSubmit(string currentPassword,string password,string confirmation,CancellationToken ct)
     {
         var user=await users.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!,ct);
         if(user is null)return Challenge();
         var errors=AdminPasswordPolicy.Validate(password??"");
         if(!passwordVerifier.Verify(currentPassword??"",user.PasswordHash)||errors.Count>0||password!=confirmation||passwordVerifier.Verify(password??"",user.PasswordHash))
         {ModelState.AddModelError("","Confira a senha atual, use uma nova senha forte e repita a confirmação.");return View("ChangePassword");}
-        await using var db=await factory.OpenAsync(ct);
-        await using var tx=await db.BeginTransactionAsync(ct);
-        var changed=await Dapper.SqlMapper.ExecuteAsync(db,new Dapper.CommandDefinition("UPDATE admin_users SET password_hash=@hash,must_change_password=FALSE,password_changed_at=UTC_TIMESTAMP(6) WHERE id=@id AND password_hash=@previous",new{id=user.Id,hash=passwordVerifier.Hash(password!),previous=user.PasswordHash},tx,cancellationToken:ct));
-        if(changed!=1)return Conflict();
-        await Dapper.SqlMapper.ExecuteAsync(db,new Dapper.CommandDefinition("INSERT INTO audit_events(actor_subject,action,entity_type,occurred_at) VALUES(@id,'admin.password_changed','admin_user',UTC_TIMESTAMP(6))",new{id=user.Id},tx,cancellationToken:ct));
-        await tx.CommitAsync(ct);
+        var changed=await users.UpdatePasswordAsync(user.Id,passwordVerifier.Hash(password!),ct);
+        if(!changed)return Conflict();
+        await audit.WriteAsync("admin.password_changed","admin_user",user.Id,null,ct);
         await HttpContext.SignOutAsync(AdminAuthDefaults.Scheme);
         TempData["Flash"]="Senha alterada. Entre novamente com MFA.";
         return RedirectToAction(nameof(Login));

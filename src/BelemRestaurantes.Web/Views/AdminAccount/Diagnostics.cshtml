@@ -131,7 +131,33 @@ else
       <a href="/admin/discovery" style="color: var(--forest-800); font-weight: 600;">Revisar estabelecimentos ↗</a>
     </div>
   </div>
+
+  <!-- Card IA -->
+  <div class="cuia-card">
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Cuia IA</div>
+    <div id="ai-status-value" style="font-size: 22px; font-weight: 800; margin-top: 6px; color: var(--forest-900);">Consultando…</div>
+    <div id="ai-status-detail" aria-live="polite" style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Guard de prompt injection e rate limiting ativos.</div>
+  </div>
 </div>
+
+<script>
+  (function () {
+    fetch('/api/cuia-ia/status')
+      .then(r => r.json())
+      .then(data => {
+        const value = document.getElementById('ai-status-value');
+        const detail = document.getElementById('ai-status-detail');
+        if (!value || !detail) return;
+        const configured = (data.providers || []).filter(p => p.configured).length;
+        value.textContent = configured > 0 ? configured + ' provedor(es) configurado(s)' : 'Nenhum provedor configurado';
+        detail.textContent = (data.providers || []).map(p => p.provider + ': ' + (p.configured ? 'ok' : 'ausente')).join(' · ');
+      })
+      .catch(() => {
+        const value = document.getElementById('ai-status-value');
+        if (value) value.textContent = 'Status indisponível';
+      });
+  })();
+</script>
 
 <!-- Telemetria do Último Ciclo -->
 <div class="cuia-card" style="margin-bottom: 24px;">

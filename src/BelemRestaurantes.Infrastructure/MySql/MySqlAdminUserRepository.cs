@@ -133,6 +133,24 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             cancellationToken: ct)) == 1;
     }
 
+    public async Task<bool> UpdatePasswordAsync(string id, string passwordHash, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        return await connection.ExecuteAsync(new CommandDefinition(
+            """
+            UPDATE admin_users
+            SET password_hash = @passwordHash,
+                must_change_password = FALSE,
+                password_changed_at = UTC_TIMESTAMP(6),
+                access_failed_count = 0,
+                lockout_end_at = NULL
+            WHERE id = @id AND disabled = FALSE AND is_disabled = FALSE
+            """,
+            new { id, passwordHash },
+            cancellationToken: ct)) == 1;
+    }
+
     public async Task<bool> ConsumeTotpAsync(string id, long counter, CancellationToken ct)
     {
         await using var connection = await factory.OpenAsync(ct);

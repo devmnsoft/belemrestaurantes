@@ -18,4 +18,12 @@ public sealed class LegacyMigrationCompatibilityTests
         Assert.Null(LegacyConditionalColumns.Expand("023","ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS other INT"));
         Assert.Null(LegacyConditionalColumns.Expand("014","CREATE TABLE IF NOT EXISTS example(id INT)"));
     }
+
+    [Fact]
+    public void MigrationScriptsHaveUniqueIdsAndStableOrder()
+    {
+        var scripts = MigrationRunner.LoadScripts();
+        Assert.Equal(scripts.Select(s => s.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count(), scripts.Length);
+        Assert.Equal(scripts.OrderBy(s => s.Id, StringComparer.OrdinalIgnoreCase).Select(s => s.Id).ToArray(), scripts.Select(s => s.Id).ToArray());
+    }
 }

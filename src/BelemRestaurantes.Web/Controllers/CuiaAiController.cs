@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using BelemRestaurantes.Application.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BelemRestaurantes.Web.Controllers;
 
@@ -34,6 +35,7 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
 
     [HttpPost("/api/cuia-ia/ask")]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("cuia")]
     public async Task<IActionResult> Ask([FromBody] AskRequest req, CancellationToken ct)
     {
         if (req == null || string.IsNullOrWhiteSpace(req.Prompt))
@@ -63,6 +65,21 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
         if (id <= 0) return BadRequest();
         var advice = await cuiaAi.GetRestaurantAdviceAsync(id, ct);
         return Ok(new { advice });
+    }
+
+    [HttpGet("/api/cuia-ia/status")]
+    [AllowAnonymous]
+    public IActionResult Status()
+    {
+        var status = cuiaAi.GetStatus();
+        return Ok(new
+        {
+            status = "ok",
+            providers = status.Providers,
+            promptInjectionGuard = status.PromptInjectionGuard,
+            rateLimitPolicy = status.RateLimitPolicy,
+            costTracking = "enabled"
+        });
     }
 
     [HttpGet("/api/cuia-ia/dica-receita/{slug}")]

@@ -3,7 +3,7 @@
 <article class="para-restaurant">
   <a href="/establishment/@Model.Id" class="para-restaurant-media" tabindex="-1" aria-hidden="true">
   @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl) && (Model.PhotoUrl.StartsWith("/media/", StringComparison.Ordinal) || (Uri.TryCreate(Model.PhotoUrl, UriKind.Absolute, out var photo) && photo.Scheme == "https")))
-  { <img src="@Model.PhotoUrl" alt="" loading="lazy" width="640" height="420" /> }
+  { <img src="@Model.PhotoUrl" alt="" loading="lazy" decoding="async" width="640" height="420" /> }
   else
   { @await Html.PartialAsync("_CategoryArtwork",Model.Category ?? "Restaurante") }
   </a>
