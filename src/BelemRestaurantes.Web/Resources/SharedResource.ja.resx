@@ -606,7 +606,12 @@
   <data name="NavTrails" xml:space="preserve"><value>Food trails</value></data>
   <data name="NavCommunity" xml:space="preserve"><value>Community</value></data>
   <data name="NavRecipes" xml:space="preserve"><value>Recipes</value></data>
-  <data name="NavGuide" xml:space="preserve"><value>The guide</value></data>
+  <data name="NavGuide" xml:space="preserve"><value>ガイド</value></data>
+  <data name="NavWhere" xml:space="preserve"><value>どこで食べる？</value></data>
+  <data name="NavWhat" xml:space="preserve"><value>何を食べる？</value></data>
+  <data name="NavArrive" xml:space="preserve"><value>どう行く？</value></data>
+  <data name="NavFavorites" xml:space="preserve"><value>お気に入り</value></data>
+  <data name="NavMore" xml:space="preserve"><value>その他</value></data>
   <data name="AtlasFooterTagline" xml:space="preserve"><value>A taste of Pará.</value></data>
   <data name="AtlasFooterText" xml:space="preserve"><value>From market to table, from city to island. Every good story starts with good food.</value></data>
   <data name="AtlasJoin" xml:space="preserve"><value>Be part of the story</value></data>
