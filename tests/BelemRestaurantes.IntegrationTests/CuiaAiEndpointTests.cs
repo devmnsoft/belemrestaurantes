@@ -4,9 +4,11 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Dapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace BelemRestaurantes.IntegrationTests;
@@ -75,10 +77,43 @@ public sealed class CuiaAiEndpointTests : IClassFixture<WebApplicationFactory<Pr
             BaseAddress = new Uri("https://localhost")
         });
 
-        var response = await client.GetAsync("/api/cuia-ia/dica-receita/tacaca-em-casa");
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var recipes = scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Application.Abstractions.IParaRecipes>();
+        const string slug = "tacaca-em-casa";
+        var created = await recipes.GetAsync(slug, false, default) is null;
+        if (created)
+        {
+            await recipes.SaveAsync(new BelemRestaurantes.Application.Models.ParaRecipe
+            {
+                Slug = slug,
+                Title = "Tacacá em casa",
+                Subtitle = "Adaptação editorial para teste do guia de substituição.",
+                Ingredients = ["tucupi", "jambu", "goma de tapioca"],
+                Steps = ["Ferver o tucupi.", "Hidratar a goma.", "Servir na cuia."],
+                Status = "published"
+            }, "fixture-admin", default);
+        }
 
-        var json = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Tucupi", json);
+        try
+        {
+            var response = await client.GetAsync("/api/cuia-ia/dica-receita/" + slug);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var json = await response.Content.ReadAsStringAsync();
+            Assert.Contains("Tucupi", json);
+        }
+        finally
+        {
+            if (created)
+            {
+                await using var db = await scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory>().OpenAsync(default);
+                var id = await db.ExecuteScalarAsync<long?>("SELECT id FROM para_recipes WHERE slug=@slug", new { slug });
+                if (id is not null)
+                {
+                    await db.ExecuteAsync("DELETE FROM para_recipe_versions WHERE recipe_id=@id", new { id });
+                    await db.ExecuteAsync("DELETE FROM audit_events WHERE entity_type='recipe' AND entity_id=@id AND actor_subject='fixture-admin'", new { id });
+                    await db.ExecuteAsync("DELETE FROM para_recipes WHERE id=@id", new { id });
+                }
+            }
+        }
     }
 }

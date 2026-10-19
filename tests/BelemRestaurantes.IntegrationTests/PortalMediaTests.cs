@@ -48,14 +48,27 @@ public sealed class PortalMediaTests
     {
         using var app=BulkAndVisitTests.Factory();
         using var client=app.CreateClient(new(){BaseAddress=new("https://localhost"),AllowAutoRedirect=false});
-        var response=await client.GetAsync("/admin/restaurants?page=2147483647");
-        Assert.Equal(HttpStatusCode.OK,response.StatusCode);
-        var html=await response.Content.ReadAsStringAsync();
-        Assert.Contains("Conforto de leitura",html);
-        Assert.Contains("Gerenciar",html);
-        Assert.Contains("/admin/midias?restaurantId=",html);
-        Assert.Contains("/establishment/",html);
-        Assert.Contains("Páginas do catálogo",WebUtility.HtmlDecode(html));
+        var marker="midia-fixture-"+Guid.NewGuid().ToString("N");
+        using var scope=app.Services.CreateScope();
+        var id=await scope.ServiceProvider.GetRequiredService<IRestaurantIngestionRepository>().UpsertDiscoveredAsync(new(marker,marker,null,"Belém","Pizzaria","Rua de teste",null,null,"https://example.org/source",null,null,null,[]),"test_fixture",DateTimeOffset.UtcNow,default);
+        await using var db=await scope.ServiceProvider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
+        try
+        {
+            var response=await client.GetAsync("/admin/restaurants?query="+marker+"&page=2147483647");
+            Assert.Equal(HttpStatusCode.OK,response.StatusCode);
+            var html=await response.Content.ReadAsStringAsync();
+            Assert.Contains("Conforto de leitura",html);
+            Assert.Contains("Gerenciar",html);
+            Assert.Contains("/admin/midias?restaurantId="+id,html);
+            Assert.Contains("/establishment/"+id,html);
+            Assert.Contains("Páginas do catálogo",WebUtility.HtmlDecode(html));
+        }
+        finally
+        {
+            await db.ExecuteAsync("DELETE FROM source_observations WHERE restaurant_id=@id",new{id});
+            await db.ExecuteAsync("DELETE FROM moderation_queue WHERE item_type='restaurant' AND item_id=@id",new{id});
+            await db.ExecuteAsync("DELETE FROM restaurants WHERE id=@id",new{id});
+        }
     }
 
     [Fact]

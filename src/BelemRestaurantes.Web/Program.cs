@@ -146,9 +146,9 @@ if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
         using var migrationScope = app.Services.CreateScope();
         await migrationScope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.Migrations.MigrationRunner>().ApplyAsync(CancellationToken.None);
     }
-    catch (MySqlConnector.MySqlException ex) when (ex.Number is 1044 or 1045)
+    catch (MySqlConnector.MySqlException ex) when (ex.Number is 0 or 1042 or 1043 or 1044 or 1045 or 2003 or 2026)
     {
-        app.Logger.LogWarning("Migrações não aplicadas neste processo porque a conta do banco não tem esse acesso ({ErrorNumber}).", ex.Number);
+        app.Logger.LogWarning("Migrações não aplicadas neste processo porque o banco não está acessível ({ErrorNumber}).", ex.Number);
     }
 }
 if (args.Contains("--migrate") || args.Contains("--provision-admin"))
