@@ -292,7 +292,7 @@ html.recipe-kitchen .recipe-steps li span[aria-hidden]{font-size:1.8rem!importan
 #interactive-map{height: min(65vh,36rem);min-height:20rem;width:100%;border:2px solid var(--color-border);border-radius:12px;background:#f7f2e7;isolation:isolate;z-index:0}
 #interactive-map[hidden]{display:none}
 .map-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
-.map-pin{display:grid;place-items:center;border-radius:50%;background:#143f32;color:white;border:3px solid white;font-size:1rem;font-weight:700;box-shadow:0 1px 5px #143f3280}
+.leaflet-marker-icon.map-pin{display:grid;place-items:center;border-radius:50%;background:#143f32;color:white;border:3px solid white;font-size:1rem;font-weight:700;box-shadow:0 1px 5px #143f3280}
 #interactive-map .leaflet-control a{min-width:44px;min-height:44px;font-size:1rem}
 #interactive-map .leaflet-popup-content{font-size:1rem;line-height:1.6}
 #interactive-map .leaflet-popup-content a{display:inline-block;min-height:44px}
