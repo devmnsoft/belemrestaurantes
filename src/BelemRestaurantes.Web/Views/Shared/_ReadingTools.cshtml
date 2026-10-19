@@ -1,14 +1,64 @@
-<details class="reading-tools" lang="pt-BR">
-  <summary>Conforto de leitura <span aria-hidden="true">Aa</span></summary>
-  <div class="reading-controls">
-    <p>Ajuste a leitura como preferir. As escolhas ficam salvas neste navegador.</p>
-    <label for="reading-size">Tamanho do texto</label>
-    <select id="reading-size" data-reading-size><option value="100">Padrão</option><option value="125">Maior</option><option value="150">Bem maior</option></select>
-    <label><input type="checkbox" data-reading-contrast /> Alto contraste</label>
-    <label><input type="checkbox" data-reading-links /> Destacar links</label>
-    <label><input type="checkbox" data-reading-motion /> Reduzir movimentos</label>
-    <button type="button" data-reading-reset>Restaurar padrão</button>
-    <span role="status" aria-live="polite" data-reading-status></span>
-    <small>Você também pode ampliar a página pelo zoom do navegador.</small>
+<details class="reading-tools" id="cuia-acessivel" lang="pt-BR" aria-label="Cuia Acessível: Painel de acessibilidade e conforto de leitura">
+  <summary class="reading-tools-summary">
+    <span class="reading-tools-title">
+      @await Html.PartialAsync("_ParaIcon", "acessibilidade")
+      <span>Cuia Acessível · Conforto de leitura</span>
+    </span>
+    <span class="reading-badge" aria-hidden="true">Aa · WCAG 2.2 AA</span>
+  </summary>
+  <div class="reading-controls" role="region" aria-label="Controles de acessibilidade e leitura">
+    <p class="reading-intro">
+      Ajuste o portal conforme suas necessidades de visão e conforto. Suas preferências são salvas de forma segura no navegador.
+    </p>
+
+    <div class="reading-group" role="group" aria-labelledby="reading-size-label">
+      <span id="reading-size-label" class="reading-group-title">Tamanho do texto:</span>
+      <div class="reading-size-stepper">
+        <button type="button" class="reading-btn" data-reading-decrease aria-label="Diminuir tamanho do texto">A−</button>
+        <select id="reading-size" data-reading-size aria-label="Selecionar escala do texto">
+          <option value="100">100% · Padrão</option>
+          <option value="115">115% · Conforto</option>
+          <option value="125">125% · Maior</option>
+          <option value="150">150% · Máximo</option>
+        </select>
+        <button type="button" class="reading-btn" data-reading-increase aria-label="Aumentar tamanho do texto">A+</button>
+      </div>
+    </div>
+
+    <div class="reading-options" role="group" aria-label="Ajustes visuais e de foco">
+      <label class="reading-check-label">
+        <input type="checkbox" data-reading-contrast />
+        <span><strong>Alto contraste</strong> (fundo escuro e tipografia luminosa)</span>
+      </label>
+      <label class="reading-check-label">
+        <input type="checkbox" data-reading-line-spacing />
+        <span><strong>Espaçamento entre linhas</strong> (aumenta entrelinha para 1.8)</span>
+      </label>
+      <label class="reading-check-label">
+        <input type="checkbox" data-reading-letter-spacing />
+        <span><strong>Espaçamento entre caracteres</strong> (letras e palavras mais abertas)</span>
+      </label>
+      <label class="reading-check-label">
+        <input type="checkbox" data-reading-links />
+        <span><strong>Destacar links</strong> (sublinhado nítido sem depender de cor)</span>
+      </label>
+      <label class="reading-check-label">
+        <input type="checkbox" data-reading-motion />
+        <span><strong>Reduzir movimentos</strong> (pausa transições e animações)</span>
+      </label>
+      <label class="reading-check-label">
+        <input type="checkbox" data-reading-distraction />
+        <span><strong>Modo leitura sem distrações</strong> (foco no conteúdo editorial)</span>
+      </label>
+    </div>
+
+    <div class="reading-actions">
+      <button type="button" class="reading-reset-btn" data-reading-reset>Restaurar todas as preferências</button>
+      <span role="status" aria-live="polite" class="reading-live-status" data-reading-status></span>
+    </div>
+
+    <p class="reading-footer-note">
+      <small>Navegação por teclado: use <strong>Tab</strong> / <strong>Shift+Tab</strong> para alternar e <strong>Esc</strong> para recolher o painel. O site suporta ampliação nativa de 200% sem perda de conteúdo.</small>
+    </p>
   </div>
 </details>

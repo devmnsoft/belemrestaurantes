@@ -31,18 +31,92 @@ html{scroll-padding-top:110px}body{font-family:'Segoe UI',system-ui,sans-serif;c
 /* Reading preferences and category artwork share the existing stylesheet. */
 .home-video-feature{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;align-items:center;padding:clamp(24px,5vw,64px);background:#f1e7d0;border:1px solid #d2c4a3;border-radius:8px 64px 8px 8px}.home-video-feature h2{font-family:var(--para-serif);font-size:clamp(2rem,4vw,3.5rem);line-height:1.1;font-weight:500;margin:12px 0 20px}.home-video-feature .para-text-link{display:block;margin-top:18px}.home-video-mark{display:grid;justify-items:center;color:#143f32}.home-video-mark svg{width:150px;height:150px}.home-video-mark span{font-family:var(--para-serif);font-size:clamp(2rem,4vw,3.2rem);line-height:1.1;text-align:center;margin-top:12px}
 @media(max-width:700px){.home-video-feature{grid-template-columns:1fr}.home-video-mark{display:none}}
-.reading-tools{background:#143f32;color:#fff6df;border-bottom:1px solid #efb645;padding:8px max(18px,calc((100% - 1200px)/2));position:relative;z-index:1001;flex-shrink:0}
-.reading-tools summary{cursor:pointer;display:list-item;width:fit-content;font-weight:650;min-height:32px}.reading-tools summary span{margin-left:16px;border:1px solid #d6be7d;border-radius:5px;padding:0 8px}
-.reading-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:12px 0 18px;max-width:1100px}.reading-controls p,.reading-controls small{flex-basis:100%;margin:0}.reading-controls label{display:flex;align-items:center;gap:8px}.reading-controls input{width:22px;height:22px}.reading-controls select,.reading-controls button{min-height:44px;color:#143f32;background:#fff6df;border:2px solid #efb645;border-radius:6px;padding:6px 12px;max-width:100%}
-:focus-visible{outline:3px solid #fff!important;outline-offset:2px;box-shadow:0 0 0 6px #143f32!important;scroll-margin-block:130px}
-html[data-text-size="125"]{--reading-size:1.25rem}html[data-text-size="150"]{--reading-size:1.5rem}
-html:is([data-text-size="125"],[data-text-size="150"]) :is(main,header,footer,.reading-tools) :is(p,li,label,input,select,textarea,button,a,small,td,th,summary,span,div,dt,dd,legend){font-size:max(1em,var(--reading-size))!important;line-height:1.65!important;letter-spacing:.01em;overflow-wrap:anywhere}
-html.reading-links a{text-decoration:underline!important;text-decoration-thickness:2px;text-underline-offset:4px}
-html.reading-contrast body,html.reading-contrast body :not(svg,svg *,img,video,iframe){color:#fff!important;background-color:#101810!important;box-shadow:none!important;text-shadow:none!important;border-color:#d4e6cb!important}
-html.reading-contrast a{color:#ffe18a!important;text-decoration:underline!important}html.reading-contrast :focus-visible{outline-color:#ffe18a!important}html.reading-contrast input,html.reading-contrast select,html.reading-contrast textarea{border:2px solid #fff!important}html.reading-contrast ::placeholder{color:#d5ded1!important}
+/* Cuia Acessível V6 — Conforto Visual e Acessibilidade WCAG 2.2 AA */
+.reading-tools{background:#0d281e;color:#fff6df;border-bottom:2px solid #efb645;padding:10px max(18px,calc((100% - 1200px)/2));position:relative;z-index:1001;flex-shrink:0}
+.reading-tools summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700;min-height:44px;list-style:none}
+.reading-tools summary::-webkit-details-marker{display:none}
+.reading-tools-title{display:inline-flex;align-items:center;gap:10px;font-size:1rem}
+.reading-tools-title .para-icon{width:24px;height:24px;color:#efb645}
+.reading-badge{border:1px solid #d6be7d;border-radius:6px;padding:2px 10px;font-size:.85rem;background:#184535;color:#fff6df;letter-spacing:.03em}
+.reading-controls{display:grid;grid-template-columns:1fr;gap:14px;padding:14px 0 8px;max-width:1100px}
+.reading-intro{font-size:.95rem;color:#f3eedc;margin:0}
+.reading-group{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.reading-group-title{font-weight:700;font-size:.95rem;color:#ffe2a0}
+.reading-size-stepper{display:inline-flex;align-items:center;gap:6px}
+.reading-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;background:#fff6df;color:#0d281e;border:2px solid #efb645;border-radius:6px;cursor:pointer}
+.reading-btn:hover,.reading-btn:focus-visible{background:#ffe2a0}
+.reading-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:10px}
+.reading-check-label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:.95rem;cursor:pointer;background:#143f32;padding:6px 12px;border-radius:6px;border:1px solid #2d6150}
+.reading-check-label:hover{background:#1a4d3e}
+.reading-check-label input[type=checkbox]{width:22px;height:22px;min-width:22px;accent-color:#efb645;cursor:pointer}
+.reading-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:6px}
+.reading-reset-btn{min-height:44px;padding:8px 18px;font-weight:700;background:#fff6df;color:#0d281e;border:2px solid #efb645;border-radius:6px;cursor:pointer}
+.reading-reset-btn:hover,.reading-reset-btn:focus-visible{background:#ffe2a0}
+.reading-live-status{font-size:.9rem;color:#ffe2a0;font-style:italic}
+.reading-footer-note{margin:0;font-size:.85rem;color:#d5ded1;line-height:1.5}
+.reading-controls select{min-height:44px;color:#0d281e;background:#fff6df;border:2px solid #efb645;border-radius:6px;padding:6px 12px;font-weight:600}
+
+/* Foco universal de alto contraste WCAG 2.2 AA (3:1 contrast ratio) */
+:focus-visible{outline:3px solid #efb645!important;outline-offset:3px!important;box-shadow:0 0 0 6px #0d281e!important;scroll-margin-block:130px}
+
+/* Escalas tipográficas acessíveis */
+html[data-text-size="115"]{--reading-size:1.15rem}
+html[data-text-size="125"]{--reading-size:1.25rem}
+html[data-text-size="150"]{--reading-size:1.5rem}
+html:is([data-text-size="115"],[data-text-size="125"],[data-text-size="150"]) :is(main,header,footer,.reading-tools) :is(p,li,label,input,select,textarea,button,a,small,td,th,summary,span,div,dt,dd,legend){font-size:max(1em,var(--reading-size))!important;line-height:1.65!important;overflow-wrap:anywhere}
+
+/* Espaçamento ampliado entre linhas (WCAG 1.4.12) */
+html.reading-line-spacing :is(main,header,footer,.reading-tools) :is(p,li,label,span,div,h1,h2,h3,h4,h5,h6,td,th,small,summary,legend){line-height:1.85!important}
+
+/* Espaçamento ampliado entre caracteres e palavras (WCAG 1.4.12) */
+html.reading-letter-spacing :is(main,header,footer,.reading-tools) :is(p,li,label,span,div,h1,h2,h3,h4,h5,h6,td,th,small,summary,legend){letter-spacing:0.12em!important;word-spacing:0.16em!important}
+
+/* Destaque acessível de links (sem depender apenas da cor) */
+html.reading-links a{text-decoration:underline!important;text-decoration-thickness:2.5px!important;text-underline-offset:4px!important;font-weight:700!important}
+html.reading-links a:hover,html.reading-links a:focus{text-decoration-style:double!important}
+
+/* Modo leitura sem distrações */
+html.reading-distraction .para-ribbon{display:none}
+html.reading-distraction .category-artwork{opacity:0.3;filter:grayscale(80%)}
+html.reading-distraction .para-container{max-width:960px!important}
+
+/* Alto contraste visual (WCAG 2.2 AA) */
+html.reading-contrast body,html.reading-contrast body :not(svg,svg *,img,video,iframe){color:#fff!important;background-color:#0b120c!important;box-shadow:none!important;text-shadow:none!important;border-color:#facc15!important}
+html.reading-contrast a{color:#ffe18a!important;text-decoration:underline!important;font-weight:700!important}
+html.reading-contrast :focus-visible{outline-color:#facc15!important;box-shadow:0 0 0 6px #000!important}
+html.reading-contrast input,html.reading-contrast select,html.reading-contrast textarea{border:2px solid #fff!important;background:#000!important;color:#fff!important}
+html.reading-contrast button,.reading-contrast .reading-btn,.reading-contrast .reading-reset-btn{background:#000!important;color:#fff!important;border:2px solid #facc15!important}
+html.reading-contrast ::placeholder{color:#d5ded1!important}
+
+/* Redução de movimentos */
 html.reading-motion *,html.reading-motion *::before,html.reading-motion *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Suporte a reflow até 320px e ampliação sem sobreposição */
+@media(max-width:360px){.reading-tools summary{flex-direction:column;align-items:flex-start}.reading-badge{align-self:flex-start}.reading-options{grid-template-columns:1fr}}
+@media(max-width:320px){body{min-width:320px;overflow-x:hidden}.para-container{padding-inline:10px}.para-header{flex-direction:column;align-items:flex-start}}
 .category-artwork{margin:0;position:relative;width:100%;height:100%;background:#e9e5d5;overflow:hidden}.category-artwork svg{display:block;width:100%;height:100%;object-fit:cover;min-height:210px}.category-artwork figcaption{position:absolute;bottom:12px;left:12px;right:12px;width:fit-content;max-width:calc(100% - 24px);background:#fff6df;color:#143f32;padding:4px 12px;font-size:.75rem;font-weight:650;border:1px solid #143f3226;border-radius:20px}
 .para-detail-media>.category-artwork{min-height:400px}.para-detail-media>.category-artwork svg{min-height:400px}.para-restaurant-media>.category-artwork{aspect-ratio:640/420}
 .video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px}.video-card{border:1px solid var(--para-line);border-radius:16px;background:#fffdf8;padding:20px}.video-card h3{font-family:var(--para-serif);font-size:1.5rem;margin:0 0 8px}.video-card p{font-size:.9rem}.video-player{aspect-ratio:16/9;display:grid;place-items:center;border-radius:12px;background:#143f32;overflow:hidden;margin-block:16px}.video-player button{padding:12px 18px;border:2px solid #efb645;border-radius:8px;background:#fff6df;color:#143f32;cursor:pointer;max-width:90%;min-height:48px}.video-player iframe{width:100%;height:100%;border:0}.media-editor{display:grid;gap:12px;margin-block:24px}.media-editor label{font-weight:650}.media-editor input:not([type=checkbox]){width:100%;padding:12px;border:1px solid #526359;border-radius:8px}.media-editor input[type=checkbox]{width:22px;height:22px}
 @media(max-width:600px){.reading-controls{align-items:stretch;flex-direction:column}.reading-controls label{min-height:44px}.para-detail-media>.category-artwork,.para-detail-media>.category-artwork svg{min-height:260px}.para-admin header{flex-wrap:wrap;gap:12px}.para-admin header>div{flex-wrap:wrap;gap:12px!important;max-width:100%}.para-admin .table-v3-wrapper{max-width:100%;overflow:auto}}
+
+/* Modo Cozinha (Kitchen Mode) — Leitura Clara e Sem Distrações */
+html.recipe-kitchen :is(.para-header,.para-footer,.para-ribbon,.para-breadcrumb,.recipe-related,.recipe-source,.recipe-detail-art){display:none!important}
+html.recipe-kitchen body{background:#0e1713!important;color:#fbf7ec!important;padding:16px!important}
+html.recipe-kitchen .recipe-detail{max-width:960px!important;margin:0 auto!important}
+html.recipe-kitchen .recipe-detail-heading h1{font-size:clamp(2.2rem,5vw,3.6rem)!important;color:#ffe2a0!important}
+html.recipe-kitchen .recipe-ingredients,html.recipe-kitchen .recipe-steps{font-size:1.25rem!important;line-height:1.75!important}
+html.recipe-kitchen .recipe-ingredients label,html.recipe-kitchen .recipe-steps label{display:flex;align-items:center;gap:14px;padding:8px 0;cursor:pointer}
+html.recipe-kitchen input[data-recipe-check]{width:28px!important;height:28px!important;min-width:28px!important;accent-color:#efb645!important}
+html.recipe-kitchen .recipe-steps li span[aria-hidden]{font-size:1.8rem!important;font-weight:800!important;color:#efb645!important}
+
+/* Estilo para Impressão de Receitas e Conteúdo Editorial */
+@media print{
+  .reading-tools,.skip-link,.para-ribbon,.para-header,.para-footer,.recipe-tools,.recipe-related,button,.home-video-feature,.atlas-hero-actions{display:none!important}
+  body{background:#fff!important;color:#000!important;font-size:12pt!important;line-height:1.5!important}
+  a{color:#000!important;text-decoration:none!important}
+  .para-container{max-width:100%!important;padding:0!important}
+  .recipe-ingredients ul,.recipe-steps ol{padding-left:20px!important}
+  .recipe-steps li{page-break-inside:avoid}
+}
+

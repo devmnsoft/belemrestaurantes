@@ -1,7 +1,38 @@
 @{Layout="_AdminLayout";ViewData["Title"]="Operação do Worker";var beats=(IEnumerable<dynamic>)ViewData["Heartbeats"]!;var tasks=(IEnumerable<dynamic>)ViewData["Queue"]!;var targets=(IEnumerable<dynamic>)ViewData["Targets"]!;}
 <section class="para-operations"><span class="para-eyebrow">CUIA · OPERAÇÃO TOTAL</span><h1>O pulso do nosso guia.</h1><p>O heartbeat vence após 90 segundos. Um Worker ativo não comprova sucesso de cada conector; consulte os ciclos e erros.</p>
-<div class="para-stat-row">@foreach(var beat in beats){<article><strong>@((string)beat.state=="running"&&(DateTime)beat.heartbeat_at>DateTime.UtcNow.AddSeconds(-90)?"Ativo":"Inativo")</strong><span>@beat.instance_id</span><p>@(((DateTime)beat.heartbeat_at).ToString("dd/MM HH:mm:ss")) UTC · @((long)beat.working_set_bytes/1024/1024) MB</p><span>Discovery: @beat.discovery_enabled · Crawler: @beat.crawler_enabled</span></article>}@if(!beats.Any()){<article><strong>Sem heartbeat</strong><p>Inicie o Worker com as migrações atuais.</p></article>}</div>
-<h2>Fila persistente</h2><div class="para-stat-row">@foreach(var task in tasks){<article><strong>@task.total</strong><span>@task.state</span></article>}</div>
+<div class="para-stat-row">
+  <article>
+    <strong>@(((int)ViewData["PendingCount"]!).ToString("N0"))</strong>
+    <span>Candidatos aguardando aprovação</span>
+    <p><a href="/admin/moderacao" style="text-decoration:underline;">Abrir moderação em lote ↗</a></p>
+  </article>
+  <article>
+    <strong>@(((int)ViewData["PublishedCount"]!).ToString("N0"))</strong>
+    <span>Restaurantes publicados</span>
+    <p><a href="/busca" target="_blank" rel="noopener" style="text-decoration:underline;">Ver catálogo público ↗</a></p>
+  </article>
+  <article>
+    <strong>@ViewData["TargetCount"]</strong>
+    <span>Alvos no plano estadual</span>
+    <p>@ViewData["EnabledCount"] municípios ativos</p>
+  </article>
+</div>
+
+<h2>Diagnóstico do Worker e Conectores</h2>
+<div class="para-stat-row">@foreach(var beat in beats){
+  var isActive = (string)beat.state == "running" && (DateTime)beat.heartbeat_at > DateTime.UtcNow.AddSeconds(-90);
+  <article style="border-left: 4px solid @(isActive ? "#10b981" : "#ef4444");">
+    <strong style="color: @(isActive ? "#10b981" : "#ef4444");">@(isActive ? "Worker Ativo" : "Worker Parado / Inativo")</strong>
+    <span>Instância: @beat.instance_id</span>
+    <p>Último sinal: @(((DateTime)beat.heartbeat_at).ToString("dd/MM HH:mm:ss")) UTC · @((long)beat.working_set_bytes/1024/1024) MB</p>
+    <span>Discovery: @beat.discovery_enabled · Crawler: @beat.crawler_enabled</span>
+  </article>
+}@if(!beats.Any()){
+  <article style="border-left: 4px solid #ef4444;">
+    <strong style="color: #ef4444;">Worker parado ou sem heartbeat</strong>
+    <p>Inicie o serviço de Worker com a migração 029 ou superior.</p>
+  </article>
+}</div>
 <form method="post" action="/admin/operacao/sincronizar">@Html.AntiForgeryToken()<button class="para-button">Executar sincronização agora</button><p>Enfileira apenas alvos ativos vencidos. Não altera retries nem executa consultas externas nesta requisição.</p></form><p><a href="/admin/discovery">Ciclos, erros e resultados</a> · <a href="/admin/diagnostics">Qualidade e custos de APIs</a></p>
 <div class="recipe-tools"><form method="post" action="/admin/operacao/plano-estadual">@Html.AntiForgeryToken()<button class="para-button" data-confirm="Ativar o plano OpenStreetMap dos 144 municípios, com primeira passagem escalonada e atualização semanal?">Ativar plano dos 144 municípios</button></form><form method="post" action="/admin/operacao/enriquecer">@Html.AntiForgeryToken()<button class="para-button">Enfileirar até 100 enriquecimentos</button></form></div><p>Os distritos de Mosqueiro, Outeiro e Icoaraci são pesquisados dentro do município Belém. O enriquecimento preserva os dados dos parceiros.</p>
 <h2>Alvos de descoberta (@ViewData["TargetCount"] cadastrados · @ViewData["EnabledCount"] ativos)</h2><p>Ative progressivamente os municípios conforme capacidade e orçamento. O limite restringe os cadastros tratados; a fonte pode cobrar pela consulta inteira.</p>

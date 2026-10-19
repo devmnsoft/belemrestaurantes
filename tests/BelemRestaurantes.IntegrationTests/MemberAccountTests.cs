@@ -30,7 +30,10 @@ public sealed class MemberAccountTests
         Assert.NotNull(id);
         Assert.Null(await accounts.LoginAsync(email, password, true, default));
         var rows = (await connection.QueryAsync<OutboxRow>("SELECT id,payload FROM transactional_email_outbox WHERE state='pending'")).ToArray();
-        var row = Assert.Single(rows, item => protector.Unprotect(item.payload).Recipient == email);
+        var row = Assert.Single(rows, item => {
+            try { return protector.Unprotect(item.payload).Recipient == email; }
+            catch { return false; }
+        });
         var message = protector.Unprotect(row.payload);
         Assert.Equal("ja", message.Culture);
         Assert.DoesNotContain(email, System.Text.Encoding.UTF8.GetString(row.payload));
@@ -51,7 +54,10 @@ public sealed class MemberAccountTests
         Assert.Equal(mailCount, await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM transactional_email_outbox"));
         await accounts.RequestTokenAsync(email, "reset", "fr", default);
         var resetRows = await connection.QueryAsync<OutboxRow>("SELECT id,payload FROM transactional_email_outbox WHERE payload IS NOT NULL");
-        var resetRow = Assert.Single(resetRows, item => protector.Unprotect(item.payload) is { Kind: "reset" } mail && mail.Recipient == email);
+        var resetRow = Assert.Single(resetRows, item => {
+            try { return protector.Unprotect(item.payload) is { Kind: "reset" } mail && mail.Recipient == email; }
+            catch { return false; }
+        });
         var resetToken = protector.Unprotect(resetRow.payload).Link!.Split("#token=")[1];
         var beforeResend = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM member_tokens WHERE user_id=@id", new { id });
         await accounts.RequestTokenAsync(email, "reset", "fr", default);
@@ -80,7 +86,10 @@ public sealed class MemberAccountTests
         var protector = provider.GetRequiredService<MailPayloadProtector>();
         await using var connection = await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
         var rows = await connection.QueryAsync<OutboxRow>("SELECT id,payload FROM transactional_email_outbox WHERE payload IS NOT NULL");
-        var confirmation = protector.Unprotect(Assert.Single(rows, row => protector.Unprotect(row.payload).Recipient == email).payload).Link!.Split("#token=")[1];
+        var confirmation = protector.Unprotect(Assert.Single(rows, row => {
+            try { return protector.Unprotect(row.payload).Recipient == email; }
+            catch { return false; }
+        }).payload).Link!.Split("#token=")[1];
         Assert.Equal(HttpStatusCode.OK, (await Post(client, "/account/confirm", new() { ["token"] = confirmation })).StatusCode);
         var login = await Post(client, "/account/login", new() { ["Email"] = email, ["Password"] = password, ["Remember"] = "true", ["ReturnUrl"] = "https://example.invalid" });
         Assert.Equal("/account", login.Headers.Location?.ToString());
@@ -102,7 +111,10 @@ public sealed class MemberAccountTests
         await using var connection = await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
         var protector = provider.GetRequiredService<MailPayloadProtector>();
         var rows = await connection.QueryAsync<OutboxRow>("SELECT id,payload FROM transactional_email_outbox WHERE payload IS NOT NULL");
-        var token = protector.Unprotect(Assert.Single(rows, row => protector.Unprotect(row.payload).Recipient == email).payload).Link!.Split("#token=")[1];
+        var token = protector.Unprotect(Assert.Single(rows, row => {
+            try { return protector.Unprotect(row.payload).Recipient == email; }
+            catch { return false; }
+        }).payload).Link!.Split("#token=")[1];
         await connection.ExecuteAsync("UPDATE member_tokens SET expires_at=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 MINUTE) WHERE token_hash=@hash", new { hash = MySqlMemberAccounts.HashToken(token) });
         Assert.False(await accounts.ConfirmEmailAsync(token, default));
     }

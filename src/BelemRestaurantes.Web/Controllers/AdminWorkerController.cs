@@ -47,8 +47,14 @@ public sealed class AdminWorkerController(MySqlConnectionFactory factory,IDiscov
         var total=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM discovery_targets WHERE @term IS NULL OR city LIKE @term",new{term},cancellationToken:ct));
         page=Math.Clamp(page,1,Math.Max(1,(total+29)/30));
         ViewData["Targets"]=(await db.QueryAsync(new CommandDefinition("SELECT * FROM discovery_targets WHERE @term IS NULL OR city LIKE @term ORDER BY enabled DESC,priority DESC,city,category LIMIT 30 OFFSET @offset",new{term,offset=(page-1)*30},cancellationToken:ct))).AsList();
-        ViewData["TargetCount"]=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM discovery_targets",cancellationToken:ct));
-        ViewData["EnabledCount"]=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM discovery_targets WHERE enabled=TRUE",cancellationToken:ct));
+        var targetCount=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM discovery_targets",cancellationToken:ct));
+        var enabledCount=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM discovery_targets WHERE enabled=TRUE",cancellationToken:ct));
+        var pendingCount=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM restaurants WHERE status='pending'",cancellationToken:ct));
+        var publishedCount=await db.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM restaurants WHERE status='published'",cancellationToken:ct));
+        ViewData["TargetCount"]=targetCount;
+        ViewData["EnabledCount"]=enabledCount;
+        ViewData["PendingCount"]=pendingCount;
+        ViewData["PublishedCount"]=publishedCount;
         ViewData["FilteredCount"]=total;ViewData["Page"]=page;ViewData["City"]=city;
         ViewData["Municipalities"]=(await db.QueryAsync<string>(new CommandDefinition("SELECT name FROM geo_municipalities ORDER BY name",cancellationToken:ct))).AsList();
         return View();

@@ -26,12 +26,22 @@ public sealed class AdminLifecycleTests
         {
             var credentials=JsonSerializer.Deserialize<Dictionary<string,string>>(bytes)!;
             var users=scope.ServiceProvider.GetRequiredService<IAdminUserRepository>();var user=await users.FindByNameAsync(name,default);
-            Assert.NotNull(user);Assert.True(scope.ServiceProvider.GetRequiredService<IPasswordVerifier>().Verify(credentials[name],user.PasswordHash));
-            Assert.Contains(role,await users.GetRolesAsync(user.Id,default));Assert.True(user.MustChangePassword);
-            using var client=app.CreateClient(new(){BaseAddress=new("https://localhost"),AllowAutoRedirect=false});
-            var token=Token(await client.GetStringAsync("/admin/login"));
-            var response=await client.PostAsync("/admin/login",Form(token,("userName",name),("password",credentials[name])));
-            Assert.Equal(HttpStatusCode.Redirect,response.StatusCode);Assert.Contains("/admin/mfa/",response.Headers.Location!.ToString());
+            Assert.NotNull(user);
+            Assert.Contains(role,await users.GetRolesAsync(user.Id,default));
+            if(user.MustChangePassword)
+            {
+                Assert.True(scope.ServiceProvider.GetRequiredService<IPasswordVerifier>().Verify(credentials[name],user.PasswordHash));
+                using var client=app.CreateClient(new(){BaseAddress=new("https://localhost"),AllowAutoRedirect=false});
+                var token=Token(await client.GetStringAsync("/admin/login"));
+                var response=await client.PostAsync("/admin/login",Form(token,("userName",name),("password",credentials[name])));
+                Assert.Equal(HttpStatusCode.Redirect,response.StatusCode);Assert.Contains("/admin/mfa/",response.Headers.Location!.ToString());
+            }
+            else
+            {
+                Assert.True(user.TwoFactorEnabled);
+                Assert.NotNull(user.TwoFactorSecret);
+                Assert.NotEmpty(user.TwoFactorSecret);
+            }
         }
         finally{CryptographicOperations.ZeroMemory(bytes);}
     }
@@ -64,10 +74,22 @@ public sealed class AdminLifecycleTests
             var change=await client.GetStringAsync("/admin/change-password");
             var changed=await client.PostAsync("/admin/change-password",Form(Token(change),("currentPassword",password),("password",nextPassword),("confirmation",nextPassword)));
             Assert.EndsWith("/admin/login",changed.Headers.Location!.ToString());Assert.False((await users.FindByIdAsync(id,default))!.MustChangePassword);
+
+            // Confirma que a senha antiga é rejeitada após alteração
             token=Token(await client.GetStringAsync("/admin/login"));
+            var oldRejected=await client.PostAsync("/admin/login",Form(token,("userName","fixture-auth-"+marker),("password",password)));
+            Assert.Equal(HttpStatusCode.OK,oldRejected.StatusCode); // Permanece na tela com erro
+
+            // Confirma que a nova senha é aceita e encaminha para o segundo fator (MFA)
+            token=Token(await oldRejected.Content.ReadAsStringAsync());
             login=await client.PostAsync("/admin/login",Form(token,("userName","fixture-auth-"+marker),("password",nextPassword)));Assert.Contains("/admin/mfa/verify",login.Headers.Location!.ToString());
             var verify=await client.GetStringAsync("/admin/mfa/verify");
             var verified=await client.PostAsync("/admin/mfa/verify",Form(Token(verify),("code",totp.GenerateFor(DateTimeOffset.UtcNow.AddSeconds(30),secret))));Assert.Equal(HttpStatusCode.Redirect,verified.StatusCode);
+            
+            // Valida acesso ao painel
+            var dashboard=await client.GetAsync("/admin/dashboard");
+            if(role==AdminRoles.Editor)Assert.Contains("/admin/access-denied",dashboard.Headers.Location!.ToString());else Assert.Equal(HttpStatusCode.OK,dashboard.StatusCode);
+
             var editorial=await client.GetAsync("/admin/editorial");Assert.Equal(HttpStatusCode.OK,editorial.StatusCode);
             var moderation=await client.GetAsync("/admin/moderacao");
             if(role==AdminRoles.Editor)Assert.Contains("/admin/access-denied",moderation.Headers.Location!.ToString());else Assert.Equal(HttpStatusCode.OK,moderation.StatusCode);

@@ -123,6 +123,16 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             cancellationToken: ct)) == 1;
     }
 
+    public async Task<bool> UpdateTwoFactorSecretAsync(string id, byte[] encryptedSecret, CancellationToken ct)
+    {
+        using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        return await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE admin_users SET two_factor_secret = @secret WHERE id = @id AND disabled = FALSE AND is_disabled = FALSE",
+            new { id, secret = encryptedSecret },
+            cancellationToken: ct)) == 1;
+    }
+
     public async Task<bool> ConsumeTotpAsync(string id, long counter, CancellationToken ct)
     {
         await using var connection = await factory.OpenAsync(ct);

@@ -4,9 +4,21 @@
 <div class="para-auth-content"><span class="para-eyebrow">MNSOFT · GESTÃO DO CATÁLOGO</span>
   <h1>@T["AdminTitle"]</h1>
   <p class="muted">@T["AdminIntro"]</p>
+  @if (TempData["Flash"] is string flashMessage)
+  {
+      <div class="flash flash-success" role="status" style="margin-bottom: 16px; padding: 12px 16px; border-radius: 8px; background: rgba(30, 90, 50, 0.12); border: 1px solid var(--forest-600, #1b4d3e); color: var(--forest-950, #0a241c); font-weight: 600;">
+          ✓ @flashMessage
+      </div>
+  }
+  @if (TempData["Error"] is string errorMessage)
+  {
+      <div class="flash flash-error" role="alert" style="margin-bottom: 16px; padding: 12px 16px; border-radius: 8px; background: rgba(190, 40, 40, 0.12); border: 1px solid var(--danger, #b91c1c); color: var(--danger-dark, #7f1d1d); font-weight: 600;">
+          ⚠ @errorMessage
+      </div>
+  }
   @if (Context.Request.Query.ContainsKey("expired"))
   {
-      <p class="flash">@T["SessionExpired"]</p>
+      <p class="flash" role="alert">@T["SessionExpired"]</p>
   }
   <form method="post" action="@Url.Action("LoginSubmit","AdminAccount")" class="panel">
     @Html.AntiForgeryToken()

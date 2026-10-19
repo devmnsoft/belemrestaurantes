@@ -14,6 +14,8 @@ public interface IAdminUserRepository
 
     Task<bool> EnableTwoFactorAsync(string id, byte[] encryptedSecret, CancellationToken ct);
 
+    Task<bool> UpdateTwoFactorSecretAsync(string id, byte[] encryptedSecret, CancellationToken ct);
+
     Task<bool> ConsumeTotpAsync(string id, long counter, CancellationToken ct);
 
     Task<string[]> GetRolesAsync(string id, CancellationToken ct);

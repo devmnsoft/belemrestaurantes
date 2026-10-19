@@ -6,14 +6,16 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
-var keysPath = builder.Configuration["DataProtection:KeysPath"];
-if (!string.IsNullOrWhiteSpace(keysPath))
+var keysPath = builder.Configuration["DataProtection:KeysPath"]
+    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MNSOFT", "BelemRestaurantes", "keys");
+Directory.CreateDirectory(keysPath);
+var dataProtection = builder.Services.AddDataProtection()
+    .SetApplicationName("BelemRestaurantes")
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+if (OperatingSystem.IsWindows())
 {
-    var keys = builder.Services.AddDataProtection().SetApplicationName("BelemRestaurantes")
-        .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
-    if (OperatingSystem.IsWindows()) keys.ProtectKeysWithDpapi();
+    dataProtection.ProtectKeysWithDpapi();
 }
-
 
 builder.Services.AddControllersWithViews(options =>
 {
@@ -34,7 +36,7 @@ builder.Services
     {
         options.Cookie.Name = ".BelRest.Member";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.LoginPath = "/account/login";
         options.AccessDeniedPath = "/account/login";
@@ -52,8 +54,8 @@ builder.Services
     {
         options.Cookie.Name = ".BelRest.AdminAuth";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
-        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.Events.OnValidatePrincipal = async context =>
@@ -67,7 +69,14 @@ builder.Services
             if (user is null || user.IsLockedOut(DateTimeOffset.UtcNow) || !user.TwoFactorEnabled ||
                 context.Principal?.FindFirst("credential_version")?.Value != version ||
                 !roles.Order().SequenceEqual(cookieRoles.Order()))
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning("Admin principal rejected for {UserId}: userFound={UserFound}, locked={Locked}, mfa={Mfa}, versionMatch={VersionMatch}, rolesMatch={RolesMatch}",
+                    id, user != null, user?.IsLockedOut(DateTimeOffset.UtcNow), user?.TwoFactorEnabled,
+                    context.Principal?.FindFirst("credential_version")?.Value == version,
+                    roles.Order().SequenceEqual(cookieRoles.Order()));
                 context.RejectPrincipal();
+            }
         };
         options.LoginPath = "/admin/login";
         options.AccessDeniedPath = "/admin/access-denied";
@@ -137,6 +146,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
 app.UseRequestLocalization(BelemRestaurantes.Web.Localization.SupportedLanguages.Options());
 app.UseHttpsRedirection();
 app.Use(async (context, next) =>
