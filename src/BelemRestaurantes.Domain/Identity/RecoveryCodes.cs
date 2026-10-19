@@ -26,7 +26,26 @@ public static class RecoveryCodes
 
     /// <summary>Normaliza antes de comparar: o usuário digita com ou sem traço/espaço.</summary>
     public static string Normalize(string code) =>
-        code.Trim().ToUpperInvariant().Replace(" ", "", StringComparison.Ordinal);
+        new string(code.Trim().ToUpperInvariant().Where(static c => c is not (' ' or '-')).ToArray());
+
+    /// <summary>Aceita apenas o formato emitido, com ou sem o traço.</summary>
+    public static bool TryNormalize(string? code, out string normalized)
+    {
+        normalized = string.Empty;
+        if (string.IsNullOrWhiteSpace(code) || code.Length > 32)
+        {
+            return false;
+        }
+
+        normalized = Normalize(code);
+        if (normalized.Length != 10 || normalized.Any(c => Alphabet.IndexOf(c) < 0))
+        {
+            normalized = string.Empty;
+            return false;
+        }
+
+        return true;
+    }
 
     public static string Hash(string normalizedCode)
     {

@@ -1,0 +1,13 @@
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Código de recuperação"; }
+<section class="shell section narrow">
+  <h1>Entrar com um código de recuperação</h1>
+  <p>Digite um dos códigos que você guardou ao ativar o segundo fator. O código vale uma vez. O aplicativo autenticador continua obrigatório e será trocado neste acesso.</p>
+  <form method="post" action="@Url.Action("RecoverSubmit","AdminAccount")" class="panel">
+    @Html.AntiForgeryToken()
+    <label for="code">Código de recuperação
+      <input id="code" name="code" required maxlength="32" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false"/>
+    </label>
+    <button type="submit">Confirmar código</button>
+    @Html.ValidationSummary()
+  </form>
+</section>

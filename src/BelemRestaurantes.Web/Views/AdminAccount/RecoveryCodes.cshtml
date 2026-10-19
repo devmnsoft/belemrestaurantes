@@ -1,0 +1,12 @@
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Códigos de recuperação"; }
+<section class="shell section narrow">
+  <h1>Guarde estes códigos de recuperação</h1>
+  <p>Use um código se perder o aplicativo autenticador. Cada código funciona uma vez. O segundo fator continua obrigatório. Esta é a única vez que mostramos estes códigos.</p>
+  <ul class="recovery-codes">
+    @foreach (var code in (System.Collections.Generic.IEnumerable<string>)(ViewData["Codes"] ?? Array.Empty<string>()))
+    {
+      <li><code>@code</code></li>
+    }
+  </ul>
+  <p><a href="@Url.Action("Dashboard","AdminAccount")">Continuar</a></p>
+</section>

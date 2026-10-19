@@ -98,6 +98,21 @@ public class SocialLinkTests
     }
 }
 
+public class RecoveryCodeTests
+{
+    [Fact]
+    public void RecoveryCodeKeepsOnlyTheHashOfTheNormalizedValue()
+    {
+        var codes = RecoveryCodes.Generate(8);
+        Assert.Equal(8, codes.Distinct(StringComparer.Ordinal).Count());
+        Assert.True(RecoveryCodes.TryNormalize(codes[0].ToLowerInvariant(), out var normalized));
+        Assert.Equal(10, normalized.Length);
+        Assert.DoesNotContain("-", normalized);
+        Assert.NotEqual(normalized, RecoveryCodes.Hash(normalized));
+        Assert.False(RecoveryCodes.TryNormalize("senha-admin", out _));
+    }
+}
+
 public class AdminPasswordPolicyTests
 {
     [Fact]

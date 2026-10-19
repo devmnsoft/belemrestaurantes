@@ -181,13 +181,137 @@ public sealed class AdminAccountController(
         var user = await users.FindByIdAsync(userId, ct);
         ClearChallenge();
         await users.ResetFailuresAsync(userId, DateTimeOffset.UtcNow, ct);
-        if (user is not null)
+        if (user is null)
         {
-            await IssueCookieAsync(user, ct);
-            if (user.MustChangePassword) return RedirectToAction(nameof(ChangePassword));
+            return RedirectToAction("Login");
         }
 
-        return RedirectSafe(null);
+        await IssueRecoveryCodesAsync(user.Id, ct);
+        await IssueCookieAsync(user, ct);
+        if (user.MustChangePassword) return RedirectToAction(nameof(ChangePassword));
+        return RedirectToAction(nameof(RecoveryCodesShown));
+    }
+
+    [Authorize]
+    [HttpGet("mfa/recovery-codes")]
+    public IActionResult RecoveryCodesShown()
+    {
+        if (TempData["RecoveryCodes"] is not string packed || string.IsNullOrWhiteSpace(packed))
+            return RedirectSafe(null);
+        ViewData["Codes"] = packed.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return View("RecoveryCodes");
+    }
+
+    [AllowAnonymous]
+    [HttpGet("mfa/recover")]
+    public IActionResult Recover()
+    {
+        if (ReadChallenge(false) is null)
+        {
+            TempData["Error"] = "A sessão de verificação expirou. Entre novamente com seu usuário e senha.";
+            return RedirectToAction("Login");
+        }
+
+        return View("Recover");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("mfa/recover")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RecoverSubmit(string code, CancellationToken ct)
+    {
+        var challenge = ReadChallenge(false);
+        if (challenge is null)
+        {
+            await audit.WriteAsync("admin.recovery_rejected", "admin_user", null, "{\"reason\":\"challenge_missing\"}", ct);
+            TempData["Error"] = "A sessão de verificação expirou. Entre novamente.";
+            return RedirectToAction("Login");
+        }
+
+        var user = await users.FindByIdAsync(challenge.UserId, ct);
+        if (user is null || user.IsLockedOut(DateTimeOffset.UtcNow) || challenge.Version != CredentialVersion(user) || !user.TwoFactorEnabled)
+        {
+            await audit.WriteAsync("admin.recovery_rejected", "admin_user", null, System.Text.Json.JsonSerializer.Serialize(new { userId = challenge.UserId, reason = "user_invalid_or_locked" }), ct);
+            TempData["Error"] = "Conta indisponível ou credencial alterada. Entre novamente.";
+            return RedirectToAction("Login");
+        }
+
+        if (!RecoveryCodes.TryNormalize(code, out var normalized) || !await users.ConsumeRecoveryCodeAsync(user.Id, RecoveryCodes.Hash(normalized), ct))
+        {
+            await users.IncrementFailuresAsync(user.Id, DateTimeOffset.UtcNow.AddMinutes(15), ct);
+            await audit.WriteAsync("admin.recovery_failed", "admin_user", null, System.Text.Json.JsonSerializer.Serialize(new { userId = user.Id, reason = "invalid_code" }), ct);
+            ModelState.AddModelError(string.Empty, "Código de recuperação inválido ou já utilizado.");
+            return View("Recover");
+        }
+
+        ClearChallenge();
+        await users.ResetFailuresAsync(user.Id, DateTimeOffset.UtcNow, ct);
+        await audit.WriteAsync("admin.recovery_code_used", "admin_user", null, System.Text.Json.JsonSerializer.Serialize(new { userId = user.Id }), ct);
+        var refreshed = await users.FindByIdAsync(user.Id, ct);
+        if (refreshed is null || !refreshed.TwoFactorEnabled)
+        {
+            return RedirectToAction("Login");
+        }
+
+        await IssueCookieAsync(refreshed, ct);
+        if (refreshed.MustChangePassword) return RedirectToAction(nameof(ChangePassword));
+        return RedirectToAction(nameof(RotateMfa));
+    }
+
+    [Authorize]
+    [HttpGet("mfa/rotate")]
+    public IActionResult RotateMfa()
+    {
+        if (User.FindFirst("must_rotate_mfa")?.Value != "true")
+            return RedirectSafe(null);
+        var secret = ReadRotateSecret() ?? totp.GenerateSecret();
+        SetRotateSecret(secret);
+        ViewData["Secret"] = secret;
+        return View("Rotate");
+    }
+
+    [Authorize]
+    [HttpPost("mfa/rotate")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RotateMfaSubmit(string code, CancellationToken ct)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var secret = ReadRotateSecret();
+        var user = userId is null ? null : await users.FindByIdAsync(userId, ct);
+        if (user is null || secret is null || !user.TwoFactorEnabled || !user.MustRotateMfa)
+        {
+            TempData["Error"] = "Não há troca de autenticador pendente. O segundo fator continua obrigatório.";
+            return RedirectToAction("Login");
+        }
+
+        if (!totp.Validate(code, secret, DateTimeOffset.UtcNow))
+        {
+            ViewData["Secret"] = secret;
+            ModelState.AddModelError(string.Empty, "Código não confere com o novo autenticador.");
+            return View("Rotate");
+        }
+
+        var codes = RecoveryCodes.Generate(8);
+        var hashes = codes.Select(item => RecoveryCodes.Hash(RecoveryCodes.Normalize(item))).ToArray();
+        var protectedSecret = protection.CreateProtector("Admin.Totp.v1").Protect(System.Text.Encoding.UTF8.GetBytes(secret));
+        if (!await users.RotateMfaAsync(user.Id, protectedSecret, hashes, ct))
+        {
+            ViewData["Secret"] = secret;
+            ModelState.AddModelError(string.Empty, "Não foi possível concluir a troca. O segundo fator antigo continua valendo.");
+            return View("Rotate");
+        }
+
+        ClearRotateSecret();
+        await audit.WriteAsync("admin.mfa_rotated", "admin_user", null, System.Text.Json.JsonSerializer.Serialize(new { userId = user.Id }), ct);
+        var refreshed = await users.FindByIdAsync(user.Id, ct);
+        if (refreshed is null || !refreshed.TwoFactorEnabled || refreshed.MustRotateMfa)
+        {
+            return RedirectToAction("Login");
+        }
+
+        await IssueCookieAsync(refreshed, ct);
+        ViewData["Codes"] = codes;
+        return View("RecoveryCodes");
     }
 
     [AllowAnonymous]
@@ -207,7 +331,7 @@ public sealed class AdminAccountController(
         {ModelState.AddModelError("","Confira a senha atual, use uma nova senha forte e repita a confirmação.");return View("ChangePassword");}
         var changed=await users.UpdatePasswordAsync(user.Id,passwordVerifier.Hash(password!),ct);
         if(!changed)return Conflict();
-        await audit.WriteAsync("admin.password_changed","admin_user",user.Id,null,ct);
+        await audit.WriteAsync("admin.password_changed", "admin_user", null, System.Text.Json.JsonSerializer.Serialize(new { userId = user.Id }), ct);
         await HttpContext.SignOutAsync(AdminAuthDefaults.Scheme);
         TempData["Flash"]="Senha alterada. Entre novamente com MFA.";
         return RedirectToAction(nameof(Login));
@@ -237,6 +361,7 @@ public sealed class AdminAccountController(
             new("sub", user.Id),
             new("amr", "mfa"),
             new("must_change_password",user.MustChangePassword?"true":"false"),
+            new("must_rotate_mfa",user.MustRotateMfa?"true":"false"),
             new("credential_version", Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(user.PasswordHash))))
         };
 
@@ -251,6 +376,52 @@ public sealed class AdminAccountController(
             AdminAuthDefaults.Scheme,
             new ClaimsPrincipal(identity),
             new AuthenticationProperties { IsPersistent = true, ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8) });
+    }
+
+    private async Task IssueRecoveryCodesAsync(string userId, CancellationToken ct)
+    {
+        try
+        {
+            var codes = RecoveryCodes.Generate(8);
+            await users.ReplaceRecoveryCodesAsync(userId, codes.Select(item => RecoveryCodes.Hash(RecoveryCodes.Normalize(item))).ToArray(), ct);
+            TempData["RecoveryCodes"] = string.Join(' ', codes);
+            await audit.WriteAsync("admin.recovery_codes_issued", "admin_user", null, System.Text.Json.JsonSerializer.Serialize(new { userId, count = codes.Count }), ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            await audit.WriteAsync("admin.recovery_codes_issue_failed", "admin_user", null, System.Text.Json.JsonSerializer.Serialize(new { userId, reason = ex.GetType().Name }), ct);
+        }
+    }
+
+    private const string RotateCookie = ".BelRest.AdminMfaRotate";
+
+    private void SetRotateSecret(string secret)
+    {
+        var options = ChallengeOptions();
+        options.Path = "/admin/mfa/rotate";
+        options.MaxAge = TimeSpan.FromMinutes(10);
+        Response.Cookies.Append(RotateCookie, protection.CreateProtector("Admin.MfaRotate.v1").Protect(secret), options);
+    }
+
+    private string? ReadRotateSecret()
+    {
+        if (!Request.Cookies.TryGetValue(RotateCookie, out var protectedValue)) return null;
+        try
+        {
+            var secret = protection.CreateProtector("Admin.MfaRotate.v1").Unprotect(protectedValue);
+            return string.IsNullOrWhiteSpace(secret) ? null : secret;
+        }
+        catch (System.Security.Cryptography.CryptographicException)
+        {
+            return null;
+        }
+    }
+
+    private void ClearRotateSecret()
+    {
+        var options = ChallengeOptions();
+        options.Path = "/admin/mfa/rotate";
+        Response.Cookies.Delete(RotateCookie, options);
     }
 
     private async Task<bool> ConsumeCodeAsync(string userId, string code, string secret, CancellationToken ct)

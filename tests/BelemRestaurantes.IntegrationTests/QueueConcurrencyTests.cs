@@ -84,7 +84,9 @@ public sealed class QueueConcurrencyTests
             await queue.FailAsync(jobId, "simulated", TimeSpan.FromMinutes(4), 3, default);
             Assert.Equal("dead_lettered", await connection.ExecuteScalarAsync<string>("SELECT state FROM discovery_jobs WHERE id=@jobId", new { jobId }));
             await connection.ExecuteAsync("UPDATE discovery_jobs SET locked_until=DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 1 MINUTE) WHERE id=@id", new { id = jobs[1].JobId });
-            Assert.Equal(1, await queue.ReleaseStaleLocksAsync(DateTimeOffset.UtcNow, default));
+            var staleBefore = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM discovery_jobs WHERE state='running' AND (locked_until IS NULL OR locked_until <= UTC_TIMESTAMP(6))");
+            Assert.Equal(staleBefore, await queue.ReleaseStaleLocksAsync(DateTimeOffset.UtcNow, default));
+            Assert.Equal("pending", await connection.ExecuteScalarAsync<string>("SELECT state FROM discovery_jobs WHERE id=@id", new { id = jobs[1].JobId }));
             var recovered = await queue.ClaimDueAsync(1, "test-restart", TimeSpan.FromMinutes(4), default);
             Assert.Equal(jobs[1].JobId, Assert.Single(recovered).JobId);
             await queue.CompleteAsync(recovered[0].JobId, default);

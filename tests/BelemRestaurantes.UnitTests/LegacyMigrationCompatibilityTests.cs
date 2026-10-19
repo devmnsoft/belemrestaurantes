@@ -23,7 +23,7 @@ public sealed class LegacyMigrationCompatibilityTests
     public void MigrationScriptsHaveUniqueIdsAndStableOrder()
     {
         var scripts = MigrationRunner.LoadScripts();
-        Assert.Equal(scripts.Select(s => s.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count(), scripts.Length);
+        Assert.Equal(scripts.Select(s => s.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count(), scripts.Count);
         Assert.Equal(scripts.OrderBy(s => s.Id, StringComparer.OrdinalIgnoreCase).Select(s => s.Id).ToArray(), scripts.Select(s => s.Id).ToArray());
     }
 }

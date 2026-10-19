@@ -97,6 +97,7 @@
               <span class="cuia-ai-guarantee">@Model.Recommendations.Count lugar(es) da camada Guia nesta resposta</span>
             </div>
             <div class="cuia-ai-response-body">
+              <h2>Recomendações da Cuia IA</h2>
               @Html.Raw(CuiaMarkdown.ToHtml(Model.AnswerMarkdown))
             </div>
             @if (Model.Recommendations.Count > 0)

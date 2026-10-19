@@ -1,0 +1,14 @@
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Trocar o autenticador"; }
+<section class="shell section narrow">
+  <h1>Cadastre o novo aplicativo autenticador</h1>
+  <p>O segundo fator continua ligado. Abra o aplicativo, adicione uma conta e informe a chave abaixo. Depois digite o código de 6 dígitos que ele mostrar.</p>
+  <p><code class="secret">@ViewData["Secret"]</code></p>
+  <form method="post" action="@Url.Action("RotateMfaSubmit","AdminAccount")" class="panel">
+    @Html.AntiForgeryToken()
+    <label for="code">Código do novo autenticador
+      <input id="code" name="code" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"/>
+    </label>
+    <button type="submit">Confirmar novo autenticador</button>
+    @Html.ValidationSummary()
+  </form>
+</section>

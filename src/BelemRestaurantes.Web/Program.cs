@@ -66,8 +66,10 @@ builder.Services
             var version = user is null ? null : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(user.PasswordHash)));
             var roles = user is null ? [] : await users.GetRolesAsync(user.Id, context.HttpContext.RequestAborted);
             var cookieRoles = context.Principal?.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value) ?? [];
+            var rotate = user?.MustRotateMfa == true ? "true" : "false";
             if (user is null || user.IsLockedOut(DateTimeOffset.UtcNow) || !user.TwoFactorEnabled ||
                 context.Principal?.FindFirst("credential_version")?.Value != version ||
+                context.Principal?.FindFirst("must_rotate_mfa")?.Value != rotate ||
                 !roles.Order().SequenceEqual(cookieRoles.Order()))
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
@@ -137,6 +139,18 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
+{
+    try
+    {
+        using var migrationScope = app.Services.CreateScope();
+        await migrationScope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.Migrations.MigrationRunner>().ApplyAsync(CancellationToken.None);
+    }
+    catch (MySqlConnector.MySqlException ex) when (ex.Number is 1044 or 1045)
+    {
+        app.Logger.LogWarning("Migrações não aplicadas neste processo porque a conta do banco não tem esse acesso ({ErrorNumber}).", ex.Number);
+    }
+}
 if (args.Contains("--migrate") || args.Contains("--provision-admin"))
 {
     await BelemRestaurantes.Web.AdminMaintenance.RunAsync(app.Services, args.Contains("--migrate"));
@@ -170,10 +184,17 @@ app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.Use(async(context,next)=>{
-    if(context.User.Identity?.IsAuthenticated==true && context.User.FindFirst("must_change_password")?.Value=="true"
-        && (context.Request.Path.StartsWithSegments("/admin")||context.Request.Path.StartsWithSegments("/api/admin"))
-        && !context.Request.Path.StartsWithSegments("/admin/change-password") && !context.Request.Path.StartsWithSegments("/admin/logout"))
+    var path = context.Request.Path;
+    var adminArea = path.StartsWithSegments("/admin") || path.StartsWithSegments("/api/admin");
+    var authenticated = context.User.Identity?.IsAuthenticated == true;
+    if(authenticated && adminArea && context.User.FindFirst("must_change_password")?.Value=="true"
+        && !path.StartsWithSegments("/admin/change-password") && !path.StartsWithSegments("/admin/logout"))
     {context.Response.Redirect("/admin/change-password");return;}
+    if(authenticated && adminArea && context.User.FindFirst("must_rotate_mfa")?.Value=="true"
+        && !path.StartsWithSegments("/admin/mfa/rotate")
+        && !path.StartsWithSegments("/admin/change-password")
+        && !path.StartsWithSegments("/admin/logout"))
+    {context.Response.Redirect("/admin/mfa/rotate");return;}
     await next();
 });
 app.UseAuthorization();

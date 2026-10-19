@@ -15,7 +15,8 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             """
             SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
                    two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
-                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt,must_change_password AS MustChangePassword
+                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt,must_change_password AS MustChangePassword,
+                   must_rotate_mfa AS MustRotateMfa
             FROM admin_users WHERE user_name = @userName AND is_disabled = FALSE AND disabled = FALSE LIMIT 1
             """,
             new { userName },
@@ -31,7 +32,8 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             """
             SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
                    two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
-                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt,must_change_password AS MustChangePassword
+                   access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt,must_change_password AS MustChangePassword,
+                   must_rotate_mfa AS MustRotateMfa
             FROM admin_users WHERE id = @id AND is_disabled = FALSE AND disabled = FALSE LIMIT 1
             """,
             new { id },
@@ -159,6 +161,98 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
             new { id, counter }, cancellationToken: ct)) == 1;
     }
 
+    public async Task ReplaceRecoveryCodesAsync(string id, IReadOnlyList<string> codeHashes, CancellationToken ct)
+    {
+        if (codeHashes.Count is < 1 or > 10) throw new ArgumentOutOfRangeException(nameof(codeHashes));
+        await using var connection = await factory.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "DELETE FROM admin_recovery_codes WHERE user_id = @id AND used_at IS NULL",
+            new { id }, transaction, cancellationToken: ct));
+        foreach (var hash in codeHashes)
+        {
+            if (hash.Length != 64) throw new ArgumentException("Hash de recuperação inválido.", nameof(codeHashes));
+            await connection.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO admin_recovery_codes (user_id, code_hash) VALUES (@id, @hash)",
+                new { id, hash }, transaction, cancellationToken: ct));
+        }
+
+        await transaction.CommitAsync(ct);
+    }
+
+    public async Task<bool> ConsumeRecoveryCodeAsync(string id, string codeHash, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        var consumed = await connection.ExecuteAsync(new CommandDefinition(
+            """
+            UPDATE admin_recovery_codes
+            SET used_at = UTC_TIMESTAMP(6)
+            WHERE user_id = @id AND code_hash = @codeHash AND used_at IS NULL
+            """,
+            new { id, codeHash }, transaction, cancellationToken: ct)) == 1;
+        if (!consumed)
+        {
+            await transaction.RollbackAsync(ct);
+            return false;
+        }
+
+        var marked = await connection.ExecuteAsync(new CommandDefinition(
+            """
+            UPDATE admin_users
+            SET must_rotate_mfa = TRUE
+            WHERE id = @id AND two_factor_enabled = TRUE AND disabled = FALSE AND is_disabled = FALSE
+            """,
+            new { id }, transaction, cancellationToken: ct)) == 1;
+        if (!marked)
+        {
+            await transaction.RollbackAsync(ct);
+            return false;
+        }
+
+        await transaction.CommitAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> RotateMfaAsync(string id, byte[] encryptedSecret, IReadOnlyList<string> codeHashes, CancellationToken ct)
+    {
+        if (encryptedSecret.Length == 0 || codeHashes.Count is < 1 or > 10)
+            return false;
+        await using var connection = await factory.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        var rotated = await connection.ExecuteAsync(new CommandDefinition(
+            """
+            UPDATE admin_users
+            SET two_factor_secret = @secret, two_factor_enabled = TRUE, must_rotate_mfa = FALSE
+            WHERE id = @id AND two_factor_enabled = TRUE AND disabled = FALSE AND is_disabled = FALSE
+            """,
+            new { id, secret = encryptedSecret }, transaction, cancellationToken: ct)) == 1;
+        if (!rotated)
+        {
+            await transaction.RollbackAsync(ct);
+            return false;
+        }
+
+        await connection.ExecuteAsync(new CommandDefinition(
+            "DELETE FROM admin_recovery_codes WHERE user_id = @id AND used_at IS NULL",
+            new { id }, transaction, cancellationToken: ct));
+        foreach (var hash in codeHashes)
+        {
+            if (hash.Length != 64)
+            {
+                await transaction.RollbackAsync(ct);
+                return false;
+            }
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO admin_recovery_codes (user_id, code_hash) VALUES (@id, @hash)",
+                new { id, hash }, transaction, cancellationToken: ct));
+        }
+
+        await transaction.CommitAsync(ct);
+        return true;
+    }
+
     public async Task<string[]> GetRolesAsync(string id, CancellationToken ct)
     {
         using var connection = factory.Create();
@@ -183,11 +277,12 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
         row.Secret,
         row.AccessFailedCount,
         row.LockoutEndAt,
-        null) { MustChangePassword=row.MustChangePassword };
+        null) { MustChangePassword=row.MustChangePassword, MustRotateMfa=row.MustRotateMfa };
 
     private sealed class AdminRow
     {
         public bool MustChangePassword { get; set; }
+        public bool MustRotateMfa { get; set; }
         public string Id { get; set; } = default!;
         public string UserName { get; set; } = default!;
         public string? Email { get; set; } = default!;

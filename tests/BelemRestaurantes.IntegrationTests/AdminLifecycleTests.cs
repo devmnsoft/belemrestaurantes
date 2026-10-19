@@ -105,6 +105,63 @@ public sealed class AdminLifecycleTests
             await db.ExecuteAsync("DELETE FROM audit_events WHERE actor_subject=@id",new{id});
         }
     }
+
+    [Fact]
+    public async Task RecoveryCodeSignsInWithoutDisablingMfaAndCannotBeReused()
+    {
+        using var app=Factory();using var scope=app.Services.CreateScope();
+        var users=scope.ServiceProvider.GetRequiredService<IAdminUserRepository>();var verifier=scope.ServiceProvider.GetRequiredService<IPasswordVerifier>();
+        var totp=scope.ServiceProvider.GetRequiredService<ITotpProvider>();var marker=Guid.NewGuid().ToString("N");var id=Guid.NewGuid().ToString();
+        var password="Xy9!"+Convert.ToBase64String(RandomNumberGenerator.GetBytes(18));var nextPassword="Zz5!"+Convert.ToBase64String(RandomNumberGenerator.GetBytes(18));
+        await users.CreateAsync(new(id,"fixture-recovery-"+marker,marker+"@example.invalid",verifier.Hash(password),false,null,0,null,null),[AdminRoles.PlatformAdmin],default);
+        await using var db=await scope.ServiceProvider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
+        try
+        {
+            await db.ExecuteAsync("UPDATE admin_users SET must_change_password=TRUE WHERE id=@id",new{id});
+            using var client=app.CreateClient(new(){BaseAddress=new("https://localhost"),AllowAutoRedirect=false});
+            var token=Token(await client.GetStringAsync("/admin/login"));
+            var login=await client.PostAsync("/admin/login",Form(token,("userName","fixture-recovery-"+marker),("password",password)));
+            var enrol=await client.GetStringAsync(login.Headers.Location);
+            var enrolled=await client.PostAsync("/admin/mfa/enrol",Form(Token(enrol),("code",totp.GenerateFor(DateTimeOffset.UtcNow,WebUtility.HtmlDecode(Regex.Match(enrol,"class=\"secret\">([^<]+)").Groups[1].Value)))));
+            Assert.EndsWith("/admin/change-password",enrolled.Headers.Location!.ToString());
+            var changePage=await client.GetStringAsync(enrolled.Headers.Location);
+            var recovery=Regex.Matches(changePage,"class=\"recovery-codes\">.*?</ul>",RegexOptions.Singleline).Cast<Match>().SelectMany(m=>Regex.Matches(m.Value,"<code>([^<]+)</code>").Select(c=>c.Groups[1].Value)).ToArray();
+            Assert.Equal(8,recovery.Length);
+            var changed=await client.PostAsync("/admin/change-password",Form(Token(changePage),("currentPassword",password),("password",nextPassword),("confirmation",nextPassword)));
+            Assert.EndsWith("/admin/login",changed.Headers.Location!.ToString());
+            Assert.False(verifier.Verify(password,(await users.FindByIdAsync(id,default))!.PasswordHash));
+            token=Token(await client.GetStringAsync("/admin/login"));
+            Assert.Equal(HttpStatusCode.OK,(await client.PostAsync("/admin/login",Form(token,("userName","fixture-recovery-"+marker),("password",password)))).StatusCode);
+            token=Token(await client.GetStringAsync("/admin/login"));
+            login=await client.PostAsync("/admin/login",Form(token,("userName","fixture-recovery-"+marker),("password",nextPassword)));
+            Assert.Contains("/admin/mfa/verify",login.Headers.Location!.ToString());
+            var recovered=await client.PostAsync("/admin/mfa/recover",Form(Token(await client.GetStringAsync("/admin/mfa/recover")),("code",recovery[0].ToLowerInvariant())));
+            Assert.EndsWith("/admin/mfa/rotate",recovered.Headers.Location!.ToString());
+            var still=await users.FindByIdAsync(id,default);
+            Assert.True(still!.TwoFactorEnabled);Assert.True(still.MustRotateMfa);
+            using var other=app.CreateClient(new(){BaseAddress=new("https://localhost"),AllowAutoRedirect=false});
+            var otherToken=Token(await other.GetStringAsync("/admin/login"));
+            var otherLogin=await other.PostAsync("/admin/login",Form(otherToken,("userName","fixture-recovery-"+marker),("password",nextPassword)));
+            Assert.Contains("/admin/mfa/verify",otherLogin.Headers.Location!.ToString());
+            var replay=await other.PostAsync("/admin/mfa/recover",Form(Token(await other.GetStringAsync("/admin/mfa/recover")),("code",recovery[0])));
+            Assert.Equal(HttpStatusCode.OK,replay.StatusCode);
+            var rotate=await client.GetStringAsync("/admin/mfa/rotate");
+            var secret=WebUtility.HtmlDecode(Regex.Match(rotate,"class=\"secret\">([^<]+)").Groups[1].Value);
+            var rotated=await client.PostAsync("/admin/mfa/rotate",Form(Token(rotate),("code",totp.GenerateFor(DateTimeOffset.UtcNow,secret))));
+            Assert.Equal(HttpStatusCode.OK,rotated.StatusCode);
+            var done=await users.FindByIdAsync(id,default);
+            Assert.True(done!.TwoFactorEnabled);Assert.False(done.MustRotateMfa);
+            var audit=await db.ExecuteScalarAsync<string>("SELECT metadata FROM audit_events WHERE actor_subject=@id AND action='admin.recovery_code_used' ORDER BY id DESC LIMIT 1",new{id});
+            Assert.DoesNotContain(recovery[0],audit,StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(HttpStatusCode.OK,(await client.GetAsync("/admin/dashboard")).StatusCode);
+        }
+        finally
+        {
+            await db.ExecuteAsync("DELETE FROM admin_user_roles WHERE user_id=@id",new{id});
+            await db.ExecuteAsync("DELETE FROM admin_users WHERE id=@id",new{id});
+            await db.ExecuteAsync("DELETE FROM audit_events WHERE actor_subject=@id",new{id});
+        }
+    }
     private static string Token(string html)=>WebUtility.HtmlDecode(Regex.Match(html,"name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
     private static FormUrlEncodedContent Form(string token,params (string Key,string Value)[] pairs)=>new(pairs.Select(p=>new KeyValuePair<string,string>(p.Key,p.Value)).Append(new("__RequestVerificationToken",token)));
     private static WebApplicationFactory<Program> Factory()=>new WebApplicationFactory<Program>().WithWebHostBuilder(builder=>builder.UseEnvironment("Development").ConfigureAppConfiguration((_,config)=>config.AddInMemoryCollection(new Dictionary<string,string?>{["ConnectionStrings:MySql"]=DatabaseEnvironment.ConnectionString()})));
