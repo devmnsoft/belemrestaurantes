@@ -54,8 +54,8 @@ public sealed class MySqlEnrichmentQueueRepository(MySqlConnectionFactory factor
                 locked_until = @lockedUntil,
                 locked_by = @instanceId
             WHERE id IN @ids AND state = 'pending'
-              AND next_attempt_at <= CURRENT_TIMESTAMP(6)
-              AND (locked_until IS NULL OR locked_until < CURRENT_TIMESTAMP(6))
+              AND next_attempt_at <= UTC_TIMESTAMP(6)
+              AND (locked_until IS NULL OR locked_until < UTC_TIMESTAMP(6))
             ORDER BY priority DESC, next_attempt_at ASC
             LIMIT @batchSize;
             """;

@@ -12,6 +12,7 @@ namespace BelemRestaurantes.Web.Controllers;
 public sealed class SearchController(
     ISearchService searchService,
     IRestaurantReadRepository restaurantRepository,
+    ISearchGapWriter searchGaps,
     IGeoMunicipalityRepository? geoRepository = null,
     IGeoDistrictLocalityRepository? localityRepository = null) : Controller
 {
@@ -39,6 +40,7 @@ public sealed class SearchController(
         [FromQuery] double? lat = null,
         [FromQuery] double? lng = null,
         [FromQuery] double radius = 10,
+        [FromQuery] string? tier = null,
         CancellationToken ct = default)
     {
         var searchQuery = new RestaurantSearchQuery(
@@ -47,9 +49,15 @@ public sealed class SearchController(
             Category: category,
             Neighborhood: neighborhood,
             Page: Math.Max(1, page),
-            PageSize: 24, Sort: sort, PhotosOnly: photosOnly, Latitude: lat, Longitude: lng, RadiusKm: radius);
+            PageSize: 24, Sort: sort, PhotosOnly: photosOnly, Latitude: lat, Longitude: lng, RadiusKm: radius, Tier: tier);
 
         var result = await restaurantRepository.SearchAsync(searchQuery, ct);
+        if (result.TotalCount == 0 && !string.IsNullOrWhiteSpace(q))
+        {
+            try { await searchGaps.RecordAsync(q, city, 0, ct); }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+            catch { /* a busca pública não depende do registro da lacuna */ }
+        }
         var filterOptions = await searchService.GetFilterOptionsAsync(ct);
 
         ViewBag.SearchTerm = q;

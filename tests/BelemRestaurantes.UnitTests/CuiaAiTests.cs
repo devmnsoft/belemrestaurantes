@@ -128,7 +128,8 @@ public sealed class CuiaAiTests
 
         Assert.NotNull(response);
         Assert.Contains("Combu", response.AnswerMarkdown, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("popopô", response.AnswerMarkdown, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Cuia Rotas", response.AnswerMarkdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("10 minutos", response.AnswerMarkdown, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -145,6 +146,9 @@ public sealed class CuiaAiTests
         Assert.NotNull(advice);
         Assert.Contains("Tacacá da Dona Maria", advice);
         Assert.Contains("jambu", advice, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("não confirma o cardápio", advice, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("16h30", advice, StringComparison.Ordinal);
+        Assert.DoesNotContain("Filhote", advice, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

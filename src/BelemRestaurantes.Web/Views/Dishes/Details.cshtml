@@ -1,0 +1,18 @@
+@model BelemRestaurantes.Application.Models.TasteGuidePage
+<section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">@(Model.Entry.Kind == "prato" ? "PRATO" : "OCASIÃO")</span><h1>@Model.Entry.Title</h1><p>@Model.Entry.Summary</p><p><a href="/pratos">Todos os pratos</a> · <a href="/ocasioes">Ocasiões</a> · <a href="/busca?q=@Uri.EscapeDataString(Model.Entry.Title)">Buscar no catálogo</a></p></div></section>
+<section class="para-container para-section">
+  <h2>Camada Guia</h2>
+  <p>Lugares promovidos depois de revisão humana e que citam este tema no nome, no bairro ou no cardápio publicado.</p>
+  @if (Model.Guide.Count == 0)
+  { <div class="para-empty"><div><h3>Ainda não há recomendação.</h3><p>Quando uma casa for conferida e promovida à camada Guia, ela aparece aqui. A ausência é informação: o portal não completa a lista com cadastro fiscal.</p></div></div> }
+  else
+  { <div class="para-restaurant-grid">@foreach (var place in Model.Guide) { @await Html.PartialAsync("_RestaurantCard", place) }</div> }
+</section>
+<section class="para-container para-section">
+  <h2>Fichas</h2>
+  <p>Cadastros públicos que mencionam o tema. Não são visita, horário nem qualidade confirmados.</p>
+  @if (Model.Directory.Count == 0)
+  { <p>Nenhuma ficha publicada cita este tema.</p> }
+  else
+  { <div class="para-restaurant-grid">@foreach (var place in Model.Directory) { @await Html.PartialAsync("_RestaurantCard", place) }</div> }
+</section>

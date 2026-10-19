@@ -122,17 +122,23 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
         foreach(var itemId in ids)
         {
             if(!rows.TryGetValue(itemId,out var row)) { results.Add(new(itemId,"Cadastro removido","ignored","O cadastro não existe mais.")); continue; }
-            var blocked=operation is "archive" or "block"?(row.Stage is "pending" or "approved" or "published"?null:"O cadastro já está fora do fluxo ativo.")
+            var blocked=operation=="promote_guide"
+                ?(row.Status=="published"?null:"A camada Guia só promove cadastro já publicado.")
+                :operation is "archive" or "block"?(row.Stage is "pending" or "approved" or "published"?null:"O cadastro já está fora do fluxo ativo.")
                 :row.Status!="pending"?"O cadastro já recebeu uma decisão."
                 :operation=="publish"&&row.Stage!="approved"?"A publicação separada exige aprovação prévia."
                 :operation=="approve_only"&&row.Stage!="pending"?"Este cadastro já foi aprovado."
                 :operation is "approve" or "approve_only" or "publish"?row.BlockReason:null;
             if(blocked is not null) { results.Add(new(row.Id,row.Name,"ignored",blocked)); continue; }
-            if(operation is "approve" or "publish" or "approve_only" or "reject" or "archive" or "block")
+            if(operation=="promote_guide")
+            {
+                await db.ExecuteAsync(new CommandDefinition("UPDATE restaurants SET catalog_tier='guia', updated_at=UTC_TIMESTAMP(6) WHERE id=@itemId AND status='published'",new{itemId},tx,cancellationToken:ct));
+            }
+            else if(operation is "approve" or "publish" or "approve_only" or "reject" or "archive" or "block")
             {
                 var status=operation is "approve" or "publish"?"published":operation=="approve_only"?"pending":operation=="reject"?"rejected":"suspended";
                 var stage=operation=="approve_only"?"approved":operation=="archive"?"archived":operation=="block"?"blocked":status;
-                await db.ExecuteAsync(new CommandDefinition("UPDATE restaurants SET status=@status,moderation_stage=@stage,published_at=CASE WHEN @status='published' THEN UTC_TIMESTAMP(6) ELSE published_at END WHERE id=@itemId",new{status,stage,itemId},tx,cancellationToken:ct));
+                await db.ExecuteAsync(new CommandDefinition("UPDATE restaurants SET status=@status,moderation_stage=@stage,published_at=CASE WHEN @status='published' THEN UTC_TIMESTAMP(6) ELSE published_at END,catalog_tier=CASE WHEN @status='published' THEN 'ficha' ELSE catalog_tier END WHERE id=@itemId",new{status,stage,itemId},tx,cancellationToken:ct));
                 await db.ExecuteAsync(new CommandDefinition("UPDATE moderation_queue SET status=@state,reviewed_by=@actor,reviewed_at=UTC_TIMESTAMP(6) WHERE item_type='restaurant' AND item_id=@itemId AND status='pending'",new{state=operation is "approve" or "approve_only" or "publish"?"approved":"rejected",actor,itemId},tx,cancellationToken:ct));
             }
             else if(operation=="reprocess")
@@ -152,7 +158,7 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
             }
             await db.ExecuteAsync(new CommandDefinition("INSERT INTO audit_events(actor_subject,action,entity_type,entity_id,metadata,occurred_at) VALUES(@actor,@action,'restaurant',@itemId,@metadata,UTC_TIMESTAMP(6))",
                 new{actor,action="restaurant.bulk_"+operation,itemId,metadata=JsonSerializer.Serialize(new{batchId=id,reason})},tx,cancellationToken:ct));
-            results.Add(new(itemId,row.Name,"applied",operation is "approve" or "publish"?"Publicado no catálogo.":operation=="approve_only"?"Aprovado; aguardando publicação.":operation=="archive"?"Arquivado e retirado do catálogo público.":operation=="block"?"Bloqueado e retirado do catálogo público.":operation=="reject"?"Rejeitado com motivo.":"Encaminhado para análise."));
+            results.Add(new(itemId,row.Name,"applied",operation is "approve" or "publish"?"Publicado como ficha. A camada Guia pede promoção depois da conferência.":operation=="promote_guide"?"Promovido à camada Guia.":operation=="approve_only"?"Aprovado; aguardando publicação.":operation=="archive"?"Arquivado e retirado do catálogo público.":operation=="block"?"Bloqueado e retirado do catálogo público.":operation=="reject"?"Rejeitado com motivo.":"Encaminhado para análise."));
         }
         await db.ExecuteAsync(new CommandDefinition("UPDATE moderation_batches SET completed_at=UTC_TIMESTAMP(6),result_json=@result WHERE id=@id",new{id,result=JsonSerializer.Serialize(results)},tx,cancellationToken:ct));
         await tx.CommitAsync(ct);

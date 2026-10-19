@@ -113,6 +113,8 @@ public sealed class CrawlerHostedService : BackgroundService
             var enrichmentService = scope.ServiceProvider.GetService<IEnrichmentService>();
             if (enrichmentService != null)
             {
+                var queuedPhotos = await enrichmentService.EnqueueLicensedPhotoSweepAsync(15, timeoutCts.Token);
+                if (queuedPhotos > 0) _logger.LogInformation("Fila de fotos licenciadas: {Count} estabelecimentos publicados sem foto.", queuedPhotos);
                 enrichedCount = await enrichmentService.RunEnrichmentCycleAsync(10, timeoutCts.Token);
                 if (enrichedCount > 0)
                 {

@@ -56,4 +56,7 @@ public interface IEnrichmentService
     /// Executa um ciclo de processamento da fila de enriquecimento.
     /// </summary>
     Task<int> RunEnrichmentCycleAsync(int batchSize, CancellationToken ct);
+
+    /// <summary>Enfileira publicados sem foto para busca no Wikimedia Commons.</summary>
+    Task<int> EnqueueLicensedPhotoSweepAsync(int limit, CancellationToken ct);
 }

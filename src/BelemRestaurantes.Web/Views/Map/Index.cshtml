@@ -1,0 +1,53 @@
+@model BelemRestaurantes.Web.Models.CatalogMapPage
+@using System.Globalization
+@using BelemRestaurantes.Application.Models
+@{
+    ViewData["Title"] = "Mapa dos publicados";
+    ViewData["MetaDescription"] = "Posição dos estabelecimentos publicados que já têm coordenada. A camada Guia só aparece quando há dono, horário, cardápio ou foto.";
+    string Coord(double value) => value.ToString("0.####", CultureInfo.InvariantCulture);
+}
+<section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">ONDE JÁ HÁ CADASTRO</span><h1>Mapa dos publicados</h1><p>@Model.PublishedWithCoordinates lugares publicados têm coordenada. @Model.GuideCount estão na camada Guia. O desenho usa só essas coordenadas: não é mapa de ruas e não inclui os cadastros pendentes.</p></div></section>
+<section class="para-container para-section">
+  <form action="/mapa" method="get" class="para-search" role="search">
+    <div class="para-search-query"><label for="mapQuery">Nome, bairro ou categoria</label><input id="mapQuery" name="q" type="search" value="@Model.Term" maxlength="80" /></div>
+    <div><label for="mapCity">Município</label><select id="mapCity" name="city"><option value="">Todos</option>@foreach (var city in Model.Cities){<option value="@city" selected="@(string.Equals(city, Model.City, StringComparison.OrdinalIgnoreCase))">@city</option>}</select></div>
+    <button type="submit" class="para-button">Filtrar</button>
+  </form>
+  @if (Model.Places.Count == 0)
+  {
+    <div class="para-empty"><div><h2>Nenhum publicado com coordenada neste filtro.</h2><p>A busca vazia é o resultado. O portal não completa o mapa com cadastro pendente.</p><a href="/mapa" class="para-text-link">Limpar filtro ↗</a></div></div>
+  }
+  else
+  {
+    <figure class="catalog-map">
+      <svg viewBox="0 0 800 640" role="img" aria-labelledby="catalog-map-title">
+        <title id="catalog-map-title">Posição relativa de @Model.Plotted.Count estabelecimentos publicados</title>
+        <rect width="800" height="640" fill="#f7f2e7" />
+        @foreach (var point in Model.Plotted)
+        {
+          var guide = point.Place.CatalogTier == "guia";
+          <a href="/establishment/@point.Place.Id">
+            <circle cx="@Coord(point.X)" cy="@Coord(point.Y)" r="8" fill="@(guide ? "#143f32" : "#a63725")"><title>@point.Place.Name · @point.Place.City</title></circle>
+          </a>
+        }
+      </svg>
+      <figcaption><i class="catalog-dot is-guide"></i> Guia <i class="catalog-dot is-directory"></i> Ficha. Cada ponto abre a ficha. Para ruas, o OpenStreetMap abre em um lugar por vez.</figcaption>
+    </figure>
+    <ol class="catalog-map-list">
+      @foreach (var place in Model.Places)
+      {
+        <li>
+          <a href="/establishment/@place.Id"><strong>@place.Name</strong><span>@place.City@(!string.IsNullOrWhiteSpace(place.Neighborhood) ? " · " + place.Neighborhood : "") · @(place.Category ?? "Sem categoria")</span></a>
+          <span class="para-tier @(place.CatalogTier == "guia" ? "is-guide" : "is-directory")">@(place.CatalogTier == "guia" ? "Guia" : "Ficha")</span>
+          @if (CatalogMapLayout.IsPlottable(place.Latitude, place.Longitude))
+          {
+            <a href="@FormattableString.Invariant($"https://www.openstreetmap.org/?mlat={place.Latitude}&mlon={place.Longitude}#map=17/{place.Latitude}/{place.Longitude}")" target="_blank" rel="noopener noreferrer">Rua no OpenStreetMap ↗</a>
+          }
+          else
+          { <span>Coordenada fora do intervalo útil.</span> }
+        </li>
+      }
+    </ol>
+  }
+  <p><a href="/busca" class="para-text-link">Voltar à busca ↗</a> <a href="/guia" class="para-text-link">Como a camada Guia é decidida ↗</a></p>
+</section>

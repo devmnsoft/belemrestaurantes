@@ -293,18 +293,18 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
             }, ct);
         }
 
-        // Discovery 360: Adicionar foto licenciada externa se extraída
-        if (!string.IsNullOrWhiteSpace(extracted.PhotoUrl) && _mediaRepo != null)
+        // Só guarda imagem do próprio site, e ainda assim pendente: schema.org não é licença.
+        if (_mediaRepo != null && LicensedImageRules.TryOfficialSiteImage(extracted.SourceUrl, extracted.PhotoUrl, out var officialImage))
         {
             await _mediaRepo.AddMediaAsync(new RestaurantMedia
             {
                 RestaurantId = restaurantId,
-                MediaType = "photo_dish",
-                MediaUrl = extracted.PhotoUrl,
+                MediaType = "photo_facade",
+                MediaUrl = officialImage,
                 PriorityTier = (int)MediaPriorityTier.LicensedExternal,
                 SourceOrigin = extracted.SourceUrl,
-                AttributionText = extracted.PhotoAttribution ?? $"Foto via {extracted.SourceUrl}",
-                LicenseType = "licensed_external",
+                AttributionText = "Imagem publicada no site do estabelecimento. A licença ainda não foi conferida por uma pessoa.",
+                LicenseType = "site_a_conferir",
                 Status = "pending"
             }, ct);
         }

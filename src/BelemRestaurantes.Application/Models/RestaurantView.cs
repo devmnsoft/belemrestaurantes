@@ -22,6 +22,10 @@ public sealed record RestaurantView(
     public string? Phone { get; init; }
     public string? BusinessStatus { get; init; }
     public string? SourceUrl { get; init; }
+    /// <summary>guia = revisão humana; ficha = cadastro público sem visita confirmada.</summary>
+    public string CatalogTier { get; init; } = "ficha";
+    public string? PhotoAttribution { get; init; }
+    public string? PhotoLicense { get; init; }
     public RestaurantView() : this(0, "", "", null, null, null, null, null, null, null, null, null, default) { }
 }
 
@@ -39,7 +43,9 @@ public sealed record RestaurantSearchQuery(
     bool PhotosOnly = false,
     double? Latitude = null,
     double? Longitude = null,
-    double RadiusKm = 10)
+    double RadiusKm = 10,
+    string? Tier = null,
+    bool GuideOnly = false)
 {
     /// <summary>Limites aplicados pela regra, não pelo controller.</summary>
     public int SafePage => Math.Clamp(Page, 1, 10_000);
@@ -53,6 +59,7 @@ public sealed record RestaurantSearchQuery(
         && lat is >= -90 and <= 90 && lng is >= -180 and <= 180;
     public double SafeRadiusKm => double.IsFinite(RadiusKm) ? Math.Clamp(RadiusKm, 1, 100) : 10;
     public string SafeSort => Sort is "recent" or "city" ? Sort : Sort == "nearby" && HasLocation ? "nearby" : "name";
+    public string? SafeTier => GuideOnly ? "guia" : Tier is "guia" or "ficha" ? Tier : null;
 }
 
 /// <summary>Resultado paginado.</summary>

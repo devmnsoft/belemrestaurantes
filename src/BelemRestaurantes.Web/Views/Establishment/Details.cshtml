@@ -2,9 +2,9 @@
 @using BelemRestaurantes.Application.Abstractions
 @{
     ViewData["Title"] = $"{Model.Name} — Belém Restaurantes";
-    ViewData["MetaDescription"] = $"Conheça {Model.Name} em {Model.City} ({Model.Neighborhood}): cardápio digital, horários, fotos, notas do Selo Cuia e avaliações da comunidade.";
+    ViewData["MetaDescription"] = $"{Model.Name} em {Model.City}. Ficha publicada com o que a fonte informou. Horário, cardápio e foto só aparecem quando existem.";
     ViewData["OgTitle"] = $"{Model.Name} | Belém Restaurantes";
-    ViewData["OgDescription"] = $"Cardápio, fotos e avaliações de {Model.Name} em {Model.City}. O Pará tem sabor!";
+    ViewData["OgDescription"] = $"Cadastro de {Model.Name} em {Model.City}. O que não está na ficha não foi confirmado.";
     if (!string.IsNullOrEmpty(Model.PhotoUrl))
     {
         ViewData["OgImage"] = Model.PhotoUrl;
@@ -14,6 +14,7 @@
     var gallery = ViewData["Gallery"] as RestaurantGallery;
     var experiences = ViewData["Experiences"] as IReadOnlyList<ExperienceView> ?? [];
     var recipes=ViewData["Recipes"] as IReadOnlyList<BelemRestaurantes.Application.Models.ParaRecipe>??[];
+    var facts=ViewData["FactSheet"] as BelemRestaurantes.Application.Models.CatalogFactSheet;
 }
 
 <div class="cuia-container cuia-section">
@@ -21,12 +22,12 @@
   <article class="para-detail-hero">
     <div class="para-detail-media">
       @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl) && (Model.PhotoUrl.StartsWith("/media/", StringComparison.Ordinal) || (Uri.TryCreate(Model.PhotoUrl, UriKind.Absolute, out var heroPhotoUri) && heroPhotoUri.Scheme == "https")))
-      { <img src="@Model.PhotoUrl" alt="Foto de @Model.Name" width="900" height="700" fetchpriority="high" /> }
+      { <figure class="para-licensed-photo"><img src="@Model.PhotoUrl" alt="Foto de @Model.Name" width="900" height="700" fetchpriority="high" />@if(!string.IsNullOrWhiteSpace(Model.PhotoAttribution)){<figcaption>Foto: @Model.PhotoAttribution@if(!string.IsNullOrWhiteSpace(Model.PhotoLicense)){<span> · @Model.PhotoLicense</span>}</figcaption>}</figure> }
       else
       { @await Html.PartialAsync("_CategoryArtwork",Model.Category ?? "Restaurante") }
       @if(cuiaBadges.Count>0) { <div class="para-detail-badges">@foreach(var badge in cuiaBadges) { <span class="cuia-tag cuia-tag-tucupi">Selo Cuia · @badge.BadgeTitle</span> }</div> }
     </div>
-    <div class="para-detail-info"><span class="para-eyebrow">@Model.Category · @Model.City</span><h1>@Model.Name</h1><p class="para-detail-address">@(Model.Address ?? "Endereço completo em revisão") @(!string.IsNullOrWhiteSpace(Model.Neighborhood) ? "· " + Model.Neighborhood : "")</p>
+    <div class="para-detail-info"><span class="para-tier @(Model.CatalogTier=="guia"?"is-guide":"is-directory")">@(Model.CatalogTier=="guia"?"Camada Guia · revisão humana":"Ficha cadastral · sem visita confirmada")</span><span class="para-eyebrow">@Model.Category · @Model.City</span><h1>@Model.Name</h1><p class="para-detail-address">@(Model.Address ?? "Endereço completo em revisão") @(!string.IsNullOrWhiteSpace(Model.Neighborhood) ? "· " + Model.Neighborhood : "")</p>
       @if(Model.BusinessStatus is "temporarily_closed" or "permanently_closed") { <p class="para-closed">@(Model.BusinessStatus=="temporarily_closed"?"Fonte informa fechamento temporário. Confirme antes de ir.":"Fonte informa encerramento das atividades.")</p> }
       else { <p class="para-detail-note">Vai visitar? Confirme os horários e o funcionamento com o estabelecimento.</p> }
       <div class="para-detail-main-actions">
@@ -43,17 +44,36 @@
       <a href="/sugerir?restaurantId=@Model.Id">Sugerir uma correção</a></div>
     </div>
   </article>
+  @if (facts is not null)
+  {
+    <section class="fact-sheet" lang="pt-BR" aria-labelledby="fact-sheet-title">
+      <h2 id="fact-sheet-title">O que esta ficha confirma</h2>
+      <dl>
+        <div><dt>Endereço</dt><dd>@(facts.HasAddress ? "Informado" : "Não informado")</dd></div>
+        <div><dt>Coordenada</dt><dd>@(facts.HasCoordinates ? "Informada" : "Não informada")</dd></div>
+        <div><dt>Telefone</dt><dd>@(facts.HasPhone ? "Informado" : "Não informado")</dd></div>
+        <div><dt>Foto com licença</dt><dd>@(facts.HasPhoto ? "Publicada" : "Não há")</dd></div>
+        <div><dt>Horário vigente</dt><dd>@(facts.HasHours ? "Informado" : "Não confirmado")</dd></div>
+        <div><dt>Cardápio</dt><dd>@(facts.HasMenu ? "Itens publicados" : "Nenhum item")</dd></div>
+        <div><dt>Responsável</dt><dd>@(facts.HasOwner ? "Vinculado" : "Não reivindicado")</dd></div>
+      </dl>
+      @if (!facts.HasOwner)
+      { <p><a href="/partner/claim/@Model.Id" class="para-button">Este lugar é seu? Reivindique e complete a ficha</a></p> }
+      @if (facts.HasCoordinates)
+      { <p><a href="/mapa?city=@Uri.EscapeDataString(Model.City)" class="para-text-link">Ver no mapa dos publicados ↗</a></p> }
+    </section>
+  }
   <div class="para-detail-quick-links"><a href="/cardapio/@Model.Id">Ver cardápio ↗</a><a href="/experience/create?restaurantId=@Model.Id">Contar minha experiência ↗</a><a href="/partner/claim/@Model.Id">Esse restaurante é seu? Reivindique ↗</a></div>
   
   <section class="visit-panel cuia-ai-sommelier-panel" lang="pt-BR" aria-labelledby="sommelier-heading" style="background:#0d281e;color:#fffdf5;border:2px solid #efb645;border-radius:18px;padding:24px;margin-bottom:24px;">
-    <span class="para-eyebrow" style="color:#ffe2a0;">SOMMELIER GASTRONÔMICO · CUIA IA</span>
-    <h2 id="sommelier-heading" style="font-family:var(--para-serif);font-size:1.6rem;color:#fffdf5;margin:8px 0 12px;">Dica do Chef & Concierge da Amazônia</h2>
+    <span class="para-eyebrow" style="color:#ffe2a0;">O QUE O CADASTRO PERMITE DIZER</span>
+    <h2 id="sommelier-heading" style="font-family:var(--para-serif);font-size:1.6rem;color:#fffdf5;margin:8px 0 12px;">Leitura da ficha</h2>
     <div id="ai-restaurant-advice" class="cuia-ai-advice-content" style="line-height:1.6;font-size:1.05rem;color:#f3eedc;">
-      <p>💡 Descubra o prato imperdível, o melhor horário e combinações autênticas da culinária paraense selecionadas pela nossa Inteligência Artificial.</p>
+      <p>A leitura usa só cidade, categoria e endereço desta ficha. Ela não escolhe prato, horário nem preço.</p>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;align-items:center;">
       <button type="button" class="para-button" id="btn-ask-sommelier" data-restaurant-id="@Model.Id" style="background:#efb645;color:#0d281e;font-weight:800;border:none;cursor:pointer;padding:10px 18px;border-radius:8px;">
-        Consultar Dica da Cuia IA ✨
+        Ler o que a ficha permite dizer
       </button>
       <a href="/cuia-ia?q=@Uri.EscapeDataString("O que pedir no " + Model.Name + " em " + Model.City + "?")" class="para-text-link" style="color:#ffe2a0;font-weight:600;">
         Fazer outra pergunta à Cuia IA ↗
@@ -76,7 +96,7 @@
           <a href="/cardapio/@Model.Id" class="cuia-btn cuia-btn-primary cuia-btn-sm">Acessar Cardápio →</a>
         </div>
         <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; margin: 0;">
-          Consulte os pratos típicos, preços atualizados, alérgenos e opções regionais disponíveis.
+          O cardápio só lista o que o responsável publicou. Sem itens, a página avisa que não há cardápio.
         </p>
       </div>
 
@@ -84,7 +104,7 @@
       <div class="cuia-card" style="margin-bottom: 24px; padding: 24px;">
         <h3 style="font-size: 18px; font-weight: 800; color: var(--floresta-900, #113F32); margin-bottom: 12px;">Mobilidade Urbana & Como Chegar</h3>
         <p style="color: var(--texto-secundario, #4b635a); font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-          Use o endereço ou o ponto no mapa para planejar seu trajeto até @Model.City. Para transporte público ou travessias, confirme linhas, horários e pontos de embarque com os operadores.
+          Use o endereço ou a coordenada informada para abrir o trajeto até @Model.City. Linha, horário de barco e tarifa só aparecem quando há fonte vigente.
         </p>
         <a href="https://www.google.com/maps/dir/?api=1&destination=@Uri.EscapeDataString(Model.Name + " " + Model.Address + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="cuia-btn cuia-btn-secondary cuia-btn-sm" style="width: 100%; text-align: center;">
           Traçar Rota no Google Maps ↗

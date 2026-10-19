@@ -47,4 +47,25 @@ public sealed class VisitController(IRestaurantReadRepository restaurants,IOpera
             """,new{date=local.Date},cancellationToken:ct))).AsList();
         return View("Index",new VisitPlanModel(restaurant,request,schedule,assessment,routes,choices,fares));
     }
+
+    [HttpGet("/travessias")]
+    public async Task<IActionResult> Crossings(CancellationToken ct)
+    {
+        await using var db = await factory.OpenAsync(ct);
+        var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, OpeningHours.ParaZone).Date;
+        var fares = (await db.QueryAsync<FareView>(new CommandDefinition("""
+            SELECT f.service_name ServiceName, f.mode Mode, f.amount Amount, f.valid_from ValidFrom, f.valid_until ValidUntil,
+                f.conditions Conditions, f.confidence Confidence, s.source_url SourceUrl, s.name SourceName
+            FROM mobility_fares f
+            JOIN mobility_sources s ON s.id = f.source_id
+            WHERE s.enabled = TRUE AND s.kind = 'river' AND s.expires_at > UTC_TIMESTAMP(6)
+              AND f.mode = 'boat' AND f.valid_from <= @date AND f.valid_until >= @date
+            ORDER BY f.service_name
+            LIMIT 50
+            """, new { date = today }, cancellationToken: ct))).AsList();
+        ViewData["Title"] = "Travessias";
+        ViewData["MetaDescription"] = "Tarifas e referências de barco somente quando a fonte está vigente.";
+        ViewData["AtlasEditorial"] = true;
+        return View(fares);
+    }
 }

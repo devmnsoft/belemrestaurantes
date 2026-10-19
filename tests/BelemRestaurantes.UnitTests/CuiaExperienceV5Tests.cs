@@ -25,7 +25,7 @@ public class CuiaExperienceV5Tests
     {
         // Frente 1 & 2: Todas as migrações embutidas devem ser encontradas e ordenadas
         var scripts = MigrationRunner.LoadScripts();
-        Assert.Equal(29, scripts.Count);
+        Assert.Equal(31, scripts.Count);
 
         for (int i = 0; i < scripts.Count; i++)
         {

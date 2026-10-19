@@ -12,13 +12,14 @@
         ["sort"]=query.SafeSort,["photosOnly"]=query.PhotosOnly.ToString(),["page"]=page.ToString(),
         ["lat"]=query.HasLocation?query.Latitude?.ToString(CultureInfo.InvariantCulture):null,
         ["lng"]=query.HasLocation?query.Longitude?.ToString(CultureInfo.InvariantCulture):null,
-        ["radius"]=query.SafeRadiusKm.ToString(CultureInfo.InvariantCulture)
+        ["radius"]=query.SafeRadiusKm.ToString(CultureInfo.InvariantCulture),
+        ["tier"]=query.SafeTier
     });
 }
 <section class="para-explore-hero"><div class="para-container">
   <span class="para-eyebrow">@T["SearchEyebrow"]</span><h1>@T["SearchHeadline"]<br /><em>@T["SearchHeadlineAccent"]</em></h1>
   <p>@T["SearchIntro"]</p>
-  <div class="para-explore-actions"><button type="button" class="para-button" data-nearby data-location-unavailable="@T["SearchLocationUnavailable"]" data-location-loading="@T["SearchLocationLoading"]" data-location-error="@T["SearchLocationError"]">@await Html.PartialAsync("_ParaIcon", "mobility") @T["SearchNearby"]</button><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div>
+  <div class="para-explore-actions"><button type="button" class="para-button" data-nearby data-location-unavailable="@T["SearchLocationUnavailable"]" data-location-loading="@T["SearchLocationLoading"]" data-location-error="@T["SearchLocationError"]">@await Html.PartialAsync("_ParaIcon", "mobility") @T["SearchNearby"]</button><a href="/mapa" class="para-text-link">Mapa dos publicados ↗</a><a href="/pratos" class="para-text-link">Pratos do Pará ↗</a><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div>
   <p id="nearby-status" role="status" aria-live="polite" class="para-nearby-status">@(query.HasLocation ? T["SearchNearbyActive",query.SafeRadiusKm].Value : T["SearchNearbyHelp"].Value)</p>
 </div></section>
 <div class="para-container">@await Html.PartialAsync("_CategoryShortcuts",query.Category ?? "")</div>
@@ -34,6 +35,7 @@
       <label for="searchCategory">@T["SearchType"]</label><select id="searchCategory" name="category"><option value="">@T["AtlasAllFlavours"]</option>@if(!string.IsNullOrWhiteSpace(query.Category) && !(filters?.Categories.Contains(query.Category) ?? false)){<option value="@query.Category" selected>@query.Category</option>}@foreach (var category in filters?.Categories ?? []) { <option value="@category" selected="@(category==query.Category)">@category</option> }</select>
       <label for="searchNeighborhood">@T["SearchNeighbourhood"]</label><select id="searchNeighborhood" name="neighborhood"><option value="">@T["SearchAllNeighbourhoods"]</option>@foreach (var neighborhood in filters?.Neighborhoods ?? []) { <option value="@neighborhood" selected="@(neighborhood==query.Neighborhood)">@neighborhood</option> }</select>
       <label for="searchSort">@T["SearchSort"]</label><select id="searchSort" name="sort"><option value="name" selected="@(query.SafeSort=="name")">@T["SearchSortName"]</option><option value="recent" selected="@(query.SafeSort=="recent")">@T["SearchSortRecent"]</option><option value="city" selected="@(query.SafeSort=="city")">@T["SearchSortCity"]</option>@if(query.HasLocation) { <option value="nearby" selected="@(query.SafeSort=="nearby")">@T["SearchSortNearby"]</option> }</select>
+      <label for="searchTier">Confiança</label><select id="searchTier" name="tier"><option value="">Guia e ficha</option><option value="guia" selected="@(query.SafeTier=="guia")">Só camada Guia</option><option value="ficha" selected="@(query.SafeTier=="ficha")">Só fichas</option></select>
       <label class="para-filter-check"><input type="checkbox" name="photosOnly" value="true" checked="@query.PhotosOnly" /> @T["SearchWithPhoto"]</label>
       @if (query.HasLocation)
       {

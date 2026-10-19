@@ -45,19 +45,10 @@ public sealed class CuiaAiService(
         var searchResult = await restaurantRepo.SearchAsync(new RestaurantSearchQuery(
             Term: searchTerm,
             City: detectedCity,
-            PageSize: 6
+            PageSize: 6,
+            GuideOnly: true
         ), ct);
-
-        // Se a busca específica retornar vazia, busca geral por cidade ou padrão
-        var candidates = searchResult.Items.ToList();
-        if (candidates.Count == 0)
-        {
-            var fallbackSearch = await restaurantRepo.SearchAsync(new RestaurantSearchQuery(
-                City: detectedCity ?? "Belém",
-                PageSize: 4
-            ), ct);
-            candidates = fallbackSearch.Items.ToList();
-        }
+        var candidates = searchResult.Items.Take(4).ToList();
 
         var recommendations = candidates.Take(4).Select(r => new CuiaAiRecommendation(
             Id: r.Id,
@@ -90,17 +81,6 @@ public sealed class CuiaAiService(
                 Difficulty: r.Difficulty
             )).ToList();
 
-        if (matchingRecipes.Count == 0 && allRecipesResult.Items.Count > 0)
-        {
-            matchingRecipes = allRecipesResult.Items.Take(1).Select(r => new CuiaAiRecipeMatch(
-                Slug: r.Slug,
-                Title: r.Title,
-                Subtitle: r.Subtitle,
-                TotalMinutes: r.TotalMinutes,
-                Difficulty: r.Difficulty
-            )).ToList();
-        }
-
         // 4. Curiosidades e Dicas Culturais
         var curiosities = SelectCuriosities(pLower);
         var followUps = GenerateFollowUps(pLower, detectedCity);
@@ -117,7 +97,7 @@ public sealed class CuiaAiService(
                     Você é o Sommelier e Concierge da Cuia IA do portal 'Belém Restaurantes — O Pará tem sabor'.
                     Sua personalidade é acolhedora, vibrante, poética e conhecedora íntima dos ingredientes e tradições paraenses (tucupi, jambu, chicória do Pará, aviú, filhote na brasa, maniçoba cozida 7 dias, açaí puro batido com farinha d'água de Bragança).
                     Use formatação Markdown elegante (títulos com ##, negrito, listas). Seja objetivo e empolgante.
-                    Cite os estabelecimentos e pratos sugeridos de acordo com o contexto fornecido.
+                    Cite somente estabelecimentos da lista restaurantes_encontrados. Se a lista estiver vazia, diga que a camada Guia ainda não tem lugar conferido e aponte a busca por prato. Não invente horário de barco, tarifa, ponto de embarque nem prato que o cadastro não cita.
                     """;
 
                 var contextPayload = JsonSerializer.Serialize(new
@@ -175,36 +155,27 @@ public sealed class CuiaAiService(
         if (restaurant == null) return "Este restaurante não está disponível no catálogo público no momento.";
 
         var sb = new StringBuilder();
-        sb.AppendLine($"### 🌿 Dica do Sommelier Cuia IA para {restaurant.Name}");
+        sb.AppendLine($"### O que o cadastro de {restaurant.Name} permite dizer");
         sb.AppendLine();
-        sb.AppendLine($"Localizado em **{restaurant.City}**" + (!string.IsNullOrWhiteSpace(restaurant.Neighborhood) ? $", no bairro **{restaurant.Neighborhood}**" : "") + ".");
-        sb.AppendLine();
-
+        sb.Append("Publicado em **").Append(restaurant.City).Append("**");
+        if (!string.IsNullOrWhiteSpace(restaurant.Neighborhood))
+            sb.Append(", no bairro **").Append(restaurant.Neighborhood).Append("**");
+        sb.AppendLine(".");
+        if (!string.IsNullOrWhiteSpace(restaurant.Category))
+            sb.AppendLine($"A categoria cadastrada é **{restaurant.Category}**. Isso não confirma o cardápio desta casa.");
+        sb.AppendLine(string.IsNullOrWhiteSpace(restaurant.Address)
+            ? "Endereço não informado."
+            : $"Endereço informado: {restaurant.Address}.");
+        if (string.IsNullOrWhiteSpace(restaurant.Phone))
+            sb.AppendLine("Telefone não informado.");
+        if (string.IsNullOrWhiteSpace(restaurant.PhotoUrl))
+            sb.AppendLine("Não há foto com licença nesta ficha.");
+        sb.AppendLine("Horário, preço e travessia só entram com fonte vigente. Este texto não inventa prato nem hora.");
         if (restaurant.Category?.Contains("Tacacá", StringComparison.OrdinalIgnoreCase) == true)
-        {
-            sb.AppendLine("✨ **Como aproveitar ao máximo:** O tacacá é uma instituição das tardes amazônicas (costuma ser servido a partir das 16h30). Peça a cuia bem quente, com bastante jambu para sentir o tremor característico, tucupi fervido e camarão seco graúdo. Beba diretamente na cuia, usando o palito apenas para o camarão e o jambu!");
-        }
+            sb.AppendLine("Nota cultural, separada desta casa: o tacacá paraense leva tucupi, jambu e camarão. Isso não confirma que este endereço sirva o prato agora.");
         else if (restaurant.Category?.Contains("Açaí", StringComparison.OrdinalIgnoreCase) == true)
-        {
-            sb.AppendLine("✨ **Como aproveitar ao máximo:** Peça o açaí tradicional grosso em tigela funda. Para a experiência 100% paraense, acompanhe com peixe frito crocante e uma porção generosa de farinha d'água de Bragança. Açúcar é opcional, mas os tradicionais degustam o fruto puro.");
-        }
-        else if (restaurant.Category?.Contains("Peixe", StringComparison.OrdinalIgnoreCase) == true || restaurant.Name.Contains("Peixe", StringComparison.OrdinalIgnoreCase))
-        {
-            sb.AppendLine("✨ **Prato imperdível:** Experimente o **Filhote na brasa** (um dos peixes de couro mais nobres dos rios da Amazônia, com carne branca, macia e sem espinhos pequenos) ou a clássica **Caldeirada Paraense** perfumada com chicória do Pará e ovos cozidos.");
-        }
-        else
-        {
-            sb.AppendLine($"✨ **Dica de mesa:** Explore o cardápio e pergunte sempre pelos pratos do dia preparados com temperos frescos regionais (tucupi, chicória paraense, cheiro-verde e pimenta-de-cheiro).");
-        }
-
-        if (!string.IsNullOrWhiteSpace(restaurant.Address))
-        {
-            sb.AppendLine();
-            sb.AppendLine($"📍 **Endereço:** {restaurant.Address}");
-        }
-
-        sb.AppendLine();
-        sb.AppendLine($"💡 *Planeje seu deslocamento pelo Cuia Rotas para conferir linhas de ônibus, travessias fluviais e horários.*");
+            sb.AppendLine("Nota cultural, separada desta casa: o açaí no Pará é o fruto batido, muitas vezes com farinha e peixe. Isso não confirma o preparo deste endereço.");
+        sb.AppendLine("O caminho fica no Cuia Rotas. Quem responde pelo lugar reivindica a ficha para completar horário e cardápio.");
 
         return sb.ToString();
     }
@@ -278,7 +249,7 @@ public sealed class CuiaAiService(
         if (r.Neighborhood?.Contains("Campina", StringComparison.OrdinalIgnoreCase) == true || r.Neighborhood?.Contains("Reduto", StringComparison.OrdinalIgnoreCase) == true)
             return "Localização central e histórica com culinária autoral e regional marcante.";
 
-        return "Estabelecimento verificado no catálogo gastronômico oficial.";
+        return "Cadastro publicado na camada Guia. Confirme horário e prato com a casa.";
     }
 
     private static string GenerateAutonomousEditorialResponse(
@@ -308,9 +279,7 @@ public sealed class CuiaAiService(
         }
         else if (p.Contains("combu") || p.Contains("rio") || p.Contains("barco"))
         {
-            sb.AppendLine("A travessia para a **Ilha do Combu** é um dos passeios gastronômicos mais encantadores da Amazônia. O embarque ocorre nos barcos popopô na Praça Princesa Isabel (bairro Condor). Em menos de 10 minutos de navegação pelo Rio Guamá, você chega a restaurantes sobre palafitas na mata ciliar.");
-            sb.AppendLine();
-            sb.AppendLine("Não deixe de provar os peixes assados na folha de bananeira e visitar as pequenas fábricas artesanais de chocolate de cacau nativo da ilha.");
+            sb.AppendLine("A ida à **Ilha do Combu** é de barco. Este portal só mostra ponto, horário ou tarifa quando essa informação está vigente em [Cuia Rotas](/travessias). Até lá, confirme a travessia no dia.");
         }
         else if (p.Contains("vegetariano") || p.Contains("vegano"))
         {
@@ -327,10 +296,15 @@ public sealed class CuiaAiService(
             sb.AppendLine("Recomendamos começar pelos polos clássicos: a orla da **Estação das Docas** para alta gastronomia e vista da Baía do Guajará, os boxes do **Ver-o-Peso** para vivenciar o pulsar da cultura popular, e os charmosos bistrôs dos bairros **Nazaré** e **Umarizal**.");
         }
 
-        if (recs.Count > 0)
+        if (recs.Count == 0)
         {
             sb.AppendLine();
-            sb.AppendLine("### 🍽️ Lugares selecionados do catálogo:");
+            sb.AppendLine("A camada **Guia** ainda não tem um lugar conferido para este pedido. Uma ficha cadastral não é recomendação de visita. Veja os pratos em [Pratos do Pará](/pratos) e as travessias com fonte vigente em [Travessias](/travessias).");
+        }
+        else
+        {
+            sb.AppendLine();
+            sb.AppendLine("### Lugares da camada Guia:");
             foreach (var r in recs)
             {
                 var loc = !string.IsNullOrWhiteSpace(r.Neighborhood) ? $"{r.Neighborhood}, {r.City}" : r.City;

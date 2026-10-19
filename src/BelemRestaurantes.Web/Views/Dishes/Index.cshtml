@@ -1,0 +1,9 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Data.TasteEntry>
+@{ ViewData["Title"] = "Pratos do Pará"; }
+<section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">O QUE COMER</span><h1>Pratos que o Pará pede pelo nome.</h1><p>Cada página separa a camada Guia, revista por uma pessoa, da ficha cadastral. Cadastro não significa que a casa serve o prato hoje.</p></div></section>
+<section class="para-container para-section"><div class="taste-grid">
+@foreach (var dish in Model)
+{
+  <a class="taste-card" href="/pratos/@dish.Slug"><span class="para-eyebrow">PRATO</span><h2>@dish.Title</h2><p>@dish.Summary</p></a>
+}
+</div><p><a class="para-text-link" href="/ocasioes">Ver por ocasião ↗</a></p></section>

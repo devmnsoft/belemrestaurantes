@@ -17,6 +17,12 @@ public interface IRestaurantReadRepository
     Task<IReadOnlyList<string>> ListCategoriesAsync(CancellationToken ct);
     Task<IReadOnlyDictionary<string,int>> CountPublishedByCityAsync(CancellationToken ct)
         => Task.FromResult<IReadOnlyDictionary<string,int>>(new Dictionary<string,int>());
+
+    Task<IReadOnlyList<CatalogMapPoint>> ListPublishedMapAsync(CancellationToken ct)
+        => Task.FromResult<IReadOnlyList<CatalogMapPoint>>([]);
+
+    Task<CatalogFactSheet?> GetFactSheetAsync(long id, CancellationToken ct)
+        => Task.FromResult<CatalogFactSheet?>(null);
 }
 
 /// <summary>Operações de ingested do catálogo usadas pelo worker.</summary>

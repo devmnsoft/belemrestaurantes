@@ -47,6 +47,7 @@ public sealed class EstablishmentController(
         ViewData["OperationSchedule"]=operation;
         ViewData["OpeningAssessment"]=OpeningHours.Evaluate(operation,DateTimeOffset.UtcNow,DateTimeOffset.UtcNow);
         ViewData["Recipes"]=await recipes.ForRestaurantAsync(id,ct);
+        ViewData["FactSheet"]=await repo.GetFactSheetAsync(id,ct);
 
         return View(establishment);
     }

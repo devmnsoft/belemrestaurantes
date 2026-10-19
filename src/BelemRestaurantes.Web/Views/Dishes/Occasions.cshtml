@@ -1,0 +1,8 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Data.TasteEntry>
+<section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">QUANDO</span><h1>A mesa muda com o dia.</h1><p>Domingo, Círio, visita curta, almoço de trabalho, família e ilha. Travessia só entra com fonte vigente.</p></div></section>
+<section class="para-container para-section"><div class="taste-grid">
+@foreach (var item in Model)
+{
+  <a class="taste-card" href="/ocasioes/@item.Slug"><span class="para-eyebrow">OCASIÃO</span><h2>@item.Title</h2><p>@item.Summary</p></a>
+}
+</div></section>

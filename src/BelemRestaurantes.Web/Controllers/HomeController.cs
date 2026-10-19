@@ -45,7 +45,7 @@ public sealed class HomeController(
             .Select(c=>c.Name).OrderBy(n=>n).ToArray());
         var catTask = LoadAsync(() => restaurantRepository.ListCategoriesAsync(ct), categories, "Categorias");
         var trailsTask = LoadAsync(() => trailService.ListTrailsAsync(ct), trails, "Roteiros");
-        var featuredTask = LoadAsync(async () => (await restaurantRepository.SearchAsync(new RestaurantSearchQuery(Page: 1, PageSize: 6), ct)).Items, featured, "Restaurantes");
+        var featuredTask = LoadAsync(async () => (await restaurantRepository.SearchAsync(new RestaurantSearchQuery(Page: 1, PageSize: 6, GuideOnly: true), ct)).Items, featured, "Restaurantes");
         await Task.WhenAll(cuiaTask, expTask, citiesTask, catTask, trailsTask, featuredTask);
         cuiaBadges = await cuiaTask;
         experiences = await expTask;

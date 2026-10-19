@@ -1,5 +1,7 @@
 # Belém Restaurantes — O Pará tem sabor
 
+> **Camada Guia e fotos com licença:** a home e a Cuia IA recomendam só a camada Guia. Publicar em lote cria ficha. Sem dono, horário, cardápio ou foto licenciada, o publicado volta a ficha. `/mapa` desenha só quem está publicado e tem coordenada. `/pratos` e `/ocasioes` separam recomendação de cadastro. O robô só grava foto do Wikimedia Commons com licença livre e o nome do lugar no arquivo; imagem do site da casa fica pendente. `/travessias` mostra barco apenas com fonte vigente. A leitura da ficha não inventa prato nem hora.
+
 > **Sprint 25 — catálogo e leitura:** corrigida a consulta administrativa, com artes por categoria, controles para baixa visão, gestão de vídeos e lotes de 1.000 registros (teto configurável de 2.000). Consulte [funcionalidades, testes e limites da validação](docs/SPRINT25-PORTAL.md).
 
 > **Aprovação mais prática:** navegação no topo e no fim, salto para página, seleção entre páginas, filtros preservados e consultas por IDs com índices novos. Consulte [mudanças, medições e testes da paginação](docs/SPRINT25-PAGINACAO.md).

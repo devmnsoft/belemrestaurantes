@@ -18,7 +18,9 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
                instagram AS Instagram, facebook AS Facebook, tiktok AS TikTok,
                youtube AS YouTube, photo_url AS PhotoUrl, updated_at AS UpdatedAt,
                latitude AS Latitude, longitude AS Longitude, phone AS Phone,
-               business_status AS BusinessStatus, created_source_url AS SourceUrl
+               business_status AS BusinessStatus, created_source_url AS SourceUrl,
+               catalog_tier AS CatalogTier, photo_attribution AS PhotoAttribution,
+               photo_license AS PhotoLicense
         FROM restaurants
         """;
 
@@ -43,6 +45,7 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
             select = SelectColumns.Replace("FROM restaurants", $", {distance} AS DistanceKm FROM restaurants", StringComparison.Ordinal);
         }
         if (query.PhotosOnly) where.Add("photo_url IS NOT NULL AND photo_url <> ''");
+        if (query.SafeTier is { } tier) { where.Add("catalog_tier = @tier"); parameters.Add("tier", tier); }
         // A ordenação vem de uma lista fechada; nunca incorpora SQL enviado pelo usuário.
         var order = query.SafeSort switch { "recent" => "updated_at DESC, id DESC", "city" => "city, name, id", "nearby" => "DistanceKm, name, id", _ => "name, id" };
 
@@ -161,6 +164,59 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
         var rows=await connection.QueryAsync<(string City,int Total)>(new CommandDefinition(
             "SELECT normalized_city, COUNT(*) FROM restaurants WHERE status='published' GROUP BY normalized_city",cancellationToken:ct));
         return rows.ToDictionary(r=>r.City,r=>r.Total,StringComparer.Ordinal);
+    }
+
+    public async Task<IReadOnlyList<CatalogMapPoint>> ListPublishedMapAsync(CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        var rows = await connection.QueryAsync<CatalogMapPoint>(new CommandDefinition(
+            """
+            SELECT id AS Id, name AS Name, city AS City, neighborhood AS Neighborhood,
+                   category AS Category, latitude AS Latitude, longitude AS Longitude,
+                   catalog_tier AS CatalogTier
+            FROM restaurants
+            WHERE status = 'published'
+              AND latitude IS NOT NULL AND longitude IS NOT NULL
+            ORDER BY city, name, id
+            LIMIT 500
+            """,
+            cancellationToken: ct));
+        return rows.AsList();
+    }
+
+    public async Task<CatalogFactSheet?> GetFactSheetAsync(long id, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        var row = await connection.QueryFirstOrDefaultAsync<CatalogFactRow>(new CommandDefinition(
+            """
+            SELECT
+              (r.address IS NOT NULL AND r.address <> '') AS HasAddress,
+              (r.latitude IS NOT NULL AND r.longitude IS NOT NULL) AS HasCoordinates,
+              (r.phone IS NOT NULL AND r.phone <> '') AS HasPhone,
+              (r.photo_url IS NOT NULL AND r.photo_url <> '') AS HasPhoto,
+              (EXISTS (SELECT 1 FROM restaurant_schedules s WHERE s.restaurant_id = r.id)
+                OR EXISTS (SELECT 1 FROM restaurant_operation_info i WHERE i.restaurant_id = r.id AND i.expires_at > UTC_TIMESTAMP(6))) AS HasHours,
+              EXISTS (SELECT 1 FROM menu_items m WHERE m.restaurant_id = r.id) AS HasMenu,
+              EXISTS (SELECT 1 FROM restaurant_owners o WHERE o.restaurant_id = r.id) AS HasOwner
+            FROM restaurants r
+            WHERE r.id = @id AND r.status = 'published'
+            """,
+            new { id },
+            cancellationToken: ct));
+        return row is null ? null : new CatalogFactSheet(
+            row.HasAddress != 0, row.HasCoordinates != 0, row.HasPhone != 0, row.HasPhoto != 0,
+            row.HasHours != 0, row.HasMenu != 0, row.HasOwner != 0);
+    }
+
+    private sealed class CatalogFactRow
+    {
+        public int HasAddress { get; set; }
+        public int HasCoordinates { get; set; }
+        public int HasPhone { get; set; }
+        public int HasPhoto { get; set; }
+        public int HasHours { get; set; }
+        public int HasMenu { get; set; }
+        public int HasOwner { get; set; }
     }
 
     /// <summary>

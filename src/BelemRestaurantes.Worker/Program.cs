@@ -51,6 +51,8 @@ public class Program
         {EditorialHomologation.ReviewAsync(host.Services,args,args.Contains("--publish-reviewed-catalog",StringComparer.Ordinal)).GetAwaiter().GetResult();return;}
         if(args.Contains("--verify-operations",StringComparer.Ordinal))
         {OperationEvidence.PrintAsync(host.Services).GetAwaiter().GetResult();return;}
+        if(args.Contains("--sweep-licensed-photos",StringComparer.Ordinal))
+        {LicensedPhotoSweepCommand.RunAsync(host.Services).GetAwaiter().GetResult();return;}
         if(args.Contains("--provision-homologation",StringComparer.Ordinal))
         {
             HomologationProvision.RunAsync(host.Services,args.Contains("--authorize-homologation",StringComparer.Ordinal),args.Contains("--reset-homologation",StringComparer.Ordinal)).GetAwaiter().GetResult();

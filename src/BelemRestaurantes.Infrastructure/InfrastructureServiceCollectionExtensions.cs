@@ -149,6 +149,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IRestaurantAttributeHistoryRepository, MySql.MySqlRestaurantAttributeHistoryRepository>();
         services.AddScoped<IRestaurantMediaRepository, MySql.MySqlRestaurantMediaRepository>();
         services.AddScoped<IEnrichmentService, Crawler.EnrichmentService>();
+        services.AddScoped<ITasteGuide, MySql.MySqlTasteGuide>();
+        services.AddScoped<ISearchGapWriter, MySql.MySqlSearchGapWriter>();
+        services.AddSingleton<ILicensedPhotoFinder, Photos.WikimediaLicensedPhotoFinder>();
 
         // Sprint 10 - Cuia Discovery Intelligence, Distritos e Monetização Real
         services.AddScoped<IGeoDistrictLocalityRepository, MySql.MySqlDistrictLocalityRepository>();
@@ -165,6 +168,13 @@ public static class InfrastructureServiceCollectionExtensions
             client.DefaultRequestHeaders.UserAgent.ParseAdd("BelemRestaurantes/2.0 (+discovery)");
         });
         services.AddHttpClient("ai", client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddHttpClient("wikimedia", client =>
+        {
+            client.BaseAddress = new Uri("https://commons.wikimedia.org/");
+            client.Timeout = TimeSpan.FromSeconds(12);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("BelemRestaurantes/1.0 (https://belemrestaurantes.com.br; comercial@belemrestaurantes.com.br)");
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        });
         services.AddHttpClient("opendata", client =>
         {
             var endpoint = new Uri(configuration["OpenData:Endpoint"] ?? "https://overpass-api.de/api/interpreter");
