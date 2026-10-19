@@ -1,0 +1,181 @@
+@model BelemRestaurantes.Application.Abstractions.CuiaAiResponse
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Cuia IA — Sommelier & Concierge Gastronômico da Amazônia";
+    ViewData["AtlasEditorial"] = true;
+    var cities = ViewData["Cities"] as IReadOnlyList<string> ?? [];
+    var initialPrompt = ViewData["InitialPrompt"] as string ?? "";
+    var initialCity = ViewData["InitialCity"] as string ?? "";
+}
+
+<section class="cuia-ai-page para-container" lang="pt-BR">
+  <nav class="para-breadcrumb" aria-label="Você está aqui">
+    <a href="/">Início</a>
+    <span aria-hidden="true">/</span>
+    <span>Cuia IA Concierge</span>
+  </nav>
+
+  <header class="cuia-ai-hero">
+    <div class="cuia-ai-badge">
+      @await Html.PartialAsync("_ParaIcon", "cuia")
+      <span>INTELIGÊNCIA ARTIFICIAL GASTRONÔMICA NATIVA</span>
+    </div>
+    <h1>Cuia IA · Seu Concierge da <em>Amazônia</em></h1>
+    <p>
+      Descubra o que comer, onde encontrar e como harmonizar os tesouros do Pará.
+      De tacacás borbulhantes a travessias ribeirinhas no Combu e segredos do tucupi com jambu.
+    </p>
+  </header>
+
+  <div class="cuia-ai-card">
+    <form id="cuia-ai-form" class="cuia-ai-form" onsubmit="return false;">
+      @Html.AntiForgeryToken()
+      <div class="cuia-ai-input-wrapper">
+        <label for="ai-prompt" class="sr-only">Faça sua pergunta sobre a gastronomia paraense</label>
+        <textarea id="ai-prompt" name="prompt" maxlength="500" placeholder="Ex: Onde almoçar peixe na beira do rio no domingo com a família?" rows="2">@initialPrompt</textarea>
+        <button type="submit" id="ai-submit" class="cuia-ai-submit-btn">
+          <span>Consultar Cuia IA</span>
+          <span aria-hidden="true">✨</span>
+        </button>
+      </div>
+
+      <div class="cuia-ai-filters">
+        <div class="cuia-ai-filter-item">
+          <label for="ai-city">Município:</label>
+          <select id="ai-city" name="city">
+            <option value="">Todo o Pará (144 municípios)</option>
+            @foreach (var c in cities)
+            {
+              <option value="@c" selected="@(c == initialCity)">@c</option>
+            }
+          </select>
+        </div>
+
+        <div class="cuia-ai-filter-item">
+          <label for="ai-occasion">Ocasião:</label>
+          <select id="ai-occasion" name="occasion">
+            <option value="">Qualquer momento</option>
+            <option value="familia">Em família / Crianças</option>
+            <option value="romantico">Romântico / A dois</option>
+            <option value="rapido">Parada rápida / Lanche</option>
+            <option value="ribeirinho">Experiência ribeirinha</option>
+            <option value="tradicional">Culinária raiz / Mercado</option>
+          </select>
+        </div>
+
+        <div class="cuia-ai-filter-item">
+          <label for="ai-dietary">Preferência:</label>
+          <select id="ai-dietary" name="dietary">
+            <option value="">Sem restrições</option>
+            <option value="vegetariano">Vegetariano / Plant-based</option>
+            <option value="sem_frutos_mar">Sem frutos do mar</option>
+            <option value="sem_gluten">Sem glúten / Leve</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="cuia-ai-suggestions" role="group" aria-label="Sugestões populares">
+        <span class="cuia-ai-suggestions-title">Ideias para perguntar:</span>
+        <button type="button" class="cuia-ai-chip" data-prompt="Onde tomar o melhor tacacá tradicional em Belém com bastante jambu?">🍵 Onde tomar tacacá?</button>
+        <button type="button" class="cuia-ai-chip" data-prompt="Como almoçar na Ilha do Combu? Melhores restaurantes e travessia de barco.">🛶 Almoço na Ilha do Combu</button>
+        <button type="button" class="cuia-ai-chip" data-prompt="Quero provar o clássico açaí paraense com peixe frito e farinha de Bragança.">🥣 Açaí puro com peixe frito</button>
+        <button type="button" class="cuia-ai-chip" data-prompt="Quais os melhores restaurantes para jantar na Estação das Docas ou Cidade Velha?">⚓ Jantar com vista para o rio</button>
+        <button type="button" class="cuia-ai-chip" data-prompt="O que uma pessoa vegetariana ou vegana pode comer na culinária paraense?">🌱 Opções vegetarianas da Amazônia</button>
+      </div>
+    </form>
+
+    <div id="ai-loading" class="cuia-ai-loading" role="status" aria-live="polite" hidden>
+      <div class="cuia-ai-spinner" aria-hidden="true"></div>
+      <p>Consultando a inteligência gastronômica da Amazônia...</p>
+    </div>
+
+    <div id="ai-results" class="cuia-ai-results" role="region" aria-live="polite" @(Model == null ? "hidden" : "")>
+      @if (Model != null)
+      {
+        <div class="cuia-ai-meta">
+          <span class="cuia-ai-engine">⚡ Motor: @Model.EngineUsed</span>
+          <span class="cuia-ai-guarantee">✓ Restaurantes reais verificados</span>
+        </div>
+
+        <div class="cuia-ai-response-body">
+          @Html.Raw(Model.AnswerMarkdown.Replace("\n\n", "<br/><br/>").Replace("## ", "<h2>").Replace("### ", "<h3>").Replace("- **", "<p>• <strong>"))
+        </div>
+
+        @if (Model.Recommendations.Count > 0)
+        {
+          <div class="cuia-ai-section">
+            <h3>🍽️ Estabelecimentos selecionados para você</h3>
+            <div class="cuia-ai-grid">
+              @foreach (var r in Model.Recommendations)
+              {
+                <article class="cuia-ai-reco-card">
+                  <div class="cuia-ai-reco-header">
+                    <h4><a href="/estabelecimento/@r.Id">@r.Name</a></h4>
+                    @if (r.CuiaScore.HasValue)
+                    {
+                      <span class="cuia-ai-score">★ @r.CuiaScore.Value.ToString("F1")</span>
+                    }
+                  </div>
+                  <p class="cuia-ai-reco-cat">@(r.Category ?? "Restaurante") · @r.City @(!string.IsNullOrWhiteSpace(r.Neighborhood) ? $"({r.Neighborhood})" : "")</p>
+                  <p class="cuia-ai-reco-reason">@r.Reason</p>
+                  @if (!string.IsNullOrWhiteSpace(r.Address))
+                  {
+                    <p class="cuia-ai-reco-address">📍 @r.Address</p>
+                  }
+                  <div class="cuia-ai-reco-actions">
+                    <a href="/estabelecimento/@r.Id" class="para-button">Ver detalhes ↗</a>
+                    <a href="/cuia-rotas?restaurantId=@r.Id" class="para-text-link">Como chegar (Cuia Rotas) →</a>
+                  </div>
+                </article>
+              }
+            </div>
+          </div>
+        }
+
+        @if (Model.Recipes.Count > 0)
+        {
+          <div class="cuia-ai-section">
+            <h3>📖 Receitas relacionadas no Caderno do Pará</h3>
+            <div class="cuia-ai-recipes-list">
+              @foreach (var rc in Model.Recipes)
+              {
+                <a href="/receitas/@rc.Slug" class="cuia-ai-recipe-pill">
+                  <strong>@rc.Title</strong>
+                  <span>@rc.Subtitle · @rc.TotalMinutes min · Nível @rc.Difficulty ↗</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+        @if (Model.RegionalCuriosities.Count > 0)
+        {
+          <div class="cuia-ai-curiosities">
+            <h4>💡 Segredos e Sabedoria da Floresta</h4>
+            <ul>
+              @foreach (var c in Model.RegionalCuriosities)
+              {
+                <li>@c</li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (Model.SuggestedFollowUps.Count > 0)
+        {
+          <div class="cuia-ai-followups">
+            <span>Perguntas relacionadas:</span>
+            @foreach (var f in Model.SuggestedFollowUps)
+            {
+              <button type="button" class="cuia-ai-chip" data-prompt="@f">@f</button>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</section>
+
+@section Scripts {
+  <script src="~/js/cuia-ai.js" asp-append-version="true" defer></script>
+}

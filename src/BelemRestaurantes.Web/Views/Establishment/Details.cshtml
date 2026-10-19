@@ -44,6 +44,23 @@
     </div>
   </article>
   <div class="para-detail-quick-links"><a href="/cardapio/@Model.Id">Ver cardápio ↗</a><a href="/experience/create?restaurantId=@Model.Id">Contar minha experiência ↗</a><a href="/partner/claim/@Model.Id">Esse restaurante é seu? Reivindique ↗</a></div>
+  
+  <section class="visit-panel cuia-ai-sommelier-panel" lang="pt-BR" aria-labelledby="sommelier-heading" style="background:#0d281e;color:#fffdf5;border:2px solid #efb645;border-radius:18px;padding:24px;margin-bottom:24px;">
+    <span class="para-eyebrow" style="color:#ffe2a0;">SOMMELIER GASTRONÔMICO · CUIA IA</span>
+    <h2 id="sommelier-heading" style="font-family:var(--para-serif);font-size:1.6rem;color:#fffdf5;margin:8px 0 12px;">Dica do Chef & Concierge da Amazônia</h2>
+    <div id="ai-restaurant-advice" class="cuia-ai-advice-content" style="line-height:1.6;font-size:1.05rem;color:#f3eedc;">
+      <p>💡 Descubra o prato imperdível, o melhor horário e combinações autênticas da culinária paraense selecionadas pela nossa Inteligência Artificial.</p>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;align-items:center;">
+      <button type="button" class="para-button" id="btn-ask-sommelier" data-restaurant-id="@Model.Id" style="background:#efb645;color:#0d281e;font-weight:800;border:none;cursor:pointer;padding:10px 18px;border-radius:8px;">
+        Consultar Dica da Cuia IA ✨
+      </button>
+      <a href="/cuia-ia?q=@Uri.EscapeDataString("O que pedir no " + Model.Name + " em " + Model.City + "?")" class="para-text-link" style="color:#ffe2a0;font-weight:600;">
+        Fazer outra pergunta à Cuia IA ↗
+      </a>
+    </div>
+  </section>
+
   @await Html.PartialAsync("_RestaurantVideos", ViewData["MediaList"] as IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantMedia> ?? [])
   <section class="visit-panel" lang="pt-BR" aria-labelledby="visit-section"><span class="para-eyebrow">CUIA MOBILIDADE 360</span><h2 id="visit-section">Como chegar e quando visitar</h2><p class="visit-status">@((ViewData["OpeningAssessment"] as BelemRestaurantes.Application.Models.OpeningAssessment)?.Message??"Horário não confirmado")</p><p>Ônibus, BRT, caminhada, bicicleta, carro e referências de transporte fluvial. Confira trajetos, funcionamento e informações disponíveis antes de sair.</p><a href="/cuia-rotas?restaurantId=@Model.Id" class="para-button">Planejar minha visita →</a></section>
   <details class="visit-panel"><summary>Ver localização no mapa</summary>@if(Model.Latitude is {} lat && Model.Longitude is {} lng){<p>O mapa externo carrega após seu clique e mostra somente o destino informado pela fonte.</p><button type="button" class="visit-text-button" data-load-map="@FormattableString.Invariant($"https://www.openstreetmap.org/export/embed.html?bbox={lng-0.006}%2C{lat-0.004}%2C{lng+0.006}%2C{lat+0.004}&layer=mapnik&marker={lat}%2C{lng}")">Carregar mapa interativo</button><div id="visit-map"></div><p>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></p>}else{<p>Coordenadas não confirmadas. Consulte o endereço e planeje a visita no Cuia Rotas.</p>}</details>
@@ -246,5 +263,27 @@
       </div>
     </div>
   </div>
-</div>
-@section Scripts{<script src="~/js/videos.js" asp-append-version="true" defer></script><script src="~/js/visit.js" asp-append-version="true" defer></script>}
+@section Scripts{
+  <script src="~/js/videos.js" asp-append-version="true" defer></script>
+  <script src="~/js/visit.js" asp-append-version="true" defer></script>
+  <script>
+    document.getElementById('btn-ask-sommelier')?.addEventListener('click', async function() {
+      const btn = this;
+      const id = btn.dataset.restaurantId;
+      const target = document.getElementById('ai-restaurant-advice');
+      if (!id || !target) return;
+      btn.disabled = true;
+      btn.textContent = 'Consultando Cuia IA...';
+      try {
+        const res = await fetch('/api/cuia-ia/dica-restaurante/' + id);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        target.innerHTML = data.advice.replace(/\n\n/g, '<br/><br/>').replace(/### /g, '<h3 style="color:#ffe2a0;margin:10px 0 6px;">').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      } catch {
+        target.innerHTML = '<p style="color:#fee2e2;">Não foi possível carregar a dica no momento. Tente novamente mais tarde.</p>';
+      } finally {
+        btn.textContent = 'Dica da Cuia IA Carregada ✨';
+      }
+    });
+  </script>
+}

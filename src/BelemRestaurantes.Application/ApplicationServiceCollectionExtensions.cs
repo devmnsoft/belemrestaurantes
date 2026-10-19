@@ -16,6 +16,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<ConsistencyChecker>();
         services.AddSingleton<IOptionsSnapshotLike, ProviderChainOptions>();
         services.AddSingleton<IAiRouter, AiRouter>();
+        services.AddScoped<ICuiaAiService, CuiaAiService>();
         return services;
     }
 }

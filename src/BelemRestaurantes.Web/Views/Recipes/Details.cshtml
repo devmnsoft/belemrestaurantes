@@ -10,6 +10,45 @@
 @if(!string.IsNullOrWhiteSpace(Model.SafetyNote)){<aside class="recipe-safety" aria-labelledby="safety-title"><h2 id="safety-title">Antes de começar</h2><p>@Model.SafetyNote</p></aside>}
 <div class="recipe-method"><section id="ingredients" class="recipe-ingredients"><span class="para-eyebrow">DA FEIRA À BANCADA</span><h2>Ingredientes</h2><p>Para @Model.Servings porções. Marque os itens que já separou.</p><ul>@for(var i=0;i<Model.Ingredients.Length;i++){<li><label><input type="checkbox" data-recipe-check="ingredient" /><span>@Model.Ingredients[i]</span></label></li>}</ul><h3>Alérgenos e ingredientes</h3><p>@(string.IsNullOrWhiteSpace(Model.Allergens)?"Confira os rótulos e a composição dos ingredientes utilizados.":Model.Allergens)</p></section><section class="recipe-steps"><span class="para-eyebrow">UMA ETAPA DE CADA VEZ</span><h2>Modo de preparo</h2><ol>@for(var i=0;i<Model.Steps.Length;i++){<li><span aria-hidden="true">@((i+1).ToString("D2"))</span><label><input type="checkbox" data-recipe-check="step" /><span>@Model.Steps[i]</span></label></li>}</ol></section></div>
 <div class="recipe-notes">@foreach(var note in new[]{("Dica da cozinha",Model.Tips),("Variações",Model.Variations),("Com o que servir",Model.ServeWith)}){if(!string.IsNullOrWhiteSpace(note.Item2)){<section><h2>@note.Item1</h2><p>@note.Item2</p></section>}}</div>
+<section class="recipe-notes" style="margin-block:24px;">
+  <section style="background:#0d281e;color:#fffdf5;border:2px solid #efb645;border-radius:16px;padding:22px;">
+    <span class="para-eyebrow" style="color:#ffe2a0;">CHEF & ADAPTAÇÕES · CUIA IA</span>
+    <h2 style="color:#fffdf5;font-size:1.4rem;margin:6px 0 10px;">Como adaptar os ingredientes fora do Pará?</h2>
+    <div id="ai-recipe-substitutions" style="color:#f3eedc;font-size:1rem;line-height:1.6;">
+      <p>💡 Não encontrou jambu fresco, maniva ou tucupi na sua cidade? Consulte a Cuia IA para receber substituições recomendadas sem perder a essência amazônica.</p>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <button type="button" id="btn-recipe-ai" data-recipe-slug="@Model.Slug" class="para-button" style="background:#efb645;color:#0d281e;font-weight:800;border:none;cursor:pointer;padding:8px 16px;">
+        Ver Dicas e Substituições da Cuia IA ✨
+      </button>
+      <a href="/cuia-ia?q=@Uri.EscapeDataString("Dicas de preparo e segredos para a receita " + Model.Title)" class="para-text-link" style="color:#ffe2a0;font-weight:600;">
+        Tirar dúvidas com o Sommelier Cuia IA ↗
+      </a>
+    </div>
+  </section>
+</section>
 <section class="recipe-source"><h2>Receita, contexto e procedência</h2><p>@(Model.Kind=="official"?"Receita identificada pela equipe como oficial, com fonte e registro editorial de autorização ou publicação.":"Esta é uma adaptação editorial para preparar em casa. Não é uma receita oficial de restaurante. A referência abaixo oferece contexto cultural ou orientações de preparo; as quantidades e instruções desta página foram redigidas pela equipe.")</p>@if(Model.SourceUrl is {} source){<a href="@source" target="_blank" rel="noopener noreferrer">Consultar a referência ↗</a>}@if(Model.VideoUrl is {} video){<p><a href="@video" target="_blank" rel="noopener noreferrer">@Model.VideoTitle — @Model.VideoPlatform ↗</a> · Conteúdo externo, sem incorporação ou reprodução automática.</p>}<p>Revisão editorial: @Model.UpdatedAt.ToString("dd/MM/yyyy") · versão @Model.Version.</p></section>
 <section class="recipe-related"><div class="para-section-heading"><div><span class="para-eyebrow">DA SUA COZINHA PARA A CIDADE</span><h2>Prefere descobrir à mesa?</h2><p>Conheça lugares do guia. Uma relação editorial não confirma que este prato esteja no cardápio; consulte o estabelecimento.</p></div><a href="/busca" class="para-text-link">Explorar restaurantes ↗</a></div>@if(restaurants.Count>0){<div class="para-restaurant-grid">@foreach(var restaurant in restaurants){@await Html.PartialAsync("_RestaurantCard",restaurant)}</div>}else{<p>Esta receita ainda não tem estabelecimentos relacionados pela curadoria.</p>}<a href="/receitas" class="para-button">Voltar ao caderno</a></section></article>
-@section Scripts{<script src="~/js/recipes.js" asp-append-version="true" defer></script>}
+@section Scripts{
+  <script src="~/js/recipes.js" asp-append-version="true" defer></script>
+  <script>
+    document.getElementById('btn-recipe-ai')?.addEventListener('click', async function() {
+      const btn = this;
+      const slug = btn.dataset.recipeSlug;
+      const target = document.getElementById('ai-recipe-substitutions');
+      if (!slug || !target) return;
+      btn.disabled = true;
+      btn.textContent = 'Consultando Cuia IA...';
+      try {
+        const res = await fetch('/api/cuia-ia/dica-receita/' + encodeURIComponent(slug));
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        target.innerHTML = data.tips.replace(/\n\n/g, '<br/><br/>').replace(/### /g, '<h3 style="color:#ffe2a0;margin:10px 0 6px;">').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      } catch {
+        target.innerHTML = '<p style="color:#fee2e2;">Não foi possível carregar as adaptações no momento.</p>';
+      } finally {
+        btn.textContent = 'Dicas da Cuia IA Atualizadas ✨';
+      }
+    });
+  </script>
+}

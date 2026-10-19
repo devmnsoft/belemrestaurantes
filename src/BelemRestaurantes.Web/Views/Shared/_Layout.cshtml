@@ -28,6 +28,7 @@
   }
 
   <link rel="stylesheet" asp-append-version="true" href="~/css/para.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" crossorigin="anonymous" />
   @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="para-public">
@@ -42,6 +43,7 @@
   <div class="atlas-header-tools"><details class="atlas-language"><summary aria-label="@(T["Language"].Value + ": " + CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpperInvariant())">@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpperInvariant()</summary><form method="post" action="/language">@Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" /><button type="submit" name="culture" value="pt-BR" lang="pt-BR">Português</button><button type="submit" name="culture" value="en" lang="en">English</button><button type="submit" name="culture" value="es" lang="es">Español</button></form></details><button class="para-menu-toggle" type="button" aria-expanded="false" aria-controls="public-navigation">Menu @await Html.PartialAsync("_ParaIcon", "menu")</button></div>
   <nav id="public-navigation" class="para-navigation" lang="@editorialLanguage" aria-label="@T["Explore"]">
     <a href="/busca">@T["NavEat"]</a><a href="/cidades">@T["NavPara"]</a><a href="/roteiros">@T["NavTrails"]</a>
+    <a href="/cuia-ia" class="para-nav-highlight">✨ Cuia IA</a>
     <a href="/community">@T["NavCommunity"]</a><a href="/receitas">@T["NavRecipes"]</a><a href="/cuia-rotas" lang="pt-BR">Cuia Rotas</a><a href="/guia">@T["NavGuide"]</a>
     <a href="/account" class="para-account">@T["MyAccount"] ↗</a>
   </nav>
@@ -52,7 +54,7 @@
 <footer class="para-footer" lang="@editorialLanguage">
   <div class="para-container para-footer-grid">
     <div><a href="/" class="para-footer-brand">belém restaurantes<span>@T["AtlasFooterTagline"]</span></a><p>@T["AtlasFooterText"]</p></div>
-    <div><strong>@T["AtlasExplore"]</strong><a href="/busca">@T["NavEat"]</a><a href="/cidades">@T["NavPara"]</a><a href="/roteiros">@T["NavTrails"]</a><a href="/guia">@T["AtlasGuideLink"]</a></div>
+    <div><strong>@T["AtlasExplore"]</strong><a href="/busca">@T["NavEat"]</a><a href="/cidades">@T["NavPara"]</a><a href="/cuia-ia">Cuia IA Concierge</a><a href="/roteiros">@T["NavTrails"]</a><a href="/guia">@T["AtlasGuideLink"]</a></div>
     <div><strong>@T["AtlasJoin"]</strong><a href="/community">@T["NavCommunity"]</a><a href="/sugerir">@T["Suggest"]</a><a href="/partner/dashboard">@T["AtlasPartnerButton"]</a><a href="mailto:comercial@belemrestaurantes.com.br">@T["Contact"]</a></div>
     <form method="post" action="/language" class="para-language" lang="@CultureInfo.CurrentUICulture.Name">
       @Html.AntiForgeryToken()
