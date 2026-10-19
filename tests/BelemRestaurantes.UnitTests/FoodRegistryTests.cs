@@ -53,14 +53,15 @@ public sealed class FoodRegistryTests
     [InlineData("Lanche da Vila",5611203,"Lanchonete")]
     [InlineData("Açaí da Vila",4729699,"Açaí")]
     [InlineData("Sorvetes da Vila",4729699,"Sorveteria")]
-    [InlineData("Alimentos da Vila",4729699,"Loja de alimentos")]
-    [InlineData("Mercado da Vila",4712100,"Mercearia")]
+    [InlineData("Alimentos da Vila",4729699,"Comércio alimentício")]
+    [InlineData("Mercado da Vila",4712100,"Comércio alimentício")]
     [InlineData("Mercado da Vila",4711302,"Supermercado")]
     [InlineData("Peixes da Vila",4722902,"Peixaria")]
     [InlineData("Frutas da Vila",4724500,"Hortifrúti")]
     [InlineData("Festa da Vila",5620102,"Buffet")]
     [InlineData("Cantina da Vila",5620103,"Cantina")]
     [InlineData("Espetinho da Vila",5612100,"Comida de rua")]
+    [InlineData("Coletiva da Vila",5620101,"Outros serviços alimentares")]
     public void CategoryUsesFoodActivityAndExplicitTradeName(string name,int cnae,string category)
     {
         var item=Item();item["nome_fantasia"]=name;item["cnae_fiscal"]=cnae;
@@ -82,4 +83,15 @@ public sealed class FoodRegistryTests
     [InlineData("04252011000110",true)]
     [InlineData("11222333000182",false)]
     public void CnpjCheckDigitsAreValidated(string number,bool expected)=>Assert.Equal(expected,FoodRegistryParser.IsValidCnpj(number));
+
+    [Fact]
+    public void WholesaleFoodCompanyIsNotImportedAsAPublicRestaurant()
+    {
+        var item=Item();item["cnae_fiscal"]=4639701;item["nome_fantasia"]="Atacado da Vila";
+        Assert.Equal("Distribuidor",BelemRestaurantes.Domain.Rules.FoodVenueRules.FromCnae(4639701));
+        Assert.False(BelemRestaurantes.Domain.Rules.FoodVenueRules.IsRestaurantOpenToPublic("Distribuidor"));
+        Assert.False(BelemRestaurantes.Domain.Rules.FoodVenueRules.IsRestaurantOpenToPublic("Comércio alimentício"));
+        Assert.False(BelemRestaurantes.Domain.Rules.FoodVenueRules.IsRestaurantOpenToPublic("Outros serviços alimentares"));
+        Assert.Empty(FoodRegistryParser.ParsePage(Page(item)).Places);
+    }
 }

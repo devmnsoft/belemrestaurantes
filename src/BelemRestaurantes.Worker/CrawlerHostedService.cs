@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BelemRestaurantes.Application.Abstractions;
+using BelemRestaurantes.Domain.Rules;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -38,24 +39,20 @@ public sealed class CrawlerHostedService : BackgroundService
             return;
         }
 
-        var intervalMinutes = Math.Max(1, _configuration.GetValue<int>("Crawler:IntervalMinutes", 10));
-        var every = TimeSpan.FromMinutes(intervalMinutes);
+        var externalEvery = TimeSpan.FromMinutes(Math.Max(1, _configuration.GetValue<int>("Crawler:IntervalMinutes", 10)));
+        var queueEvery = WorkerCadence.QueueCheck(_configuration.GetValue<int?>("Crawler:QueueCheckMinutes"));
         var maxTasks = Math.Clamp(_configuration.GetValue<int>("Crawler:MaxTasksPerCycle", 10), 1, 30);
 
         _logger.LogInformation(
-            "Cuia Crawler iniciado: intervalo de {Interval}min, max {MaxTasks} tarefas/ciclo, instância {Instance}",
-            every.TotalMinutes, maxTasks, InstanceId);
+            "Cuia Crawler iniciado: fila a cada {Queue}min, fonte externa a cada {Interval}min, max {MaxTasks} tarefas/ciclo, instância {Instance}",
+            queueEvery.TotalMinutes, externalEvery.TotalMinutes, maxTasks, InstanceId);
 
-        using var timer = new PeriodicTimer(every);
+        using var timer = new PeriodicTimer(queueEvery);
+        DateTimeOffset? lastExternal = null;
 
-        // Executa uma primeira rodada inicial após 30 segundos de inicialização para validação do serviço
         try
         {
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-            if (!stoppingToken.IsCancellationRequested)
-            {
-                await RunSingleCycleAsync(maxTasks, stoppingToken);
-            }
         }
         catch (OperationCanceledException)
         {
@@ -66,12 +63,20 @@ public sealed class CrawlerHostedService : BackgroundService
         {
             try
             {
+                if (WorkerCadence.ExternalDue(DateTimeOffset.UtcNow, lastExternal, externalEvery))
+                {
+                    await RunSingleCycleAsync(maxTasks, stoppingToken);
+                    lastExternal = DateTimeOffset.UtcNow;
+                }
+                else
+                {
+                    await MaintainQueueAsync(stoppingToken);
+                }
+
                 if (!await timer.WaitForNextTickAsync(stoppingToken))
                 {
                     break;
                 }
-
-                await RunSingleCycleAsync(maxTasks, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -84,6 +89,14 @@ public sealed class CrawlerHostedService : BackgroundService
         }
 
         _logger.LogInformation("Cuia Crawler finalizado.");
+    }
+
+    private async Task MaintainQueueAsync(CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<ICrawlerOrchestrator>();
+        await orchestrator.MaintainQueueAsync(ct);
+        _logger.LogDebug("Fila do rastreador conferida sem baixar páginas.");
     }
 
     private async Task RunSingleCycleAsync(int maxTasks, CancellationToken ct)

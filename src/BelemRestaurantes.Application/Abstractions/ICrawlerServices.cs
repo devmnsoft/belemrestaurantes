@@ -115,4 +115,7 @@ public interface ICrawlerOrchestrator
     /// 6. Registra telemetria e atualiza custos
     /// </summary>
     Task<int> RunCrawlerCycleAsync(int maxTasks, CancellationToken ct);
+
+    /// <summary>Libera travas vencidas. Não baixa página nem consulta fonte externa.</summary>
+    Task MaintainQueueAsync(CancellationToken ct);
 }

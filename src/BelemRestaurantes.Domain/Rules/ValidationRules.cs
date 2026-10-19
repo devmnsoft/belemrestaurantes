@@ -92,7 +92,15 @@ public static class CategoryRules
         ["sorveteria"] = "Sorveteria",
         ["confeitaria"] = "Confeitaria",
         ["hortifruti"] = "Hortifruti",
-        ["peixaria"] = "Peixaria"
+        ["peixaria"] = "Peixaria",
+        ["supermercado"] = "Supermercado",
+        ["mercearia"] = "Comércio alimentício",
+        ["loja de alimentos"] = "Comércio alimentício",
+        ["comércio alimentício"] = "Comércio alimentício",
+        ["comercio alimenticio"] = "Comércio alimentício",
+        ["distribuidor"] = "Distribuidor",
+        ["outros serviços alimentares"] = "Outros serviços alimentares",
+        ["outros servicos alimentares"] = "Outros serviços alimentares"
     };
 
     public static string? Clean(string? raw)

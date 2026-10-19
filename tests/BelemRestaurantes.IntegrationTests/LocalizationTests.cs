@@ -101,6 +101,25 @@ public sealed class LocalizationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Public_navigation_keeps_five_plain_actions_and_the_rest_nearby()
+    {
+        using var client = Client();
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+        Assert.Contains("Onde comer?", html);
+        Assert.Contains("O que comer?", html);
+        Assert.Contains("Como chegar?", html);
+        Assert.Contains("Receitas do Pará", html);
+        Assert.Contains("Meus favoritos", html);
+        Assert.Contains("href=\"/busca\"", html);
+        Assert.Contains("href=\"/pratos\"", html);
+        Assert.Contains("href=\"/cuia-rotas\"", html);
+        Assert.Contains("href=\"/receitas\"", html);
+        Assert.Contains("href=\"/account/favorites\"", html);
+        Assert.Contains("Cuia IA", html);
+        Assert.Contains(">Mais<", html);
+    }
+
+    [Fact]
     public async Task Unsupported_browser_language_falls_back_to_portuguese()
     {
         using var client = Client();

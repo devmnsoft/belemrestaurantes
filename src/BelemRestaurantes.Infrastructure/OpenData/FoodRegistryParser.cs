@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using BelemRestaurantes.Application.Models;
 using BelemRestaurantes.Domain.Data;
+using BelemRestaurantes.Domain.Rules;
 
 namespace BelemRestaurantes.Infrastructure.OpenData;
 
@@ -36,20 +37,11 @@ public static class FoodRegistryParser
                 : ParaOfficialCatalog.Municipalities.FirstOrDefault(m => m.NormalizedName == NameNormalizer.Normalize(Text("municipio")));
             if (city is null || (Text("municipio") is { Length: > 0 } cityName && NameNormalizer.Normalize(cityName) != city.NormalizedName)) continue;
             var cnae = Number("cnae_fiscal");
-            var category = cnae switch
-            {
-                5611201 => "Restaurante", 5611203 => "Lanchonete", 1091102 or 4721102 => "Padaria",
-                5611204 or 5611205 => "Bar", 5612100 => "Comida de rua", 5620104 => "Comida pronta", 4721104 => "Confeitaria",
-                5620101 => "Refeições coletivas", 5620102 => "Buffet", 5620103 => "Cantina",
-                4721103 => "Laticínios", 4729699 => "Loja de alimentos",
-                4711301 or 4711302 => "Supermercado", 4712100 => "Mercearia",
-                4722901 => "Açougue", 4722902 => "Peixaria", 4724500 => "Hortifrúti", 4723700 => "Loja de bebidas",
-                _ => null
-            };
-            if (category is null) continue;
+            var category = FoodVenueRules.FromCnae(cnae);
+            if (!FoodVenueRules.ImportIntoDiningCatalog(category)) continue;
             var plain = NameNormalizer.RemoveDiacritics(name).ToLowerInvariant();
             bool Named(string pattern) => Regex.IsMatch(plain,pattern,RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100));
-            if (category is "Restaurante" or "Lanchonete" or "Loja de alimentos")
+            if (category is "Restaurante" or "Lanchonete" or "Comércio alimentício")
                 category = Named(@"\b(pizzaria|pizza)\b") ? "Pizzaria"
                     : Named(@"\b(acai|acaiteria|acailandia)\b") ? "Açaí"
                     : Named(@"\btacaca\b") ? "Tacacá"
