@@ -113,6 +113,23 @@ public sealed class CuiaAiTests
         Assert.NotEmpty(response.RegionalCuriosities);
         Assert.NotEmpty(response.SuggestedFollowUps);
         Assert.Contains("Cuia Knowledge Engine", response.EngineUsed);
+        Assert.Equal("catalogo", response.AnswerKind);
+        Assert.DoesNotContain("camada Guia", response.AnswerMarkdown, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task AskAsync_DoesNotTreatAccessQueryAsConfirmedPlaces()
+    {
+        var service = new CuiaAiService(
+            new FakeRestaurantRepo(),
+            new FakeRecipesRepo(),
+            [],
+            NullLogger<CuiaAiService>.Instance);
+
+        var response = await service.AskAsync(new CuiaAiQuery("Restaurantes com informações de acessibilidade"), default);
+
+        Assert.Empty(response.Recommendations);
+        Assert.Contains("não confirma acessibilidade", response.AnswerMarkdown, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -166,6 +183,7 @@ public sealed class CuiaAiTests
         Assert.Contains("Não posso seguir", response.AnswerMarkdown, StringComparison.Ordinal);
         Assert.Empty(response.Recommendations);
         Assert.Equal("Cuia Guard", response.EngineUsed);
+        Assert.Equal("limite", response.AnswerKind);
     }
 
     [Fact]

@@ -1,0 +1,86 @@
+@model BelemRestaurantes.Web.Models.CuiaDiagnosticsView
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Cuia IA — operação";
+}
+<section class="shell section" lang="pt-BR">
+  <div class="heading">
+    <div>
+      <span class="overline dark">Operação desta instância</span>
+      <h1>Cuia IA</h1>
+      <p>Provedores, uso e falhas. Esta tela não mostra chaves, consultas dos visitantes nem o texto interno enviado ao serviço.</p>
+    </div>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.LedgerNote))
+  {
+      <p role="alert">@Model.LedgerNote</p>
+  }
+
+  <h2>Nesta instância do site</h2>
+  <ul>
+    <li>Consultas medidas: @Model.Metrics.Asks</li>
+    <li>Respostas do catálogo: @Model.Metrics.CatalogAnswers</li>
+    <li>Respostas do serviço de recomendações: @Model.Metrics.ServiceAnswers</li>
+    <li>Falhas: @Model.Metrics.Failures</li>
+    <li>Tempo médio: @Model.Metrics.AverageMilliseconds ms</li>
+    <li>Limite público: @Model.RateLimitPolicy</li>
+  </ul>
+  <p>Os números de consulta valem só para este processo. Reiniciar o site zera a contagem. O livro de custos fica no banco.</p>
+
+  <h2>Provedores configurados</h2>
+  <table>
+    <thead>
+      <tr><th>Provedor</th><th>Chave e endereço carregados</th><th>Uso neste processo</th><th>Gasto no mês (USD)</th><th>Orçamento</th></tr>
+    </thead>
+    <tbody>
+      @foreach (var provider in Model.Providers)
+      {
+          var health = Model.Health.FirstOrDefault(item => item.Provider.ToString() == provider.Provider);
+          var budget = Model.Budgets.FirstOrDefault(item => item.Provider == provider.Provider);
+          <tr>
+            <td>@provider.Provider</td>
+            <td>@(provider.Configured ? "Sim" : "Não")</td>
+            <td>
+              @if (health is null || health.SuccessCount + health.FailureCount == 0)
+              {
+                  <span>Ainda sem chamada neste processo.</span>
+              }
+              else
+              {
+                  <span>@health.SuccessCount concluídas, @health.FailureCount falhas. @(health.CircuitOpen ? "Circuito aberto." : "Circuito fechado.")</span>
+              }
+            </td>
+            <td>@(budget is null ? "—" : budget.MonthUsd.ToString("0.0000"))</td>
+            <td>@(budget is null ? "—" : budget.BudgetRemaining ? "Ainda há orçamento" : "Sem orçamento liberado para novas chamadas")</td>
+          </tr>
+      }
+    </tbody>
+  </table>
+
+  <h2>Chamadas recentes ao livro de custos</h2>
+  @if (Model.Recent.Count == 0)
+  {
+      <p>Nenhuma chamada registrada, ou o livro não pôde ser lido.</p>
+  }
+  else
+  {
+      <table>
+        <thead>
+          <tr><th>Quando (UTC)</th><th>Provedor</th><th>Operação</th><th>Situação</th><th>Custo (USD)</th></tr>
+        </thead>
+        <tbody>
+          @foreach (var row in Model.Recent)
+          {
+              <tr>
+                <td>@row.OccurredAt.UtcDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>@row.Provider</td>
+                <td>@row.Operation</td>
+                <td>@(row.Success ? "Concluída" : "Falha")</td>
+                <td>@row.CostUsd.ToString("0.0000")</td>
+              </tr>
+          }
+        </tbody>
+      </table>
+  }
+</section>

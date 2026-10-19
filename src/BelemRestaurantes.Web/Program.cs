@@ -41,6 +41,8 @@ builder.Services
         options.LoginPath = "/account/login";
         options.AccessDeniedPath = "/account/login";
         options.SlidingExpiration = false;
+        options.Events.OnRedirectToLogin = context => ApiProblems.HandleRedirect(context, StatusCodes.Status401Unauthorized);
+        options.Events.OnRedirectToAccessDenied = context => ApiProblems.HandleRedirect(context, StatusCodes.Status403Forbidden);
         options.Events.OnValidatePrincipal = async context =>
         {
             var token = context.Principal?.FindFirst("sid")?.Value;
@@ -82,6 +84,8 @@ builder.Services
         };
         options.LoginPath = "/admin/login";
         options.AccessDeniedPath = "/admin/access-denied";
+        options.Events.OnRedirectToLogin = context => ApiProblems.HandleRedirect(context, StatusCodes.Status401Unauthorized);
+        options.Events.OnRedirectToAccessDenied = context => ApiProblems.HandleRedirect(context, StatusCodes.Status403Forbidden);
     });
 
 builder.Services.AddAuthorization(options =>
@@ -108,6 +112,14 @@ builder.Services.AddAdminAuth(builder.Configuration);
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        var http = context.HttpContext;
+        if (!ApiProblems.IsApi(http.Request) || http.Response.HasStarted) return;
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            http.Response.Headers.RetryAfter = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+        await ApiProblems.WriteAsync(http, StatusCodes.Status429TooManyRequests, "rate_limited", "Houve muitas consultas em pouco tempo. Espere alguns minutos e tente novamente.", true, token);
+    };
     options.AddPolicy("public", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
     {
@@ -163,6 +175,26 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseStatusCodePages(async statusContext =>
+{
+    var http = statusContext.HttpContext;
+    if (!ApiProblems.IsApi(http.Request) || http.Response.HasStarted) return;
+    if (http.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true) return;
+    var status = http.Response.StatusCode;
+    var (code, message, retryable) = status switch
+    {
+        StatusCodes.Status400BadRequest => ("antiforgery", "Não foi possível confirmar o envio. Atualize a página e tente novamente.", true),
+        StatusCodes.Status401Unauthorized => ("unauthorized", "Não conseguimos concluir sua pesquisa agora. Tente novamente.", true),
+        StatusCodes.Status403Forbidden => ("forbidden", "Esta consulta não está disponível.", false),
+        StatusCodes.Status404NotFound => ("not_found", "Não conseguimos concluir sua pesquisa agora. Tente novamente.", false),
+        StatusCodes.Status429TooManyRequests => ("rate_limited", "Houve muitas consultas em pouco tempo. Espere alguns minutos e tente novamente.", true),
+        StatusCodes.Status503ServiceUnavailable => ("catalog_unavailable", "O serviço de recomendações está temporariamente indisponível.", true),
+        StatusCodes.Status504GatewayTimeout => ("timeout", "A consulta demorou mais do que o esperado.", true),
+        _ => ("unexpected", "Não conseguimos concluir sua pesquisa agora. Tente novamente.", status >= StatusCodes.Status500InternalServerError)
+    };
+    await ApiProblems.WriteAsync(http, status, code, message, retryable);
+});
+
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
@@ -205,6 +237,16 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Correlation-ID"] = context.TraceIdentifier;
     using var logScope = app.Logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = context.TraceIdentifier });
     try { await next(); }
+    catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+    {
+        throw;
+    }
+    catch (Exception ex) when (ApiProblems.IsApi(context.Request))
+    {
+        var failure = ApiProblems.Classify(ex);
+        app.Logger.LogError("Falha na API {ExceptionType} em {Path}. CorrelationId {CorrelationId}.", ex.GetType().Name, context.Request.Path.Value, context.TraceIdentifier);
+        await ApiProblems.WriteAsync(context, failure.Status, failure.Code, failure.Message, failure.Retryable, context.RequestAborted);
+    }
     finally { actor.Value = null; }
 });
 
@@ -221,7 +263,11 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
         }));
     }
 }).AllowAnonymous();
-app.MapControllers().RequireRateLimiting("public");
+app.MapControllers().Add(endpoint =>
+{
+    if (!endpoint.Metadata.Any(metadata => metadata is EnableRateLimitingAttribute))
+        endpoint.Metadata.Add(new EnableRateLimitingAttribute("public"));
+});
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}").RequireRateLimiting("public");

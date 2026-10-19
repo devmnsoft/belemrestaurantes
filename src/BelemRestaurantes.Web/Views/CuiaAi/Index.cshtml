@@ -1,13 +1,20 @@
 @model BelemRestaurantes.Application.Abstractions.CuiaAiResponse
+@using System.Text.Json
 @using BelemRestaurantes.Application.Formatting
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Cuia IA — concierge do Pará";
-    ViewData["MetaDescription"] = "A Cuia IA responde com a camada Guia, as receitas editoriais e as travessias que têm fonte. Sem lugar conferido, a resposta diz isso.";
+    ViewData["Title"] = "Cuia IA — Seu guia de sabores do Pará";
+    ViewData["MetaDescription"] = "Conte o que você procura. A Cuia ajuda a encontrar restaurantes, pratos e experiências paraenses.";
     ViewData["AtlasEditorial"] = true;
     var cities = ViewData["Cities"] as IReadOnlyList<string> ?? [];
     var initialPrompt = ViewData["InitialPrompt"] as string ?? "";
     var initialCity = ViewData["InitialCity"] as string ?? "";
+    string KindLabel(string? kind) => kind switch
+    {
+        "servico" => "Resposta feita com um serviço de recomendações, usando só os restaurantes conferidos.",
+        "limite" => "A pergunta saiu do que a Cuia pode responder neste portal.",
+        _ => "Resposta feita com o catálogo do portal."
+    };
 }
 <section class="cuia-ai-page" lang="pt-BR">
   <div class="para-container">
@@ -18,16 +25,22 @@
     </nav>
 
     <header class="cuia-ai-hero">
-      <p class="cuia-ai-badge">@await Html.PartialAsync("_ParaIcon", "cuia") <span>Concierge da camada Guia</span></p>
-      <h1>Cuia IA · Seu Concierge da <em>Amazônia</em></h1>
-      <p>Pergunte o que comer e onde isso já está conferido. A resposta usa a camada Guia, o caderno de receitas e as travessias com fonte vigente.</p>
+      <div class="cuia-ai-hero-copy">
+        <p class="cuia-ai-badge">@await Html.PartialAsync("_ParaIcon", "cuia") <span>Guia de sabores do Pará</span></p>
+        <h1>Cuia IA — Seu guia de sabores do Pará</h1>
+        <p>Conte o que você procura. A Cuia ajuda a encontrar restaurantes, pratos e experiências paraenses.</p>
+      </div>
+      <figure class="cuia-ai-mark" aria-hidden="true">
+        <svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg">
+          <rect width="88" height="88" rx="22" fill="#143f32"/>
+          <path d="M8 62c10 6 18-2 28 2s16 8 28 2 12-8 16-4v16H8V62z" fill="#1d4e89"/>
+          <path d="M8 68c12 4 16-4 28-2s18 8 36 0" fill="none" stroke="#7eb6d6" stroke-width="2"/>
+          <path d="M24 46c0-12 8-20 20-20s20 8 20 20c2 10-6 16-20 18-14-2-22-8-20-18z" fill="#f3ead8" stroke="#efb645" stroke-width="2"/>
+          <path d="M34 28c6-10 16-8 20 0" fill="none" stroke="#2f6b45" stroke-width="2"/>
+          <circle cx="58" cy="18" r="4" fill="#a63725"/>
+        </svg>
+      </figure>
     </header>
-
-    <ul class="cuia-ai-context">
-      <li><strong>Guia</strong><span>Lugar só entra na recomendação depois de promoção humana.</span></li>
-      <li><strong>Limite</strong><span>Sem horário, preço, foto ou barco inventados.</span></li>
-      <li><strong>Caminho</strong><span>Prato, mapa, ficha e vídeo ficam nas páginas próprias.</span></li>
-    </ul>
 
     <div class="cuia-ai-layout">
       <div class="cuia-ai-card">
@@ -39,62 +52,81 @@
               <textarea id="ai-prompt" name="q" maxlength="500" rows="3" required placeholder="Ex.: Onde almoçar peixe na beira do rio no domingo?">@initialPrompt</textarea>
               <p id="ai-prompt-count" class="cuia-ai-count" aria-live="polite">@initialPrompt.Length / 500</p>
             </div>
-            <button type="submit" id="ai-submit" class="cuia-ai-submit-btn">Consultar</button>
+            <button type="submit" id="ai-submit" class="cuia-ai-submit-btn">Perguntar à Cuia</button>
           </div>
 
-          <div class="cuia-ai-filters">
-            <div class="cuia-ai-filter-item">
-              <label for="ai-city">Município</label>
-              <select id="ai-city" name="city">
-                <option value="">Todo o Pará</option>
-                @foreach (var c in cities)
-                {
-                  <option value="@c" selected="@(c == initialCity)">@c</option>
-                }
-              </select>
+          <details id="cuia-ai-filters" class="cuia-ai-filters-panel">
+            <summary>Município, ocasião e preferência alimentar</summary>
+            <div class="cuia-ai-filters">
+              <div class="cuia-ai-filter-item">
+                <label for="ai-city">Município</label>
+                <select id="ai-city" name="city">
+                  <option value="">Todo o Pará</option>
+                  @foreach (var c in cities)
+                  {
+                    <option value="@c" selected="@(c == initialCity)">@c</option>
+                  }
+                </select>
+              </div>
+              <div class="cuia-ai-filter-item">
+                <label for="ai-occasion">Ocasião</label>
+                <select id="ai-occasion" name="occasion">
+                  <option value="">Qualquer momento</option>
+                  <option value="familia">Em família</option>
+                  <option value="romantico">A dois</option>
+                  <option value="rapido">Parada rápida</option>
+                  <option value="ribeirinho">Beira de rio</option>
+                  <option value="tradicional">Comida de mercado</option>
+                </select>
+              </div>
+              <div class="cuia-ai-filter-item">
+                <label for="ai-dietary">Preferência alimentar</label>
+                <select id="ai-dietary" name="dietary">
+                  <option value="">Sem restrição</option>
+                  <option value="vegetariano">Vegetariano</option>
+                  <option value="sem_frutos_mar">Sem frutos do mar</option>
+                  <option value="sem_gluten">Sem glúten</option>
+                </select>
+              </div>
             </div>
-            <div class="cuia-ai-filter-item">
-              <label for="ai-occasion">Ocasião</label>
-              <select id="ai-occasion" name="occasion">
-                <option value="">Qualquer momento</option>
-                <option value="familia">Em família</option>
-                <option value="romantico">A dois</option>
-                <option value="rapido">Parada rápida</option>
-                <option value="ribeirinho">Beira de rio</option>
-                <option value="tradicional">Comida de mercado</option>
-              </select>
-            </div>
-            <div class="cuia-ai-filter-item">
-              <label for="ai-dietary">Preferência</label>
-              <select id="ai-dietary" name="dietary">
-                <option value="">Sem restrição</option>
-                <option value="vegetariano">Vegetariano</option>
-                <option value="sem_frutos_mar">Sem frutos do mar</option>
-                <option value="sem_gluten">Sem glúten</option>
-              </select>
-            </div>
-          </div>
+          </details>
 
-          <div class="cuia-ai-suggestions" role="group" aria-label="Perguntas prontas">
-            <span class="cuia-ai-suggestions-title">Perguntas prontas</span>
-            <button type="button" class="cuia-ai-chip" data-prompt="Onde tomar tacacá tradicional em Belém?">Onde tomar tacacá?</button>
-            <button type="button" class="cuia-ai-chip" data-prompt="Como almoçar na Ilha do Combu? O que o portal sabe sobre a travessia.">Almoço na Ilha do Combu</button>
-            <button type="button" class="cuia-ai-chip" data-prompt="Onde o catálogo cita açaí com peixe?">Açaí no catálogo</button>
-            <button type="button" class="cuia-ai-chip" data-prompt="O que uma pessoa vegetariana pode procurar na culinária paraense?">Mesa vegetariana</button>
+          <div class="cuia-ai-suggestions" role="group" aria-label="Exemplos de pergunta">
+            <span class="cuia-ai-suggestions-title">Exemplos</span>
+            <button type="button" class="cuia-ai-chip" data-prompt="Onde comer peixe?">Onde comer peixe?</button>
+            <button type="button" class="cuia-ai-chip" data-prompt="Onde tomar tacacá tradicional?">Tacacá tradicional.</button>
+            <button type="button" class="cuia-ai-chip" data-prompt="Jantar a dois" data-occasion="romantico">Jantar a dois.</button>
+            <button type="button" class="cuia-ai-chip" data-prompt="Passeio no Combu. O que o portal sabe sobre a travessia?">Passeio no Combu.</button>
+            <button type="button" class="cuia-ai-chip" data-prompt="Comida boa para família" data-occasion="familia">Comida boa para família.</button>
+            <button type="button" class="cuia-ai-chip" data-prompt="Receitas para fazer em casa">Receitas para fazer em casa.</button>
+            <button type="button" class="cuia-ai-chip" data-prompt="Restaurantes com informações de acessibilidade">Restaurantes com informações de acessibilidade.</button>
+            <button type="button" class="cuia-ai-chip" data-prompt="Lugares próximos">Lugares próximos.</button>
           </div>
         </form>
 
+        <section class="cuia-ai-guide" aria-labelledby="cuia-ai-guide-title">
+          <h2 id="cuia-ai-guide-title">O que você pode perguntar</h2>
+          <ol class="cuia-ai-help">
+            <li>Pergunte um prato, um bairro, uma ocasião ou um passeio no Pará.</li>
+            <li>Escreva no campo e toque em Perguntar à Cuia, ou escolha um exemplo. Cada exemplo faz uma consulta.</li>
+            <li>A Cuia mostra restaurantes publicados com informações conferidas, receitas do caderno e, quando couber, uma nota cultural separada do cardápio.</li>
+            <li>Se não houver opção conferida, a resposta diz isso e aponta o catálogo.</li>
+            <li>Ver restaurante abre a ficha. Como chegar abre o planejamento no Cuia Rotas.</li>
+          </ol>
+          <p class="cuia-ai-session-note">Uma pergunta seguinte sobre os resultados vale só nesta aba. Fechar a página apaga essa lista. A Cuia não guarda a conversa.</p>
+        </section>
+
         <div id="ai-loading" class="cuia-ai-loading" role="status" aria-live="polite" hidden>
           <div class="cuia-ai-spinner" aria-hidden="true"></div>
-          <p>Consultando a camada Guia...</p>
+          <p>Estamos buscando opções para você.</p>
         </div>
 
         <div id="ai-results" class="cuia-ai-results" role="region" aria-live="polite" aria-label="Resposta da Cuia IA" tabindex="-1" @(Model == null ? "hidden" : "")>
           @if (Model != null)
           {
             <div class="cuia-ai-meta">
-              <span class="cuia-ai-engine">Motor: @Model.EngineUsed</span>
-              <span class="cuia-ai-guarantee">@Model.Recommendations.Count lugar(es) da camada Guia nesta resposta</span>
+              <span class="cuia-ai-guarantee">@(Model.Recommendations.Count > 0 ? $"Pesquisa concluída. Encontramos {Model.Recommendations.Count} estabelecimentos." : "Não encontramos restaurantes conferidos para essa busca. Veja outras opções no catálogo.")</span>
+              <span class="cuia-ai-kind">@KindLabel(Model.AnswerKind)</span>
             </div>
             <div class="cuia-ai-response-body">
               <h2>Recomendações da Cuia IA</h2>
@@ -103,7 +135,7 @@
             @if (Model.Recommendations.Count > 0)
             {
               <div class="cuia-ai-section">
-                <h3>Estabelecimentos da camada Guia</h3>
+                <h3>Restaurantes com informações conferidas</h3>
                 <div class="cuia-ai-grid">
                   @foreach (var place in Model.Recommendations)
                   {
@@ -121,7 +153,7 @@
                       @if (!string.IsNullOrWhiteSpace(place.Address))
                       { <p class="cuia-ai-reco-address">@place.Address</p> }
                       <div class="cuia-ai-reco-actions">
-                        <a href="/estabelecimento/@place.Id" class="para-button">Abrir ficha</a>
+                        <a href="/estabelecimento/@place.Id" class="para-button">Ver restaurante</a>
                         <a href="/cuia-rotas?restaurantId=@place.Id" class="para-text-link">Como chegar</a>
                       </div>
                     </article>
@@ -132,7 +164,7 @@
             @if (Model.Recipes.Count > 0)
             {
               <div class="cuia-ai-section">
-                <h3>Receitas do caderno</h3>
+                <h3>Receitas do Pará</h3>
                 <div class="cuia-ai-recipes-list">
                   @foreach (var recipe in Model.Recipes)
                   {
@@ -157,23 +189,24 @@
             @if (Model.SuggestedFollowUps.Count > 0)
             {
               <div class="cuia-ai-followups">
-                <span>Continuar a conversa</span>
+                <span>Continuar nesta aba</span>
                 @foreach (var follow in Model.SuggestedFollowUps)
                 { <button type="button" class="cuia-ai-chip" data-prompt="@follow">@follow</button> }
               </div>
             }
+            <script type="application/json" id="cuia-initial-places">@Html.Raw(JsonSerializer.Serialize(Model.Recommendations.Select(place => new { id = place.Id, name = place.Name, city = place.City, neighborhood = place.Neighborhood, latitude = place.Latitude, longitude = place.Longitude, address = place.Address })))</script>
           }
         </div>
       </div>
 
       <aside class="cuia-ai-aside" aria-label="Outras formas de decidir">
-        <h2>Se a Guia ainda não responder</h2>
+        <h2>Se não houver opção conferida</h2>
         <a href="/pratos">Pratos do Pará</a>
         <a href="/mapa">Mapa dos publicados</a>
-        <a href="/busca?tier=ficha">Fichas, sem recomendação</a>
+        <a href="/busca?tier=ficha">Fichas, com informações menos completas</a>
         <a href="/travessias">Travessias com fonte</a>
         <a href="/receitas">Receitas para fazer em casa</a>
-        <a href="/guia">Como a camada Guia é decidida</a>
+        <a href="/guia">Como um restaurante é conferido</a>
       </aside>
     </div>
   </div>

@@ -95,6 +95,28 @@ public sealed class MySqlCostLedger(MySqlConnectionFactory factory) : ICostLedge
         return alreadySpentUsd < limitUsd;
     }
 
+    public async Task<IReadOnlyList<AiCostActivity>> RecentAsync(int limit, CancellationToken ct)
+    {
+        var take = Math.Clamp(limit, 1, 20);
+        await using var connection = await factory.OpenAsync(ct);
+        var rows = await connection.QueryAsync<ActivityRow>(new CommandDefinition(
+            """
+            SELECT provider, operation, success, cost_micros_usd AS micros, occurred_at
+            FROM ai_cost_entries
+            ORDER BY occurred_at DESC
+            LIMIT @take
+            """,
+            new { take },
+            cancellationToken: ct));
+
+        return rows.Select(row => new AiCostActivity(
+            row.provider,
+            row.operation,
+            row.success,
+            row.micros / 1_000_000m,
+            new DateTimeOffset(DateTime.SpecifyKind(row.occurred_at, DateTimeKind.Utc)))).ToArray();
+    }
+
     private sealed class CostRow
     {
         public string provider { get; set; } = default!;
@@ -105,5 +127,14 @@ public sealed class MySqlCostLedger(MySqlConnectionFactory factory) : ICostLedge
     {
         public long limit_micros { get; set; } = default!;
         public bool paused { get; set; } = default!;
+    }
+
+    private sealed class ActivityRow
+    {
+        public string provider { get; set; } = "";
+        public string operation { get; set; } = "";
+        public bool success { get; set; }
+        public long micros { get; set; }
+        public DateTime occurred_at { get; set; }
     }
 }

@@ -76,7 +76,17 @@ public interface ICostLedger
 
     /// <summary>Verifica se ainda há orçamento antes de gastar.</summary>
     Task<bool> HasBudgetRemaining(string provider, decimal alreadySpentUsd, CancellationToken ct);
+
+    /// <summary>Uso recente, sem mensagem de erro nem conteúdo da consulta.</summary>
+    Task<IReadOnlyList<AiCostActivity>> RecentAsync(int limit, CancellationToken ct);
 }
+
+public sealed record AiCostActivity(
+    string Provider,
+    string Operation,
+    bool Success,
+    decimal CostUsd,
+    DateTimeOffset OccurredAt);
 
 /// <summary>Relógio injetável para tornar tempo testável.</summary>
 public interface IClock
