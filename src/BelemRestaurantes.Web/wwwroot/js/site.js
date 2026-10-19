@@ -1,6 +1,7 @@
 "use strict";
 const el = id => document.getElementById(id);
 let places = [];
+function escapeHtml(value) { return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 function safeUrl(value) {
   try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : null; }
   catch { return null; }
@@ -51,7 +52,7 @@ if (el('go') && el('query') && el('client-text')) {
         const image = elem('img');
         image.src = photoUrl;
         image.alt = text.photo.replace('{0}', place.name);
-        image.loading = 'lazy'; image.referrerPolicy = 'no-referrer';
+        image.loading = 'lazy'; image.decoding = 'async'; image.referrerPolicy = 'no-referrer';
         image.onerror = () => photo.replaceChildren(elem('span', '', text.noPhoto));
         photo.append(image);
       } else photo.append(elem('span', '', text.noPhoto));
@@ -128,13 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         adviceEl.innerHTML = `
           <div style="padding:14px;background:rgba(255,255,255,0.08);border-radius:10px;margin-top:10px;">
-            <p style="margin:0 0 8px;font-size:1.05rem;">${data.advice.replace(/\n/g, '<br/>')}</p>
-            <small style="opacity:0.8;color:#ffe2a0;">⚡ Fonte: ${data.engine} · Pará à Mesa</small>
+            <p style="margin:0 0 8px;font-size:1.05rem;">${escapeHtml(data.advice || '').replace(/\n/g, '<br/>')}</p>
+            <small style="opacity:0.8;color:#ffe2a0;">⚡ Fonte: ${escapeHtml(data.engine || 'Cuia IA')} · Pará à Mesa</small>
           </div>
         `;
         sommelierBtn.innerHTML = '<span>Dica Atualizada ✨</span>';
       } catch (err) {
-        adviceEl.innerHTML = `<p style="color:#ffb3a0;">${err.message || 'Erro ao consultar dica.'}</p>`;
+        adviceEl.innerHTML = `<p style="color:#ffb3a0;">${escapeHtml(err.message || 'Erro ao consultar dica.')}</p>`;
         sommelierBtn.innerHTML = originalText;
       } finally {
         sommelierBtn.disabled = false;
@@ -158,13 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         adviceEl.innerHTML = `
           <div style="padding:14px;background:rgba(255,255,255,0.08);border-radius:10px;margin-top:10px;">
-            <p style="margin:0 0 8px;font-size:1.05rem;">${data.advice.replace(/\n/g, '<br/>')}</p>
+            <p style="margin:0 0 8px;font-size:1.05rem;">${escapeHtml(data.advice || '').replace(/\n/g, '<br/>')}</p>
             <small style="opacity:0.8;color:#ffe2a0;">⚡ Fonte: ${data.engine} · Caderno do Pará</small>
           </div>
         `;
         recipeChefBtn.innerHTML = '<span>Dica do Chef Pronta ✨</span>';
       } catch (err) {
-        adviceEl.innerHTML = `<p style="color:#ffb3a0;">${err.message || 'Erro ao consultar dica.'}</p>`;
+        adviceEl.innerHTML = `<p style="color:#ffb3a0;">${escapeHtml(err.message || 'Erro ao consultar dica.')}</p>`;
         recipeChefBtn.innerHTML = originalText;
       } finally {
         recipeChefBtn.disabled = false;

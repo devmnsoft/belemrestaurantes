@@ -35,7 +35,7 @@
     });
   }
   document.querySelector('#visit-save')?.addEventListener('click', event => {
-    try { const path = event.currentTarget.dataset.path; localStorage.setItem(key, JSON.stringify([path, ...read().filter(x => x !== path)].slice(0, 20))); document.querySelector('#visit-save-status').textContent = 'Plano salvo sem sua origem.'; render(); }
+    try { const path = event.currentTarget.dataset.path; if (!validPath(path)) { document.querySelector('#visit-save-status').textContent = 'Não foi possível salvar este plano.'; return; } localStorage.setItem(key, JSON.stringify([path, ...read().filter(x => x !== path)].slice(0, 20))); document.querySelector('#visit-save-status').textContent = 'Plano salvo sem sua origem.'; render(); }
     catch { document.querySelector('#visit-save-status').textContent = 'O navegador não permitiu salvar. Use o compartilhamento.'; }
   });
   document.querySelector('[data-load-map]')?.addEventListener('click', event => {

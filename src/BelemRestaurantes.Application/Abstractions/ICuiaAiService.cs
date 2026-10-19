@@ -21,7 +21,8 @@ public sealed record CuiaAiRecommendation(
     string? Phone,
     string Reason,
     double? CuiaScore,
-    string? PriceRange);
+    string? PriceRange,
+    string? PhotoUrl = null);
 
 public sealed record CuiaAiRecipeMatch(
     string Slug,

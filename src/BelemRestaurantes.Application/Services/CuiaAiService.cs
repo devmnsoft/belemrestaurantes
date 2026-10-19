@@ -60,7 +60,8 @@ public sealed class CuiaAiService(
             Phone: r.Phone,
             Reason: GenerateReasonForRestaurant(r, pLower),
             CuiaScore: null,
-            PriceRange: null
+            PriceRange: null,
+            PhotoUrl: r.PhotoUrl
         )).ToList();
 
         // 3. Buscar receitas regionais relacionadas
@@ -238,18 +239,9 @@ public sealed class CuiaAiService(
 
     private static string GenerateReasonForRestaurant(RestaurantView r, string p)
     {
-        if (r.Category?.Contains("Tacacá", StringComparison.OrdinalIgnoreCase) == true)
-            return "Referência imperdível para degustar tacacá tradicional com tucupi fervido e jambu.";
-        if (r.Category?.Contains("Açaí", StringComparison.OrdinalIgnoreCase) == true)
-            return "Excelente opção para o açaí autêntico paraense servido na tigela com farinha e peixe.";
-        if (r.Category?.Contains("Peixe", StringComparison.OrdinalIgnoreCase) == true || (r.Name != null && r.Name.Contains("Peixe", StringComparison.OrdinalIgnoreCase)))
-            return "Especialidade em pescados amazônicos frescos (filhote, pescada amarela e pirarucu).";
-        if (r.Neighborhood?.Contains("Combu", StringComparison.OrdinalIgnoreCase) == true)
-            return "Experiência ribeirinha rústica na Ilha do Combu com vista para o Rio Guamá.";
-        if (r.Neighborhood?.Contains("Campina", StringComparison.OrdinalIgnoreCase) == true || r.Neighborhood?.Contains("Reduto", StringComparison.OrdinalIgnoreCase) == true)
-            return "Localização central e histórica com culinária autoral e regional marcante.";
-
-        return "Cadastro publicado na camada Guia. Confirme horário e prato com a casa.";
+        var where = string.IsNullOrWhiteSpace(r.Neighborhood) ? r.City : $"{r.Neighborhood}, {r.City}";
+        var category = string.IsNullOrWhiteSpace(r.Category) ? "Cadastro" : r.Category;
+        return $"{category} na camada Guia, em {where}. Esta resposta não confirma horário, preço nem prato do dia.";
     }
 
     private static string GenerateAutonomousEditorialResponse(

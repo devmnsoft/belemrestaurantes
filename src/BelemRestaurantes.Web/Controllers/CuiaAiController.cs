@@ -11,21 +11,20 @@ namespace BelemRestaurantes.Web.Controllers;
 public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepository restaurantRepo) : Controller
 {
     [HttpGet("/cuia-ia")]
-    public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] string? city, CancellationToken ct)
+    public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] string? city, [FromQuery] string? occasion, [FromQuery] string? dietary, CancellationToken ct)
     {
-        ViewData["Title"] = "Cuia IA — Sommelier & Concierge Gastronômico da Amazônia";
-        ViewData["MetaDescription"] = "Consulte a Inteligência Artificial especializada na culinária paraense. Recomendações de restaurantes reais, harmonizações de sabores da floresta, itinerários ribeirinhos e dicas do chef.";
+        ViewData["Title"] = "Cuia IA — concierge do Pará";
+        ViewData["MetaDescription"] = "A Cuia IA responde com a camada Guia, as receitas editoriais e as travessias que têm fonte. Sem lugar conferido, a resposta diz isso.";
 
         var cities = await restaurantRepo.ListCitiesAsync(ct);
         ViewData["Cities"] = cities;
         ViewData["InitialPrompt"] = q ?? "";
         ViewData["InitialCity"] = city ?? "";
 
-        // Se houver busca inicial via query string, processa a resposta inicial
         CuiaAiResponse? initialResponse = null;
         if (!string.IsNullOrWhiteSpace(q))
         {
-            initialResponse = await cuiaAi.AskAsync(new CuiaAiQuery(q, city), ct);
+            initialResponse = await cuiaAi.AskAsync(new CuiaAiQuery(q, city, occasion, dietary), ct);
         }
 
         return View(initialResponse);

@@ -50,6 +50,7 @@
 </header>
 @if(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName is not ("pt" or "en" or "es"))
 { <p class="atlas-locale-note" lang="en">The new editorial pages are available in Português, English and Español. Other languages currently use English for these sections.</p> }
+<div hidden id="cuia-widget-token">@Html.AntiForgeryToken()</div>
 <main id="main-content" tabindex="-1" lang="@(!primaryEditorialLanguage && ViewData["AtlasEditorial"] as bool? == true ? "en" : null)">@RenderBody()</main>
 <footer class="para-footer" lang="@editorialLanguage">
   <div class="para-container para-footer-grid">
@@ -72,6 +73,7 @@
 <script src="~/js/para.js" asp-append-version="true" defer></script>
 <script src="~/js/accessibility.js" asp-append-version="true" defer></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
+<script src="~/js/cuia-widget.js" asp-append-version="true" defer></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

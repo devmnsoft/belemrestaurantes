@@ -43,7 +43,8 @@
         const res = await fetch('/api/cuia-ia/dica-receita/' + encodeURIComponent(slug));
         if (!res.ok) throw new Error();
         const data = await res.json();
-        target.innerHTML = data.tips.replace(/\n\n/g, '<br/><br/>').replace(/### /g, '<h3 style="color:#ffe2a0;margin:10px 0 6px;">').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        const escapeHtml = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+target.innerHTML = `<p style="margin:0;">${escapeHtml(data.tips || '').replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>')}</p>`;
       } catch {
         target.innerHTML = '<p style="color:#fee2e2;">Não foi possível carregar as adaptações no momento.</p>';
       } finally {
