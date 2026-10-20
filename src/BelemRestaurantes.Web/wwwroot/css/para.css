@@ -320,3 +320,5 @@ html.recipe-kitchen .recipe-steps li span[aria-hidden]{font-size:1.8rem!importan
 .menu-code-dialog [data-menu-code-close]{min-width:44px;min-height:44px;color:var(--color-text-primary);opacity:1}
 
 .partner-plans strong{overflow-wrap:anywhere}
+
+.btn[data-menu-code-open]{background:var(--para-gold);color:var(--para-forest)}

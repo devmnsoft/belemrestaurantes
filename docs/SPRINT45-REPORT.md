@@ -26,7 +26,7 @@ Também foram substituídos tokens de alerta sem definição em estados de Crawl
 
 O ensaio de superfícies usa a página de cardápio atual com CSS anterior interceptado apenas no navegador de teste, e depois com o CSS corrigido. Isso isola o defeito de estilo; não representa uma versão anterior funcional do cardápio, que retornava 500.
 
-O card antigo teve texto e fundo computados como `rgb(255,255,255)`: **1:1**. Depois, o fundo é `rgb(20,63,50)` e o texto principal `rgb(255,246,223)`, aproximadamente **10,91:1**. O axe não sinalizou o caso branco sobre branco nesse ensaio, reforçando a necessidade de inspeção visual e medição de estilos.
+O card antigo teve texto e fundo computados como `rgb(255,255,255)`: **1:1**. Depois, o fundo é `rgb(20,63,50)` e o texto principal `rgb(255,246,223)`, aproximadamente **10,91:1**. O axe não sinalizou o caso branco sobre branco nesse ensaio, reforçando a necessidade de inspeção visual e medição de estilos. A inspeção final também corrigiu o botão de QR Code que herdava texto verde sobre botão verde; ele agora usa dourado com texto verde. Estados vazios deixaram de afirmar que há atualização de cardápio em andamento sem informação do estabelecimento.
 
 O alerta de fechamento foi reproduzido com a folha anterior em uma galeria identificada como fixture. Não foi criado estabelecimento fictício fechado no catálogo público. Os relatórios guardam seletor, estado, cores e falha correspondente. Estados de menu aberto, hover, erro, foco, disabled, input inválido, ampliação e alto contraste também têm capturas.
 
