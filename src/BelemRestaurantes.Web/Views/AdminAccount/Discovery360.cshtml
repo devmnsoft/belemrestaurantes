@@ -178,7 +178,7 @@
             <td style="padding: 10px 12px; text-align: center;">
               @if (c.IsTouristPole)
               {
-                <span class="badge-tag-v3" style="background: rgba(229,169,59,0.15); color: var(--tucupi-800); border: 1px solid rgba(229,169,59,0.4); font-size: 1rem;">⭐ POLO</span>
+                <span class="badge-tag-v3" style="background: rgba(229,169,59,0.15); color: var(--color-warning-text); border: 1px solid rgba(229,169,59,0.4); font-size: 1rem;">⭐ POLO</span>
               }
               else
               {
@@ -187,7 +187,7 @@
             </td>
             <td style="padding: 10px 12px; text-align: center; font-weight: 700;">@c.TotalDiscovered</td>
             <td style="padding: 10px 12px; text-align: center; color: var(--forest-700); font-weight: 700;">@c.TotalApproved</td>
-            <td style="padding: 10px 12px; text-align: center; color: @(c.TotalWithoutPhotos > 0 ? "var(--tucupi-700)" : "var(--text-muted)");">
+            <td style="padding: 10px 12px; text-align: center; color: @(c.TotalWithoutPhotos > 0 ? "var(--color-warning-text)" : "var(--text-muted)");">
               @c.TotalWithoutPhotos
             </td>
             <td style="padding: 10px 12px; text-align: center; color: @(c.TotalStale > 0 ? "#dc2626" : "var(--text-muted)");">
@@ -317,7 +317,7 @@
             <td style="padding: 8px 10px; text-align: center;">
               @if (h.RequiresModeration)
               {
-                <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(229,169,59,0.15); color: var(--tucupi-800);">⚠️ Pendente</span>
+                <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(229,169,59,0.15); color: var(--color-warning-text);">⚠️ Pendente</span>
               }
               else
               {
@@ -342,7 +342,7 @@
         Processamento autônomo e periódico: descoberta, atualização, encerramento de atividades, conflitos e revisão de mídia.
       </p>
     </div>
-    <span class="badge-v4" style="background: rgba(229,169,59,0.15); color: var(--tucupi-800); font-weight: 750;">
+    <span class="badge-v4" style="background: rgba(229,169,59,0.15); color: var(--color-warning-text); font-weight: 750;">
       Ciclo de 10 min · Worker Permanente
     </span>
   </div>
@@ -437,7 +437,7 @@
                 }
                 else
                 {
-                  <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(229,169,59,0.15); color: var(--tucupi-800);">⏳ Pendente</span>
+                  <span class="badge-tag-v3" style="font-size: 1rem; background: rgba(229,169,59,0.15); color: var(--color-warning-text);">⏳ Pendente</span>
                 }
               </td>
               <td style="padding: 8px 10px; text-align: center;">

@@ -1,11 +1,11 @@
 @model IReadOnlyList<BelemRestaurantes.Domain.Entities.CommercialPlan>
 @{
-    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var restaurant = (BelemRestaurantes.Application.Models.RestaurantView)ViewBag.Restaurant;
     var currentSub = (BelemRestaurantes.Domain.Entities.RestaurantSubscription?)ViewBag.CurrentSubscription;
     ViewData["Title"] = $"Planos & Monetização - {restaurant.Name}";
 }
 
-<div class="container py-4">
+<div class="container py-4 partner-plans">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
             <nav aria-label="breadcrumb">

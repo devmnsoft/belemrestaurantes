@@ -161,6 +161,11 @@
                 </div>
               </div>
             }
+            @if(Model.DirectoryMatches.Count>0) {
+              <section class="cuia-ai-section"><h3>Fichas públicas para explorar</h3><p>Cadastros publicados que correspondem à busca. Não são recomendações verificadas; confirme funcionamento, serviços e acessibilidade antes de visitar.</p><ul class="cuia-ai-local-list">
+              @foreach(var place in Model.DirectoryMatches){<li><a href="/establishment/@place.Id">@place.Name</a><p>@place.City · @place.Category</p><a href="/cuia-rotas?restaurantId=@place.Id">Como chegar ↗</a></li>}
+              </ul></section>
+            }
             @if (Model.Recipes.Count > 0)
             {
               <div class="cuia-ai-section">
@@ -194,7 +199,7 @@
                 { <button type="button" class="cuia-ai-chip" data-prompt="@follow">@follow</button> }
               </div>
             }
-            <script type="application/json" id="cuia-initial-places">@Html.Raw(JsonSerializer.Serialize(Model.Recommendations.Select(place => new { id = place.Id, name = place.Name, city = place.City, neighborhood = place.Neighborhood, latitude = place.Latitude, longitude = place.Longitude, address = place.Address })))</script>
+            <script type="application/json" id="cuia-initial-places">@Html.Raw(JsonSerializer.Serialize(Model.Recommendations.Concat(Model.DirectoryMatches).Select(place => new { id = place.Id, name = place.Name, city = place.City, neighborhood = place.Neighborhood, latitude = place.Latitude, longitude = place.Longitude, address = place.Address })))</script>
           }
         </div>
       </div>

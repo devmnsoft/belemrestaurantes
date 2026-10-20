@@ -1,6 +1,6 @@
 @model IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantSchedule>
 @{
-    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var restaurant = (BelemRestaurantes.Application.Models.RestaurantView)ViewBag.Restaurant;
     var specialSchedules = (IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantSpecialSchedule>)ViewBag.SpecialSchedules;
     ViewData["Title"] = $"Horários e Feriados - {restaurant.Name}";
 
@@ -61,9 +61,9 @@
                                 {
                                     var day = (byte)i;
                                     var schedule = Model.FirstOrDefault(s => s.DayOfWeek == day);
-                                    var isClosed = schedule?.IsClosed ?? (day == 1); // segunda padrão fechado
-                                    var openTime = schedule?.OpenTime?.ToString(@"hh\:mm") ?? "11:30";
-                                    var closeTime = schedule?.CloseTime?.ToString(@"hh\:mm") ?? "23:00";
+                                    var isClosed = schedule?.IsClosed ?? false; // ausência não presume dia fechado
+                                    var openTime = schedule?.OpenTime?.ToString(@"hh\:mm") ?? "";
+                                    var closeTime = schedule?.CloseTime?.ToString(@"hh\:mm") ?? "";
 
                                     <tr>
                                         <td class="fw-bold">
@@ -71,14 +71,14 @@
                                             <input type="hidden" name="schedules[@i].DayOfWeek" value="@i" />
                                         </td>
                                         <td>
-                                            <input type="time" name="schedules[@i].OpenTime" value="@openTime" class="form-control form-control-sm" />
+                                            <input type="time" name="schedules[@i].OpenTime" aria-label="Abertura em @dayNames[i]" value="@openTime" class="form-control form-control-sm" />
                                         </td>
                                         <td>
-                                            <input type="time" name="schedules[@i].CloseTime" value="@closeTime" class="form-control form-control-sm" />
+                                            <input type="time" name="schedules[@i].CloseTime" aria-label="Fechamento em @dayNames[i]" value="@closeTime" class="form-control form-control-sm" />
                                         </td>
                                         <td class="text-center">
                                             <div class="form-check form-switch d-inline-block">
-                                                <input class="form-check-input" type="checkbox" name="schedules[@i].IsClosed" value="true" @(isClosed ? "checked" : "") id="chkClosed_@i" />
+                                                <input class="form-check-input" type="checkbox" name="schedules[@i].IsClosed" value="true" @(isClosed ? "checked" : "") id="chkClosed_@i" aria-label="Fechado em @dayNames[i]" />
                                             </div>
                                         </td>
                                     </tr>
@@ -111,7 +111,7 @@
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Data Específica *</label>
-                        <input type="date" name="SpecificDate" class="form-control form-control-sm" required min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
+                        <input type="date" name="SpecificDate" aria-label="Data do horário especial" class="form-control form-control-sm" required min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
                     </div>
 
                     <div class="mb-3">
@@ -122,11 +122,11 @@
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label class="form-label small fw-bold">Abre às</label>
-                            <input type="time" name="OpenTime" class="form-control form-control-sm" value="12:00" />
+                            <input type="time" name="OpenTime" aria-label="Abertura na data especial" class="form-control form-control-sm" value="" />
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold">Fecha às</label>
-                            <input type="time" name="CloseTime" class="form-control form-control-sm" value="18:00" />
+                            <input type="time" name="CloseTime" aria-label="Fechamento na data especial" class="form-control form-control-sm" value="" />
                         </div>
                     </div>
 

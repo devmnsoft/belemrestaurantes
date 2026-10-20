@@ -1,0 +1,37 @@
+@model BelemRestaurantes.Application.Models.RouteAlternative
+@using BelemRestaurantes.Application.Models
+@using BelemRestaurantes.Application.Services
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var number = (int)ViewData["RouteNumber"]!;
+    var mapId = "route-map-" + number;
+    var browserKey = Configuration.GetValue<bool>("GoogleMaps:Enabled") ? Configuration["GoogleMaps:BrowserKey"] : null;
+    var geometry = Model.Path.Count > 1 || Model.Steps.Any(s=>s.Path.Count>1);
+    var mapData = System.Text.Json.JsonSerializer.Serialize(new { path=Model.Path, steps=Model.Steps });
+}
+<article class="visit-route">
+  <h3>@Model.Description</h3>
+  <p><strong>@Math.Ceiling(Model.DurationSeconds/60d) min</strong> · @((Model.DistanceMeters/1000d).ToString("0.0")) km · @(Model.Fare??"Tarifa não informada")</p>
+  <p>@Model.Transfers baldeação(ões) · @Model.Steps.Where(s=>s.Mode=="WALK").Sum(s=>s.DistanceMeters??0) metros de caminhada informados</p>
+  <ol>
+  @for(var index=0;index<Model.Steps.Count;index++) {
+    var step=Model.Steps[index];
+    <li id="route-@number-step-@index" tabindex="-1">
+      <strong>@(step.Mode=="WALK"?"Caminhada":step.Line??(step.Mode=="TRANSIT"?"Transporte coletivo":"Deslocamento"))</strong> — @step.Instruction
+      @if(step.Headsign is {} headsign){<p>Sentido: @headsign</p>}
+      @if(step.Board is not null){<p>Embarque: @step.Board · Desembarque: @(step.Alight??"Não informado")</p>}
+      @if(step.DistanceMeters is {} distance){<p>@distance metros @if(step.DurationSeconds is {} duration){<span>· @Math.Ceiling(duration/60d) min</span>}</p>}
+      @if(DateTimeOffset.TryParse(step.Departure,out var departure)&&DateTimeOffset.TryParse(step.Arrival,out var arrival)){<p>@TimeZoneInfo.ConvertTime(departure,OpeningHours.ParaZone).ToString("HH:mm") → @TimeZoneInfo.ConvertTime(arrival,OpeningHours.ParaZone).ToString("HH:mm") (Pará)</p>}
+      @if(step.Path.Count>1 && !string.IsNullOrEmpty(browserKey)){<button type="button" class="visit-text-button" data-route-step="@index" data-route-target="@mapId">Ver esta etapa no mapa</button>}
+    </li>
+  }
+  </ol>
+  @if(geometry && !string.IsNullOrEmpty(browserKey)) {
+    <button type="button" class="para-button" data-route-open="@mapId" aria-controls="@mapId">Ver traçado deste trajeto</button>
+    <p>Ao abrir, o Google Maps recebe a geometria para exibir o trajeto. Caminhada tracejada; transporte coletivo com linha contínua. A alternativa textual permanece acima.</p>
+    <div id="@mapId" class="visit-route-map" hidden data-route="@mapData" data-google-key="@browserKey" role="region" aria-label="Traçado de @Model.Description"></div>
+    <p data-route-status="@mapId" role="status"></p>
+  } else {
+    <p class="visit-status">@(geometry ? "Mapa do trajeto indisponível neste portal. Consulte as etapas acima ou abra o planejador externo." : "A fonte não forneceu uma geometria válida para este trajeto. As etapas disponíveis estão acima.")</p>
+  }
+</article>

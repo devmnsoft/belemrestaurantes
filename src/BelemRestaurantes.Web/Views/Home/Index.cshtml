@@ -41,8 +41,8 @@
         <a href="/cuia-ia?q=Onde+tomar+tacac%C3%A1" class="para-text-link" style="color:var(--color-link);">Onde tomar tacacá? →</a>
       </div>
     </div>
-    <div style="background:#143f32;border:1px solid #2d6150;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-      <strong style="color:#ffe2a0;font-size:1rem;">💡 Perguntas em alta na Cuia IA:</strong>
+    <div class="cuia-ai-questions">
+      <strong>💡 Perguntas em alta na Cuia IA:</strong>
       <a href="/cuia-ia?q=Melhor+peixe+com+a%C3%A7a%C3%AD+no+Combu" class="cuia-ai-chip" style="text-decoration:none;">🛶 Almoço ribeirinho no Combu</a>
       <a href="/cuia-ia?q=Jantar+rom%C3%A2ntico+na+Esta%C3%A7%C3%A3o+das+Docas" class="cuia-ai-chip" style="text-decoration:none;">⚓ Jantar com vista para o rio</a>
       <a href="/cuia-ia?q=Como+fazer+mani%C3%A7oba+em+casa" class="cuia-ai-chip" style="text-decoration:none;">🥘 Segredos da maniçoba de 7 dias</a>
@@ -57,8 +57,15 @@
 <section id="catalogo" class="para-section atlas-catalog"><div class="para-container">
   <div class="para-section-heading"><div><span class="para-eyebrow">@T["AtlasCatalogEyebrow"]</span><h2>@T["AtlasCatalogTitle"]</h2><p>@T["AtlasCatalogText"]</p></div><a href="/mapa" class="para-text-link" lang="pt-BR">Mapa dos publicados ↗</a><a href="/busca?sort=recent" class="para-text-link">@T["AtlasExplore"] ↗</a></div>
   @if(Model.FeaturedRestaurants.Count>0){<div class="para-restaurant-grid">@foreach(var restaurant in Model.FeaturedRestaurants){@await Html.PartialAsync("_RestaurantCard",restaurant)}</div>}
-  else{<div class="atlas-catalog-empty"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon","cuia")</span><div><h3>@T["AtlasEmptyTitle"]</h3><p>@T["AtlasEmptyText"]</p><p lang="pt-BR">A camada Guia continua vazia até uma promoção com dono, horário, cardápio ou foto licenciada. Os publicados com coordenada estão no mapa.</p><a href="/mapa" class="para-text-link" lang="pt-BR">Abrir o mapa ↗</a><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div><a href="/guia" class="para-button">@T["AtlasGuideLink"]</a></div>}
+  else{<div class="atlas-catalog-empty"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon","cuia")</span><div><h3>@T["AtlasEmptyTitle"]</h3><p>@T["AtlasEmptyText"]</p><p lang="pt-BR">A camada Guia continua vazia até uma promoção com dono, horário, cardápio ou foto licenciada. Explore as fichas públicas abaixo ou use a busca; os publicados com coordenada também estão no mapa.</p><a href="/mapa" class="para-text-link" lang="pt-BR">Abrir o mapa ↗</a><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div><a href="/guia" class="para-button">@T["AtlasGuideLink"]</a></div>}
 </div></section>
+@if(Model.DirectoryRestaurants.Count>0)
+{
+<section class="para-section para-container" aria-labelledby="public-directory-title" lang="pt-BR">
+  <div class="para-section-heading"><div><span class="para-eyebrow">DESCUBRA O CATÁLOGO PÚBLICO</span><h2 id="public-directory-title">@Model.DirectoryCount fichas para explorar</h2><p>Cadastros publicados com dados de suas fontes. Ficha cadastral não é recomendação verificada: confirme funcionamento e serviços antes de visitar.</p></div><a class="para-text-link" href="/busca?tier=ficha">Ver todas as fichas ↗</a></div>
+  <div class="para-restaurant-grid">@foreach(var restaurant in Model.DirectoryRestaurants){@await Html.PartialAsync("_RestaurantCard",restaurant)}</div>
+</section>
+}
 @if(Model.CuiaHighlights.Count>0)
 {<section class="para-section para-container"><div class="para-section-heading"><h2>@T["CuiaBadge"]</h2><a href="/selo-cuia" class="para-text-link">@T["CuiaMethodology"] ↗</a></div><div class="para-restaurant-grid">@foreach(var item in Model.CuiaHighlights){<article class="para-story"><span class="para-eyebrow">Selo Cuia · @item.Score.ToString("F1")</span><h3><a href="/establishment/@item.RestaurantId">@item.RestaurantName</a></h3><p>@item.RestaurantCity</p></article>}</div></section>}
 <section class="para-section para-container atlas-community"><div><span class="para-eyebrow">@T["AtlasCommunityEyebrow"]</span><h2>@T["AtlasCommunityTitle"]</h2><p>@T["AtlasCommunityText"]</p><div class="atlas-hero-actions"><a class="para-button" href="/community">@T["NavCommunity"] ↗</a><a class="para-text-link" href="/account/favorites">@T["AtlasFavorites"] ↗</a></div></div><div class="atlas-community-card">@await Html.PartialAsync("_ParaIcon","market")<span class="para-eyebrow">@T["AtlasLocalTip"]</span><h3>@T["AtlasLocalTipTitle"]</h3><p>@T["AtlasLocalTipText"]</p><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div></section>

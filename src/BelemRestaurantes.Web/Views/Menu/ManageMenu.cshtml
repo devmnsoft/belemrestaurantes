@@ -1,6 +1,6 @@
 @model IReadOnlyList<BelemRestaurantes.Domain.Entities.MenuCategory>
 @{
-    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var restaurant = (BelemRestaurantes.Application.Models.RestaurantView)ViewBag.Restaurant;
     ViewData["Title"] = $"Cardápio Digital - {restaurant.Name}";
 }
 
@@ -16,7 +16,7 @@
             </nav>
             <h1 class="h3 fw-bold text-forest mb-0">Cardápio Digital Inteligente</h1>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             <a href="/cardapio/@restaurant.Id" target="_blank" class="btn btn-warning text-dark btn-sm fw-bold">
                 <i class="bi bi-qr-code me-1"></i>Ver Cardápio Público
             </a>
@@ -30,7 +30,7 @@
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close" data-menu-notice-close aria-label="Fechar aviso">×</button>
         </div>
     }
 
@@ -38,7 +38,7 @@
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close" data-menu-notice-close aria-label="Fechar aviso">×</button>
         </div>
     }
 
@@ -58,7 +58,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Ordem de Exibição</label>
-                        <input type="number" name="displayOrder" class="form-control form-control-sm" value="@(Model.Count + 1)" />
+                        <input type="number" name="displayOrder" aria-label="Ordem da categoria" class="form-control form-control-sm" value="@(Model.Count + 1)" />
                     </div>
                     <button type="submit" class="btn btn-forest btn-sm w-100">
                         <i class="bi bi-plus-circle me-1"></i>Adicionar Categoria
@@ -83,7 +83,7 @@
 
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Categoria *</label>
-                            <select name="CategoryId" class="form-select form-select-sm" required>
+                            <select name="CategoryId" aria-label="Categoria do prato" class="form-select form-select-sm" required>
                                 @foreach (var cat in Model)
                                 {
                                     <option value="@cat.Id">@cat.Name</option>
@@ -103,7 +103,7 @@
                             </div>
                             <div class="col-6">
                                 <label class="form-label small fw-bold">Ordem</label>
-                                <input type="number" name="DisplayOrder" class="form-control form-control-sm" value="1" />
+                                <input type="number" name="DisplayOrder" aria-label="Ordem do prato" class="form-control form-control-sm" value="1" />
                             </div>
                         </div>
 
@@ -120,7 +120,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <label class="form-label small fw-bold mb-0">Descrição do Prato</label>
-                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-forest small" id="btnCuiaAi">
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-forest small" id="btnCuiaAi" data-suggest-url="/partner/@restaurant.Id/menu/suggest-ai">
                                     <i class="bi bi-stars text-warning me-1"></i>Sugerir com Cuia IA
                                 </button>
                             </div>
@@ -227,39 +227,4 @@
     </div>
 </div>
 
-<script>
-document.getElementById('btnCuiaAi')?.addEventListener('click', async function () {
-    const dishName = document.getElementById('dishNameInput').value.trim();
-    const ingredients = document.getElementById('dishIngredientsInput').value.trim();
-    if (!dishName) {
-        alert('Informe o nome do prato antes de pedir a sugestão da Cuia IA.');
-        return;
-    }
-
-    const loading = document.getElementById('aiLoading');
-    loading.classList.remove('d-none');
-
-    try {
-        const formData = new FormData();
-        formData.append('dishName', dishName);
-        formData.append('ingredients', ingredients);
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        formData.append('__RequestVerificationToken', token);
-
-        const response = await fetch('/partner/@restaurant.Id/menu/suggest-ai', {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await response.json();
-        if (data.success && data.suggestion) {
-            document.getElementById('dishDescriptionInput').value = data.suggestion;
-        }
-    } catch (e) {
-        console.error(e);
-        alert('Erro ao consultar a Cuia IA.');
-    } finally {
-        loading.classList.add('d-none');
-    }
-});
-</script>
+@section Scripts { <script src="~/js/menu-manage.js" asp-append-version="true" defer></script> }

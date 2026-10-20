@@ -325,7 +325,8 @@
 
   function renderResults(data) {
     const places = Array.isArray(data.recommendations) ? data.recommendations : [];
-    rememberPlaces(places);
+    const directory=Array.isArray(data.directoryMatches)?data.directoryMatches:[];
+    rememberPlaces([...places,...directory]);
     let html = `
       <div class="cuia-ai-meta">
         <span class="cuia-ai-guarantee">${places.length ? `Pesquisa concluída. Encontramos ${places.length} estabelecimentos.` : 'Não encontramos restaurantes conferidos para essa busca. Veja outras opções no catálogo.'}</span>
@@ -388,6 +389,7 @@
       `;
     }
 
+    if(directory.length)html+=`<section class="cuia-ai-section"><h3>Fichas públicas para explorar</h3><p>Estes cadastros correspondem à busca, mas não são recomendações verificadas. Confirme os dados antes da visita.</p><ul class="cuia-ai-local-list">${directory.map(p=>`<li><a href="/establishment/${encodeURIComponent(String(p.id))}">${escapeHtml(p.name)}</a><p>${escapeHtml(p.city)} · ${escapeHtml(p.category||'Sem categoria')}</p><a href="/cuia-rotas?restaurantId=${encodeURIComponent(String(p.id))}">Como chegar</a></li>`).join('')}</ul></section>`;
     if (data.suggestedFollowUps && data.suggestedFollowUps.length > 0) {
       html += `
         <div class="cuia-ai-followups">

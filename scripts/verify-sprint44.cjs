@@ -15,7 +15,7 @@ const base=process.env.VISUAL_TEST_BASE_URL||'http://localhost:5180',out=process
    const axe=width===320?(await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze()).violations:[];
    const rendered=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+2,small:[...document.querySelectorAll('main p,main label,main input,main button,main td,main small')].filter(e=>e.getBoundingClientRect().height&&parseFloat(getComputedStyle(e).fontSize)<16).map(e=>({tag:e.tagName,class:e.className,size:getComputedStyle(e).fontSize})).slice(0,12)}));
    results.push({route,width,status:response.status(),errors,...rendered,violations:axe.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});
-   if(width===320||width===1440)await page.screenshot({path:path.join(out,route.replaceAll('/','_')+'-'+width+'.png'),fullPage:true});
+   if(width===320||width===1440)await page.screenshot({path:path.join(out,route.replace(/[^a-zA-Z0-9_-]/g,'_')+'-'+width+'.png'),fullPage:true});
   }
   await context.close();
  }

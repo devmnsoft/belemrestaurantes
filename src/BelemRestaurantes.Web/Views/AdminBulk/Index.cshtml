@@ -55,6 +55,7 @@
     else if(row.Status=="pending"){<p class="review-ready">Dados básicos completos. Confira a fonte antes de publicar.</p>}
     <div class="review-row-actions">
       @if(Uri.TryCreate(row.SourceUrl,UriKind.Absolute,out var uri)&&uri.Scheme=="https"){<a href="@uri.AbsoluteUri" target="_blank" rel="noopener noreferrer">Conferir fonte ↗</a>}
+      <p class="moderation-source-note">Última observação: @(row.SourceObservedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Sem registro") UTC. A coleta não confirma funcionamento atual; confira a fonte antes de aprovar.</p>
       <a href="/admin/midias?restaurantId=@row.Id">Vídeos</a><a href="/admin/mobilidade?restaurantId=@row.Id">Horários</a>
     </div>
     <details class="review-row-details"><summary>Mais informações do cadastro #@row.Id</summary><dl><div><dt>Telefone</dt><dd>@(row.Phone??"Não informado")</dd></div><div><dt>Origem</dt><dd>@(row.Source??"Não identificada")</dd></div><div><dt>Dados preenchidos</dt><dd>@row.Completeness%</dd></div><div><dt>Duplicidade</dt><dd>@(row.Duplicate?"Possível duplicado: revisar":"Sem alerta")</dd></div><div><dt>Descoberto em</dt><dd>@row.DiscoveredAt.AddHours(-3).ToString("dd/MM/yyyy HH:mm") (Brasília)</dd></div><div><dt>Identificador na fonte</dt><dd>@(row.ExternalId??"Não informado")</dd></div></dl></details>

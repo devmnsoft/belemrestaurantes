@@ -1,0 +1,15 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {chromium}=require(path.resolve('artifacts/ui-test/node_modules/playwright'));
+(async()=>{
+ const out='artifacts/sprint45/transit';fs.mkdirSync(out,{recursive:true});const browser=await chromium.launch(),context=await browser.newContext({viewport:{width:390,height:900}}),page=await context.newPage();let googleCalls=0;
+ const html=fs.readFileSync('artifacts/sprint45/snapshots/transit-fixture.html','utf8');
+ await page.route('http://localhost:5180/__transit-fixture',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:html}));
+ await page.route('https://maps.googleapis.com/maps/api/js?*',r=>{googleCalls++;return r.fulfill({contentType:'application/javascript',body:`window.testLines=[];window.testMarkers=[];window.testFits=[];window.google={maps:{Map:class{constructor(host){host.textContent='MAPA SIMULADO PARA TESTE DO RENDERIZADOR';}fitBounds(bounds){window.testFits.push(bounds.points)}},LatLngBounds:class{constructor(){this.points=[]}extend(p){this.points.push(p)}},Polyline:class{constructor(options){window.testLines.push(options)}addListener(event,fn){this.handler=fn}},Marker:class{constructor(options){window.testMarkers.push(options)}}}};window.cuiaRouteMapsReady();`});});
+ await page.goto('http://localhost:5180/__transit-fixture');assert.equal(googleCalls,0);
+ await page.locator('[data-route-open]').click();await page.locator('.visit-route-map:not([hidden])').waitFor();
+ const rendered=await page.evaluate(()=>({lines:testLines.map(l=>({path:l.path,walking:l.strokeOpacity===0,icons:l.icons})),markers:testMarkers.map(m=>m.title),fits:testFits}));assert.equal(rendered.lines.length,2);assert.equal(rendered.lines[0].walking,true);assert.equal(rendered.lines[1].walking,false);assert.equal(rendered.lines[0].path.length,3);assert.equal(rendered.lines[0].path[1].lat,40.7);
+ await page.locator('[data-route-step]').first().click();assert.equal(googleCalls,1);await page.screenshot({path:path.join(out,'simulated-renderer-mobile.png'),fullPage:true});
+ await page.evaluate(()=>window.gm_authFailure());assert.equal(await page.locator('.visit-route-map').isVisible(),false);assert.ok((await page.locator('[data-route-status]').innerText()).includes('indisponível'));
+ await page.unroute('https://maps.googleapis.com/maps/api/js?*');await page.route('https://maps.googleapis.com/maps/api/js?*',r=>r.abort());await page.reload();await page.locator('[data-route-open]').click();await page.waitForFunction(()=>document.querySelector('[data-route-status]').textContent.includes('Não foi possível'));assert.equal(await page.locator('.visit-route ol').isVisible(),true);
+ fs.writeFileSync(path.join(out,'renderer.json'),JSON.stringify({simulated:true,coverageProven:false,rendered,paidRequests:0,privacy:'script only after explicit interaction'},null,2));console.log('Geometria, caminhada tracejada, ônibus, etapas, falha de autorização e falha de rede: aprovados em simulação.');await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

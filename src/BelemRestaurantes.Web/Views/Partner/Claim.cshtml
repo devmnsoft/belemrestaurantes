@@ -1,6 +1,6 @@
 @model BelemRestaurantes.Domain.Entities.RestaurantClaimRequest
 @{
-    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var restaurant = (BelemRestaurantes.Application.Models.RestaurantView)ViewBag.Restaurant;
     var existingClaim = (BelemRestaurantes.Domain.Entities.RestaurantClaimRequest?)ViewBag.ExistingClaim;
     ViewData["Title"] = $"Reivindicar {restaurant.Name} - Belém Restaurantes";
 }

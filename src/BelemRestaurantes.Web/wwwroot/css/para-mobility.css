@@ -5,3 +5,8 @@
 .google-maps-attribution{font-family:Arial,sans-serif;font-style:normal;font-weight:400;font-size:1rem;letter-spacing:normal;white-space:nowrap;color:#5e5e5e}
 
 .visit-panel.cuia-ai-sommelier-panel p{color:var(--color-text-inverse)}
+
+.visit-route-map{height:clamp(20rem,55vh,32rem);width:100%;border:2px solid var(--color-border);border-radius:12px;margin-block:16px}
+.visit-route-map[hidden]{display:none}.visit-route li:focus{outline:3px solid var(--color-focus);outline-offset:4px}
+
+.cuia-ai-sommelier-panel{background:#0d281e;color:var(--color-text-inverse);border:2px solid #efb645;border-radius:18px;padding:24px;margin-bottom:24px}.cuia-ai-sommelier-panel .cuia-ai-advice-content{font-size:1.05rem;line-height:1.6;color:var(--color-text-inverse)}

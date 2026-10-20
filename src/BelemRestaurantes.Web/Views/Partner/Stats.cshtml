@@ -1,6 +1,6 @@
 @model IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantStat>
 @{
-    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var restaurant = (BelemRestaurantes.Application.Models.RestaurantView)ViewBag.Restaurant;
     ViewData["Title"] = $"Estatísticas - {restaurant.Name}";
 
     var totalPageViews = Model.Sum(s => s.PageViews);

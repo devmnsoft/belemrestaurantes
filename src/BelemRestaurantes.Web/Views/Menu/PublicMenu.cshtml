@@ -1,6 +1,6 @@
 @model IReadOnlyList<BelemRestaurantes.Domain.Entities.MenuCategory>
 @{
-    var restaurant = (BelemRestaurantes.Domain.Entities.Restaurant)ViewBag.Restaurant;
+    var restaurant = (BelemRestaurantes.Application.Models.RestaurantView)ViewBag.Restaurant;
     var profile = (BelemRestaurantes.Domain.Entities.RestaurantProfile?)ViewBag.Profile;
     ViewData["Title"] = $"Cardápio Digital - {restaurant.Name}";
     var rawWhatsapp = profile?.DeliveryWhatsapp ?? profile?.CommercialWhatsapp;
@@ -15,7 +15,7 @@
         <div class="p-4 p-md-5 position-relative">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>
-                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2">Cardápio Oficial Digital</span>
+                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2">@(Model.Count>0?"Cardápio publicado":"Cardápio ainda não informado")</span>
                     <h1 class="display-6 fw-bold mb-1 text-white">@restaurant.Name</h1>
                     @if (!string.IsNullOrEmpty(profile?.Slogan))
                     {
@@ -30,7 +30,7 @@
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-warning text-dark fw-bold btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#qrCodeModal">
+                    <button type="button" class="btn btn-warning text-dark fw-bold btn-sm rounded-pill px-3" data-menu-code-open aria-controls="qrCodeModal">
                         <i class="bi bi-qr-code me-1"></i>QR Code da Mesa
                     </button>
                     @if (!string.IsNullOrEmpty(whatsappUrl))
@@ -49,7 +49,7 @@
         <div class="text-center py-5">
             <i class="bi bi-journal-x text-muted" style="font-size: 3rem;"></i>
             <h5 class="text-forest fw-bold mt-3">Cardápio em Atualização</h5>
-            <p class="text-muted">O estabelecimento está atualizando seus pratos e opções. Volte em breve!</p>
+            <p class="text-muted">Este cadastro ainda não tem itens de cardápio publicados. Consulte o estabelecimento; não há confirmação de atualização em andamento.</p>
         </div>
     }
     else
@@ -131,26 +131,27 @@
 </div>
 
 <!-- Modal QR Code -->
-<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+<dialog class="menu-code-dialog" id="qrCodeModal" aria-labelledby="qrCodeModalLabel">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold text-forest" id="qrCodeModalLabel">QR Code do Cardápio</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-menu-code-close aria-label="Fechar QR Code">×</button>
             </div>
             <div class="modal-body text-center p-4">
                 <div class="p-4 bg-light rounded-4 d-inline-block mb-3 border">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=@Uri.EscapeDataString($"https://belemrestaurantes.com.br/cardapio/{restaurant.Id}")" alt="QR Code do Cardápio" class="img-fluid rounded" />
+                    <img data-menu-code-image data-src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=@Uri.EscapeDataString($"https://belemrestaurantes.com.br/cardapio/{restaurant.Id}")" alt="QR Code do Cardápio" class="img-fluid rounded" />
                 </div>
                 <h6 class="fw-bold text-forest mb-1">@restaurant.Name</h6>
                 <p class="text-muted small mb-3">Imprima e posicione nas mesas para acesso instantâneo dos clientes via celular.</p>
                 <div class="input-group">
-                    <input type="text" class="form-control form-control-sm text-center" value="https://belemrestaurantes.com.br/cardapio/@restaurant.Id" id="linkCardapio" readonly />
-                    <button class="btn btn-forest btn-sm" type="button" onclick="navigator.clipboard.writeText(document.getElementById('linkCardapio').value); alert('Link copiado!');">
+                    <input type="text" class="form-control form-control-sm text-center" value="https://belemrestaurantes.com.br/cardapio/@restaurant.Id" id="linkCardapio" aria-label="Link público do cardápio" readonly />
+                    <button class="btn btn-forest btn-sm" type="button" data-copy-target="linkCardapio">
                         Copiar Link
                     </button>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</dialog>
+@section Scripts { <script src="~/js/menu.js" asp-append-version="true" defer></script> }
