@@ -193,6 +193,12 @@ public sealed class CuiaAiService(
             answerKind = "catalogo";
         }
 
+        IReadOnlyList<CuiaAiRecommendation> directory=[];
+        if(recommendations.Count==0) {
+            var published=await restaurantRepo.SearchAsync(new RestaurantSearchQuery(Term:searchTerm,City:detectedCity,PageSize:4,Tier:"ficha"),ct);
+            directory=published.Items.Select(r=>new CuiaAiRecommendation(r.Id,r.Name,r.City,r.Neighborhood,r.Category,r.Address,r.Phone,
+                "Ficha cadastral publicada; confirme funcionamento, serviços e acessibilidade com o estabelecimento.",null,null,r.PhotoUrl,r.Latitude,r.Longitude)).ToList();
+        }
         return new CuiaAiResponse(
             AnswerMarkdown: answer,
             Recommendations: recommendations,
@@ -201,7 +207,7 @@ public sealed class CuiaAiService(
             SuggestedFollowUps: followUps,
             EngineUsed: engineUsed,
             AnswerKind: answerKind
-        );
+        ) { DirectoryMatches=directory };
     }
 
     private static string VisitorAnswer(string answer)

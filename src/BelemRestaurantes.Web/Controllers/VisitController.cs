@@ -6,6 +6,7 @@ using BelemRestaurantes.Web.Models;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BelemRestaurantes.Web.Controllers;
 
@@ -16,7 +17,7 @@ public sealed class VisitController(IRestaurantReadRepository restaurants,IOpera
     [HttpGet("/qual-onibus")]
     public Task<IActionResult> Index(long restaurantId=0,string mode="transit",DateTime? localTime=null,string? q=null,CancellationToken ct=default)
         =>RenderAsync(new(restaurantId,null,mode,localTime),false,q,ct);
-    [HttpPost("consultar"),ValidateAntiForgeryToken,RequestSizeLimit(8192)]
+    [HttpPost("consultar"),ValidateAntiForgeryToken,RequestSizeLimit(8192),EnableRateLimiting("routes")]
     public Task<IActionResult> Consult(VisitRequest request,CancellationToken ct)=>RenderAsync(request,true,null,ct);
     private async Task<IActionResult> RenderAsync(VisitRequest request,bool consult,string? query,CancellationToken ct)
     {

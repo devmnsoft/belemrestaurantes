@@ -40,7 +40,10 @@ public sealed record CuiaAiResponse(
     IReadOnlyList<string> RegionalCuriosities,
     IReadOnlyList<string> SuggestedFollowUps,
     string EngineUsed,
-    string AnswerKind = "catalogo");
+    string AnswerKind = "catalogo")
+{
+    public IReadOnlyList<CuiaAiRecommendation> DirectoryMatches { get; init; } = [];
+}
 
 public sealed record CuiaAiProviderStatus(string Provider, bool Configured);
 

@@ -46,7 +46,8 @@ public sealed class HomeController(
         var catTask = LoadAsync(() => restaurantRepository.ListCategoriesAsync(ct), categories, "Categorias");
         var trailsTask = LoadAsync(() => trailService.ListTrailsAsync(ct), trails, "Roteiros");
         var featuredTask = LoadAsync(async () => (await restaurantRepository.SearchAsync(new RestaurantSearchQuery(Page: 1, PageSize: 6, GuideOnly: true), ct)).Items, featured, "Restaurantes");
-        await Task.WhenAll(cuiaTask, expTask, citiesTask, catTask, trailsTask, featuredTask);
+        var directoryTask = LoadAsync(() => restaurantRepository.SearchAsync(new RestaurantSearchQuery(PageSize:12, Tier:"ficha", Sort:"recent"), ct), PagedResult<RestaurantView>.Empty(1,12), "Fichas públicas");
+        await Task.WhenAll(cuiaTask, expTask, citiesTask, catTask, trailsTask, featuredTask, directoryTask);
         cuiaBadges = await cuiaTask;
         experiences = await expTask;
         cities = await citiesTask;
@@ -54,7 +55,7 @@ public sealed class HomeController(
         trails = await trailsTask;
         featured = await featuredTask;
 
-        var model = new HomeViewModel(cuiaBadges, experiences, cities, categories, trails, featured);
+        var model = new HomeViewModel(cuiaBadges, experiences, cities, categories, trails, featured) { DirectoryRestaurants=(await directoryTask).Items, DirectoryCount=(await directoryTask).TotalCount };
         return View(model);
     }
 

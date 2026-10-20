@@ -60,8 +60,8 @@ public sealed class QueueConcurrencyTests
             for (var i = 0; i < 2; i++)
             {
                 var id = await connection.ExecuteScalarAsync<long>("""
-                    INSERT INTO discovery_targets(city, normalized_city, category, enabled, next_run_at)
-                    VALUES ('Belém', @normalized, 'restaurante', TRUE, UTC_TIMESTAMP(6));
+                    INSERT INTO discovery_targets(city, normalized_city, category, enabled, next_run_at, priority)
+                    VALUES ('Belém', @normalized, 'restaurante', TRUE, UTC_TIMESTAMP(6), 2147483647);
                     SELECT LAST_INSERT_ID();
                     """, new { normalized = marker + i });
                 ids.Add(id);
@@ -77,6 +77,7 @@ public sealed class QueueConcurrencyTests
             var jobs = claimedJobs.ToArray();
             Assert.Equal(2, jobs.Length);
             Assert.Equal(2, jobs.Select(job => job.JobId).Distinct().Count());
+            Assert.All(jobs, job => Assert.Contains(job.TargetId, ids));
             var jobId = jobs[0].JobId;
             await queue.FailAsync(jobId, "simulated", TimeSpan.FromMinutes(1), 3, default);
             Assert.Equal("pending", await connection.ExecuteScalarAsync<string>("SELECT state FROM discovery_jobs WHERE id=@jobId", new { jobId }));

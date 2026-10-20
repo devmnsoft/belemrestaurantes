@@ -11,4 +11,8 @@ public sealed record HomeViewModel(
     IReadOnlyList<string> Cities,
     IReadOnlyList<string> Categories,
     IReadOnlyList<GastronomicTrail> Trails,
-    IReadOnlyList<RestaurantView> FeaturedRestaurants);
+    IReadOnlyList<RestaurantView> FeaturedRestaurants)
+{
+    public IReadOnlyList<RestaurantView> DirectoryRestaurants { get; init; } = [];
+    public int DirectoryCount { get; init; }
+}

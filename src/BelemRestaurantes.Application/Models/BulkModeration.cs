@@ -21,6 +21,7 @@ public sealed class ModerationCandidate
     public string Status { get; set; } = "";
     public string Stage { get; set; } = "pending";
     public DateTime DiscoveredAt { get; set; }
+    public DateTime? SourceObservedAt { get; set; }
     public bool Duplicate { get; set; }
     public bool ValidCity { get; set; }
     public int Completeness => new[] { Name, City, Category, Address, Phone, SourceUrl }.Count(v => !string.IsNullOrWhiteSpace(v)) * 100 / 6;

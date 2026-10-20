@@ -21,9 +21,20 @@ public sealed record VisitRequest(long RestaurantId,string? Origin,string Mode="
     bool Arrival=true,int MaxWalkMeters=1000,string Preference="less_walking",bool Accessible=false,string Occasion="any",int VisitMinutes=60);
 public sealed record VisitWindow(DateTimeOffset Start,DateTimeOffset End,string Note);
 public sealed record RouteStep(string Mode,string Instruction,string? Line=null,string? Board=null,string? Alight=null,
-    string? Departure=null,string? Arrival=null,int? DistanceMeters=null);
+    string? Departure=null,string? Arrival=null,int? DistanceMeters=null)
+{
+    public string? Headsign { get; init; }
+    public int? DurationSeconds { get; init; }
+    public IReadOnlyList<RouteCoordinate> Path { get; init; } = [];
+    public RouteCoordinate? BoardLocation { get; init; }
+    public RouteCoordinate? AlightLocation { get; init; }
+}
 public sealed record RouteAlternative(string Description,int DistanceMeters,int DurationSeconds,
-    IReadOnlyList<RouteStep> Steps,string? Fare=null,string? EncodedPolyline=null);
+    IReadOnlyList<RouteStep> Steps,string? Fare=null,string? EncodedPolyline=null)
+{
+    public IReadOnlyList<RouteCoordinate> Path { get; init; } = [];
+    public int Transfers => Math.Max(0, Steps.Count(s=>s.Mode=="TRANSIT")-1);
+}
 public sealed record RouteResult(string Provider,string State,string Message,DateTimeOffset QueriedAt,
     IReadOnlyList<RouteAlternative> Alternatives,string ExternalUrl);
 

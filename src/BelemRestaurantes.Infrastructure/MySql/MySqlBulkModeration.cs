@@ -13,6 +13,7 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
         r.phone Phone,r.created_source_url SourceUrl,r.google_place_id ExternalId,r.status Status,r.created_at DiscoveredAt,
         CASE WHEN r.status IN ('published','rejected') THEN r.status WHEN r.status='suspended' THEN CASE WHEN r.moderation_stage='blocked' THEN 'blocked' ELSE 'archived' END ELSE r.moderation_stage END Stage,
         (SELECT o.provider FROM source_observations o WHERE o.restaurant_id=r.id ORDER BY o.last_seen_at DESC,o.id DESC LIMIT 1) Source,
+        (SELECT MAX(o.last_seen_at) FROM source_observations o WHERE o.restaurant_id=r.id) SourceObservedAt,
         EXISTS(SELECT 1 FROM geo_municipalities g WHERE g.normalized_name=r.normalized_city) ValidCity,
         (EXISTS(SELECT 1 FROM moderation_queue m WHERE m.item_type='restaurant' AND m.item_id=r.id
              AND m.status='pending' AND m.reason IN ('DuplicateSuspected','PossibleDuplicate','Duplicate','DeduplicationConflict'))

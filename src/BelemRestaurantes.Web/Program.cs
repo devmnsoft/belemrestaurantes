@@ -130,6 +130,9 @@ builder.Services.AddRateLimiter(options =>
         QueueLimit = 0,
         AutoReplenishment = true
     }));
+    options.AddPolicy("routes", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+        { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("account", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
         { PermitLimit = 30, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
@@ -211,6 +214,10 @@ app.Use(async (context, next) =>
     context.Response.Headers["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=(self)";
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
+    if(context.Request.Path.StartsWithSegments("/cuia-rotas") && builder.Configuration.GetValue<bool>("GoogleMaps:Enabled"))
+        context.Response.Headers["Content-Security-Policy"] = context.Response.Headers["Content-Security-Policy"].ToString()
+            .Replace("script-src 'self';", "script-src 'self' https://maps.googleapis.com https://maps.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://*.google.com;")
+            .Replace("style-src 'self' 'unsafe-inline';", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;");
     await next();
 });
 app.UseStaticFiles();
