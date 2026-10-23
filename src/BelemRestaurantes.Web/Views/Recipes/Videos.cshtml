@@ -1,0 +1,22 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.CulinaryVideo>
+@{
+    ViewData["Title"] = "Vídeos de culinária e sabores paraenses";
+}
+<article class="para-container" lang="pt-BR">
+  <nav class="para-breadcrumb" aria-label="Você está aqui"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/receitas">Receitas</a><span aria-hidden="true">/</span><span>Vídeos</span></nav>
+  <h1>Vídeos de culinária e sabores paraenses</h1>
+  <p>Referências com autor e link. O player não carrega sozinho e o vídeo não é baixado para este site.</p>
+  @if (Model.Count == 0)
+  { <p>Ainda não há referências de vídeo publicadas.</p> }
+  <div class="video-grid">
+  @foreach (var video in Model)
+  {
+    <article class="video-card">
+      <h2>@video.Title</h2>
+      <p>@video.Author · @video.Platform @if(video.PublishedOn is {} date){<span> · @date.ToString("dd/MM/yyyy")</span>}</p>
+      <p>@video.Summary</p>
+      <a href="@video.Url" rel="noopener noreferrer">Assistir na fonte ↗</a>
+    </article>
+  }
+  </div>
+</article>

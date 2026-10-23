@@ -22,6 +22,7 @@ public sealed class TrailsController(IMobilityTrailService trailService) : Contr
     {
         var trail = await trailService.GetTrailBySlugAsync(slug, ct);
         if (trail == null) return NotFound();
+        if(trail.Editorial is null&&trail.Stops.Count==0)return RedirectToAction(nameof(Index));
         return View(trail);
     }
 }

@@ -11,17 +11,17 @@ public sealed class MySqlAdminUserRepository(MySqlConnectionFactory factory) : I
     {
         using var connection = factory.Create();
         await connection.OpenAsync(ct);
-        var row = await connection.QueryFirstOrDefaultAsync<AdminRow>(new CommandDefinition(
+        var rows = (await connection.QueryAsync<AdminRow>(new CommandDefinition(
             """
             SELECT id, user_name AS UserName, email, password_hash AS PasswordHash,
                    two_factor_enabled AS TwoFactorEnabled, two_factor_secret AS Secret,
                    access_failed_count AS AccessFailedCount, lockout_end_at AS LockoutEndAt,must_change_password AS MustChangePassword,
                    must_rotate_mfa AS MustRotateMfa
-            FROM admin_users WHERE user_name = @userName AND is_disabled = FALSE AND disabled = FALSE LIMIT 1
+            FROM admin_users WHERE (user_name = @userName OR email = @userName) AND is_disabled = FALSE AND disabled = FALSE LIMIT 2
             """,
-            new { userName },
-            cancellationToken: ct));
-        return row is null ? null : Map(row);
+            new { userName=userName.Trim() },
+            cancellationToken: ct))).ToArray();
+        return rows.Length==1?Map(rows[0]):null;
     }
 
     public async Task<AdminUserRecord?> FindByIdAsync(string id, CancellationToken ct)

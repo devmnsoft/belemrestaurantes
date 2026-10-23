@@ -49,7 +49,8 @@ public sealed class PartnerEndpointTests : IDisposable
         using var client = Client(autoRedirect: true);
         using var response = await client.GetAsync("/roteiros");
         // Rota pública de turismo
-        Assert.True(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.InternalServerError);
+        // The deliberately unavailable SQL fixture returns 503, never an authentication redirect or an unhandled 500.
+        Assert.Contains(response.StatusCode,new[]{HttpStatusCode.OK,HttpStatusCode.ServiceUnavailable});
     }
 
     public void Dispose() => factory.Dispose();

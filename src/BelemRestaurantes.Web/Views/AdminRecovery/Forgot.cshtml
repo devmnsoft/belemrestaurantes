@@ -1,0 +1,3 @@
+@model BelemRestaurantes.Web.Controllers.AdminRecoveryInput
+@{ViewData["Title"]="Recuperar senha administrativa";}
+<section class="para-container para-auth"><div class="para-auth-content"><h1>Recuperar acesso administrativo</h1><p>A recuperação altera apenas a senha. O código do autenticador continua obrigatório.</p><form method="post" action="/admin/forgot" class="panel">@Html.AntiForgeryToken()<label asp-for="Identifier">Usuário ou e-mail cadastrado</label><input asp-for="Identifier" autocomplete="username" required maxlength="200" /><div asp-validation-summary="All" role="alert"></div><button type="submit">Enviar recuperação</button><a href="/admin/login">Voltar ao acesso administrativo</a></form></div></section>

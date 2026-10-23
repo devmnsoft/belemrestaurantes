@@ -12,6 +12,10 @@ public sealed class MySqlCuiaService(MySqlConnectionFactory factory, ILogger<MyS
     {
         await using var connection = await factory.OpenAsync(ct);
 
+        if (await connection.ExecuteScalarAsync<int>(new CommandDefinition("SELECT GET_LOCK('belrestaurante:cuia-ranking',5)", cancellationToken:ct)) != 1)
+            throw new TimeoutException("Outro recálculo está em andamento. Tente novamente em instantes.");
+        try
+        {
         const string statsSql = """
             SELECT r.id AS RestaurantId, r.name AS Name, r.city AS City, r.category AS Category,
                    r.created_at AS CreatedAt,
@@ -26,10 +30,9 @@ public sealed class MySqlCuiaService(MySqlConnectionFactory factory, ILogger<MyS
             """;
 
         var stats = (await connection.QueryAsync<RestaurantStatRow>(new CommandDefinition(statsSql, cancellationToken: ct))).AsList();
-        if (stats.Count == 0) return;
 
         await using var tx = await connection.BeginTransactionAsync(ct);
-        await connection.ExecuteAsync(new CommandDefinition("DELETE FROM cuia_rankings", tx, cancellationToken: ct));
+        await connection.ExecuteAsync(new CommandDefinition("DELETE FROM cuia_rankings", transaction: tx, cancellationToken: ct));
 
         var categories = CuiaRatingRules.CategoryTitles.Keys.ToArray();
 
@@ -90,6 +93,12 @@ public sealed class MySqlCuiaService(MySqlConnectionFactory factory, ILogger<MyS
 
         await tx.CommitAsync(ct);
         logger.LogInformation("Rankings do Selo Cuia recalculados com sucesso para {Count} estabelecimentos.", stats.Count);
+        }
+        finally
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            await connection.ExecuteScalarAsync<int>(new CommandDefinition("SELECT RELEASE_LOCK('belrestaurante:cuia-ranking')", cancellationToken:cleanup.Token));
+        }
     }
 
     public async Task<IReadOnlyList<CuiaBadgeView>> GetBadgesForRestaurantAsync(long restaurantId, CancellationToken ct)

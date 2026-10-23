@@ -28,6 +28,10 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
     private readonly IRestaurantMediaRepository? _mediaRepo;
     private readonly IRestaurantAttributeHistoryRepository? _historyRepo;
     private readonly IGeoMunicipalityRepository? _geoRepo;
+    private readonly IPlaceReferences? _references;
+    private readonly IExternalContent? _externalContent;
+    private readonly AutoPublicationOptions _autoPublication;
+    private int _autoPublished;
     private readonly IClock _clock;
     private readonly ILogger<CrawlerOrchestrator> _logger;
 
@@ -46,7 +50,7 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         IEnrichmentQueueRepository? enrichmentQueue = null,
         IRestaurantMediaRepository? mediaRepo = null,
         IRestaurantAttributeHistoryRepository? historyRepo = null,
-        IGeoMunicipalityRepository? geoRepo = null)
+        IGeoMunicipalityRepository? geoRepo = null,IPlaceReferences? references = null, AutoPublicationOptions? autoPublication=null,IExternalContent? externalContent=null)
     {
         _sources = sources;
         _taskQueue = taskQueue;
@@ -63,6 +67,9 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         _mediaRepo = mediaRepo;
         _historyRepo = historyRepo;
         _geoRepo = geoRepo;
+        _references=references;
+        _autoPublication=autoPublication??new();
+        _externalContent=externalContent;
     }
 
     public async Task MaintainQueueAsync(CancellationToken ct) =>
@@ -70,6 +77,7 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
 
     public async Task<int> RunCrawlerCycleAsync(int maxTasks, CancellationToken ct)
     {
+        _autoPublished=0;
         var now = _clock.UtcNow;
         var instanceId = $"{Environment.MachineName}-{Environment.ProcessId}";
 
@@ -134,8 +142,11 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                 }
                 else
                 {
+                    if(_externalContent is not null && download.ContentType?.Contains("html")==true)
+                        await _externalContent.ObservePageAsync(download.ContentText,task.Url,task.City,ct);
                     // C. Extração de estabelecimentos (Schema.org / Heurística)
-                    var restaurants = _parser.ExtractRestaurants(download.ContentText, task.Url, task.City);
+                    var contentOnly=(await _sources.GetByIdAsync(task.SourceId,ct))?.ContentOnly==true;
+                    var restaurants = contentOnly?Array.Empty<ExtractedRestaurantData>():_parser.ExtractRestaurants(download.ContentText, task.Url, task.City);
                     discoveredInTask = restaurants.Count;
 
                     foreach (var extracted in restaurants)
@@ -145,7 +156,7 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                     }
 
                     // Se a página for um diretório HTML, extrair links de sitemap ou páginas filhas
-                    if (task.Depth < 2 && download.ContentType != null && download.ContentType.Contains("html"))
+                    if (!contentOnly && task.Depth < 2 && download.ContentType != null && download.ContentType.Contains("html"))
                     {
                         // Enfileirar no máximo 10 URLs filhas do mesmo domínio
                         await EnqueueChildLinksAsync(task, download.ContentText, ct);
@@ -155,6 +166,7 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                     await _sources.RecordCrawlResultAsync(task.SourceId, true, null, download.ETag, download.LastModified, ct);
                 }
             }
+            catch(OperationCanceledException)when(ct.IsCancellationRequested){throw;}
             catch (Exception ex)
             {
                 errorMessage = ex.Message;
@@ -187,16 +199,18 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         var sources = await _sources.ListSourcesAsync("active", ct);
         foreach (var source in sources)
         {
-            // Se a fonte nunca foi rastreada ou já passou de 6 horas
-            if (source.LastCrawledAt == null || source.LastCrawledAt < DateTimeOffset.UtcNow.AddHours(-6))
+            // Public editorial feeds can be checked each minute; restaurant sources retain six-hour freshness.
+            if (source.LastCrawledAt == null || source.LastCrawledAt < DateTimeOffset.UtcNow.Subtract(source.ContentOnly?TimeSpan.FromMinutes(1):TimeSpan.FromHours(6)))
             {
-                var (allowed, _) = await _robotsTxtService.CheckAccessAsync(source.BaseUrl, "CuiaCrawler", ct);
+                var (allowed, sourceDelay) = await _robotsTxtService.CheckAccessAsync(source.BaseUrl, "CuiaCrawler", ct);
                 if (!allowed)
                 {
                     _logger.LogWarning("Crawler: fonte {SourceId}, cidade {City}, não consultada por robots.txt.", source.Id, source.TargetCity);
                     await _sources.RecordCrawlResultAsync(source.Id, false, "Bloqueado por robots.txt", null, null, ct);
                     continue;
                 }
+                if(source.ContentOnly && sourceDelay>10){await _sources.RecordCrawlResultAsync(source.Id,false,"Cadência da origem exige agendamento específico",null,null,ct);continue;}
+                if(source.ContentOnly && sourceDelay>0)await Task.Delay(TimeSpan.FromSeconds(sourceDelay),ct);
                 var download = await _httpClient.DownloadAsync(source.BaseUrl, source.ETag, source.LastModifiedHeader, 15, ct);
                 if (download.NotModified)
                 {
@@ -214,7 +228,11 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                     }
                     else if (source.SourceType == "rss_feed")
                     {
-                        urls = _parser.ParseRssFeed(download.ContentText, source.BaseUrl).Select(x => x.Url).ToList();
+                        var entries=_parser.ParseRssFeed(download.ContentText, source.BaseUrl);
+                        if(source.ContentOnly)entries=entries.Where(e=>ExternalContentRules.Relevant(e.Title,source.TargetCity??"Belém")&&ExternalContentRules.Regional(e.Title+" "+e.Description,source.TargetCity??"Belém")).Take(20).ToArray();
+                        if(source.ContentOnly && _externalContent is not null)
+                            foreach(var entry in entries)await _externalContent.ObserveAsync(new ExternalContent{Title=entry.Title,Url=entry.Url,City=source.TargetCity??"Belém",Summary=entry.Description??"",VideoUrl=ExternalContentRules.FindVideoLink(entry.Description??""),ObservedAt=_clock.UtcNow.UtcDateTime},ct);
+                        urls = entries.Select(x=>x.Url).ToArray();
                     }
                     else
                     {
@@ -273,11 +291,12 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         ) { Phone = extracted.Telephone, Instagram = extracted.Instagram, Facebook = extracted.Facebook,
             TikTok = extracted.TikTok, YouTube = extracted.YouTube };
 
-        var restaurantId = await _ingestion.UpsertDiscoveredAsync(
+        var write = await _ingestion.UpsertWithOutcomeAsync(
             place,
             provider: $"crawler:{task.SourceId}",
             now: _clock.UtcNow,
             ct: ct);
+        var restaurantId=write.Id;
 
         // Discovery 360: Registrar histórico inicial do nome e cidade
         if (_historyRepo != null)
@@ -294,6 +313,13 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                 RequiresModeration = false,
                 IsApplied = true
             }, ct);
+        }
+
+        if(_references is not null && (extracted.MenuItems.Count>0 || extracted.OpeningHours.Count>0 || extracted.YouTube is not null))
+        {
+            await _references.ObserveAsync(new(0,extracted.Name,city,extracted.SourceUrl,"structured_data",new Uri(extracted.SourceUrl).Host,
+                _clock.UtcNow,_clock.UtcNow.AddDays(7),extracted.MenuItems,extracted.Address,
+                extracted.YouTube is null?[]:[extracted.YouTube],OpeningHours:extracted.OpeningHours),ct);
         }
 
         // Só guarda imagem do próprio site, e ainda assim pendente: schema.org não é licença.
@@ -329,7 +355,7 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
         }
 
         // Se a deduplicação indicou incerteza ou conflito, enfileira para moderação humana
-        if (dedupResult.RequiresHumanReview || extracted.HasConflict)
+        if ((write.Created && dedupResult.RequiresHumanReview) || extracted.HasConflict)
         {
             await _moderation.EnqueueAsync(
                 "restaurant",
@@ -338,7 +364,7 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                 $"Fonte autônoma {extracted.SourceUrl} encontrou divergência: {dedupResult.Rationale}",
                 ct);
         }
-        else if (dedupResult.Outcome == MatchOutcome.ProbableDuplicate)
+        else if (write.Created && dedupResult.Outcome == MatchOutcome.ProbableDuplicate)
         {
             await _moderation.EnqueueAsync(
                 "restaurant",
@@ -347,13 +373,21 @@ public sealed class CrawlerOrchestrator : ICrawlerOrchestrator
                 $"Suspeita de duplicidade com estabelecimento #{dedupResult.MatchedRestaurantId}: {dedupResult.Rationale}",
                 ct);
         }
-        else
+        else if(write.Created)
         {
+            var source=await _sources.GetByIdAsync(task.SourceId,ct);
+            var blocked=AutoPublicationRules.BlockReason(extracted,source,dedupResult);
+            if(_autoPublication.Enabled && _autoPublished<Math.Clamp(_autoPublication.MaxPerCycle,0,10) && blocked is null)
+            {
+                if(await _moderation.ApproveAsync(restaurantId,"system:external-auto-publication",ct))
+                {_autoPublished++;_logger.LogInformation("Descoberta externa {RestaurantId} publicada automaticamente; fonte {SourceId}.",restaurantId,task.SourceId);return true;}
+                blocked="A validação transacional de publicação recusou o registro.";
+            }
             await _moderation.EnqueueAsync(
                 "restaurant",
                 restaurantId,
                 ModerationReason.NewDiscovery,
-                $"Novo estabelecimento gastronômico descoberto autonomamente via {extracted.SourceUrl} ({city})",
+                $"Descoberta externa via {extracted.SourceUrl} ({city}). Publicação automática: {blocked??(_autoPublication.Enabled?"limite do ciclo":"desabilitada")}",
                 ct);
         }
 

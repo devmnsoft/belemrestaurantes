@@ -37,6 +37,10 @@ public sealed class SafeHttpClient : ISafeHttpClient
         int timeoutSeconds = 15,
         CancellationToken ct = default)
     {
+        var callerToken=ct;
+        using var deadline=CancellationTokenSource.CreateLinkedTokenSource(ct);
+        deadline.CancelAfter(TimeSpan.FromSeconds(Math.Clamp(timeoutSeconds,1,30)));
+        ct=deadline.Token;
         var currentUrl = url;
         var redirectCount = 0;
 
@@ -83,11 +87,10 @@ public sealed class SafeHttpClient : ISafeHttpClient
                             throw new SecurityException($"Bloqueio SSRF: O endereço IP {badIp} associado ao host '{host}' é restrito.");
                         }
 
-                        var targetIp = addresses[0];
-                        var socket = new Socket(targetIp.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                        var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                         try
                         {
-                            await socket.ConnectAsync(new IPEndPoint(targetIp, context.DnsEndPoint.Port), cancellationToken);
+                            await socket.ConnectAsync(ConnectionOrder(addresses), context.DnsEndPoint.Port, cancellationToken);
                             return new NetworkStream(socket, ownsSocket: true);
                         }
                         catch
@@ -172,7 +175,7 @@ public sealed class SafeHttpClient : ISafeHttpClient
                     memoryStream.Write(buffer, 0, bytesRead);
                 }
 
-                var textContent = Encoding.UTF8.GetString(memoryStream.ToArray());
+                var textContent = CulinaryPageText.Decode(memoryStream.ToArray(), response.Content.Headers.ContentType?.CharSet);
                 var resETag = response.Headers.ETag?.Tag;
                 var resLastModified = response.Content.Headers.LastModified?.ToString("R");
 
@@ -185,6 +188,8 @@ public sealed class SafeHttpClient : ISafeHttpClient
                     resLastModified,
                     response.IsSuccessStatusCode ? null : $"HTTP {response.StatusCode}");
             }
+            catch(OperationCanceledException)when(callerToken.IsCancellationRequested){throw;}
+            catch(OperationCanceledException){return new(false,0,null,null,null,null,"Prazo de recuperação da fonte excedido.");}
             catch (SecurityException secEx)
             {
                 _logger.LogWarning("Tentativa de acesso bloqueada por segurança SSRF: {Url}. Motivo: {Msg}", currentUrl, secEx.Message);
@@ -200,6 +205,8 @@ public sealed class SafeHttpClient : ISafeHttpClient
         return new SafeDownloadResult(false, 0, null, null, null, null, "Limite máximo de 3 redirecionamentos excedido.");
     }
 
+    // Keep all DNS security checks above; prefer IPv4 where an advertised IPv6 route may black-hole.
+    public static IPAddress[] ConnectionOrder(IEnumerable<IPAddress> addresses)=>addresses.OrderBy(a=>a.AddressFamily==AddressFamily.InterNetwork?0:1).ToArray();
     private static bool IsRedirect(HttpStatusCode code) =>
         code is HttpStatusCode.Moved
              or HttpStatusCode.Redirect

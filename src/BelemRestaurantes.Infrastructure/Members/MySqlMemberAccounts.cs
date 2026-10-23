@@ -11,7 +11,7 @@ using MySqlConnector;
 namespace BelemRestaurantes.Infrastructure.Members;
 
 public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswordVerifier passwords, IClock clock,
-    IConfiguration configuration, MailPayloadProtector mailProtector) : IMemberAccounts
+    IConfiguration configuration, MailPayloadProtector mailProtector, DocumentIdentityProtector documents) : IMemberAccounts
 {
     private static readonly string DummyHash = $"600000.{Convert.ToBase64String(RandomNumberGenerator.GetBytes(16))}.{Convert.ToBase64String(new byte[32])}";
     private static readonly string[] Cultures = ["pt-BR", "en", "fr", "es", "ru", "de", "ja", "zh-Hans"];
@@ -24,9 +24,15 @@ public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswor
 
     public async Task RegisterAsync(RegisterMember input, CancellationToken ct)
     {
+        input = input with { Email = input.Email.Trim() };
+        var cpf=BrazilianDocument.Normalize(input.Cpf);var cnpj=BrazilianDocument.Normalize(input.Cnpj);
+        if ((cpf.Length>0 && !BrazilianDocument.IsCpf(cpf)) || (cnpj.Length>0 && (!BrazilianDocument.IsCnpj(cnpj) || cpf.Length==0 || string.IsNullOrWhiteSpace(input.OrganizationName) || input.OrganizationName.Trim().Length is <2 or >160)))
+            throw new MemberRegistrationValidationException(cpf.Length>0 && !BrazilianDocument.IsCpf(cpf)?"Cpf":"Cnpj", "Confira o documento e os dados da empresa.");
+        var cpfDigest=cpf.Length==0?null:documents.Digest("cpf",cpf);
+        var companyDigest=cnpj.Length==0?null:documents.Digest("cnpj",cnpj);
         if (!input.AcceptTerms || string.IsNullOrWhiteSpace(input.FullName) || input.FullName.Trim().Length is < 2 or > 160 ||
             !ValidEmail(input.Email) || AdminPasswordPolicy.Validate(input.Password).Count > 0)
-            throw new ArgumentException("Invalid registration.");
+            throw new MemberRegistrationValidationException("", "Confira nome, e-mail, regras de senha e aceite dos termos.");
         var hash = passwords.Hash(input.Password);
         await using var connection = await factory.OpenAsync(ct);
         await using var tx = await connection.BeginTransactionAsync(ct);
@@ -34,11 +40,11 @@ public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswor
         try
         {
             await connection.ExecuteAsync(new CommandDefinition("""
-                INSERT INTO member_users(id,full_name,email,normalized_email,password_hash,security_stamp,preferred_culture,terms_version,terms_accepted_at)
-                VALUES(@id,@name,@email,@normalized,@hash,@stamp,@culture,'2026-10',@now)
+                INSERT INTO member_users(id,full_name,email,normalized_email,password_hash,security_stamp,preferred_culture,terms_version,terms_accepted_at,cpf_digest,cpf_last4)
+                VALUES(@id,@name,@email,@normalized,@hash,@stamp,@culture,'2026-10',@now,@cpfDigest,@cpfLast4)
                 """, new
             {
-                id,
+                id,cpfDigest,cpfLast4=cpf.Length==0?null:cpf[^4..],
                 name = input.FullName.Trim(),
                 email = input.Email.Trim(),
                 normalized = Normalize(input.Email),
@@ -48,7 +54,19 @@ public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswor
                 now = clock.UtcNow
             }, tx, cancellationToken: ct));
         }
-        catch (MySqlException ex) when (ex.Number == 1062) { await tx.RollbackAsync(ct); return; }
+        catch (MySqlException ex) when (ex.Number == 1062)
+        {
+            await tx.RollbackAsync(ct);
+            await RequestTokenAsync(input.Email,"confirm",input.Culture,ct);
+            return;
+        }
+        if(companyDigest is not null)
+        {
+            await connection.ExecuteAsync(new CommandDefinition("INSERT INTO member_organizations(id,tax_digest,tax_last4,legal_name,created_at) VALUES(@organizationId,@companyDigest,@last4,@name,@now) ON DUPLICATE KEY UPDATE id=id",
+                new{organizationId=Guid.NewGuid().ToString("N"),companyDigest,last4=cnpj[^4..],name=input.OrganizationName!.Trim(),now=clock.UtcNow},tx,cancellationToken:ct));
+            await connection.ExecuteAsync(new CommandDefinition("INSERT INTO member_organization_requests(organization_id,user_id,state,created_at) SELECT id,@id,'pending',@now FROM member_organizations WHERE tax_digest=@companyDigest",
+                new{id,companyDigest,now=clock.UtcNow},tx,cancellationToken:ct));
+        }
         var user = await connection.QuerySingleAsync<UserRow>(new CommandDefinition("SELECT * FROM member_users WHERE id=@id", new { id }, tx, cancellationToken: ct));
         await CreateTokenAsync(connection, tx, user, "confirm", Culture(input.Culture), ct);
         await AuditAsync(connection, tx, id, "member.register", ct);
@@ -57,10 +75,12 @@ public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswor
 
     public async Task<MemberSession?> LoginAsync(string email, string password, bool remember, CancellationToken ct)
     {
-        if (!ValidEmail(email) || string.IsNullOrEmpty(password) || password.Length > 256) return null;
+        email=email?.Trim()??"";
+        var cpf=BrazilianDocument.IsCpf(email)?documents.Digest("cpf",BrazilianDocument.Normalize(email)):null;
+        if ((!ValidEmail(email)&&cpf is null) || string.IsNullOrEmpty(password) || password.Length > 256) return null;
         await using var connection = await factory.OpenAsync(ct);
         // Hash verification occurs outside the row lock; stamp/hash are rechecked under lock afterwards.
-        var before = await connection.QuerySingleOrDefaultAsync<UserRow>(new CommandDefinition("SELECT * FROM member_users WHERE normalized_email=@email", new { email = Normalize(email) }, cancellationToken: ct));
+        var before = await connection.QuerySingleOrDefaultAsync<UserRow>(new CommandDefinition("SELECT * FROM member_users WHERE (@cpf IS NULL AND normalized_email=@email) OR (@cpf IS NOT NULL AND cpf_digest=@cpf)", new { email = Normalize(email),cpf }, cancellationToken: ct));
         var valid = passwords.Verify(password, before?.password_hash ?? DummyHash);
         if (before is null) return null;
         await using var tx = await connection.BeginTransactionAsync(ct);
@@ -122,6 +142,7 @@ public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswor
 
     public async Task RequestTokenAsync(string email, string purpose, string culture, CancellationToken ct)
     {
+        email=email?.Trim()??"";
         if (!ValidEmail(email) || purpose is not ("confirm" or "reset")) return;
         await using var connection = await factory.OpenAsync(ct);
         await using var tx = await connection.BeginTransactionAsync(ct);
@@ -302,11 +323,20 @@ public sealed class MySqlMemberAccounts(MySqlConnectionFactory factory, IPasswor
             ? "SELECT id, full_name, email, email_confirmed, is_blocked, failed_attempts, lockout_until, created_at FROM member_users ORDER BY created_at DESC LIMIT @limit OFFSET @offset"
             : "SELECT id, full_name, email, email_confirmed, is_blocked, failed_attempts, lockout_until, created_at FROM member_users WHERE full_name LIKE @s OR email LIKE @s ORDER BY created_at DESC LIMIT @limit OFFSET @offset";
 
-        var rows = await connection.QueryAsync<MemberAdminView>(new CommandDefinition(
+        var rows = await connection.QueryAsync<MemberAdminRow>(new CommandDefinition(
             query,
             new { s = $"%{search?.Trim()}%", limit = pageSize, offset },
             cancellationToken: ct));
-        return rows.AsList();
+        return rows.Select(row => new MemberAdminView(row.id,row.full_name,row.email,row.email_confirmed,row.is_blocked,
+            checked((int)row.failed_attempts),Utc(row.lockout_until),Utc(row.created_at)!.Value)).ToArray();
+    }
+
+    private static DateTimeOffset? Utc(DateTime? value) => value is {} date ? new DateTimeOffset(DateTime.SpecifyKind(date,DateTimeKind.Utc)) : null;
+    private sealed class MemberAdminRow
+    {
+        public string id {get;set;}=""; public string full_name {get;set;}=""; public string email {get;set;}="";
+        public bool email_confirmed {get;set;} public bool is_blocked {get;set;} public uint failed_attempts {get;set;}
+        public DateTime? lockout_until {get;set;} public DateTime created_at {get;set;}
     }
 
     private sealed class ProfileRow

@@ -1,0 +1,13 @@
+@model BelemRestaurantes.Application.Abstractions.CuiaAiResponse
+@using BelemRestaurantes.Application.Formatting
+@{var sources=Model.Sources.Where(s=>!string.IsNullOrWhiteSpace(s.Title)&&Uri.TryCreate(s.Url,UriKind.Absolute,out var uri)&&uri.Scheme=="https"&&string.IsNullOrEmpty(uri.UserInfo)).Take(8).ToArray();}
+@if(Model.SearchStatus!="not_requested"){
+  @if(sources.Length>0){<section class="cuia-ai-section" aria-label="Referências da resposta"><h3>@(Model.SearchStatus=="indexed_sources"?"Referências revisadas":"Fontes consultadas")</h3><p>@CuiaSearchPresentation.Message(Model.SearchStatus)</p><ul>@for(var i=0;i<sources.Length;i++){var source=sources[i];<li>[@(i+1)] <a href="@source.Url" target="_blank" rel="noopener noreferrer">@source.Title</a> · consultada em @source.RetrievedAt.ToString("dd/MM/yyyy HH:mm 'UTC'")</li>}</ul></section>}
+  else{<p class="cuia-search-state" role="status">@CuiaSearchPresentation.Message(Model.SearchStatus)</p><p class="cuia-next-actions"><a href="/roteiros">Explorar roteiros</a> · <a href="/busca">Ver lugares publicados</a></p>}
+}
+
+@if(Model.ExternalSearchStatus is "unavailable" or "quota_exhausted" or "not_configured" or "credential_error" or "irrelevant" && Model.ExternalSearchStatus!=Model.SearchStatus){<p class="cuia-search-state">@CuiaSearchPresentation.Message(Model.ExternalSearchStatus)</p>}
+@if(!string.IsNullOrWhiteSpace(Model.ResearchQuery)&&Model.AnswerKind!="limite"){
+<section class="cuia-ai-section cuia-research-links"><h3>Continuar a pesquisa na web</h3><p>Os links abrem uma busca no seu navegador. O portal não consultou esses serviços por meio destes botões.</p><ul>
+@foreach(var item in new[]{("Google","https://www.google.com/search?q=", ""),("Bing","https://www.bing.com/search?q=",""),("VEJA e guias","https://www.google.com/search?q="," site:veja.abril.com.br"),("Instagram","https://www.google.com/search?q="," site:instagram.com"),("TikTok","https://www.google.com/search?q="," site:tiktok.com"),("LinkedIn","https://www.google.com/search?q="," site:linkedin.com")}){<li><a href="@(item.Item2+Uri.EscapeDataString(Model.ResearchQuery+item.Item3))" target="_blank" rel="noopener noreferrer">Pesquisar em @item.Item1 ↗</a></li>}
+</ul></section>}

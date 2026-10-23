@@ -1,0 +1,37 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {chromium}=require(path.resolve('artifacts/ui-test/node_modules/playwright'));
+const Axe=require(path.resolve('artifacts/ui-test/node_modules/@axe-core/playwright')).default;
+(async()=>{
+ const out=process.env.JOURNEY_OUTPUT||'artifacts/sprint47/journeys';fs.mkdirSync(out,{recursive:true});const browser=await chromium.launch(),context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage(),cases=[];
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ async function inspect(name){const violations=(await new Axe({page}).withTags(['wcag2a','wcag2aa','wcag22aa']).analyze()).violations;const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2);await page.screenshot({path:path.join(out,name+'.png'),fullPage:true});cases.push({name,overflow,violations:violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});}
+ await page.goto('http://localhost:5180/descobrir');await page.locator('[data-save-kind=catalog]').first().click();await page.locator('[data-save-kind=catalog]').nth(1).click();
+ const original=await page.evaluate(()=>JSON.parse(localStorage.getItem('belem-discoveries-v1')).map(p=>p.id));assert.equal(original.length,2);
+ await page.goto('http://localhost:5180/meu-passeio');await page.locator('.discovery-stop').nth(1).waitFor();await inspect('saved-two');
+ await page.locator('[data-move=up]').nth(1).click();await page.waitForFunction(first=>JSON.parse(localStorage.getItem('belem-discoveries-v1'))[0].id===first,original[1]);
+ await page.reload();await page.locator('.discovery-stop').nth(1).waitFor();assert.equal(await page.locator('.discovery-stop h2').first().textContent().then(t=>t.startsWith('1. ')),true);
+ const fixture=fs.readFileSync('artifacts/sprint47/snapshots/cuia-external.html','utf8');await page.route('**/cuia-ia?fixture=external',r=>r.fulfill({contentType:'text/html',body:fixture}));
+ await page.goto('http://localhost:5180/cuia-ia?fixture=external');await page.locator('.cuia-external-card').waitFor();assert.ok((await page.locator('.cuia-external-card').textContent()).includes('ainda não cadastrada'));
+ await page.locator('.cuia-external-card [data-save-kind=external]').click();await inspect('external-source');
+ await page.goto('http://localhost:5180/meu-passeio');await page.locator('.discovery-stop').nth(2).waitFor();assert.ok((await page.locator('.discovery-stop').last().textContent()).includes('Opção externa'));
+ await page.locator('[data-remove]').first().click();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('belem-discoveries-v1')).length===2);
+ await page.locator('#cuia-acessivel summary').click();await page.locator('#reading-size').selectOption('200');await inspect('saved-text200');
+ await page.goto('http://localhost:5180/cuia-ia');await page.locator('#cuia-clear-session').click();const requests=[];
+ await page.route('**/api/cuia-ia/ask',r=>{requests.push(r.request().postDataJSON());return r.fulfill({contentType:'application/json',body:JSON.stringify({answerMarkdown:'Resposta simulada de continuidade.',answerKind:'servico',generationStatus:'ok',recommendations:[],directoryMatches:[],externalSuggestions:[],sources:[],searchStatus:'empty',recipes:[],regionalCuriosities:[],suggestedFollowUps:[]})});});
+ await page.locator('#ai-search-web').check();await page.locator('#ai-prompt').fill('Onde comer em Belém?');await page.locator('#ai-submit').click();await page.getByText('Resposta simulada de continuidade.',{exact:true}).waitFor();
+ await page.locator('#ai-prompt').fill('Uma opção mais econômica');await page.locator('#ai-submit').click();await page.waitForFunction(()=>JSON.parse(sessionStorage.getItem('cuia-questions')).length===2);
+ assert.equal(requests[1].previousQuestions[0],'Onde comer em Belém?');assert.equal(requests[1].searchWeb,true);
+ await page.reload();assert.equal(await page.locator('#ai-search-web').isChecked(),true);await page.locator('#cuia-clear-session').click();assert.equal(await page.locator('#ai-search-web').isChecked(),false);assert.deepEqual(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('cuia-questions'))),[]);
+ let adviceCalls=0;page.on('request',r=>{if(r.url().includes('/api/cuia-ia/dica-restaurante/'))adviceCalls++;});await page.goto('http://localhost:5180/estabelecimento/'+original[0]);await page.locator('#btn-ask-sommelier').click();await page.locator('.cuia-advice-response').waitFor();await inspect('local-advice');
+ await page.route('**/api/cuia-ia/dica-restaurante/*',r=>r.fulfill({status:503,body:'unavailable'}));await page.locator('#btn-ask-sommelier').click();await page.locator('.cuia-advice-error').waitFor();await inspect('advice-error');assert.equal(await page.locator('#btn-ask-sommelier').isEnabled(),true);
+ await page.unroute('**/api/cuia-ia/dica-restaurante/*');await page.locator('#btn-ask-sommelier').click();await page.locator('.cuia-advice-response').waitFor();
+ assert.equal(adviceCalls,3);await page.goto('http://localhost:5180/');await page.locator('.cuia-widget-toggle').click();await page.locator('#cuia-widget-prompt').fill('Quero conhecer o Pará');await inspect('widget-open-mobile');
+ await page.keyboard.press('Escape');assert.equal(await page.locator('#cuia-widget-panel').isVisible(),false);assert.equal(await page.locator('.cuia-widget-toggle').evaluate(e=>e===document.activeElement),true);
+ await page.goto('http://localhost:5180/mapa');await page.route('**/vendor/leaflet/leaflet.css',r=>r.abort());await page.locator('#map-open').click();await page.locator('#map-retry:not([hidden])').waitFor();assert.equal(await page.locator('#map-results').isVisible(),true);
+ await page.unroute('**/vendor/leaflet/leaflet.css');await page.locator('#map-retry').click();await page.waitForFunction(()=>performance.getEntriesByName('map-useful').length>0);await inspect('map-recovered');
+ await page.goto('http://localhost:5180/meu-passeio');await page.locator('[data-discovery-clear]').click();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('belem-discoveries-v1')).length===0);assert.equal(await page.locator('.discovery-stop').count(),0);
+ const blocked=await browser.newContext({viewport:{width:320,height:844}});await blocked.addInitScript(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key==='belem-discoveries-v1')throw new DOMException('Blocked','SecurityError');return original.call(this,key,value);};});
+ const blockedPage=await blocked.newPage();await blockedPage.goto('http://localhost:5180/descobrir');await blockedPage.locator('[data-save-kind=catalog]').first().click();assert.ok((await blockedPage.locator('[data-save-feedback]').first().textContent()).includes('não permitiu guardar'));await blocked.close();
+ fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({cases,errors,sessionFlags:requests.map(r=>({searchWeb:r.searchWeb,previousQuestions:r.previousQuestions.length})),note:'Real pages/catalogue/storage; external SSR uses integration fixture; follow-up provider replies and one error are mocked.'},null,2));
+ console.log(JSON.stringify({cases:cases.length,failures:cases.filter(c=>c.overflow||c.violations.length),errors}));assert.equal(errors.length,0);assert.ok(cases.every(c=>!c.overflow&&!c.violations.length));await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -218,10 +218,10 @@ public sealed class AdminOperationsController(
             new()
             {
                 Key = "gemini",
-                Name = "Google Gemini (gemini-2.0-flash)",
+                Name = "Google Gemini",
                 Category = "Cuia IA / Enriquecimento Cultural",
                 IsConfigured = geminiConfigured,
-                ConfiguredDetails = geminiConfigured ? "Modelo: gemini-2.0-flash ativo na cadeia primária" : "Credencial Google Generative Language pendente",
+                ConfiguredDetails = geminiConfigured ? "Credencial presente; disponibilidade e plano gratuito exigem verificação" : "Credencial Google Generative Language pendente",
                 HasVerifiedSuccess = aiStats.TryGetValue("gemini", out var gStat) && gStat.Calls > 0,
                 LastSyncAt = aiStats.TryGetValue("gemini", out var gs) ? gs.LastCall : null,
                 RecentErrors = aiStats.TryGetValue("gemini", out var ge) && ge.Failures > 0 ? $"{ge.Failures} chamadas rejeitadas" : "Nenhum erro registrado",
@@ -232,10 +232,10 @@ public sealed class AdminOperationsController(
             new()
             {
                 Key = "groq",
-                Name = "Groq Cloud (llama-3.3-70b-versatile)",
+                Name = "Groq Cloud",
                 Category = "Cuia IA / Fallback Rápido",
                 IsConfigured = groqConfigured,
-                ConfiguredDetails = groqConfigured ? "LPU ultra-rápida (llama-3.3-70b)" : "Chave Groq Cloud não configurada",
+                ConfiguredDetails = groqConfigured ? "Credencial presente; disponibilidade e plano gratuito exigem verificação" : "Chave Groq Cloud não configurada",
                 HasVerifiedSuccess = aiStats.TryGetValue("groq", out var qStat) && qStat.Calls > 0,
                 LastSyncAt = aiStats.TryGetValue("groq", out var qs) ? qs.LastCall : null,
                 RecentErrors = aiStats.TryGetValue("groq", out var qe) && qe.Failures > 0 ? $"{qe.Failures} falhas" : "Nenhum erro registrado",
@@ -322,6 +322,9 @@ public sealed class AdminOperationsController(
             TotalPendingMod = pendingApprovals
         };
 
+        ViewData["PublicSearchEnabled"]=config.GetValue<bool>("WebSearch:PublicSources:Enabled");
+        ViewData["GeneralSearchConfigured"]=config.GetValue<bool>("WebSearch:Tavily:Enabled")&&config.GetValue<bool>("WebSearch:Tavily:FreeTierConfirmed")&&!string.IsNullOrWhiteSpace(config["WebSearch:Tavily:ApiKey"]) || config.GetValue<bool>("WebSearch:Brave:Enabled")&&config.GetValue<bool>("WebSearch:Brave:FreeTierConfirmed")&&!string.IsNullOrWhiteSpace(config["WebSearch:Brave:ApiKey"]);
+        ViewData["AutoPublicationEnabled"]=config.GetValue<bool>("Crawler:AutoPublication:Enabled");
         return View("~/Views/AdminAccount/Connectors.cshtml", model);
     }
 

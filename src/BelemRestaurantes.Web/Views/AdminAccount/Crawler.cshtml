@@ -83,6 +83,7 @@
         <option value="structured_data">Página com Schema.org</option>
         <option value="html_directory">Diretório Público HTML</option>
       </select>
+<label><input type="checkbox" name="contentOnly" value="true" /> Coletar somente referências de matérias e vídeos, sem criar restaurantes</label>
     </div>
 
     <div>
@@ -252,3 +253,7 @@
     </table>
   </div>
 </div>
+
+<section class="editorial-note"><h2>Pesquisa contínua na web</h2><p>Consultas por cidade e categoria alimentam o crawler quando há um provedor geral gratuito configurado. Somente páginas com identidade estruturada e endereço seguem para extração. Publicação automática exige os critérios de identidade e ausência de conflitos; não promove fichas para Guia.</p>
+@if(ViewData["ResearchJobs"] is IReadOnlyList<BelemRestaurantes.Application.Abstractions.ResearchJobStatus> jobs && jobs.Count>0){<ul>@foreach(var job in jobs){<li>@job.City · @job.State · @(job.LastStatus??"aguardando") · @job.SourceCount fontes · @job.QueuedCount páginas enfileiradas · @job.CreatedAt.ToString("dd/MM/yyyy HH:mm") UTC</li>}</ul>}else{<p>Nenhuma consulta recorrente registrada. Confira se a pesquisa geral e o Worker estão configurados.</p>}
+</section>

@@ -1,0 +1,57 @@
+/* A rolagem da página continua sendo a do documento. O painel só rola quando passa da altura útil. */
+@media (min-width: 761px) {
+  .para-explore-layout { align-items: start; }
+  .para-filter-panel {
+    position: sticky;
+    top: 6.5rem;
+    max-height: calc(100dvh - 7.5rem);
+    overflow: auto;
+    overscroll-behavior: auto;
+    z-index: 2;
+  }
+  .para-filter-open, .para-filter-toolbar, .para-filter-actions [data-filter-close] { display: none; }
+}
+@media (max-width: 760px) {
+  .para-filter-open { display: inline-flex; margin: 12px 0; }
+  .para-filter-panel { display: none; position: static; max-height: none; }
+  .para-filter-panel.is-open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    max-height: 100dvh;
+    overflow: hidden;
+    border-radius: 0;
+    padding: 0;
+    background: #fffdf8;
+  }
+  .para-filter-toolbar, .para-filter-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #fffdf8;
+  }
+  .para-filter-panel.is-open form {
+    overflow: auto;
+    flex: 1 1 auto;
+    padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+  }
+  .para-filter-actions { position: sticky; bottom: 0; }
+}
+body.para-scroll-lock { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
+.para-detail-links a, .para-detail-main-actions a, .para-detail-main-actions button, .para-restaurant-body a {
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.fact-sheet { margin: 28px 0; padding: 22px; border: 1px solid var(--para-line); border-radius: 12px; background: #fffdf8; }
+.fact-sheet dl { display: grid; gap: 14px; margin: 0; }
+.fact-sheet dt { font-weight: 700; }
+.fact-sheet dd { margin: 4px 0 0; }
+.place-discovery { display: grid; gap: 18px; margin: 28px 0; }
+.place-discovery article, .video-card { min-width: 0; }

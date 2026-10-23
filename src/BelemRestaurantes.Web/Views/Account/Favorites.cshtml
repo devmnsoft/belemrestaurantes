@@ -8,4 +8,5 @@
   else
   { <div class="para-restaurant-grid">@foreach (var restaurant in Model) { <div>@await Html.PartialAsync("_RestaurantCard", restaurant)<form method="post" action="/account/favorites/@restaurant.Id/remove">@Html.AntiForgeryToken()<button class="cuia-btn cuia-btn-outline" type="submit">Remover dos favoritos <span class="sr-only">@restaurant.Name</span></button></form></div> }</div> }
   <a href="/account" class="para-text-link">Voltar ao perfil ↗</a>
+  @if(Model.Count==0){@await Component.InvokeAsync("TrailPreview")}
 </section>

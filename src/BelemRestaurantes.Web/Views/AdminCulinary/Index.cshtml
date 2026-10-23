@@ -1,0 +1,6 @@
+@model BelemRestaurantes.Web.Controllers.CulinaryAdminPage
+@{ViewData["Title"]="Pesquisa culinária";Layout="_AdminLayout";}
+<h1>Pesquisa culinária</h1><p>O agendador verifica a fila a cada 60 segundos enquanto o Worker está ativo. Limites e regras de cada fonte continuam valendo.</p>
+<p><strong>@Model.References</strong> referências publicadas · <strong>@Model.Videos</strong> vídeos · <strong>@Model.Dishes</strong> relações de pratos com fichas.</p>
+<p>“no_structured_evidence” significa que a página não apresentou os dados exigidos pelo extrator; ela não foi preenchida por suposição. “restricted” significa acesso não permitido pela política de coleta.</p>
+<div style="overflow:auto"><table class="admin-table"><thead><tr><th>Tarefa</th><th>Tema</th><th>Estado</th><th>Último resultado</th><th>Tentativas</th><th>Atualização UTC</th></tr></thead><tbody>@foreach(var task in Model.Tasks){<tr><td>@task.Id</td><td>@task.Topic</td><td>@task.State</td><td>@task.LastStatus</td><td>@task.Attempts</td><td>@task.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td></tr>}</tbody></table></div>

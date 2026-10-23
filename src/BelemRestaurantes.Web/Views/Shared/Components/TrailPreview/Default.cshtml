@@ -1,0 +1,4 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.GastronomicTrail>
+<section class="editorial-preview"><span class="para-eyebrow">UMA IDEIA PARA COMEÇAR</span><h2>Seu próximo passeio pode nascer aqui.</h2><p>Escolha um roteiro com referências, guarde as etapas e adapte o percurso ao seu tempo.</p>
+@if(Model.Count>0){@await Html.PartialAsync("_TrailCards",Model)}else{<p>Os roteiros estão em revisão. Enquanto isso, conheça <a href="/pratos">os pratos do Pará</a> e <a href="/descobrir">os lugares publicados</a>.</p>}
+<p><a href="/roteiros">Explorar todos os roteiros ↗</a></p></section>

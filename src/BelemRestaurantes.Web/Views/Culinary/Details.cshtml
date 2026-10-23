@@ -1,0 +1,26 @@
+@model BelemRestaurantes.Application.Abstractions.CulinaryReference
+@{ ViewData["Title"] = Model.Title; }
+<article class="para-container culinary-detail" data-recipe>
+ <nav class="para-breadcrumb" aria-label="Você está aqui"><a href="/busca?q=@Uri.EscapeDataString(Model.Title)">Busca</a><span>/</span><span>@Model.Title</span></nav>
+ <span class="para-eyebrow">@(Model.Kind == "dish_evidence" ? "PRATO MENCIONADO NA FONTE" : "RECEITA DE AUTOR · REFERÊNCIA EXTERNA")</span>
+ <h1>@Model.Title</h1><p>@Model.Summary</p>
+ <p>Fonte: <a href="@Model.Url" target="_blank" rel="noopener noreferrer">@Model.Author ↗</a> · Consultada em @Model.ObservedAt.ToString("dd/MM/yyyy").</p>
+ @if(Model.Price is {} price){<p><strong>Preço observado: @price.ToString("C",System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</strong>. Não é média; confira embalagem, estoque, entrega e frete na loja.</p>}
+ @if(Model.PublishedAt is {} date){<p>Publicação informada: @date.ToString("dd/MM/yyyy"). Uma publicação antiga não confirma disponibilidade atual.</p>}
+ @if(Model.PlaceName is {} place){<section><h2>Onde foi mencionado</h2><p><strong>@place</strong> · @Model.City</p><p>@Model.Address</p><p>Confirme o cardápio atual no canal original. Esta referência não comprova a receita do restaurante.</p><a href="/busca?q=@Uri.EscapeDataString(place)&amp;city=Bel%C3%A9m">Ver fichas correspondentes</a></section>}
+ @if(Model.Ingredients.Length > 0){
+ <section data-shopping data-servings="1" data-recipe-slug="fonte-@Model.Id">
+  <h2>Ingredientes publicados</h2>
+  @if(!string.IsNullOrWhiteSpace(Model.Yield)){<p>Rendimento informado pela fonte: @Model.Yield</p>}
+  <p>Confira o preparo completo e as observações do autor na página original.</p>
+  <ul>@foreach(var ingredient in Model.Ingredients){<li><label><input type="checkbox" data-shop-item /> @ingredient</label><details><summary>Pesquisar este ingrediente em lojas</summary><p>Links de pesquisa manual; preços, estoque, frete e entrega em Belém não foram verificados.</p><a href="https://lista.mercadolivre.com.br/@Uri.EscapeDataString(ingredient)" target="_blank" rel="noopener noreferrer">Mercado Livre ↗</a> · <a href="https://www.amazon.com.br/s?k=@Uri.EscapeDataString(ingredient)" target="_blank" rel="noopener noreferrer">Amazon ↗</a></details></li>}</ul>
+  <p>Não há cotação suficiente para calcular o custo desta receita.</p>
+ </section>}
+ <div class="culinary-actions"><a class="para-button" href="@Model.Url" target="_blank" rel="noopener noreferrer">@(Model.Kind=="dish_evidence"?"Consultar cardápio na fonte ↗":Model.Kind=="ingredient_offer"?"Consultar produto na loja ↗":"Ver preparo na fonte ↗")</a>
+ @if(Model.VideoUrl is {} video){<a href="@video" target="_blank" rel="noopener noreferrer">Assistir ao vídeo do autor ↗</a>}
+ <a href="/cuia-ia?searchWeb=true&amp;q=@Uri.EscapeDataString("Onde comer " + Model.Title + " em Belém?")">Perguntar à Cuia onde comer</a></div>
+ <section><h2>Sobre esta referência</h2><p>@Model.Evidence</p><p>A lista de ingredientes não estabelece vínculo com restaurantes. Não foi reproduzido o texto integral do preparo nem a fotografia do autor.</p></section>
+</article>
+@section Styles {<link rel="stylesheet" href="~/css/search57.css" asp-append-version="true" />}
+
+@section Scripts {<script src="~/js/recipes.js" asp-append-version="true" defer></script>}

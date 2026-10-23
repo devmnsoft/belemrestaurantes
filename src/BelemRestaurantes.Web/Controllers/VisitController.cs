@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace BelemRestaurantes.Web.Controllers;
 
 [AllowAnonymous,Route("cuia-rotas")]
-public sealed class VisitController(IRestaurantReadRepository restaurants,IOperatingHoursRepository hours,IMobilityProvider mobility,MySqlConnectionFactory factory):Controller
+public sealed class VisitController(IRestaurantReadRepository restaurants,IOperatingHoursRepository hours,IMobilityProvider mobility,MySqlConnectionFactory factory,IMobilityTrailService trails):Controller
 {
     [HttpGet]
     [HttpGet("/qual-onibus")]
@@ -65,8 +65,8 @@ public sealed class VisitController(IRestaurantReadRepository restaurants,IOpera
             LIMIT 50
             """, new { date = today }, cancellationToken: ct))).AsList();
         ViewData["Title"] = "Travessias";
-        ViewData["MetaDescription"] = "Tarifas e referências de barco somente quando a fonte está vigente.";
+        ViewData["MetaDescription"] = "Roteiros de ilhas, gastronomia e paisagem, com planejamento da visita e fontes de transporte.";
         ViewData["AtlasEditorial"] = true;
-        return View(fares);
+        return View(new CrossingsViewModel(fares,await trails.ListTrailsAsync(ct)));
     }
 }

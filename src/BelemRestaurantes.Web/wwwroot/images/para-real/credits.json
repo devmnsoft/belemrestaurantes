@@ -1,0 +1,146 @@
+[
+  {
+    "slug": "ver-o-peso",
+    "originalTitle": "File:Belém Ver-o-Peso 01.jpg",
+    "author": "Cayambe",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "source": "https://commons.wikimedia.org/wiki/File%3ABel%C3%A9m_Ver-o-Peso_01.jpg",
+    "retrievedAt": "2026-10-20",
+    "changes": "Redimensionamento e conversão para WebP; recorte de apresentação via CSS.",
+    "files": [
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/ver-o-peso-480.webp",
+        "width": 480,
+        "height": 310,
+        "bytes": 35142
+      },
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/ver-o-peso-960.webp",
+        "width": 960,
+        "height": 621,
+        "bytes": 135986
+      }
+    ]
+  },
+  {
+    "slug": "tacaca",
+    "originalTitle": "File:Tacacá.jpg",
+    "author": "MI GENERAL ZAPATA",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "source": "https://commons.wikimedia.org/wiki/File%3ATacac%C3%A1.jpg",
+    "retrievedAt": "2026-10-20",
+    "changes": "Redimensionamento e conversão para WebP; recorte de apresentação via CSS.",
+    "files": [
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/tacaca-480.webp",
+        "width": 480,
+        "height": 854,
+        "bytes": 61820
+      },
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/tacaca-960.webp",
+        "width": 960,
+        "height": 1707,
+        "bytes": 211492
+      }
+    ]
+  },
+  {
+    "slug": "alter-do-chao",
+    "originalTitle": "File:Praia de Alter do Chão Santarém Para Amazonia Brasil.jpg",
+    "author": "Lucia Barreiros da Silva",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "source": "https://commons.wikimedia.org/wiki/File%3APraia_de_Alter_do_Ch%C3%A3o_Santar%C3%A9m_Para_Amazonia_Brasil.jpg",
+    "retrievedAt": "2026-10-20",
+    "changes": "Redimensionamento e conversão para WebP; recorte de apresentação via CSS.",
+    "files": [
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/alter-do-chao-480.webp",
+        "width": 480,
+        "height": 338,
+        "bytes": 36650
+      },
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/alter-do-chao-960.webp",
+        "width": 800,
+        "height": 564,
+        "bytes": 96090
+      }
+    ]
+  },
+  {
+    "slug": "manicoba",
+    "originalTitle": "File:Manicoba.jpg",
+    "author": "Ana_Cotta",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Manicoba.jpg",
+    "retrievedAt": "2026-10-20",
+    "changes": "Redimensionamento e conversão para WebP; recorte de apresentação via CSS.",
+    "files": [
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/manicoba-480.webp",
+        "width": 480,
+        "height": 360,
+        "bytes": 43998
+      },
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/manicoba-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 155242
+      }
+    ]
+  },
+  {
+    "slug": "pato-no-tucupi",
+    "originalTitle": "File:Pato no Tucupi (2113297642).jpg",
+    "author": "marcusrg - Hello, nice to meet you!",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Pato_no_Tucupi_(2113297642).jpg",
+    "retrievedAt": "2026-10-20",
+    "changes": "Redimensionamento e conversão para WebP; recorte de apresentação via CSS.",
+    "files": [
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/pato-no-tucupi-480.webp",
+        "width": 480,
+        "height": 340,
+        "bytes": 26442
+      },
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/pato-no-tucupi-960.webp",
+        "width": 960,
+        "height": 680,
+        "bytes": 115518
+      }
+    ]
+  },
+  {
+    "slug": "feira-acai",
+    "originalTitle": "File:Feira do Açaí - Belém 02.jpg",
+    "author": "Túllio F",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Feira_do_A%C3%A7a%C3%AD_-_Bel%C3%A9m_02.jpg",
+    "retrievedAt": "2026-10-20",
+    "changes": "Redimensionamento e conversão para WebP; recorte de apresentação via CSS.",
+    "files": [
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/feira-acai-480.webp",
+        "width": 480,
+        "height": 360,
+        "bytes": 24934
+      },
+      {
+        "path": "src/BelemRestaurantes.Web/wwwroot/images/para-real/feira-acai-960.webp",
+        "width": 960,
+        "height": 720,
+        "bytes": 97786
+      }
+    ]
+  }
+]

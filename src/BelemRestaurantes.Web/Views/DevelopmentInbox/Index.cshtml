@@ -1,0 +1,6 @@
+@model IReadOnlyList<BelemRestaurantes.Web.Controllers.LocalMail>
+@{ViewData["Title"]="Caixa de mensagens local";}
+<section class="para-container search-evidence"><h1>Caixa de mensagens local</h1><p>Disponível somente neste computador, em desenvolvimento. Os links abaixo permitem testar confirmação de conta e recuperação de senha. Nenhum e-mail externo foi enviado por esta tela.</p>
+@foreach(var mail in Model){<article><h2>@(mail.Kind=="confirm"?"Confirmar conta":"Recuperar senha")</h2><p>@mail.Recipient</p><a href="@mail.Link" rel="noreferrer">Abrir mensagem de acesso</a></article>}
+@if(Model.Count==0){<p>Nenhuma mensagem válida disponível. Cadastre-se ou solicite uma recuperação.</p>}
+</section>

@@ -127,6 +127,7 @@ public sealed class DiscoveryOperationsTests
     [InlineData("/admin/crawler", "Cuia Crawler")]
     [InlineData("/admin/discovery360", "Discovery")]
     [InlineData("/admin/suggestions", "Boas dicas")]
+    [InlineData("/admin/referencias", "Referências")]
     [InlineData("/account", "Perfil")]
     [InlineData("/account/favorites", "favoritos")]
     [InlineData("/partner/dashboard", "Parceiro")]
@@ -159,6 +160,7 @@ public sealed class DiscoveryOperationsTests
                         options.DefaultAuthenticateScheme = "test-operator";
                         options.DefaultChallengeScheme = "test-operator";
                     }).AddScheme<AuthenticationSchemeOptions, OperatorHandler>("test-operator", _ => { });
+                    services.Configure<AuthenticationOptions>(o=>o.SchemeMap[BelemRestaurantes.Application.Abstractions.AdminAuthDefaults.Scheme].HandlerType=typeof(OperatorHandler));
                     services.PostConfigure<AuthenticationOptions>(options =>
                         options.Schemes.First(s => s.Name == BelemRestaurantes.Application.Abstractions.MemberAuth.Scheme).HandlerType = typeof(OperatorHandler));
                 }));

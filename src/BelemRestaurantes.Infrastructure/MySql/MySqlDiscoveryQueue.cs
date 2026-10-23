@@ -10,7 +10,7 @@ namespace BelemRestaurantes.Infrastructure.MySql;
 /// <c>FOR UPDATE SKIP LOCKED</c>: duas instâncias do Windows Service nunca
 /// processam o mesmo job, mesmo started ao mesmo tempo.
 /// </summary>
-public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock clock, Microsoft.Extensions.Configuration.IConfiguration configuration) : IDiscoveryQueue
+public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock clock) : IDiscoveryQueue
 {
     public async Task<int> RetryDeadLettersAsync(string city, CancellationToken ct)
     {
@@ -83,7 +83,9 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
             .ToArray();
     }
 
-    public async Task CompleteAsync(long jobId, CancellationToken ct)
+    public Task CompleteAsync(long jobId,CancellationToken ct)=>CompleteCoreAsync(jobId,null,ct);
+    public Task CompletePageAsync(long jobId,DiscoveryPageProgress progress,CancellationToken ct)=>CompleteCoreAsync(jobId,progress,ct);
+    private async Task CompleteCoreAsync(long jobId,DiscoveryPageProgress? progress,CancellationToken ct)
     {
         await using var connection = await factory.OpenAsync(ct);
 
@@ -91,9 +93,11 @@ public sealed class MySqlDiscoveryQueue(MySqlConnectionFactory factory, IClock c
         await connection.ExecuteAsync(new CommandDefinition(
             """
             UPDATE discovery_targets t JOIN discovery_jobs j ON j.target_id = t.id
-            SET t.next_run_at = TIMESTAMPADD(MINUTE,t.refresh_minutes,@now), t.last_success_at = @now, t.locked_until = NULL, t.last_error = NULL
+            SET t.next_run_at = TIMESTAMPADD(MINUTE,CASE WHEN COALESCE(@more,t.result_more) THEN 5 ELSE t.refresh_minutes END,@now),
+                t.result_offset=COALESCE(@offset,t.result_offset),t.result_more=COALESCE(@more,t.result_more),
+                t.result_snapshot_at=COALESCE(@snapshot,t.result_snapshot_at),t.result_source_total=COALESCE(@sourceTotal,t.result_source_total), t.last_success_at = @now, t.locked_until = NULL, t.last_error = NULL
             WHERE j.id = @jobId AND j.state = 'running'
-            """, new { jobId, now = clock.UtcNow, nextRun = clock.UtcNow.AddMinutes(Math.Max(1, configuration.GetValue<int>("Discovery:TargetRefreshMinutes", 10080))) },
+            """, new { jobId, now = clock.UtcNow,offset=progress?.NextOffset,more=progress?.HasMore,snapshot=progress?.SnapshotAt,sourceTotal=progress?.SourceTotal },
             transaction, cancellationToken: ct));
         await connection.ExecuteAsync(new CommandDefinition(
             """

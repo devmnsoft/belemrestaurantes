@@ -17,10 +17,23 @@
 
   const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
   const token = tokenEl ? tokenEl.value : '';
-  let busy = false;
+  let busy = false, requestSequence=0, activeRequest;
+  const cancelBtn=document.getElementById('ai-cancel');
+  cancelBtn?.addEventListener('click',()=>{activeRequest?.abort();requestSequence++;busy=false;submitBtn.disabled=false;loadingEl.hidden=true;cancelBtn.hidden=true;resultsEl.removeAttribute('aria-busy');showLocal('<p>Consulta cancelada. Você pode tentar outra pergunta.</p>','Consulta cancelada.');});
+  let conversation = window.CuiaUi.state.read('cuia-questions', []);
+  if(!Array.isArray(conversation))conversation=[];
+  const webInput = document.getElementById('ai-search-web');
+  if(webInput){if(window.CuiaUi.state.read('cuia-search-web',false))webInput.checked=true;if(webInput.checked)window.CuiaUi.state.write('cuia-search-web',true);webInput.addEventListener('change',()=>window.CuiaUi.state.write('cuia-search-web',webInput.checked));}
+  try{const initial=JSON.parse(document.getElementById('cuia-initial-question')?.textContent||'null');if(typeof initial==='string'&&initial.trim()&&conversation.at(-1)!==initial){conversation=[...conversation,initial].slice(-3);window.CuiaUi.state.write('cuia-questions',conversation);}}catch{}
+  document.getElementById('cuia-clear-session')?.addEventListener('click',()=>{
+    activeRequest?.abort();requestSequence++;busy=false;submitBtn.disabled=false;
+    conversation=[];window.CuiaUi.state.write('cuia-questions',[]);window.CuiaUi.state.write('cuia-search-web',false);
+    window.CuiaUi.state.remove(storageKey);if(webInput)webInput.checked=false;
+    showLocal('<p>A conversa e as opções desta aba foram apagadas. Faça uma nova pergunta.</p>','Conversa reiniciada.');promptInput.focus();
+  });
 
   if (filters && window.matchMedia('(min-width: 768px)').matches) filters.open = true;
-  rememberPlaces(readInitialPlaces());
+  if(document.getElementById('cuia-initial-places'))rememberPlaces(readInitialPlaces());
 
   document.addEventListener('click', (event) => {
     const chip = event.target.closest('.cuia-ai-chip[data-prompt]');
@@ -56,7 +69,8 @@
     if (busy) return;
 
     const places = loadPlaces();
-    if (isCloserFollowUp(prompt)) {
+    const searchWeb = document.getElementById('ai-search-web')?.checked === true;
+    if (!searchWeb && isCloserFollowUp(prompt)) {
       if (!places.length) {
         showLocal('<p>A pergunta anterior não deixou restaurantes conferidos nesta aba. Sem essa lista, a Cuia não compara distância.</p>', 'Não foi possível comparar distâncias.');
         return;
@@ -64,7 +78,7 @@
       renderCloser(places);
       return;
     }
-    if (isBusFollowUp(prompt)) {
+    if (!searchWeb && isBusFollowUp(prompt)) {
       if (!places.length) {
         showLocal('<p>A pergunta anterior não deixou um restaurante conferido nesta aba. Quando houver uma casa na lista, use Como chegar.</p>', 'Não foi possível indicar o ônibus.');
         return;
@@ -73,20 +87,26 @@
       return;
     }
 
+    const id=++requestSequence;
+    conversation=window.CuiaUi.state.read('cuia-questions',[]);
     busy = true;
+    if(cancelBtn)cancelBtn.hidden=false;
     loadingEl.hidden = false;
     resultsEl.hidden = true;
     resultsEl.setAttribute('aria-busy', 'true');
     submitBtn.disabled = true;
-    const abort = new AbortController();
-    const timer = setTimeout(() => abort.abort(), 45000);
+    const abort = new AbortController();activeRequest=abort;
+    const timer = setTimeout(() => abort.abort(), 75000);
 
     try {
       const payload = {
         prompt: prompt,
         city: cityInput.value || null,
         occasion: occasionInput.value || null,
-        dietary: dietaryInput.value || null
+        dietary: dietaryInput.value || null,
+        searchWeb: document.getElementById('ai-search-web')?.checked === true,
+        previousQuestions: conversation.slice(-3),
+        placeIds: places.filter(p=>Number.isSafeInteger(p.id)&&p.id>0).slice(0,4).map(p=>p.id)
       };
 
       const response = await fetch('/api/cuia-ia/ask', {
@@ -102,16 +122,16 @@
       });
 
       const data = await readCuiaPayload(response);
+      if(id!==requestSequence)return;
+      if(data.answerKind!=='limite'){conversation=window.CuiaUi.rememberQuestion(conversation,prompt);window.CuiaUi.state.write('cuia-questions',conversation);}
       renderResults(data);
     } catch (err) {
+      if(id!==requestSequence)return;
       loadingEl.hidden = true;
       showAskError(err);
     } finally {
       clearTimeout(timer);
-      loadingEl.hidden = true;
-      resultsEl.removeAttribute('aria-busy');
-      submitBtn.disabled = false;
-      busy = false;
+      if(id===requestSequence){busy=false;submitBtn.disabled=false;loadingEl.hidden=true;if(cancelBtn)cancelBtn.hidden=true;resultsEl.removeAttribute('aria-busy');activeRequest=null;}
     }
   }
 
@@ -146,7 +166,7 @@
 
   function loadPlaces() {
     try {
-      const parsed = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+      const parsed = window.CuiaUi.state.read(storageKey, []);
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
@@ -163,7 +183,7 @@
       longitude: finite(place.longitude),
       address: place.address || ''
     })).filter((place) => place.id);
-    try { sessionStorage.setItem(storageKey, JSON.stringify(slim)); }
+    try { window.CuiaUi.state.write(storageKey, slim); }
     catch { /* a aba segue sem memória local */ }
   }
 
@@ -266,7 +286,7 @@
     if (html || !response.ok || !payload) {
       throw askFailure(messageFor(response.status, payload, html), canRetry(response.status, payload));
     }
-    return payload;
+    return window.CuiaUi.normalize(payload);
   }
 
   function askFailure(message, retryable) {
@@ -318,9 +338,7 @@
   }
 
   function kindLabel(kind) {
-    if (kind === 'servico') return 'Resposta feita com um serviço de recomendações, usando só os restaurantes conferidos.';
-    if (kind === 'limite') return 'A pergunta saiu do que a Cuia pode responder neste portal.';
-    return 'Resposta feita com o catálogo do portal.';
+    return window.CuiaUi.kind(kind);
   }
 
   function renderResults(data) {
@@ -329,13 +347,17 @@
     rememberPlaces([...places,...directory]);
     let html = `
       <div class="cuia-ai-meta">
-        <span class="cuia-ai-guarantee">${places.length ? `Pesquisa concluída. Encontramos ${places.length} estabelecimentos.` : 'Não encontramos restaurantes conferidos para essa busca. Veja outras opções no catálogo.'}</span>
+        <span class="cuia-ai-guarantee">${data.externalSuggestions?.length ? `Encontramos ${data.externalSuggestions.length} sugestões externas com fontes.` : places.length ? `Encontramos ${places.length} opções conferidas no portal.` : 'Explore a resposta e as opções disponíveis abaixo.'}</span>
         <span class="cuia-ai-kind">${escapeHtml(kindLabel(data.answerKind))}</span>
       </div>
+      ${window.CuiaUi.notice(data)}
       <div class="cuia-ai-response-body">
-        ${formatMarkdown(data.answerMarkdown || '')}
+        ${window.CuiaUi.answer(data)}
       </div>
     `;
+    html += window.CuiaUi.external(data)+window.CuiaUi.trails(data);
+
+    html += window.CuiaUi.sources(data);
 
     if (places.length > 0) {
       html += `
@@ -352,6 +374,7 @@
                 <p class="cuia-ai-reco-reason">${escapeHtml(r.reason || '')}</p>
                 ${r.address ? `<p class="cuia-ai-reco-address">${escapeHtml(r.address)}</p>` : ''}
                 <div class="cuia-ai-reco-actions">
+                  <button type="button" class="para-save" data-save-kind="catalog" data-save-id="${encodeURIComponent(String(r.id))}" data-save-name="${escapeHtml(r.name)}" data-save-city="${escapeHtml(r.city)}">Guardar para depois</button>
                   <a href="/estabelecimento/${encodeURIComponent(String(r.id))}" class="para-button">Ver restaurante</a>
                   <a href="/cuia-rotas?restaurantId=${encodeURIComponent(String(r.id))}" class="para-text-link">Como chegar</a>
                 </div>
@@ -402,6 +425,7 @@
     }
 
     resultsEl.innerHTML = html;
+    window.dispatchEvent(new Event('cuia-rendered'));
     resultsEl.hidden = false;
     revealResults();
   }
@@ -431,23 +455,5 @@
     return '';
   }
 
-  function formatMarkdown(md) {
-    if (!md) return '';
-    let escaped = escapeHtml(md);
-    escaped = escaped.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    escaped = escaped.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    escaped = escaped.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    escaped = escaped.replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
-      if (url.startsWith('/') || url.startsWith('https://')) {
-        return `<a href="${url}">${text}</a>`;
-      }
-      return text;
-    });
-    escaped = escaped.replace(/^\- (.*$)/gim, '<li>$1</li>');
-    escaped = escaped.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-    escaped = escaped.replace(/\n\n/g, '<br/><br/>');
-    return escaped;
-  }
+  function formatMarkdown(md) { return window.CuiaUi.markdown(md); }
 })();

@@ -12,7 +12,7 @@ namespace BelemRestaurantes.Worker;
 
 /// <summary>
 /// Cuia Crawler como serviço autônomo em background no Worker/Windows Service.
-/// Executa ciclos a cada 10 minutos para pesquisa e extração contínua e gentil de fontes públicas.
+/// Executa ciclos a cada minuto para pesquisa e extração contínua e gentil de fontes públicas.
 /// </summary>
 public sealed class CrawlerHostedService : BackgroundService
 {
@@ -39,7 +39,7 @@ public sealed class CrawlerHostedService : BackgroundService
             return;
         }
 
-        var externalEvery = TimeSpan.FromMinutes(Math.Max(1, _configuration.GetValue<int>("Crawler:IntervalMinutes", 10)));
+        var externalEvery = TimeSpan.FromMinutes(Math.Max(1, _configuration.GetValue<int>("Crawler:IntervalMinutes", 1)));
         var queueEvery = WorkerCadence.QueueCheck(_configuration.GetValue<int?>("Crawler:QueueCheckMinutes"));
         var maxTasks = Math.Clamp(_configuration.GetValue<int>("Crawler:MaxTasksPerCycle", 10), 1, 30);
 
@@ -96,6 +96,12 @@ public sealed class CrawlerHostedService : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var orchestrator = scope.ServiceProvider.GetRequiredService<ICrawlerOrchestrator>();
         await orchestrator.MaintainQueueAsync(ct);
+        var enrichment = scope.ServiceProvider.GetService<IEnrichmentService>();
+        if (enrichment is not null)
+        {
+            var queued = await enrichment.EnqueueIncompleteProfilesAsync(20, ct);
+            if (queued > 0) _logger.LogInformation("Fila de fichas incompletas: {Count} novos itens, sem consulta externa neste ciclo.", queued);
+        }
         _logger.LogDebug("Fila do rastreador conferida sem baixar páginas.");
     }
 

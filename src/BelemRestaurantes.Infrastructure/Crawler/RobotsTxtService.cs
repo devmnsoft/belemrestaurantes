@@ -43,6 +43,7 @@ public sealed class RobotsTxtService : IRobotsTxtService
 
         if(!result.Success && result.StatusCode is not (404 or 410))
         {
+            _logger.LogWarning("Não foi possível conferir robots.txt de {Host}: HTTP {Status}, {Reason}.",uri.Host,result.StatusCode,result.ErrorMessage);
             // A timeout, access denial or unavailable server cannot establish permission.
             Cache[hostKey]=new CachedRobotsEntry(["/"],60,DateTimeOffset.UtcNow.AddMinutes(5));
             return (false,60);

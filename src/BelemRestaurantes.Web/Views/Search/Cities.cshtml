@@ -29,3 +29,5 @@
 {
 <section class="para-section atlas-catalog"><div class="para-container"><div class="para-section-heading"><div><span class="para-eyebrow">@T["AtlasIslandsEyebrow"]</span><h2>@T["AtlasIslandsTitle"]</h2><p>@T["AtlasIslandsText"]</p></div></div><div class="atlas-localities">@foreach(var locality in localities){<a href="/localidade/@locality.NormalizedName.Replace(" ","-")">@await Html.PartialAsync("_ParaIcon","river")<span>@locality.Name</span><b aria-hidden="true">↗</b></a>}</div></div></section>
 }
+
+@if(Model.Count==0){<div class="para-container">@await Component.InvokeAsync("TrailPreview")</div>}

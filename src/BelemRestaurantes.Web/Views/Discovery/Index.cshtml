@@ -1,0 +1,32 @@
+@model BelemRestaurantes.Web.Models.DiscoveryPage
+@using BelemRestaurantes.Domain.Data
+@{ ViewData["Title"] = "Descubra seu próximo sabor"; }
+<section class="para-container para-section discovery-page" lang="pt-BR">
+  <nav class="para-breadcrumb" aria-label="Você está aqui"><a href="/">Início</a><span aria-hidden="true">/</span><span>Descobrir</span></nav>
+  <span class="para-eyebrow">DO SEU JEITO, NO SEU TEMPO</span><h1>Qual é o sabor do seu momento?</h1>
+  <p>Escolha por onde começar. Guarde ideias, explore um prato e monte seu próprio passeio.</p>
+  <form method="get" action="/descobrir" class="discovery-filters">
+    <fieldset><legend>O que combina com agora?</legend><div class="discovery-moments">
+      @foreach (var option in new[] { ("almoco", "Almoço"), ("cafe", "Café"), ("jantar", "Jantar"), ("familia", "Em família"), ("a-dois", "A dois"), ("passeio", "Passeio com comida") })
+      { <label><input type="radio" name="moment" value="@option.Item1" checked="@(Model.Moment == option.Item1)" />@option.Item2</label> }
+    </div></fieldset>
+    <div><label for="discover-city">Município</label><select id="discover-city" name="city"><option value="">Todo o Pará</option>@foreach (var city in ParaOfficialCatalog.Municipalities.OrderBy(c=>c.Name)){<option value="@city.Name" selected="@(Model.City == city.Name)">@city.Name</option>}</select></div>
+    <div><label for="discover-dish">Um sabor para experimentar</label><select id="discover-dish" name="dish"><option value="">Quero explorar</option>@foreach(var dish in ParaTasteCatalog.Dishes){<option value="@dish.Slug" selected="@(Model.Dish==dish.Slug)">@dish.Title</option>}</select></div>
+    <button class="para-button" type="submit">Explorar este momento</button>
+  </form>
+  <section class="discovery-section"><h2>Comece pelos lugares publicados</h2>
+    <p>A ocasião ajuda a organizar sua busca; não confirma estrutura para crianças, ambiente romântico, cardápio ou horário. Confira a ficha antes de ir.</p>
+    @if(Model.Places.Count > 0){<div class="para-restaurant-grid">@foreach(var place in Model.Places){@await Html.PartialAsync("_RestaurantCard",place)}</div>}
+    else{<p>Nenhuma ficha publicada corresponde a esta seleção. Você pode ampliar os filtros ou pedir à Cuia para pesquisar opções externas.</p>}
+    <a class="para-text-link" href="/cuia-ia?q=@Uri.EscapeDataString("Quero sugestões para " + (Model.Moment=="familia"?"um passeio gastronômico em família":Model.Moment=="a-dois"?"um jantar a dois":Model.Moment=="cafe"?"um café":Model.Moment=="jantar"?"um jantar":"um passeio com comida") + " em " + (Model.City ?? "Pará"))">Refinar com a Cuia e pesquisar fora do catálogo ↗</a>
+  </section>
+  <section class="discovery-section"><h2>Um ingrediente, muitas descobertas</h2><p>Conheça o prato, veja receitas e encontre cadastros relacionados. A menção ao tema não confirma que uma casa o sirva hoje.</p>
+    <div class="discovery-flavors">@foreach(var dish in ParaTasteCatalog.Dishes.Take(6)){<a href="/pratos/@dish.Slug"><strong>@dish.Title</strong><span>História, receitas e lugares relacionados ↗</span></a>}</div>
+  </section>
+  <section class="discovery-section"><h2>Leve o Pará para sua cozinha</h2><div class="recipe-grid">@foreach(var recipe in Model.Recipes){@await Html.PartialAsync("_RecipeCard",recipe)}</div><a href="/receitas" class="para-text-link">Explorar todas as receitas ↗</a></section>
+  @await Html.PartialAsync("_ParaPhotoStories")
+  <section class="discovery-next"><h2>Suas descobertas viram um passeio.</h2><p>Guarde lugares neste navegador e escolha a ordem de visita, sem criar conta.</p><a class="para-button" href="/meu-passeio">Montar meu passeio ↗</a><a href="/mapa">Explorar pelo mapa ↗</a></section>
+  @await Component.InvokeAsync("TrailPreview")
+</section>
+
+@await Component.InvokeAsync("ExternalContentPreview")

@@ -1,0 +1,5 @@
+ALTER TABLE discovery_targets
+ ADD COLUMN result_offset INT NOT NULL DEFAULT 0,
+ ADD COLUMN result_more BOOLEAN NOT NULL DEFAULT FALSE,
+ ADD COLUMN result_snapshot_at DATETIME(6) NULL,
+ ADD COLUMN result_source_total INT NOT NULL DEFAULT 0;

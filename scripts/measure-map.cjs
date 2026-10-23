@@ -1,16 +1,24 @@
-// Local Chromium, cold browser context per sample. No network throttling unless SLOW=1.
-const fs = require('node:fs'), path = require('node:path');
-const {chromium} = require(path.resolve('artifacts/ui-test/node_modules/playwright'));
-(async () => {
- const output = process.env.MAP_OUTPUT || 'artifacts/sprint44/before'; fs.mkdirSync(output,{recursive:true});
- const browser = await chromium.launch(); const results=[];
- for(let i=0;i<5;i++) {
-  const context=await browser.newContext({viewport:{width:390,height:844}}), page=await context.newPage();
-  if(process.env.SLOW) { const cdp=await context.newCDPSession(page); await cdp.send('Network.enable'); await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:200000,uploadThroughput:90000}); }
-  await page.addInitScript(()=>{window.observed={lcp:0,cls:0,longTasks:0,interaction:0}; for(const type of ['largest-contentful-paint','layout-shift','longtask','event'])try{new PerformanceObserver(list=>{for(const e of list.getEntries()){if(type==='largest-contentful-paint')observed.lcp=e.startTime;if(type==='layout-shift'&&!e.hadRecentInput)observed.cls+=e.value;if(type==='longtask')observed.longTasks+=e.duration;if(type==='event'&&e.interactionId)observed.interaction=Math.max(observed.interaction,e.duration);}}).observe({type,buffered:true,durationThreshold:16});}catch{}});
-  const response=await page.goto((process.env.VISUAL_TEST_BASE_URL||'http://localhost:5180')+'/mapa'); await page.waitForTimeout(1800);
-  const metrics=await page.evaluate(()=>{const n=performance.getEntriesByType('navigation')[0], r=performance.getEntriesByType('resource');return {...observed,ttfb:n.responseStart-n.requestStart,htmlBytes:n.decodedBodySize,transferred:n.transferSize+r.reduce((a,e)=>a+e.transferSize,0),requests:1+r.length,memory:performance.memory?.usedJSHeapSize,points:document.querySelectorAll('.catalog-map circle').length,resources:r.map(e=>({name:e.name,duration:e.duration,size:e.transferSize})),navigationMs:n.duration};});
-  results.push({status:response.status(),serverTiming:response.headers()['server-timing'],...metrics}); if(i===0)await page.screenshot({path:path.join(output,'mapa-390.png'),fullPage:true}); await context.close();
+const fs=require('node:fs'),path=require('node:path');
+const {chromium}=require(path.resolve('artifacts/ui-test/node_modules/playwright'));
+(async()=>{
+ const out=process.env.MAP_MEASURE_OUTPUT||'artifacts/sprint47/map-before.json';
+ const browser=await chromium.launch(),samples=[];
+ for(let i=0;i<5;i++){
+  const context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage();
+  if(process.env.MAP_SCRIPT_FILE)await page.route('**/js/catalog-map.js*',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(process.env.MAP_SCRIPT_FILE,'utf8')}));
+  const responses=[];page.on('response',r=>{if(r.url().includes('/api/mapa/pontos'))responses.push(r);});
+  await page.goto('http://localhost:5180/mapa');
+  const start=Date.now();await page.locator('#map-open').click();
+  await page.waitForFunction(()=>performance.getEntriesByName('map-useful').length>0);
+  const elapsed=Date.now()-start;
+  const timing=await page.evaluate(()=>({lcp:performance.getEntriesByType('largest-contentful-paint').at(-1)?.startTime||null,resources:performance.getEntriesByType('resource').filter(r=>r.name.includes('leaflet')||r.name.includes('/api/mapa/pontos')).map(r=>({name:r.name.split('/').at(-1),bytes:r.transferSize,duration:r.duration}))}));
+  const response=responses.at(-1);const body=response?await response.text():'';
+  samples.push({clickToUsefulMs:elapsed,requests:responses.length,pointPayloadBytes:Buffer.byteLength(body),...timing});await context.close();
  }
- fs.writeFileSync(path.join(output,'metrics.json'),JSON.stringify({network:process.env.SLOW?'150ms / 1.6Mbps':'local, unthrottled',viewport:390,samples:results},null,2));console.log(JSON.stringify(results.map(({resources,...r})=>r)));await browser.close();
+ await fetch('http://localhost:5180/api/mapa/pontos?bbox=-48.6,-1.6,-48.3,-1.3&limit=200');
+ const api=[];
+ for(let i=0;i<15;i++){const started=performance.now(),r=await fetch('http://localhost:5180/api/mapa/pontos?bbox=-48.6,-1.6,-48.3,-1.3&limit=200');if(!r.ok)throw Error('HTTP '+r.status);const text=await r.text();api.push({ms:performance.now()-started,bytes:Buffer.byteLength(text)});}
+ const sorted=api.map(r=>r.ms).sort((a,b)=>a-b),clicks=samples.map(r=>r.clickToUsefulMs).sort((a,b)=>a-b);
+ const report={samples,api,medianClickToUsefulMs:clicks[2],apiP50Ms:sorted[7],apiP95Ms:sorted[14],note:'Local Chromium, 390x844, published local catalogue; optional JS baseline override; warmed API connection; no configured street tiles, no external routing calls.'};
+ fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2));console.log(JSON.stringify({medianClickToUsefulMs:report.medianClickToUsefulMs,apiP50Ms:report.apiP50Ms,apiP95Ms:report.apiP95Ms}));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

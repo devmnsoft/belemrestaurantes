@@ -1,0 +1,2 @@
+@model IReadOnlyList<BelemRestaurantes.Web.ViewComponents.SearchDiscovery>
+@if(Model.Count>0){<section class="para-container search-evidence"><h2>Receitas, pratos e descobertas relacionadas</h2><div class="culinary-grid">@foreach(var item in Model){<article class="culinary-card" data-culinary-id="@item.CulinaryId"><p class="culinary-type">@item.Kind</p><h3><a href="@item.Url">@item.Title</a></h3>@if(item.Context is {} context){<p>@context</p>}</article>}</div></section>}

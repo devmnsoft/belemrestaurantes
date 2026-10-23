@@ -156,7 +156,7 @@ public sealed class DiscoveryHostedService(
                         continue;
                     }
 
-                    await queue.CompleteAsync(job.JobId, ct);
+                    if(discovered.PageProgress is {} progress)await queue.CompletePageAsync(job.JobId,progress,ct);else await queue.CompleteAsync(job.JobId, ct);
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
@@ -204,13 +204,15 @@ public sealed class DiscoveryHostedService(
     {
         var provider = scope.ServiceProvider.GetRequiredService<IPlaceDiscoveryProvider>();
         await using var db=await scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.MySql.MySqlConnectionFactory>().OpenAsync(ct);
-        var target=await Dapper.SqlMapper.QuerySingleAsync(db,new Dapper.CommandDefinition("SELECT provider,result_limit FROM discovery_targets WHERE id=@id",new{id=job.TargetId},cancellationToken:ct));
+        var target=await Dapper.SqlMapper.QuerySingleAsync(db,new Dapper.CommandDefinition("SELECT provider,result_limit,result_offset,result_snapshot_at FROM discovery_targets WHERE id=@id",new{id=job.TargetId},cancellationToken:ct));
         provider=(string)target.provider switch {
             "openstreetmap"=>scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.OpenData.OpenStreetMapDiscoveryClient>(),
             "googleplaces"=>scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Infrastructure.Google.GooglePlacesClient>(),
             _=>provider
         };
-        provider=new LimitedProvider(provider,(int)target.result_limit);
+        DateTimeOffset? previousSnapshot=target.result_snapshot_at is DateTime stamp?new DateTimeOffset(DateTime.SpecifyKind(stamp,DateTimeKind.Utc)):null;
+        var limited=new LimitedProvider(provider,(int)target.result_limit,(int)target.result_offset,previousSnapshot);
+        provider=limited;
         var ingestion = scope.ServiceProvider.GetRequiredService<IRestaurantIngestionRepository>();
         var moderation = scope.ServiceProvider.GetRequiredService<IModerationRepository>();
         var router = scope.ServiceProvider.GetRequiredService<IAiRouter>();
@@ -219,7 +221,7 @@ public sealed class DiscoveryHostedService(
         var orchestrator = new DiscoveryOrchestrator(provider, ingestion, moderation, router, clock,
             scope.ServiceProvider.GetRequiredService<ILogger<DiscoveryOrchestrator>>());
 
-        return await orchestrator.RunTargetAsync(job, ct);
+        return (await orchestrator.RunTargetAsync(job, ct)) with {PageProgress=limited.Progress};
     }
 
     private sealed class AggregateMetrics
@@ -243,12 +245,15 @@ public sealed class DiscoveryHostedService(
             $"descobertos={Discovered} novos={Created} atualizados={Updated} ignorados={Skipped} falhas={Failed}";
     }
 
-    private sealed class LimitedProvider(IPlaceDiscoveryProvider inner,int limit):IPlaceDiscoveryProvider
+    private sealed class LimitedProvider(IPlaceDiscoveryProvider inner,int limit,int offset,DateTimeOffset? snapshot):IPlaceDiscoveryProvider
     {
+        public BelemRestaurantes.Application.Models.DiscoveryPageProgress? Progress {get;private set;}
         public string Name=>inner.Name;
         public bool IsConfigured=>inner.IsConfigured;
         public async Task<BelemRestaurantes.Application.Models.PlaceSearchResult> SearchAsync(string query,string? city,CancellationToken ct)
-        {var result=await inner.SearchAsync(query,city,ct);return result with{Places=result.Places.Take(limit).ToArray()};}
+        {var result=await inner.SearchAsync(query,city,ct);
+            if(inner.Name=="openstreetmap"){var sliced=BelemRestaurantes.Application.Services.SnapshotDiscoveryPage.Slice(result,limit,offset,snapshot);Progress=sliced.Progress;return sliced.Result;}
+            return result with{Places=result.Places.Take(limit).ToArray()};}
         public Task<BelemRestaurantes.Application.Models.DiscoveredPlace?> GetDetailsAsync(string externalId,CancellationToken ct)=>inner.GetDetailsAsync(externalId,ct);
     }
 }

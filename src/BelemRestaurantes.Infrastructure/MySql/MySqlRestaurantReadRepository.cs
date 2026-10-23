@@ -1,6 +1,7 @@
 using Dapper;
 using MySqlConnector;
 using BelemRestaurantes.Application.Models;
+using BelemRestaurantes.Application.Services;
 using BelemRestaurantes.Domain.Entities;
 
 namespace BelemRestaurantes.Infrastructure.MySql;
@@ -20,7 +21,8 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
                latitude AS Latitude, longitude AS Longitude, phone AS Phone,
                business_status AS BusinessStatus, created_source_url AS SourceUrl,
                catalog_tier AS CatalogTier, photo_attribution AS PhotoAttribution,
-               photo_license AS PhotoLicense
+               photo_license AS PhotoLicense, phone_secondary AS PhoneSecondary,
+               coordinate_precision AS CoordinatePrecision, coordinate_source AS CoordinateSource
         FROM restaurants
         """;
 
@@ -216,15 +218,30 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
               (EXISTS (SELECT 1 FROM restaurant_schedules s WHERE s.restaurant_id = r.id)
                 OR EXISTS (SELECT 1 FROM restaurant_operation_info i WHERE i.restaurant_id = r.id AND i.expires_at > UTC_TIMESTAMP(6))) AS HasHours,
               EXISTS (SELECT 1 FROM menu_items m WHERE m.restaurant_id = r.id) AS HasMenu,
-              EXISTS (SELECT 1 FROM restaurant_owners o WHERE o.restaurant_id = r.id) AS HasOwner
+              EXISTS (SELECT 1 FROM restaurant_claim_requests c WHERE c.restaurant_id = r.id AND c.status = 'approved') AS HasOwner,
+              r.address AS Address, r.phone AS Phone, r.phone_secondary AS PhoneSecondary,
+              r.coordinate_precision AS CoordinatePrecision,
+              (SELECT COUNT(*) FROM menu_items m WHERE m.restaurant_id = r.id) AS MenuCount,
+              (SELECT state FROM field_provenance p WHERE p.restaurant_id = r.id AND p.field_name = 'hours' ORDER BY p.id DESC LIMIT 1) AS HoursProvenance
             FROM restaurants r
             WHERE r.id = @id AND r.status = 'published'
             """,
             new { id },
             cancellationToken: ct));
-        return row is null ? null : new CatalogFactSheet(
+        if (row is null) return null;
+        var dishes = (await connection.QueryAsync<string>(new CommandDefinition(
+            "SELECT name FROM menu_items WHERE restaurant_id = @id ORDER BY name LIMIT 12", new { id }, cancellationToken: ct))).ToArray();
+        var hoursState = row.HasHours != 0 ? FieldStates.Informed : string.IsNullOrWhiteSpace(row.HoursProvenance) ? FieldStates.NotLocated : row.HoursProvenance;
+        var precision = string.IsNullOrWhiteSpace(row.CoordinatePrecision) ? (row.HasCoordinates != 0 ? "unknown" : "none") : row.CoordinatePrecision;
+        return new CatalogFactSheet(
             row.HasAddress != 0, row.HasCoordinates != 0, row.HasPhone != 0, row.HasPhoto != 0,
-            row.HasHours != 0, row.HasMenu != 0, row.HasOwner != 0);
+            row.HasHours != 0, row.HasMenu != 0, row.HasOwner != 0)
+        {
+            Address = row.Address, Phone = row.Phone, PhoneSecondary = row.PhoneSecondary,
+            HoursState = hoursState, CoordinatePrecision = precision,
+            MenuState = row.MenuCount > 0 ? "collected" : "not_collected",
+            ClaimValidated = row.HasOwner != 0, Dishes = dishes
+        };
     }
 
     private sealed class CatalogFactRow
@@ -236,6 +253,12 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
         public int HasHours { get; set; }
         public int HasMenu { get; set; }
         public int HasOwner { get; set; }
+        public string? Address { get; set; }
+        public string? Phone { get; set; }
+        public string? PhoneSecondary { get; set; }
+        public string? CoordinatePrecision { get; set; }
+        public int MenuCount { get; set; }
+        public string? HoursProvenance { get; set; }
     }
 
     /// <summary>

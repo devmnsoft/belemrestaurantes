@@ -49,8 +49,9 @@ public sealed class AdminLoginTests
             Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
             var codeInstant = DateTimeOffset.UtcNow;
             var code = totp.GenerateFor(codeInstant, secret);
-            var verify = await PostForm(client, "/admin/mfa/verify", "/admin/mfa/verify", new() { ["code"] = code });
+            var verify = await PostForm(client, "/admin/mfa/verify", "/admin/mfa/verify", new() { ["code"] = code, ["returnUrl"] = "/account" });
             Assert.Equal(HttpStatusCode.Redirect, verify.StatusCode);
+            Assert.Equal("/admin/dashboard",verify.Headers.Location?.ToString());
             Assert.Contains(verify.Headers.GetValues("Set-Cookie"), value => value.StartsWith(".BelRest.AdminAuth="));
             var protectedResponse = await client.GetAsync("/api/admin/review/pending");
             if (canModerate) Assert.Equal(HttpStatusCode.OK, protectedResponse.StatusCode);

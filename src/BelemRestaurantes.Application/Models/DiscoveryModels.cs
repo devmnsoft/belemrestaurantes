@@ -18,6 +18,7 @@ public sealed record DiscoveryCycleMetrics(
     int PlacesSkipped,
     TimeSpan Duration)
 {
+    public DiscoveryPageProgress? PageProgress {get;init;}
     public string Source { get; init; } = "google_places";
     public string? FailureReason { get; init; }
     public DateTimeOffset? ProviderRetryAt { get; init; }
@@ -100,3 +101,5 @@ public static class ConnectorStateNames
     public const string Degraded = "degradado";
     public const string Paused = "pausado";
 }
+
+public sealed record DiscoveryPageProgress(int NextOffset,bool HasMore,DateTimeOffset SnapshotAt,int SourceTotal);

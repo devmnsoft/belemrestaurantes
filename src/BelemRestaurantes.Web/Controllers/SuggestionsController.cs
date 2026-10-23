@@ -13,9 +13,18 @@ namespace BelemRestaurantes.Web.Controllers;
 public sealed class SuggestionsController(ISuggestionRepository suggestions, IRestaurantReadRepository catalog) : Controller
 {
     [HttpGet]
-    public async Task<IActionResult> Index(long? restaurantId, CancellationToken ct)
+    public async Task<IActionResult> Index(long? restaurantId, CancellationToken ct, string? name = null, string? city = null, string? source = null)
     {
         var input = new RestaurantSuggestionInput();
+        if (restaurantId is null && !string.IsNullOrWhiteSpace(name))
+        {
+            input.Name = name.Trim()[..Math.Min(name.Trim().Length, 160)];
+            var official = ParaOfficialCatalog.Municipalities.FirstOrDefault(c => NameNormalizer.Normalize(c.Name) == NameNormalizer.Normalize(city));
+            input.City = official?.Name ?? "Belém";
+            // A search result is evidence for review, not necessarily the business's official website.
+            if (source?.Length <= 350 && SocialLinkRules.TryValidate(source, out _)) input.Notes = "Fonte externa para revisão: " + source;
+            ViewData["ExternalSuggestion"] = true;
+        }
         if (restaurantId is { } id)
         {
             var restaurant = await catalog.GetPublishedAsync(id, ct);
@@ -38,7 +47,8 @@ public sealed class SuggestionsController(ISuggestionRepository suggestions, IRe
             ModelState.AddModelError(nameof(input.Website), "Use um link HTTPS do site ou perfil oficial.");
         if (input.RestaurantId is { } id && await catalog.GetPublishedAsync(id, ct) is null) return NotFound();
         if (!ModelState.IsValid) return View("Index", input);
-        await suggestions.AddAsync(input.Name.Trim(), city!.Name, input.Website?.Trim(), input.Notes, ct, input.RestaurantId);
+        try { await suggestions.AddAsync(input.Name.Trim(), city!.Name, input.Website?.Trim(), input.Notes, ct, input.RestaurantId); }
+        catch (TimeoutException) { ModelState.AddModelError("", "Há outra indicação deste lugar em processamento. Aguarde um instante e tente novamente."); return View("Index", input); }
         TempData["SuggestionReceived"] = true;
         return RedirectToAction(nameof(Index));
     }

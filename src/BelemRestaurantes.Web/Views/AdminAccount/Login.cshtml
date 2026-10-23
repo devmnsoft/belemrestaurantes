@@ -23,9 +23,10 @@
   <form method="post" action="@Url.Action("LoginSubmit","AdminAccount")" class="panel">
     @Html.AntiForgeryToken()
     <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]"/>
-    <label>@T["UserName"] <input name="userName" required maxlength="100" autocomplete="username"/></label>
+    <label>Usuário ou e-mail <input name="userName" required maxlength="200" autocomplete="username"/></label>
     <label>@T["Password"] <input name="password" type="password" required maxlength="256" autocomplete="current-password"/></label>
     <button type="submit">@T["SignIn"]</button>
+    <a href="/admin/forgot">Esqueci a senha administrativa</a>
     @Html.ValidationSummary()
   </form>
 

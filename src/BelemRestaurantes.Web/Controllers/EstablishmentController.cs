@@ -15,7 +15,7 @@ public sealed class EstablishmentController(
     IPhotoStorageService photoService,
     ICuiaService cuiaService,
     IRestaurantMediaRepository? mediaRepo = null,
-    IRestaurantAttributeHistoryRepository? historyRepo = null) : Controller
+    IRestaurantAttributeHistoryRepository? historyRepo = null,IPlaceReferences? references=null,IPlaceDossier? dossier=null) : Controller
 {
     [HttpGet("{id:long}")]
     [HttpGet("/estabelecimento/{id:long}")]
@@ -38,6 +38,7 @@ public sealed class EstablishmentController(
         var mediaList = mediaRepo != null ? await mediaRepo.GetMediaByRestaurantAsync(id, onlyApproved: true, ct) : [];
         var attrHistory = historyRepo != null ? await historyRepo.GetHistoryAsync(id, ct) : [];
 
+        ViewData["PlaceReferences"]=references is null?Array.Empty<PlaceReference>():await references.FindAsync(establishment.Name,establishment.City,ct);
         ViewData["CuiaBadges"] = cuiaBadges;
         ViewData["Gallery"] = gallery;
         ViewData["Experiences"] = communityExperiences;
@@ -48,6 +49,7 @@ public sealed class EstablishmentController(
         ViewData["OpeningAssessment"]=OpeningHours.Evaluate(operation,DateTimeOffset.UtcNow,DateTimeOffset.UtcNow);
         ViewData["Recipes"]=await recipes.ForRestaurantAsync(id,ct);
         ViewData["FactSheet"]=await repo.GetFactSheetAsync(id,ct);
+        ViewData["Dossier"]=dossier is null?null:await dossier.ForRestaurantAsync(id,ct);
 
         return View(establishment);
     }

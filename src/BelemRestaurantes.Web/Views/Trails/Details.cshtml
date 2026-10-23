@@ -1,103 +1,13 @@
 @model BelemRestaurantes.Domain.Entities.GastronomicTrail
-@{
-    ViewData["Title"] = $"{Model.Title} - Roteiro Gastronômico";
+@using System.Text.Json
+@{ViewData["Title"]=Model.Title;var guide=Model.Editorial;}
+<section class="para-container editorial-hero"><a href="/roteiros">← Todos os roteiros</a><p class="para-eyebrow">@Model.Region</p><h1>@Model.Title</h1><p>@Model.Description</p><p><strong>@Model.EstimatedDurationHours h de passeio · estimativa editorial</strong>, sem incluir previsão de transporte.</p></section>
+@if(guide is not null){
+<section class="para-container para-section" data-trail-page><div class="editorial-note"><h2>Do seu jeito, no seu tempo</h2><p><strong>Para quem:</strong> @guide.Audience</p><p><strong>Começo sugerido:</strong> @guide.Origin</p><p><strong>Acesso:</strong> @(guide.Mode=="river"?"Planejamento fluvial":guide.Mode=="road"?"Planejamento terrestre":"Circuito urbano")</p><p>@guide.BeforeYouGo</p><p>@guide.Accessibility</p><p>Revisão editorial: @Model.ReviewedAt?.ToString("dd/MM/yyyy"). As fontes registram referências do lugar; consulte os canais oficiais para condições atuais.</p>@if(Model.ReviewedAt is {} reviewed&&reviewed<DateTime.UtcNow.AddDays(-90)){<p role="status">Este roteiro está na fila de atualização editorial. Confirme os dados diretamente nas fontes.</p>}</div>
+<div class="editorial-actions"><button class="para-button" type="button" data-save-trail>Adicionar etapas ao meu passeio</button><a href="/meu-passeio">Organizar o passeio ↗</a><a href="/cuia-ia?q=@Uri.EscapeDataString("Quero planejar o roteiro "+Model.Title+" em Belém. O que devo confirmar?")&amp;searchWeb=true">Perguntar à Cuia com pesquisa externa ↗</a></div>
+<script type="application/json" id="trail-steps">@Html.Raw(JsonSerializer.Serialize(guide.Stops.Select(s=>new{kind="external",name=s.Name,city=s.City,url=s.SourceUrl})))</script>
+<h2>Etapas para adaptar ao seu dia</h2><ol class="editorial-stops">@foreach(var stop in guide.Stops){<li><article class="editorial-card"><span class="para-tier is-external">Etapa editorial com fonte · não é ficha conferida</span><h3>@stop.Name</h3><p>@stop.City</p><p>@stop.Summary</p><p><a href="@stop.SourceUrl" target="_blank" rel="noopener noreferrer">Consultar referência: @stop.SourceName ↗</a></p><p><a href="https://www.google.com/maps/search/?api=1&amp;query=@Uri.EscapeDataString(stop.Name+", "+stop.City+", Pará")" target="_blank" rel="noopener noreferrer">Buscar o local no Google Maps (serviço externo) ↗</a></p><button type="button" class="para-save" data-save-kind="external" data-save-name="@stop.Name" data-save-city="@stop.City" data-save-url="@stop.SourceUrl">Guardar esta etapa</button></article></li>}</ol>
+<p>Esta sequência não é um trajeto calculado. Se uma etapa não estiver disponível, remova-a em Meu passeio e escolha outra experiência.</p></section>
+}else{
+<section class="para-container para-section"><h2>Lugares deste roteiro</h2>@foreach(var stop in Model.Stops){<article class="editorial-card"><h3><a href="/establishment/@stop.RestaurantId">@stop.RestaurantName</a></h3><p>@stop.Notes</p><a href="/cuia-rotas?restaurantId=@stop.RestaurantId">Planejar chegada ↗</a></article>}<p><a href="/roteiros">Explorar outros roteiros</a></p></section>
 }
-
-<div class="container py-4">
-    <div class="mb-3">
-        <a href="/roteiros" class="text-decoration-none text-muted">
-            <i class="bi bi-arrow-left me-1"></i>Voltar para todos os roteiros
-        </a>
-    </div>
-
-    <!-- Banner do Roteiro -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-forest text-white">
-        <div class="p-4 p-md-5">
-            <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2">@Model.Region</span>
-            <h1 class="display-6 fw-bold mb-2 text-white">@Model.Title</h1>
-            <p class="text-white-50 mb-3" style="max-width: 700px;">@Model.Description</p>
-            <div class="d-flex align-items-center gap-3 text-white-50 small flex-wrap">
-                <span><i class="bi bi-clock me-1 text-warning"></i>Tempo estimado: @Model.EstimatedDurationHours horas</span>
-                <span><i class="bi bi-geo-alt me-1 text-danger"></i>Região: @Model.Region</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <!-- Paradas e Restaurantes do Circuito -->
-        <div class="col-lg-8">
-            <h4 class="fw-bold text-forest mb-4">
-                <i class="bi bi-signpost-split me-2 text-warning"></i>Paradas Recomendadas no Circuito
-            </h4>
-
-            @if (Model.Stops.Count == 0)
-            {
-                <div class="card border-0 shadow-sm rounded-4 p-4 text-center text-muted">
-                    <p class="mb-0">Este roteiro está sendo enriquecido com novos restaurantes parceiros da região.</p>
-                </div>
-            }
-            else
-            {
-                <div class="d-flex flex-column gap-3">
-                    @foreach (var stop in Model.Stops)
-                    {
-                        <div class="card border-0 shadow-sm rounded-4 p-4">
-                            <div class="d-flex align-items-start gap-3">
-                                <div class="bg-forest text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px; min-width: 36px;">
-                                    @stop.StopOrder
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                                        <div>
-                                            <h5 class="fw-bold text-forest mb-1">
-                                                <a href="/estabelecimento/@stop.RestaurantId" class="text-decoration-none text-forest">@stop.RestaurantName</a>
-                                            </h5>
-                                            <p class="text-muted small mb-1">
-                                                <i class="bi bi-geo-alt text-danger me-1"></i>@stop.RestaurantAddress
-                                            </p>
-                                            <a href="/cuia-rotas?restaurantId=@stop.RestaurantId">Planejar transporte e conferir horários desta parada →</a>
-                                        </div>
-                                        <a href="/cardapio/@stop.RestaurantId" class="btn btn-outline-forest btn-sm rounded-pill">
-                                            <i class="bi bi-qr-code me-1"></i>Cardápio
-                                        </a>
-                                    </div>
-
-                                    @if (!string.IsNullOrEmpty(stop.HighlightDish))
-                                    {
-                                        <div class="mt-2 bg-light p-2 px-3 rounded-3 small">
-                                            <strong class="text-forest"><i class="bi bi-award-fill text-warning me-1"></i>Prato Destaque:</strong> @stop.HighlightDish
-                                        </div>
-                                    }
-
-                                    @if (!string.IsNullOrEmpty(stop.Notes))
-                                    {
-                                        <p class="small text-muted mt-2 mb-0">@stop.Notes</p>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-
-        <!-- Dicas de Mobilidade e Transporte -->
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 20px;">
-                <h5 class="fw-bold text-forest mb-3">
-                    <i class="bi bi-bus-front me-2 text-warning"></i>Como Chegar e Mobilidade
-                </h5>
-                <p class="text-muted small mb-3">
-                    @Model.TransportTips
-                </p>
-                <hr class="my-3">
-                <h6 class="fw-bold text-forest small mb-2">Dicas para o Turista</h6>
-                <ul class="text-muted small ps-3 mb-0 d-flex flex-column gap-2">
-                    <li>Prefira sapatos confortáveis para caminhar pelas calçadas históricas e orlas.</li>
-                    <li>Em dias de chuva à tarde em Belém (a famosa "chuva da tarde"), aproveite para saborear um tacacá quentinho.</li>
-                    <li>Confira os horários de funcionamento dos restaurantes no cardápio antes de sair.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>

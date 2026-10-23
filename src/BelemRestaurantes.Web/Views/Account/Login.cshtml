@@ -6,7 +6,7 @@
 <form method="post" action="/account/login" class="panel">
   @Html.AntiForgeryToken()
   <input asp-for="ReturnUrl" type="hidden" />
-  <label>@T["Email"]<input asp-for="Email" type="email" autocomplete="username" required maxlength="200" /></label>
+  <label>E-mail ou CPF<input asp-for="Email" type="text" autocomplete="username" required maxlength="200" /></label>
   <label>@T["Password"]<input name="Password" type="password" autocomplete="current-password" required maxlength="256" /></label>
   <label class="check-label"><input asp-for="Remember" type="checkbox" /> @T["Remember"]</label>
   <div asp-validation-summary="All" role="alert"></div><button type="submit">@T["SignIn"]</button>

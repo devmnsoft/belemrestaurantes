@@ -49,6 +49,38 @@ public sealed class EnrichmentService : IEnrichmentService
         _logger = logger;
     }
 
+    public async Task<int> EnqueueIncompleteProfilesAsync(int limit, CancellationToken ct)
+    {
+        var batch = Math.Clamp(limit, 1, 30);
+        await using var connection = await _factory.OpenAsync(ct);
+        return await connection.ExecuteAsync(new CommandDefinition("""
+            INSERT INTO restaurant_enrichment_queue
+              (restaurant_id, priority, state, fields_to_enrich, next_attempt_at)
+            SELECT r.id,
+              CASE
+                WHEN r.address IS NULL OR r.address = '' OR r.phone IS NULL OR r.phone = '' THEN 1
+                WHEN r.category IN ('Restaurante','Bar','Pizzaria','Lanchonete') THEN 3
+                ELSE 6
+              END,
+              'pending', 'profile', UTC_TIMESTAMP(6)
+            FROM restaurants r
+            WHERE r.status = 'published'
+              AND (r.address IS NULL OR r.address = '' OR r.phone IS NULL OR r.phone = '' OR r.latitude IS NULL
+                OR NOT EXISTS (SELECT 1 FROM menu_items m WHERE m.restaurant_id = r.id))
+              AND NOT EXISTS (
+                SELECT 1 FROM restaurant_claim_requests c
+                WHERE c.restaurant_id = r.id AND c.status = 'approved')
+              AND NOT EXISTS (
+                SELECT 1 FROM restaurant_enrichment_queue q
+                WHERE q.restaurant_id = r.id AND q.fields_to_enrich = 'profile'
+                  AND (q.state IN ('pending','running')
+                    OR (q.state = 'completed' AND q.completed_at > DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 7 DAY))
+                    OR (q.state = 'failed' AND q.next_attempt_at > UTC_TIMESTAMP(6))))
+            ORDER BY r.updated_at, r.id
+            LIMIT @batch
+            """, new { batch }, cancellationToken: ct));
+    }
+
     public async Task<int> EnqueueLicensedPhotoSweepAsync(int limit, CancellationToken ct)
     {
         var batch = Math.Clamp(limit, 1, 20);
@@ -137,8 +169,8 @@ public sealed class EnrichmentService : IEnrichmentService
         // 2. Verificar se o restaurante possui proprietário verificado (Tier 1)
         const string ownerSql = """
             SELECT COUNT(*)
-            FROM restaurant_owners
-            WHERE restaurant_id = @restaurantId;
+            FROM restaurant_claim_requests
+            WHERE restaurant_id = @restaurantId AND status = 'approved';
             """;
         var isVerifiedOwner = await connection.ExecuteScalarAsync<int>(new CommandDefinition(ownerSql, new { restaurantId }, cancellationToken: ct)) > 0;
 

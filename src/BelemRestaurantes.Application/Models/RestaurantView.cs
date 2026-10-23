@@ -26,6 +26,10 @@ public sealed record RestaurantView(
     public string CatalogTier { get; init; } = "ficha";
     public string? PhotoAttribution { get; init; }
     public string? PhotoLicense { get; init; }
+    public string? PhoneSecondary { get; init; }
+    /// <summary>rooftop, approximate ou unknown. Coordenada sem precisão não é ponto exato.</summary>
+    public string? CoordinatePrecision { get; init; }
+    public string? CoordinateSource { get; init; }
     public RestaurantView() : this(0, "", "", null, null, null, null, null, null, null, null, null, default) { }
 }
 

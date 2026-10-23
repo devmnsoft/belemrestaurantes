@@ -11,7 +11,7 @@ public static partial class CuiaMarkdown
     {
         if (string.IsNullOrWhiteSpace(markdown)) return "";
         var builder = new StringBuilder();
-        var inList = false;
+        string? listKind = null;
         foreach (var raw in markdown.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n'))
         {
             var line = raw.TrimEnd();
@@ -35,15 +35,13 @@ public static partial class CuiaMarkdown
                 continue;
             }
 
-            if (line.StartsWith("- ", StringComparison.Ordinal))
+            if (BareOrdinalPattern().IsMatch(line)) { CloseList(); continue; }
+            var ordered=OrderedItemPattern().Match(line);
+            if (line.StartsWith("- ", StringComparison.Ordinal) || ordered.Success)
             {
-                if (!inList)
-                {
-                    builder.Append("<ul>");
-                    inList = true;
-                }
-
-                builder.Append("<li>").Append(Inline(line[2..])).Append("</li>");
+                var tag=ordered.Success?"ol":"ul";
+                if(listKind!=tag){CloseList();builder.Append('<').Append(tag).Append('>');listKind=tag;}
+                builder.Append("<li>").Append(Inline(ordered.Success?ordered.Groups[1].Value:line[2..])).Append("</li>");
                 continue;
             }
 
@@ -56,9 +54,9 @@ public static partial class CuiaMarkdown
 
         void CloseList()
         {
-            if (!inList) return;
-            builder.Append("</ul>");
-            inList = false;
+            if (listKind is null) return;
+            builder.Append("</").Append(listKind).Append('>');
+            listKind = null;
         }
     }
 
@@ -76,6 +74,11 @@ public static partial class CuiaMarkdown
             return $"<a href=\"{url}\">{label}</a>";
         });
     }
+
+    [GeneratedRegex(@"^\d+\.\s+(.+)$")]
+    private static partial Regex OrderedItemPattern();
+    [GeneratedRegex(@"^\d+\.\s*$")]
+    private static partial Regex BareOrdinalPattern();
 
     [GeneratedRegex(@"\*\*(.+?)\*\*")]
     private static partial Regex BoldPattern();

@@ -1,3 +1,7 @@
 @{ ViewData["Title"] = T["MyAccount"].Value; }
 <section class="shell section narrow"><div class="panel"><p role="status">@ViewData["Message"]</p>
-<a href="/account/login">@T["SignIn"]</a><a href="/account/forgot">@T["ForgotPassword"]</a><a href="/account/resend">@T["ResendEmail"]</a></div></section>
+@if(ViewData["DeliveryNotice"] is string notice){<p role="status">@notice</p>}
+@if(ViewData["LocalMailbox"] as bool?==true){<p><a href="/dev/caixa-de-entrada">Abrir a caixa de mensagens deste ambiente local</a></p>}
+@if(ViewData["AdminRecovery"] as bool?==true){<p><a href="/admin/login">Entrar na administração</a> · <a href="/admin/forgot">Solicitar nova recuperação administrativa</a></p>}
+else{<a href="/account/login">@T["SignIn"]</a><a href="/account/forgot">@T["ForgotPassword"]</a><a href="/account/resend">@T["ResendEmail"]</a>}
+</div></section>

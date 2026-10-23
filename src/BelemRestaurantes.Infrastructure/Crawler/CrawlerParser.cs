@@ -191,7 +191,7 @@ public sealed class CrawlerParser : ICrawlerParser
 
         var data = new ExtractedRestaurantData
         {
-            Name = name.Trim(),
+            Name = BelemRestaurantes.Application.Formatting.PublicText.Clean(name, 160),
             Description = GetStringProperty(element, "description"),
             Telephone = GetStringProperty(element, "telephone"),
             Website = GetStringProperty(element, "url") ?? sourceUrl,
@@ -199,6 +199,8 @@ public sealed class CrawlerParser : ICrawlerParser
             PriceRange = GetStringProperty(element, "priceRange"),
             SourceUrl = sourceUrl,
             City = defaultCity,
+            StructuredIdentity=true,
+            DeclaredWebsite=!string.IsNullOrWhiteSpace(GetStringProperty(element,"url")),
             ConfidenceScore = 0.95
         };
 
@@ -213,7 +215,7 @@ public sealed class CrawlerParser : ICrawlerParser
                 var postal = GetStringProperty(addrEl, "postalCode");
 
                 data.Address = string.Join(", ", new[] { street, locality, region, postal }.Where(s => !string.IsNullOrWhiteSpace(s)));
-                if (!string.IsNullOrWhiteSpace(locality)) data.City = locality;
+                if (!string.IsNullOrWhiteSpace(locality)){data.City = locality;data.ExplicitCity=true;}
             }
             else if (addrEl.ValueKind == JsonValueKind.String)
             {
@@ -252,7 +254,37 @@ public sealed class CrawlerParser : ICrawlerParser
             data.PhotoAttribution = $"Fonte oficial: {sourceUrl}";
         }
 
+        if(element.TryGetProperty("hasMenu",out var menu))ReadMenu(menu,data.MenuItems,0);
+        if(element.TryGetProperty("menu",out var alternateMenu))ReadMenu(alternateMenu,data.MenuItems,0);
+        if(element.TryGetProperty("openingHours",out var hours))
+        {
+            if(hours.ValueKind==JsonValueKind.String)data.OpeningHours.Add(hours.GetString()!);
+            else if(hours.ValueKind==JsonValueKind.Array)data.OpeningHours.AddRange(hours.EnumerateArray().Where(h=>h.ValueKind==JsonValueKind.String).Take(14).Select(h=>h.GetString()!));
+        }
+        if(element.TryGetProperty("openingHoursSpecification",out var specifications))
+        {
+            var specs=specifications.ValueKind==JsonValueKind.Array?specifications.EnumerateArray().ToArray():[specifications];
+            foreach(var spec in specs.Take(14))if(spec.ValueKind==JsonValueKind.Object)
+            {
+                var opens=GetStringProperty(spec,"opens");var closes=GetStringProperty(spec,"closes");
+                if(opens is not null && closes is not null)data.OpeningHours.Add((spec.TryGetProperty("dayOfWeek",out var days)?days.ToString():"Dia não informado")+" "+opens+"–"+closes);
+            }
+        }
+        if(element.TryGetProperty("video",out var video) && video.ValueKind==JsonValueKind.Object)
+            MapSocialLink(data,GetStringProperty(video,"contentUrl")??GetStringProperty(video,"embedUrl"));
+        data.MenuItems=data.MenuItems.Distinct().Take(20).ToList();
+        data.OpeningHours=data.OpeningHours.Select(h=>h[..Math.Min(h.Length,180)]).Distinct().Take(14).ToList();
         list.Add(data);
+    }
+
+    private static void ReadMenu(JsonElement menu,List<string> items,int depth)
+    {
+        if(depth>6 || items.Count>=20)return;
+        if(menu.ValueKind==JsonValueKind.Array){foreach(var node in menu.EnumerateArray().Take(30))ReadMenu(node,items,depth+1);return;}
+        if(menu.ValueKind!=JsonValueKind.Object)return;
+        if(menu.TryGetProperty("@type",out var type) && type.ToString()=="MenuItem" && GetStringProperty(menu,"name") is {Length:>0} name)
+            items.Add(name[..Math.Min(name.Length,180)]);
+        foreach(var property in new[]{"hasMenuSection","hasMenuItem"})if(menu.TryGetProperty(property,out var child))ReadMenu(child,items,depth+1);
     }
 
     private static void MapSocialLink(ExtractedRestaurantData data, string? link)

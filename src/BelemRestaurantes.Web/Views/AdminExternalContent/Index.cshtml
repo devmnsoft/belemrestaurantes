@@ -1,0 +1,4 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.ExternalContent>
+@{Layout="_AdminLayout";ViewData["Title"]="Conteúdos externos coletados";}
+<h1>Conteúdos externos coletados</h1><p>Publicação automática de referências, com resumo próprio e links. Suspender remove a referência das páginas públicas e da recuperação pela Cuia. Uma nova coleta não desfaz essa decisão.</p>
+<ul>@foreach(var item in Model){<li><h2>@item.Title</h2><p>@item.City · @item.Publisher · @item.State</p><a href="@item.Url" target="_blank" rel="noopener noreferrer">Consultar fonte original ↗</a><form method="post" action="/admin/conteudos-externos/@item.Id/estado">@Html.AntiForgeryToken()<input type="hidden" name="state" value="@(item.State=="published"?"suspended":"published")"/><button type="submit">@(item.State=="published"?"Suspender referência":"Republicar referência")</button></form></li>}</ul>

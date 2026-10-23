@@ -105,6 +105,7 @@ public interface IDiscoveryQueue
         CancellationToken ct);
 
     Task CompleteAsync(long jobId, CancellationToken ct);
+    Task CompletePageAsync(long jobId,DiscoveryPageProgress progress,CancellationToken ct)=>CompleteAsync(jobId,ct);
 
     Task FailAsync(long jobId, string error, TimeSpan backoff, int maxAttempts, CancellationToken ct);
 

@@ -21,7 +21,7 @@ public sealed class AccountController(
     IMemberAccounts accounts,
     IExperienceService experiences,
     ILgpdService lgpd,
-    IStringLocalizer<SharedResource> text) : Controller
+    IStringLocalizer<SharedResource> text, IConfiguration configuration) : Controller
 {
     private string Subject() => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
     private string SessionToken() => User.FindFirstValue("sid")!;
@@ -34,34 +34,36 @@ public sealed class AccountController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RegisterSubmit(RegisterInput input, CancellationToken ct)
     {
-        if (!string.IsNullOrEmpty(input.Website)) return Message("CheckEmail");
-        if (!ModelState.IsValid || !input.AcceptTerms || AdminPasswordPolicy.Validate(input.Password).Count > 0)
-        {
-            ModelState.Clear();
-            ModelState.AddModelError("", text["RegistrationInvalid"]);
-            input.Password = "";
-            input.ConfirmPassword = "";
-            return View("Register", input);
-        }
+        if (!string.IsNullOrEmpty(input.Website)) return MailMessage("CheckEmail");
+        foreach (var error in input.Validate(new System.ComponentModel.DataAnnotations.ValidationContext(input)))
+            foreach (var field in error.MemberNames.DefaultIfEmpty(""))
+                if (!ModelState.TryGetValue(field, out var entry) || !entry.Errors.Any(e => e.ErrorMessage == error.ErrorMessage))
+                    ModelState.AddModelError(field, error.ErrorMessage!);
+        if (!ModelState.IsValid) return InvalidRegistration(input);
 
         try
         {
-            await accounts.RegisterAsync(new(input.FullName, input.Email, input.Password, input.AcceptTerms, Culture()), ct);
+            await accounts.RegisterAsync(new(input.FullName, input.Email, input.Password, input.AcceptTerms, Culture(),input.Cpf,input.Cnpj,input.OrganizationName), ct);
         }
-        catch (ArgumentException)
+        catch (MemberRegistrationValidationException ex)
         {
-            ModelState.Clear();
-            ModelState.AddModelError("", text["RegistrationInvalid"]);
-            input.Password = "";
-            input.ConfirmPassword = "";
-            return View("Register", input);
+            ModelState.AddModelError(ex.Field, ex.Message);
+            return InvalidRegistration(input);
         }
 
-        return Message("CheckEmail");
+        return MailMessage("CheckEmail");
+    }
+
+    private IActionResult InvalidRegistration(RegisterInput input)
+    {
+        input.Password = ""; input.ConfirmPassword = "";
+        foreach (var field in new[] { nameof(input.Password), nameof(input.ConfirmPassword) })
+            if (ModelState.TryGetValue(field, out var entry)) { entry.RawValue = null; entry.AttemptedValue = null; }
+        return View("Register", input);
     }
 
     [AllowAnonymous, HttpGet("login")]
-    public IActionResult Login(string? returnUrl = null) => View(new MemberLoginInput { ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl : null });
+    public IActionResult Login(string? returnUrl = null) => View(new MemberLoginInput { ReturnUrl = SafeMemberReturn(returnUrl) });
 
     [AllowAnonymous, HttpPost("login")]
     [ValidateAntiForgeryToken]
@@ -91,7 +93,7 @@ public sealed class AccountController(
             AllowRefresh = false
         });
 
-        return LocalRedirect(Url.IsLocalUrl(input.ReturnUrl) ? input.ReturnUrl! : "/account");
+        return LocalRedirect(SafeMemberReturn(input.ReturnUrl) ?? "/account");
     }
 
     [AllowAnonymous, HttpGet("forgot")]
@@ -102,7 +104,7 @@ public sealed class AccountController(
     public async Task<IActionResult> ForgotSubmit(EmailInput input, CancellationToken ct)
     {
         if (ModelState.IsValid) await accounts.RequestTokenAsync(input.Email, "reset", Culture(), ct);
-        return Message("RecoveryNeutral");
+        return MailMessage("RecoveryNeutral");
     }
 
     [AllowAnonymous, HttpGet("resend")]
@@ -113,7 +115,7 @@ public sealed class AccountController(
     public async Task<IActionResult> ResendSubmit(EmailInput input, CancellationToken ct)
     {
         if (ModelState.IsValid) await accounts.RequestTokenAsync(input.Email, "confirm", Culture(), ct);
-        return Message("CheckEmail");
+        return MailMessage("CheckEmail");
     }
 
     [AllowAnonymous, HttpGet("confirm")]
@@ -271,6 +273,24 @@ public sealed class AccountController(
 
     [AllowAnonymous, HttpGet("privacy")]
     public IActionResult Privacy() { ViewData["Privacy"] = true; return View("Policy"); }
+
+    private string? SafeMemberReturn(string? value)
+    {
+        if(!Url.IsLocalUrl(value) || !Uri.TryCreate(new Uri("https://local.invalid"),value,out var uri))return null;
+        var path=Uri.UnescapeDataString(uri.AbsolutePath);
+        if(path.Contains('\\') || path.Contains("..") || path.Equals("/admin",StringComparison.OrdinalIgnoreCase) || path.StartsWith("/admin/",StringComparison.OrdinalIgnoreCase) || path.StartsWith("/api/admin",StringComparison.OrdinalIgnoreCase))return null;
+        return value;
+    }
+
+    private IActionResult MailMessage(string key)
+    {
+        ViewData["LocalMailbox"]=DevelopmentInboxController.Allowed(HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>(),configuration,HttpContext);
+        ViewData["DeliveryNotice"] = configuration.GetValue<bool>("Smtp:Enabled")
+            ? "A solicitação será processada pela fila de e-mail. Verifique também o spam. Se necessário, solicite novo link após cinco minutos."
+            : "O envio de e-mail está temporariamente indisponível. Sua solicitação não confirma entrega. Tente novamente quando o serviço estiver disponível.";
+        ViewData["Message"] = "Solicitação recebida. Por segurança, esta resposta não confirma se existe uma conta para o endereço informado.";
+        return View("Message");
+    }
 
     private IActionResult Message(string key) { ViewData["Message"] = text[key].Value; return View("Message"); }
 }

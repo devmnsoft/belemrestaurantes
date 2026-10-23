@@ -8,6 +8,7 @@
   else
   { <div class="para-restaurant-grid">@foreach (var place in Model.Guide) { @await Html.PartialAsync("_RestaurantCard", place) }</div> }
 </section>
+<section class="para-container discovery-next"><h2>Do prato à próxima descoberta</h2><a href="/receitas?Query=@Uri.EscapeDataString(Model.Entry.Title)">Explorar receitas relacionadas ↗</a><a href="/cuia-ia?q=@Uri.EscapeDataString("Quero conhecer " + Model.Entry.Title + " e lugares para experimentar no Pará")">Pedir sugestões à Cuia ↗</a><a href="/descobrir?dish=@Model.Entry.Slug">Continuar explorando sabores ↗</a></section>
 <section class="para-container para-section">
   <h2>Fichas</h2>
   <p>Cadastros públicos que mencionam o tema. Não são visita, horário nem qualidade confirmados.</p>

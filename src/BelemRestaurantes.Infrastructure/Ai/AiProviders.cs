@@ -47,6 +47,7 @@ public abstract class OpenAiCompatibleProvider(
         EndpointGuard.EnsureHttps(options.BaseUrl, $"base URL de {Provider}");
 
         using var message = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(options.BaseUrl), "chat/completions"));
+        message.Version=httpClient.DefaultRequestVersion;message.VersionPolicy=httpClient.DefaultVersionPolicy;
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
 
         message.Content = new StringContent(
@@ -55,7 +56,7 @@ public abstract class OpenAiCompatibleProvider(
                 model = options.Model,
                 temperature = request.Temperature,
                 max_tokens = request.MaxOutputTokens,
-                response_format = new { type = "json_object" },
+                response_format = new { type = request.JsonOutput ? "json_object" : "text" },
                 messages = new object[]
                 {
                     new { role = "system", content = request.SystemInstruction },
@@ -67,7 +68,8 @@ public abstract class OpenAiCompatibleProvider(
 
         var startedAt = System.Diagnostics.Stopwatch.StartNew();
 
-        using var response = await httpClient.SendAsync(message, ct);
+        using var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead,ct);
+        await response.Content.LoadIntoBufferAsync(262144,ct);
         var body = await response.Content.ReadAsStringAsync(ct);
         startedAt.Stop();
 
@@ -160,12 +162,12 @@ public sealed class GeminiProvider(
 
         EndpointGuard.EnsureHttps(options.BaseUrl, "base URL do Gemini");
 
-        // A chave viaja na URL porque é assim que a API do Gemini autentica.
-        // Por isso a URL nunca é logada em nível de debug.
+        // A chave usa cabeçalho e nunca deve aparecer em logs.
         var url = new Uri(
             $"{options.BaseUrl.TrimEnd('/')}/models/{Uri.EscapeDataString(options.Model)}:generateContent");
 
         using var message = new HttpRequestMessage(HttpMethod.Post, url);
+        message.Version=httpClient.DefaultRequestVersion;message.VersionPolicy=httpClient.DefaultVersionPolicy;
         message.Headers.Add("x-goog-api-key", options.ApiKey);
 
         message.Content = new StringContent(
@@ -177,14 +179,15 @@ public sealed class GeminiProvider(
                 {
                     temperature = request.Temperature,
                     maxOutputTokens = request.MaxOutputTokens,
-                    responseMimeType = "application/json"
+                    responseMimeType = request.JsonOutput ? "application/json" : "text/plain"
                 }
             }),
             Encoding.UTF8,
             "application/json");
 
         var startedAt = System.Diagnostics.Stopwatch.StartNew();
-        using var response = await httpClient.SendAsync(message, ct);
+        using var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead,ct);
+        await response.Content.LoadIntoBufferAsync(262144,ct);
         var body = await response.Content.ReadAsStringAsync(ct);
         startedAt.Stop();
 
@@ -207,14 +210,10 @@ public sealed class GeminiProvider(
             return new AiCompletionResponse(Provider, string.Empty, 0, 0, 0, latency, IsValid: false);
         }
 
-        var text = candidates[0]
-            .TryGetProperty("content", out var content) &&
-            content.TryGetProperty("parts", out var parts) &&
-            parts.ValueKind == JsonValueKind.Array &&
-            parts.GetArrayLength() > 0 &&
-            parts[0].TryGetProperty("text", out var textElement)
-                ? textElement.GetString()
-                : null;
+        var text = candidates[0].TryGetProperty("content",out var content) && content.TryGetProperty("parts",out var parts) && parts.ValueKind==JsonValueKind.Array
+            ? string.Concat(parts.EnumerateArray().Where(part=>!part.TryGetProperty("thought",out var thought)||thought.ValueKind!=JsonValueKind.True)
+                .Select(part=>part.TryGetProperty("text",out var value)&&value.ValueKind==JsonValueKind.String?value.GetString():null)) : null;
+        var complete=!candidates[0].TryGetProperty("finishReason",out var finish)||finish.GetString()=="STOP";
 
         var usage = document.RootElement.TryGetProperty("usageMetadata", out var u) ? u : default;
 
@@ -226,6 +225,7 @@ public sealed class GeminiProvider(
             ? c.GetInt32()
             : 0;
 
+        if(usage.ValueKind==JsonValueKind.Object && usage.TryGetProperty("thoughtsTokenCount",out var thinking))outputTokens+=thinking.GetInt32();
         return new AiCompletionResponse(
             Provider,
             text ?? string.Empty,
@@ -233,19 +233,17 @@ public sealed class GeminiProvider(
             outputTokens,
             0,
             latency,
-            IsValid: !string.IsNullOrWhiteSpace(text));
+            IsValid: complete && !string.IsNullOrWhiteSpace(text));
     }
 
     private static string Truncate(string value, int max) =>
         value.Length <= max ? value : value[..max];
 }
 
-public sealed class AiProviderException(AiProvider provider, int statusCode, string detail)
-    : Exception($"Provedor {provider} respondeu {statusCode}: {detail}")
+public sealed class AiProviderException : AiProviderFailureException
 {
-    public AiProvider Provider { get; } = provider;
-
-    public int StatusCode { get; } = statusCode;
+    public AiProviderException(AiProvider provider,int statusCode,string detail):base(provider,statusCode)
+    { _ = detail; /* Provider bodies can contain confidential data; never retain them in exceptions. */ }
 }
 
 /// <summary>

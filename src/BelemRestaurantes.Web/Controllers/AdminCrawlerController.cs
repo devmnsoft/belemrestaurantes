@@ -17,7 +17,7 @@ public sealed class AdminCrawlerController(
     ICrawlerSourceRepository sourceRepo,
     ICrawlerTelemetryRepository telemetryRepo,
     ICrawlerTaskQueue taskQueue,
-    ILogger<AdminCrawlerController> logger) : Controller
+    ILogger<AdminCrawlerController> logger, IResearchJobs researchJobs) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken ct)
@@ -28,6 +28,7 @@ public sealed class AdminCrawlerController(
 
         ViewData["Stats"] = stats;
         ViewData["RecentRuns"] = recentRuns;
+        ViewData["ResearchJobs"]=await researchJobs.RecentAsync(ct);
 
         return View("~/Views/AdminAccount/Crawler.cshtml", sources);
     }
@@ -41,6 +42,7 @@ public sealed class AdminCrawlerController(
         [FromForm] string? targetCity,
         [FromForm] string? defaultCategory,
         [FromForm] int crawlDelay = 5,
+        bool contentOnly=false,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(baseUrl))
@@ -81,6 +83,7 @@ public sealed class AdminCrawlerController(
             TargetCity = string.IsNullOrWhiteSpace(targetCity) ? null : targetCity.Trim(),
             DefaultCategory = string.IsNullOrWhiteSpace(defaultCategory) ? null : defaultCategory.Trim(),
             Status = "active",
+            ContentOnly=contentOnly,
             CrawlDelaySeconds = Math.Clamp(crawlDelay, 2, 60)
         };
 

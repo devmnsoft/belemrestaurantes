@@ -50,7 +50,8 @@ public enum AiProvider
     Disabled = 0,
     Gemini = 1,
     Groq = 2,
-    DeepSeek = 3
+    DeepSeek = 3,
+    Drael = 4
 }
 
 /// <summary>Motivo pelo qual um item entrou na fila de moderação.</summary>

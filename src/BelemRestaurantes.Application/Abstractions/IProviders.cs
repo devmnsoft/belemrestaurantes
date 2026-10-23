@@ -68,6 +68,8 @@ public sealed record ProviderHealthReport(
 /// <summary>Contabilidade de custo para o painel de APIs.</summary>
 public interface ICostLedger
 {
+    /// <summary>Free calls still respect the operator pause, without requiring a positive paid budget.</summary>
+    Task<bool> CanUseFreeTierAsync(string provider, CancellationToken ct) => Task.FromResult(false);
     Task RecordAsync(AiCostEntry entry, CancellationToken ct);
 
     Task<decimal> MonthToDateUsdAsync(string provider, DateTimeOffset now, CancellationToken ct);

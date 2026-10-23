@@ -9,7 +9,14 @@ public sealed record CuiaAiQuery(
     string? City = null,
     string? Occasion = null,
     string? Dietary = null,
-    string? Budget = null);
+    string? Budget = null,
+    bool SearchWeb = false,
+    IReadOnlyList<string>? PreviousQuestions = null,
+    IReadOnlyList<long>? PlaceIds = null,
+    string? SessionKey = null);
+
+public sealed record CuiaExternalSuggestion(string Name, string? City, string? Neighborhood,
+    string Evidence, IReadOnlyList<int> SourceNumbers);
 
 public sealed record CuiaAiRecommendation(
     long Id,
@@ -33,6 +40,8 @@ public sealed record CuiaAiRecipeMatch(
     int TotalMinutes,
     string Difficulty);
 
+public sealed record CuiaTrailSuggestion(string Slug,string Title,string Region,int EstimatedHours);
+
 public sealed record CuiaAiResponse(
     string AnswerMarkdown,
     IReadOnlyList<CuiaAiRecommendation> Recommendations,
@@ -43,9 +52,18 @@ public sealed record CuiaAiResponse(
     string AnswerKind = "catalogo")
 {
     public IReadOnlyList<CuiaAiRecommendation> DirectoryMatches { get; init; } = [];
+    public IReadOnlyList<WebSearchSource> Sources { get; init; } = [];
+    public string? ResearchQuery {get;init;}
+    public string? ExternalSearchStatus {get;init;}
+    public string SearchStatus { get; init; } = "not_requested";
+    public IReadOnlyList<CuiaExternalSuggestion> ExternalSuggestions { get; init; } = [];
+    public string GenerationStatus { get; init; } = "local";
+    public IReadOnlyList<CuiaTrailSuggestion> TrailSuggestions {get;init;}=[];
+    /// <summary>Diagnóstico sem prompt, sem dado pessoal e sem nome de provedor.</summary>
+    public string? ResearchNote { get; init; }
 }
 
-public sealed record CuiaAiProviderStatus(string Provider, bool Configured);
+public sealed record CuiaAiProviderStatus(string Provider, bool Configured, bool EnabledForCuia = false);
 
 public sealed record CuiaAiStatus(
     IReadOnlyList<CuiaAiProviderStatus> Providers,

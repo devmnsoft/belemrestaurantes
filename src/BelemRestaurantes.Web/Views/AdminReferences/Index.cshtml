@@ -1,0 +1,11 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.PlaceReference>
+@{Layout="_AdminLayout";ViewData["Title"]="Referências externas da Cuia";}
+<section class="para-container para-section"><h1>Referências externas da Cuia</h1>
+<p>Confira identidade, fonte, fatos e vigência. Aprovar uma referência não publica nem confere um restaurante. Dados estruturados não comprovam que a página é oficial.</p>
+@if(Model.Count==0){<p>Nenhuma referência aguardando análise.</p>}
+@foreach(var row in Model){<article class="panel"><h2>@row.PlaceName · @row.City</h2><p>@row.Publisher · @(row.SourceKind=="official_menu"?"Cardápio identificado":row.SourceKind=="editorial_reference"?"Referência editorial":"Dados estruturados publicados na fonte")</p><p>Consultada em @row.ObservedAt.ToString("dd/MM/yyyy") · válida até @row.ExpiresAt.ToString("dd/MM/yyyy")</p>
+<a href="@row.SourceUrl" target="_blank" rel="noopener noreferrer">Conferir a fonte ↗</a><p>@row.Address</p><ul>@foreach(var item in row.MenuItems){<li>@item</li>}</ul>
+@foreach(var hours in row.OpeningHours??[]){<p>Horário extraído: @hours</p>}
+@foreach(var video in row.VideoLinks??[]){<p><a href="@video" target="_blank" rel="noopener noreferrer">Conferir vídeo externo ↗</a></p>}
+<form method="post" action="/admin/referencias/@row.Id/revisar">@Html.AntiForgeryToken()<button name="decision" value="approved" type="submit">Aprovar referência</button><button name="decision" value="rejected" type="submit">Rejeitar</button></form></article>}
+</section>

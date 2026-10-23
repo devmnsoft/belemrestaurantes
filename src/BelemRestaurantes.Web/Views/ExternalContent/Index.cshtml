@@ -1,0 +1,6 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.ExternalContent>
+@{ViewData["Title"]="Matérias e vídeos para descobrir o Pará";}
+<section class="para-container para-section" lang="pt-BR"><span class="para-eyebrow">ENCONTROS PELA WEB</span><h1>Matérias, vídeos e boas descobertas.</h1><p>Referências reunidas pelo robô e pelo acervo do portal. Veja as informações coletadas e consulte a publicação original. Cada cartão informa origem e data; a prévia é criada pelo portal.</p>
+<form method="get" class="discovery-filters"><div><label for="reference-query">Assunto ou lugar</label><input id="reference-query" name="q" maxlength="180" value="@ViewData["Query"]" /></div><div><label for="reference-city">Município</label><input id="reference-city" name="city" maxlength="120" value="@ViewData["City"]" /></div><button type="submit" class="para-button">Pesquisar referências</button></form>
+@if(Model.Count>0){<h2>Referências encontradas</h2>@await Html.PartialAsync("_ExternalContentCards",Model)}else{<p>Nenhuma referência publicada corresponde à busca. <a href="/referencias">Ver todas as referências</a> ou <a href="/cuia-ia">pesquisar com a Cuia</a>.</p>}
+</section>

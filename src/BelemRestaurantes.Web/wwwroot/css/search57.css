@@ -1,0 +1,40 @@
+/* Loaded after the shared theme: controls must not become unintended grid cells. */
+.para-explore-layout {grid-template-areas:"filters results";grid-template-columns:minmax(230px,280px) minmax(0,1fr);align-items:start;gap:28px}
+.para-explore-layout>.para-filter-panel {grid-area:filters;min-width:0}
+.para-explore-layout>.para-results {grid-area:results;min-width:0;scroll-margin-top:120px}
+.para-explore-layout>[hidden] {display:none!important}
+.para-explore-layout input,.para-explore-layout select {box-sizing:border-box;max-width:100%}
+.para-results-bar {flex-wrap:wrap}
+.para-restaurant-body,.para-restaurant-body h3,.para-restaurant-body p {min-width:0;overflow-wrap:anywhere}
+.para-filter-actions {display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.culinary-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:18px}
+.culinary-card {border:1px solid #bbc7b8;border-radius:12px;padding:20px;background:#fffdf8;min-width:0;overflow-wrap:anywhere}
+.culinary-card h3 {font-size:1.25rem;line-height:1.35;margin:.4rem 0}
+.culinary-card p {margin:.7rem 0;line-height:1.6}
+.culinary-type {font-weight:700;color:#526359}
+.culinary-detail {max-width:960px;padding-block:32px}
+.culinary-detail h1 {font-size:clamp(2rem,5vw,3rem);line-height:1.15}
+.culinary-detail li {margin-block:12px;overflow-wrap:anywhere}
+.culinary-actions {display:flex;gap:12px;flex-wrap:wrap;margin-block:18px}
+.culinary-actions a {min-height:44px;display:inline-flex;align-items:center}
+.search-evidence [data-search-sources] {display:grid;gap:14px}
+.search-evidence [data-search-sources] article {border:1px solid #bbc7b8;border-radius:12px;padding:18px;min-width:0}
+@media(min-width:761px){
+ .para-explore-layout>.para-filter-open {display:none!important}
+ .para-explore-layout .para-filter-toolbar,.para-filter-actions [data-filter-close] {display:none!important}
+ .para-explore-layout .para-filter-panel {position:sticky;top:115px;max-height:calc(100dvh - 130px);overflow:auto;overscroll-behavior:auto}
+}
+@media(max-width:1024px) and (min-width:761px){.para-explore-layout{grid-template-columns:240px minmax(0,1fr);gap:20px}.para-explore-layout .para-restaurant-grid{grid-template-columns:1fr}}
+@media(max-width:760px){
+ .para-explore-layout {grid-template-areas:"open" "results";grid-template-columns:minmax(0,1fr);gap:18px}
+ .para-explore-layout>.para-filter-open {grid-area:open;justify-self:start;display:inline-flex}
+ .para-explore-layout>.para-filter-panel {grid-area:auto;display:none}
+ .para-explore-layout>.para-filter-panel.is-open {display:flex;z-index:200;min-height:0}
+ .para-filter-panel.is-open form {min-height:0}
+ .para-explore-layout .para-restaurant-grid,.para-explore-layout .para-restaurant-grid.is-list {display:grid;grid-template-columns:minmax(0,1fr)}
+ .para-explore-layout .para-restaurant-grid.is-list .para-restaurant {display:block}
+ .para-filter-actions {padding-inline:0;flex-shrink:0}
+}
+
+.para-results #search-related .para-container {width:100%;margin-inline:0}
+.search-evidence .culinary-card {padding:20px}

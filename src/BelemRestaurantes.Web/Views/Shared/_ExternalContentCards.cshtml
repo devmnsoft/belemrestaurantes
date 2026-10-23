@@ -1,0 +1,10 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Abstractions.ExternalContent>
+<div class="editorial-grid external-content-grid">
+@foreach(var item in Model){<article class="editorial-card external-content-card"><figure><img src="/referencias/@item.Id/previa.svg" width="960" height="540" alt="Prévia do portal: @item.Title" loading="lazy" /><figcaption>Prévia gerada pelo portal · @item.Publisher</figcaption></figure><div class="external-content-body"><span class="para-eyebrow">Contexto: @item.City · referência externa</span><h3>@item.Title</h3><p>@(item.Facts.Description??item.Summary)</p>
+@if(item.Facts.Address is {} address){<p><strong>Endereço informado:</strong> @address</p>}
+@if(item.Facts.MenuItems?.Count>0){<p><strong>Menções gastronômicas:</strong> @string.Join("; ",item.Facts.MenuItems.Take(6)). Não confirmam o cardápio atual.</p>}
+@if(item.Facts.OpeningHours?.Count>0){<p><strong>Horários informados na fonte:</strong> @string.Join("; ",item.Facts.OpeningHours.Take(3)). Confirme antes de ir.</p>}
+<p>Consultada em @item.ObservedAt.ToString("dd/MM/yyyy HH:mm") UTC.@if(item.PublishedAt is {} published){<span> Publicação: @published.ToString("dd/MM/yyyy").</span>}</p><p><a href="@item.Url" target="_blank" rel="noopener noreferrer">Ler a matéria ou fonte original ↗</a></p>
+@if(item.VideoUrl is {} video){<p><a href="@video" target="_blank" rel="noopener noreferrer">Assistir ao vídeo na plataforma original ↗</a></p>}
+<button class="para-save" type="button" data-reference-capture="/referencias/@item.Id/previa.svg" data-reference-id="@item.Id">Baixar prévia em PNG</button><p class="reference-capture-status" role="status"></p></div></article>}
+</div>

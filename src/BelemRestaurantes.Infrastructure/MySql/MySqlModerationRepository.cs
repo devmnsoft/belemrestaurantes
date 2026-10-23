@@ -21,7 +21,7 @@ public sealed class MySqlModerationRepository(
 
         await using var connection = await factory.OpenAsync(ct);
         const string where = """
-            r.status = 'pending'
+            r.status = 'pending' AND r.moderation_stage='pending'
             AND (@term IS NULL OR r.name LIKE @term OR r.address LIKE @term OR r.neighborhood LIKE @term)
             AND (@city IS NULL OR r.normalized_city = @city)
             AND (@category IS NULL OR r.category = @category)
@@ -119,7 +119,7 @@ public sealed class MySqlModerationRepository(
         // idempotente e impede corrida entre dois moderadores (o segundo pega 0 linhas).
         var sql = $"""
             UPDATE restaurants
-            SET status = @to,
+            SET status = @to, moderation_stage=CASE WHEN @to='suspended' THEN 'archived' ELSE @to END,
                 published_at = CASE WHEN @to = 'published' THEN @now ELSE published_at END,
                 status_before_suspend = CASE WHEN @to = 'suspended' THEN status ELSE status_before_suspend END
             WHERE id = @id AND status = @from
@@ -204,7 +204,7 @@ public sealed class MySqlModerationRepository(
         await using var connection = await factory.OpenAsync(ct);
 
         return await connection.ExecuteScalarAsync<int>(new CommandDefinition(
-            "SELECT COUNT(*) FROM restaurants WHERE status = 'pending'", cancellationToken: ct));
+            "SELECT COUNT(*) FROM restaurants WHERE status = 'pending' AND moderation_stage='pending'", cancellationToken: ct));
     }
 }
 

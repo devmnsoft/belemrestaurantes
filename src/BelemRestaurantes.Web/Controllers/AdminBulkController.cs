@@ -8,6 +8,7 @@ namespace BelemRestaurantes.Web.Controllers;
 
 [Authorize(Policy="RestaurantModerator")]
 [Route("admin/moderacao")]
+[ResponseCache(Location=ResponseCacheLocation.None,NoStore=true)]
 public sealed class AdminBulkController(MySqlBulkModeration moderation) : Controller
 {
     [HttpGet]
@@ -24,6 +25,13 @@ public sealed class AdminBulkController(MySqlBulkModeration moderation) : Contro
         ViewData["SelectionKey"]=ModerationNavigation.SelectionKey(filter);
         try { return View("Confirm",await moderation.PrepareAsync(User.Identity!.Name!,operation,reason,ids,allFiltered,filter,ct)); }
         catch(ArgumentException ex) { TempData["ErrorMessage"]=ex.Message; return Redirect(ModerationNavigation.PageUrl(filter,page)); }
+    }
+    [HttpGet("lote/{id}")]
+    public async Task<IActionResult> Result(string id,CancellationToken ct)
+    {
+        if(!Guid.TryParse(id,out _))return BadRequest();
+        var result=await moderation.GetResultAsync(id,User.Identity!.Name!,ct);
+        return result is null?NotFound():View("Result",result);
     }
     [HttpPost("confirmar"),ValidateAntiForgeryToken]
     public async Task<IActionResult> Confirm(string id,bool confirmed,string? returnUrl,CancellationToken ct)

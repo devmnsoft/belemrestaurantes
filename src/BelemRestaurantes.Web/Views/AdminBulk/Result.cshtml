@@ -6,4 +6,5 @@
 <p><strong>Ação:</strong> @ModerationNavigation.OperationLabel(Model.Operation). Reenviar a confirmação mostra o mesmo resultado, sem repetir a ação.</p>
 @if(ignored>0){<h2>Cadastros que precisam de atenção</h2><ul class="review-confirm-list">@foreach(var row in results.Where(r=>r.Outcome!="applied")){<li><strong>@row.Name</strong><span>Cadastro #@row.Id · @row.Reason</span></li>}</ul>}
 @if(applied>0){<details class="review-row-details"><summary>Ver os @applied cadastros atualizados</summary><ul class="review-confirm-list">@foreach(var row in results.Where(r=>r.Outcome=="applied")){<li><strong>@row.Name</strong><span>Cadastro #@row.Id · @row.Reason</span></li>}</ul></details>}
+<p><a href="/admin/moderacao/lote/@Model.Id">Consultar novamente o resultado deste lote</a></p>
 <p class="review-batch-id">Identificador do lote: @Model.Id</p></section>

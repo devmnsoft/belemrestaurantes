@@ -73,7 +73,7 @@ public sealed class CuiaAiEndpointTests : IClassFixture<WebApplicationFactory<Pr
 
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("Cuia IA", html);
-        Assert.Contains("Recomendações da Cuia IA", html);
+        Assert.Contains("Sua resposta", html);
         Assert.Contains("cuia-ai-kind", html);
         Assert.Contains("Resposta feita com", html);
     }

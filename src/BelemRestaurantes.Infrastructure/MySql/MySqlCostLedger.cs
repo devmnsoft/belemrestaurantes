@@ -9,6 +9,14 @@ namespace BelemRestaurantes.Infrastructure.MySql;
 /// </summary>
 public sealed class MySqlCostLedger(MySqlConnectionFactory factory) : ICostLedger
 {
+    public async Task<bool> CanUseFreeTierAsync(string provider, CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        return await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+            "SELECT COUNT(*) FROM api_budgets WHERE provider=@provider AND paused=FALSE",
+            new { provider }, cancellationToken: ct)) == 1;
+    }
+
     public async Task RecordAsync(AiCostEntry entry, CancellationToken ct)
     {
         await using var connection = await factory.OpenAsync(ct);

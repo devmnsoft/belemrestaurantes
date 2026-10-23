@@ -6,7 +6,7 @@ public static class MemberAuth
     public const string Policy = "VerifiedMember";
 }
 
-public sealed record RegisterMember(string FullName, string Email, string Password, bool AcceptTerms, string Culture);
+public sealed record RegisterMember(string FullName, string Email, string Password, bool AcceptTerms, string Culture, string? Cpf = null, string? Cnpj = null, string? OrganizationName = null);
 public sealed record MemberSession(string UserId, string Name, string Email, string Culture, string SessionToken, DateTimeOffset ExpiresAt);
 public sealed record MemberSessionView(string Id, DateTimeOffset CreatedAt, DateTimeOffset ExpiresAt, bool Current);
 

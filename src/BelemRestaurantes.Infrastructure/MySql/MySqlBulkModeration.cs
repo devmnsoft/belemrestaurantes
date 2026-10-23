@@ -105,6 +105,13 @@ public sealed class MySqlBulkModeration(MySqlConnectionFactory factory, IConfigu
             """,new{id,actor,operation,reason,selection=JsonSerializer.Serialize(selected.Select(s=>s.Id))},cancellationToken:ct));
         return new(id,operation,reason,selected);
     }
+    public async Task<ModerationBatch?> GetResultAsync(string id,string actor,CancellationToken ct)
+    {
+        await using var db=await factory.OpenAsync(ct);
+        var row=await db.QuerySingleOrDefaultAsync(new CommandDefinition("SELECT operation,reason,result_json FROM moderation_batches WHERE id=@id AND actor=@actor",new{id,actor},cancellationToken:ct));
+        if(row?.result_json is not string result)return null;
+        return new(id,(string)row.operation,(string?)row.reason,[],JsonSerializer.Deserialize<ModerationDecision[]>(result));
+    }
     public async Task<ModerationBatch?> ExecuteAsync(string id,string actor,CancellationToken ct)
     {
         await using var db=await factory.OpenAsync(ct);

@@ -31,8 +31,10 @@
       @if(Model.BusinessStatus is "temporarily_closed" or "permanently_closed") { <p class="para-closed">@(Model.BusinessStatus=="temporarily_closed"?"Fonte informa fechamento temporário. Confirme antes de ir.":"Fonte informa encerramento das atividades.")</p> }
       else { <p class="para-detail-note">Vai visitar? Confirme os horários e o funcionamento com o estabelecimento.</p> }
       <div class="para-detail-main-actions">
+        <button type="button" class="para-save" data-save-kind="catalog" data-save-id="@Model.Id" data-save-name="@Model.Name" data-save-city="@Model.City">Guardar neste navegador</button>
         <a href="https://www.google.com/maps/search/?api=1&amp;query=@Uri.EscapeDataString(Model.Latitude is not null && Model.Longitude is not null ? Model.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + "," + Model.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : Model.Name + " " + Model.City)" target="_blank" rel="noopener noreferrer" class="para-button">@await Html.PartialAsync("_ParaIcon", "mobility") Como chegar ↗</a>
         @if(!string.IsNullOrWhiteSpace(Model.Phone)) { <a class="para-text-link" href="tel:@(new string(Model.Phone.Where(c=>char.IsDigit(c)||c=='+').ToArray()))">Ligar: @Model.Phone</a> }
+        @if(!string.IsNullOrWhiteSpace(Model.PhoneSecondary)) { <a class="para-text-link" href="tel:@(new string(Model.PhoneSecondary.Where(c=>char.IsDigit(c)||c=='+').ToArray()))">Outro telefone informado: @Model.PhoneSecondary</a> }
       </div>
       <div class="para-detail-links">
         @foreach(var link in new[] { ("Site",Model.Website), ("Instagram",Model.Instagram), ("Facebook",Model.Facebook), ("TikTok",Model.TikTok), ("YouTube",Model.YouTube) })
@@ -46,21 +48,57 @@
   </article>
   @if (facts is not null)
   {
-    <section class="fact-sheet" lang="pt-BR" aria-labelledby="fact-sheet-title">
-      <h2 id="fact-sheet-title">O que esta ficha confirma</h2>
+    var dossier = ViewData["Dossier"] as BelemRestaurantes.Application.Abstractions.PlaceDossier;
+    var addressNote = dossier?.Fields.LastOrDefault(f => f.Field == "address" && f.State == "informed");
+    var conflict = dossier?.Fields.LastOrDefault(f => f.Field == "address" && f.State == "conflict");
+    <section class="fact-sheet" lang="pt-BR" aria-labelledby="visit-facts-title">
+      <h2 id="visit-facts-title">Para a visita</h2>
       <dl>
-        <div><dt>Endereço</dt><dd>@(facts.HasAddress ? "Informado" : "Não informado")</dd></div>
-        <div><dt>Coordenada</dt><dd>@(facts.HasCoordinates ? "Informada" : "Não informada")</dd></div>
-        <div><dt>Telefone</dt><dd>@(facts.HasPhone ? "Informado" : "Não informado")</dd></div>
-        <div><dt>Foto com licença</dt><dd>@(facts.HasPhoto ? "Publicada" : "Não há")</dd></div>
-        <div><dt>Horário vigente</dt><dd>@(facts.HasHours ? "Informado" : "Não confirmado")</dd></div>
-        <div><dt>Cardápio</dt><dd>@(facts.HasMenu ? "Itens publicados" : "Nenhum item")</dd></div>
-        <div><dt>Responsável</dt><dd>@(facts.HasOwner ? "Vinculado" : "Não reivindicado")</dd></div>
+        <div><dt>Endereço e bairro</dt><dd>@(addressNote?.Value ?? facts.Address ?? "Endereço ainda não localizado.") @(!string.IsNullOrWhiteSpace(Model.Neighborhood) ? "· " + Model.Neighborhood : "")</dd></div>
+        <div><dt>Como chegar</dt><dd><a href="/cuia-rotas?restaurantId=@Model.Id">Abrir o caminho no Cuia Rotas</a></dd></div>
+        <div><dt>Telefone</dt><dd>@(facts.HasPhone ? facts.Phone : "Ainda não localizado.")@if(!string.IsNullOrWhiteSpace(facts.PhoneSecondary)){<span> · Também informado: @facts.PhoneSecondary</span>}</dd></div>
+        <div><dt>Horário</dt><dd>@(facts.HasHours ? (facts.HoursSummary ?? "Há horário informado pela fonte. Confirme a data.") : "Ainda não localizado. Sem isso, a ficha não marca aberto agora.")@if(facts.HoursObservedOn is {} observed){<span> Verificado em @observed.ToString("dd/MM/yyyy").</span>}@if(!string.IsNullOrWhiteSpace(facts.HoursSource)){<span> Fonte: @facts.HoursSource.</span>}</dd></div>
+        <div><dt>Cardápio e pratos</dt><dd>@(facts.MenuState == "collected" ? string.Join(" · ", facts.Dishes) : "Ainda não houve coleta de cardápio. Isso não significa que a casa não sirva pratos.")</dd></div>
+        <div><dt>Localização</dt><dd>@(facts.HasCoordinates ? (facts.CoordinatePrecision == "rooftop" ? "Coordenada com precisão registrada." : "Há coordenada, sem precisão de ponto exato. O mapa da cidade não marca esta ficha como localização exata.") : "Coordenada ainda não localizada.")</dd></div>
       </dl>
-      @if (!facts.HasOwner)
-      { <p><a href="/partner/claim/@Model.Id" class="para-button">Este lugar é seu? Reivindique e complete a ficha</a></p> }
-      @if (facts.HasCoordinates)
-      { <p><a href="/mapa?city=@Uri.EscapeDataString(Model.City)" class="para-text-link">Ver no mapa dos publicados ↗</a></p> }
+      @if (conflict is not null) { <p><strong>Informação conflitante:</strong> @conflict.Evidence</p> }
+      <p><a href="/sugerir?restaurantId=@Model.Id" class="para-button">Sugerir correção</a></p>
+    </section>
+    <details class="fact-sheet">
+      <summary>Sobre estas informações</summary>
+      <dl>
+        <div><dt>Endereço</dt><dd>@BelemRestaurantes.Application.Services.FieldStates.Label(facts.HasAddress ? "informed" : "not_located")</dd></div>
+        <div><dt>Telefone</dt><dd>@BelemRestaurantes.Application.Services.FieldStates.Label(facts.HasPhone ? "informed" : "not_located")</dd></div>
+        <div><dt>Horário</dt><dd>@BelemRestaurantes.Application.Services.FieldStates.Label(facts.HoursState)@(facts.HoursObservedOn is {} whenHours ? " em " + whenHours.ToString("dd/MM/yyyy") : "")</dd></div>
+        <div><dt>Cardápio</dt><dd>@(facts.MenuState == "collected" ? "Itens publicados pelo responsável." : "Coleta ainda não realizada.")</dd></div>
+        <div><dt>Foto</dt><dd>@(facts.HasPhoto ? "Há imagem publicada, com a origem indicada junto da foto." : "Foto licenciada ainda não localizada.")</dd></div>
+        <div><dt>Responsável</dt><dd>@(facts.ClaimValidated ? "Reivindicação validada no sistema." : "Responsável não reivindicado. Um perfil ou página externa não valida a propriedade da ficha.")</dd></div>
+      </dl>
+      @if (dossier is not null && dossier.Fields.Count > 0)
+      {
+        <ul>
+        @foreach (var field in dossier.Fields)
+        {
+          <li>@field.Field: @BelemRestaurantes.Application.Services.FieldStates.Label(field.State)@if(!string.IsNullOrWhiteSpace(field.SourceName)){<span> · @field.SourceName</span>}@if(field.SourceUrl is not null && Uri.TryCreate(field.SourceUrl, UriKind.Absolute, out var sourceUri) && sourceUri.Scheme == "https"){<span> · <a href="@sourceUri.AbsoluteUri" rel="noopener noreferrer">fonte</a></span>}</li>
+        }
+        </ul>
+      }
+      @if (!facts.ClaimValidated) { <p><a href="/partner/claim/@Model.Id">Este lugar é seu? Reivindique a ficha</a></p> }
+    </details>
+    @if (dossier is not null && dossier.Videos.Count > 0)
+    {
+      <section class="place-discovery" aria-labelledby="place-videos-title"><h2 id="place-videos-title">Vídeos relacionados</h2>
+      @foreach (var video in dossier.Videos)
+      {
+        <article class="video-card"><h3>@video.Title</h3><p>@video.Author · @video.Platform @if(video.PublishedOn is {} published){<span> · @published.ToString("dd/MM/yyyy")</span>}</p><p>@video.Summary</p><p>@(video.Attribution == "chef_published" ? "Vídeo de chef ou instituição identificada. Não é o cardápio deste estabelecimento." : video.Attribution == "traditional_similar" ? "Versão caseira ou tradicional. Não é receita oficial deste estabelecimento." : "Vídeo de canal. A relação com este estabelecimento não está comprovada.")</p><a href="@video.Url" rel="noopener noreferrer">Assistir na fonte ↗</a></article>
+      }
+      </section>
+    }
+    <section class="place-discovery" aria-labelledby="continue-title"><h2 id="continue-title">Continuar na Cuia</h2>
+      <p><a href="/cuia-ia?searchWeb=true&amp;q=@Uri.EscapeDataString("Quais os horários da " + Model.Name + " em " + (Model.Neighborhood ?? Model.City) + "?")">Perguntar os horários</a></p>
+      <p><a href="/cuia-ia?searchWeb=true&amp;q=@Uri.EscapeDataString("Quais pratos " + Model.Name + " divulga?")">Perguntar os pratos divulgados</a></p>
+      <p><a href="/culinaria">Ver vídeos de culinária paraense</a></p>
+      <p><a href="/busca?city=@Uri.EscapeDataString(Model.City)&amp;neighborhood=@Uri.EscapeDataString(Model.Neighborhood ?? "")">Mais lugares no bairro</a></p>
     </section>
   }
   <div class="para-detail-quick-links"><a href="/cardapio/@Model.Id">Ver cardápio ↗</a><a href="/experience/create?restaurantId=@Model.Id">Contar minha experiência ↗</a><a href="/partner/claim/@Model.Id">Esse restaurante é seu? Reivindique ↗</a></div>
@@ -83,7 +121,7 @@
 
   @await Html.PartialAsync("_RestaurantVideos", ViewData["MediaList"] as IReadOnlyList<BelemRestaurantes.Domain.Entities.RestaurantMedia> ?? [])
   <section class="visit-panel" lang="pt-BR" aria-labelledby="visit-section"><span class="para-eyebrow">CUIA MOBILIDADE 360</span><h2 id="visit-section">Como chegar e quando visitar</h2><p class="visit-status">@((ViewData["OpeningAssessment"] as BelemRestaurantes.Application.Models.OpeningAssessment)?.Message??"Horário não confirmado")</p><p>Ônibus, BRT, caminhada, bicicleta, carro e referências de transporte fluvial. Confira trajetos, funcionamento e informações disponíveis antes de sair.</p><a href="/cuia-rotas?restaurantId=@Model.Id" class="para-button">Planejar minha visita →</a></section>
-  <details class="visit-panel"><summary>Ver localização no mapa</summary>@if(Model.Latitude is {} lat && Model.Longitude is {} lng){<p>O mapa externo carrega após seu clique e mostra somente o destino informado pela fonte.</p><button type="button" class="visit-text-button" data-load-map="@FormattableString.Invariant($"https://www.openstreetmap.org/export/embed.html?bbox={lng-0.006}%2C{lat-0.004}%2C{lng+0.006}%2C{lat+0.004}&layer=mapnik&marker={lat}%2C{lng}")">Carregar mapa interativo</button><div id="visit-map"></div><p>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></p>}else{<p>Coordenadas não confirmadas. Consulte o endereço e planeje a visita no Cuia Rotas.</p>}</details>
+  <details class="visit-panel"><summary>Ver localização no mapa</summary>@if(Model.Latitude is {} lat && Model.Longitude is {} lng && string.Equals(Model.CoordinatePrecision, "rooftop", StringComparison.Ordinal)){<p>O mapa externo carrega após seu clique e mostra o ponto com precisão registrada.</p><button type="button" class="visit-text-button" data-load-map="@FormattableString.Invariant($"https://www.openstreetmap.org/export/embed.html?bbox={lng-0.006}%2C{lat-0.004}%2C{lng+0.006}%2C{lat+0.004}&layer=mapnik&marker={lat}%2C{lng}")">Carregar mapa interativo</button><div id="visit-map"></div><p>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></p>}else if(Model.Latitude is not null){<p>Há coordenada, sem precisão de ponto exato. O mapa não marca esta ficha como localização exata.</p><p><a href="/mapa?city=@Uri.EscapeDataString(Model.City)">Abrir o mapa da cidade</a></p>}else{<p>Coordenada ainda não localizada. Consulte o endereço e planeje a visita no Cuia Rotas.</p>}</details>
   @if(recipes.Count>0){<section class="recipe-related"><div class="para-section-heading"><div><span class="para-eyebrow">O PARÁ NA SUA COZINHA</span><h2>Quer fazer algo parecido em casa?</h2><p>Adaptações editoriais relacionadas ao tema. Não reproduzem receitas oficiais deste estabelecimento.</p></div><a href="/receitas?RestaurantId=@Model.Id" class="para-text-link">Ver receitas relacionadas ↗</a></div><div class="recipe-grid">@foreach(var recipe in recipes){@await Html.PartialAsync("_RecipeCard",recipe)}</div></section>}
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 32px; align-items: start;">
@@ -96,7 +134,7 @@
           <a href="/cardapio/@Model.Id" class="cuia-btn cuia-btn-primary cuia-btn-sm">Acessar Cardápio →</a>
         </div>
         <p style="color: var(--texto-secundario, #4b635a); font-size: 1rem; margin: 0;">
-          O cardápio só lista o que o responsável publicou. Sem itens, a página avisa que não há cardápio.
+          O cardápio só lista o que o responsável publicou. Sem itens, a página informa que a coleta ainda não aconteceu.
         </p>
       </div>
 
@@ -283,28 +321,16 @@
       </div>
     </div>
   </div>
+@if(ViewData["PlaceReferences"] is IReadOnlyList<PlaceReference> referenceRows && referenceRows.Count>0)
+{<section class="para-container para-section"><h2>Referências externas revisadas</h2><p>Informações atribuídas às fontes abaixo. Confirme cardápio, horários e disponibilidade diretamente com o estabelecimento.</p>
+@foreach(var reference in referenceRows){<article class="panel"><h3>@reference.Publisher</h3><a href="@reference.SourceUrl" target="_blank" rel="noopener noreferrer">Consultar a fonte ↗</a><p>Consultada em @reference.ObservedAt.ToString("dd/MM/yyyy") · @(reference.SourceKind=="official_menu"?"Cardápio identificado":reference.SourceKind=="editorial_reference"?"Referência editorial":"Dados publicados pela fonte")</p>
+@if(reference.MenuItems.Count>0){<h4>Pratos mencionados na fonte</h4><ul>@foreach(var item in reference.MenuItems){<li>@item</li>}</ul>}
+@foreach(var opening in reference.OpeningHours??[]){<p>Horário informado na fonte: @opening</p>}
+@foreach(var video in reference.VideoLinks??[]){<p><a href="@video" target="_blank" rel="noopener noreferrer">Ver vídeo externo relacionado ↗</a></p>}
+</article>}</section>}
+<section class="para-container para-section"><h2>Opiniões em outras plataformas</h2><p>Avaliações externas têm autoria e regras próprias; não foram copiadas para os comentários da comunidade.</p><a href="https://www.google.com/maps/search/?api=1&amp;query=@Uri.EscapeDataString(Model.Name+" "+Model.City+" "+Model.Address)" target="_blank" rel="noopener noreferrer">Buscar o perfil e avaliações no Google Maps ↗</a></section>
 @section Scripts{
   <script src="~/js/videos.js" asp-append-version="true" defer></script>
   <script src="~/js/visit.js" asp-append-version="true" defer></script>
-  <script>
-    document.getElementById('btn-ask-sommelier')?.addEventListener('click', async function() {
-      const btn = this;
-      const id = btn.dataset.restaurantId;
-      const target = document.getElementById('ai-restaurant-advice');
-      if (!id || !target) return;
-      btn.disabled = true;
-      btn.textContent = 'Consultando Cuia IA...';
-      try {
-        const res = await fetch('/api/cuia-ia/dica-restaurante/' + id);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        const escapeHtml = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-target.innerHTML = `<p style="margin:0 0 8px;">${escapeHtml(data.advice || '').replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>')}</p>`;
-      } catch {
-        target.innerHTML = '<p style="color:#fee2e2;">Não foi possível carregar a dica no momento. Tente novamente mais tarde.</p>';
-      } finally {
-        btn.textContent = 'Dica da Cuia IA Carregada ✨';
-      }
-    });
-  </script>
+  <script src="~/js/cuia-advice.js" asp-append-version="true" defer></script>
 }

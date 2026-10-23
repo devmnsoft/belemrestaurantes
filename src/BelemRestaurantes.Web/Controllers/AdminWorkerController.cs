@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BelemRestaurantes.Web.Controllers;
 
 [Authorize(Policy="PlatformOperator"),Route("admin/operacao")]
-public sealed class AdminWorkerController(MySqlConnectionFactory factory,IDiscoveryQueue queue):Controller
+public sealed class AdminWorkerController(MySqlConnectionFactory factory,IDiscoveryQueue queue,CuiaFreeTierOptions aiLimits):Controller
 {
     [HttpPost("manutencao"),ValidateAntiForgeryToken]
     public async Task<IActionResult> Maintenance(string kind,[FromServices] MySqlMaintenanceJobs jobs,CancellationToken ct)
@@ -40,6 +40,8 @@ public sealed class AdminWorkerController(MySqlConnectionFactory factory,IDiscov
     public async Task<IActionResult> Index(string? city=null,int page=1,CancellationToken ct=default)
     {
         await using var db=await factory.OpenAsync(ct);
+        ViewData["AiLimits"]=aiLimits;
+        ViewData["FreeUsage"]=(await db.QueryAsync(new CommandDefinition("SELECT service,period,requests FROM external_free_usage WHERE service IN ('cuia_gemini','worker_gemini','cuia_groq','worker_groq') AND period IN (DATE_FORMAT(UTC_DATE(),'%Y%m00'),DATE_FORMAT(UTC_DATE(),'%Y%m%d')) ORDER BY service,period",cancellationToken:ct))).AsList();
         ViewData["Heartbeats"]=(await db.QueryAsync(new CommandDefinition("SELECT * FROM worker_heartbeats ORDER BY heartbeat_at DESC LIMIT 10",cancellationToken:ct))).AsList();
         ViewData["Queue"]=(await db.QueryAsync(new CommandDefinition("SELECT state,COUNT(*) total FROM discovery_jobs GROUP BY state",cancellationToken:ct))).AsList();
         ViewData["Maintenance"]=(await db.QueryAsync(new CommandDefinition("SELECT id,kind,state,attempts,result_json,last_error,created_at,completed_at FROM operational_maintenance_jobs ORDER BY id DESC LIMIT 8",cancellationToken:ct))).AsList();

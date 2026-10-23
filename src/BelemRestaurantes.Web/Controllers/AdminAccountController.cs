@@ -32,12 +32,13 @@ public sealed class AdminAccountController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> LoginSubmit(string userName, string password, string? returnUrl, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(userName) || userName.Length > 100 || string.IsNullOrEmpty(password) || password.Length > 1024)
+        if (string.IsNullOrWhiteSpace(userName) || userName.Length > 200 || string.IsNullOrEmpty(password) || password.Length > 1024)
         {
             ModelState.AddModelError(string.Empty, text["InvalidCredentials"].Value);
             return View("Login");
         }
-        var user = await users.FindByNameAsync(userName, ct);
+        ViewData["ReturnUrl"]=returnUrl;
+        var user = await users.FindByNameAsync(userName.Trim(), ct);
         var validPassword = passwordVerifier.Verify(password, user?.PasswordHash ?? DummyHash);
         if (user is null || user.IsLockedOut(DateTimeOffset.UtcNow) || !validPassword)
         {
@@ -537,10 +538,20 @@ public sealed class AdminAccountController(
 
     private void ClearChallenge() => Response.Cookies.Delete(ChallengeCookie, ChallengeOptions());
 
+    private static bool IsAdminReturn(string value)
+    {
+        if (value.Contains('\\') || value.Any(char.IsControl)) return false;
+        if (!Uri.TryCreate(new Uri("https://local.invalid"),value,out var uri) || uri.Host!="local.invalid") return false;
+        var path=Uri.UnescapeDataString(uri.AbsolutePath);
+        return path.StartsWith("/admin/",StringComparison.OrdinalIgnoreCase) && !path.Contains("..") && !path.Contains('\\');
+    }
+
     private IActionResult RedirectSafe(string? returnUrl)
     {
         if(User.IsInRole(AdminRoles.Editor)&&!User.IsInRole(AdminRoles.PlatformAdmin)&&!User.IsInRole(AdminRoles.Moderator))return Redirect("/admin/editorial");
-        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl) && IsAdminReturn(returnUrl)
+            && !returnUrl.StartsWith("/admin/login",StringComparison.OrdinalIgnoreCase)
+            && !returnUrl.StartsWith("/admin/mfa/",StringComparison.OrdinalIgnoreCase))
         {
             return Redirect(returnUrl);
         }

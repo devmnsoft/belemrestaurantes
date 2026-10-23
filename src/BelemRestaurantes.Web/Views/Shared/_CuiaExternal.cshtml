@@ -1,0 +1,25 @@
+@model BelemRestaurantes.Application.Abstractions.CuiaAiResponse
+@if (Model.ExternalSuggestions.Count > 0)
+{
+  <section class="cuia-ai-section" aria-labelledby="cuia-external-title">
+    <h3 id="cuia-external-title">Descobertas além do catálogo</h3>
+    <p>Opções encontradas em fontes públicas. A menção não confirma funcionamento, qualidade ou serviços.</p>
+    <div class="cuia-ai-grid">
+      @foreach (var place in Model.ExternalSuggestions)
+      {
+        var source = place.SourceNumbers.Where(n => n > 0 && n <= Model.Sources.Count).Select(n => Model.Sources[n-1]).FirstOrDefault();
+        if (source is null) { continue; }
+        <article class="cuia-ai-reco-card cuia-external-card">
+          <span class="para-tier is-external">Opção externa — ainda não cadastrada no portal</span>
+          <h4>@place.Name</h4>
+          @if (place.City is not null) { <p>@place.City @(!string.IsNullOrWhiteSpace(place.Neighborhood) ? "· " + place.Neighborhood : "")</p> }
+          <p>@place.Evidence</p>
+          <a href="@source.Url" target="_blank" rel="noopener noreferrer">Consultar fonte: @source.Title ↗</a>
+          <p>Consultada em @source.RetrievedAt.ToString("dd/MM/yyyy HH:mm 'UTC'"). Confirme antes de sair.</p>
+          <a href="/sugerir?name=@Uri.EscapeDataString(place.Name)&amp;city=@Uri.EscapeDataString(place.City ?? "")&amp;source=@Uri.EscapeDataString(source.Url)">Indicar este lugar ao portal</a>
+          <button type="button" class="para-save" data-save-kind="external" data-save-name="@place.Name" data-save-city="@place.City" data-save-url="@source.Url">Guardar opção externa</button>
+        </article>
+      }
+    </div>
+  </section>
+}

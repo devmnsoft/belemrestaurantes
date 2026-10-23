@@ -4,11 +4,11 @@
     ViewData["AtlasEditorial"] = true;
     ViewData["MetaDescription"] = T["AtlasMeta"].Value;
 }
-<link rel="preload" as="image" href="~/images/para-atlas-editorial-v1.webp" fetchpriority="high" />
-<section class="atlas-hero">
+<link rel="preload" as="image" href="/images/para-real/ver-o-peso-960.webp" imagesrcset="/images/para-real/ver-o-peso-480.webp 480w, /images/para-real/ver-o-peso-960.webp 960w" imagesizes="(min-width: 1000px) 48vw, 100vw" fetchpriority="high" />
+<section class="atlas-hero hero-documental">
   <div class="para-container atlas-hero-grid">
-    <div class="atlas-hero-copy"><span class="para-eyebrow">@T["AtlasEyebrow"]</span><h1>@T["AtlasHeadline"]<br /><em>@T["AtlasHeadlineAccent"]</em></h1><p>@T["AtlasIntro"]</p><div class="atlas-hero-actions"><a class="para-button" href="#catalogo">@T["AtlasExplore"] <span aria-hidden="true">↗</span></a><a class="para-text-link" href="/cidades">@T["AtlasChooseDestination"] ↗</a></div><div class="atlas-hero-note"><span aria-hidden="true">01 / 144</span><span>@T["AtlasOfficialTerritory"]</span></div></div>
-    <figure class="atlas-hero-art"><img src="~/images/para-atlas-editorial-v1.webp" width="1536" height="1024" fetchpriority="high" alt="@T["AtlasArtAlt"]" /><figcaption>@T["AtlasIllustration"]</figcaption><span class="atlas-art-seal" aria-hidden="true">PARÁ<br /><em>à mesa</em><span>AMAZÔNIA · BRASIL</span></span></figure>
+    <div class="atlas-hero-copy"><span class="para-eyebrow">@T["AtlasEyebrow"]</span><h1>@T["AtlasHeadline"]<br /><em>@T["AtlasHeadlineAccent"]</em></h1><p>@T["AtlasIntro"]</p><div class="atlas-hero-actions"><a class="para-button" href="#catalogo">@T["AtlasExplore"] <span aria-hidden="true">↗</span></a><a class="para-text-link" href="/roteiros">Escolher um roteiro ↗</a><a class="para-text-link" href="/cidades">@T["AtlasChooseDestination"] ↗</a></div><div class="atlas-hero-note"><span aria-hidden="true">01 / 144</span><span>@T["AtlasOfficialTerritory"]</span></div></div>
+    <figure class="atlas-hero-art"><img src="/images/para-real/ver-o-peso-960.webp" srcset="/images/para-real/ver-o-peso-480.webp 480w, /images/para-real/ver-o-peso-960.webp 960w" sizes="(min-width:1000px) 48vw, 100vw" width="960" height="621" fetchpriority="high" decoding="async" alt="Mercado Ver-o-Peso e barcos na orla de Belém" /><figcaption><strong>Belém se encontra entre o mercado e o rio.</strong>Foto documental de Cayambe · <a href="https://commons.wikimedia.org/wiki/File:Bel%C3%A9m_Ver-o-Peso_01.jpg" target="_blank" rel="noopener noreferrer">Original e autoria</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a>. Redimensionada para o portal; não representa condições atuais de visita.</figcaption></figure>
   </div>
   <div class="para-container atlas-search-container">
     <form action="/busca" method="get" class="para-search" role="search">
@@ -20,7 +20,9 @@
   </div>
 </section>
 <div class="atlas-flavour-line" aria-hidden="true"><span>TUCUPI</span><i>✦</i><span>JAMBU</span><i>✦</i><span>AÇAÍ</span><i>✦</i><span>FARINHA D’ÁGUA</span><i>✦</i><span>CUPUAÇU</span><i>✦</i><span>ENCONTROS</span></div>
+<div class="para-container">@await Component.InvokeAsync("TrailPreview")</div>
 <section class="para-section para-container" aria-labelledby="sabores-title">
+  <div class="discovery-next" lang="pt-BR"><div><span class="para-eyebrow">UMA IDEIA PARA CADA MOMENTO</span><h2>Seu próximo sabor começa aqui.</h2><p>Escolha uma ocasião, conheça os sabores e guarde lugares para montar seu passeio.</p></div><a class="para-button" href="/descobrir">Descobrir meu momento ↗</a><a href="/meu-passeio">Ver meus lugares guardados ↗</a></div>
   <div class="para-section-heading"><div><span class="para-eyebrow">@T["AtlasCategoriesEyebrow"]</span><h2 id="sabores-title">@T["AtlasCategoriesTitle"]</h2></div><a href="/busca" class="para-text-link">@T["AtlasSeeAll"] ↗</a></div>
   <div class="para-categories para-categories-expanded">@foreach(var item in BelemRestaurantes.Web.Models.CatalogCategories.Featured){<a href="/busca?category=@Uri.EscapeDataString(item.Name)"><span class="para-category-icon para-@item.Tone">@await Html.PartialAsync("_ParaIcon",item.Icon)</span><strong>@T[item.LabelKey]</strong><span>@T[item.DescriptionKey]</span><b aria-hidden="true">↗</b></a>}</div>
 </section>
@@ -34,7 +36,7 @@
         Em dúvida sobre onde ir ou o que pedir? Pergunte à <em>Cuia IA</em>.
       </h2>
       <p style="font-size:1.05rem;line-height:1.6;color:var(--color-text-secondary);margin-bottom:20px;">
-        Seu concierge gastronômico com conhecimento profundo da cultura paraense. Recomendações sob medida para o seu momento, harmonizações e segredos dos 144 municípios.
+        Explore gastronomia, receitas e passeios no Pará. A pesquisa externa, quando habilitada, também pode encontrar opções fora do catálogo, com fontes para consultar.
       </p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
         <a href="/cuia-ia" class="para-button" style="background:#efb645;color:#0d281e;font-weight:800;">Consultar Cuia IA agora ✨</a>
@@ -77,3 +79,5 @@
 <section class="atlas-trust"><div class="para-container atlas-trust-grid"><article><span>01</span><h3>@T["AtlasTrustSource"]</h3><p>@T["AtlasTrustSourceText"]</p></article><article><span>02</span><h3>@T["AtlasTrustReview"]</h3><p>@T["AtlasTrustReviewText"]</p></article><article><span>03</span><h3>@T["AtlasTrustCommunity"]</h3><p>@T["AtlasTrustCommunityText"]</p></article></div></section>
 <section class="para-section para-container"><div class="atlas-partner"><div><span class="para-eyebrow">@T["AtlasPartnerEyebrow"]</span><h2>@T["AtlasPartnerTitle"]</h2><p>@T["AtlasPartnerText"]</p><a href="/partner/dashboard" class="para-button">@T["AtlasPartnerButton"] ↗</a></div><span class="atlas-partner-mark" aria-hidden="true">DAQUI.<br /><em>PARA O<br />MUNDO.</em></span></div></section>
 <div id="client-text" hidden data-loading="@T["CatalogLoading"]" data-unavailable="@T["CatalogUnavailable"]" data-autocomplete-loading="@T["AtlasAutocompleteLoading"]" data-autocomplete-count="@T["AtlasAutocompleteCount"]" data-autocomplete-empty="@T["AtlasAutocompleteEmpty"]" data-autocomplete-error="@T["AtlasAutocompleteError"]"></div>
+
+@await Component.InvokeAsync("ExternalContentPreview")

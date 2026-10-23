@@ -1,0 +1,8 @@
+@model IReadOnlyList<BelemRestaurantes.Domain.Entities.GastronomicTrail>
+<div class="editorial-grid">
+@foreach(var trail in Model){
+<article class="editorial-card"><span class="para-eyebrow">@trail.Region</span><h3><a href="/roteiros/@trail.Slug">@trail.Title</a></h3><p>@trail.Description</p><p><strong>@trail.EstimatedDurationHours h de passeio</strong> · estimativa editorial, sem previsão de transporte</p>
+@if(trail.Editorial is {} guide){<p>@(guide.Mode=="river"?"Inclui planejamento de barco":guide.Mode=="road"?"Acesso terrestre":"Circuito urbano") · @guide.Stops.Count etapas com referências</p>}
+<a class="para-button" href="/roteiros/@trail.Slug">Conhecer este roteiro ↗</a></article>
+}
+</div>

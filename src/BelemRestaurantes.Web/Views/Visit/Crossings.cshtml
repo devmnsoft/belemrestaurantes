@@ -1,17 +1,10 @@
-@model IReadOnlyList<BelemRestaurantes.Web.Models.FareView>
-<section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">RIO</span><h1>Travessias com fonte vigente.</h1><p>Combu, Cotijuba, Mosqueiro e os outros rios do Pará só aparecem aqui com tarifa ou referência dentro da validade. Sem fonte, não há horário.</p></div></section>
-<section class="para-container para-section">
-@if (Model.Count == 0)
-{
-  <div class="para-empty"><div><h3>Nenhuma travessia vigente.</h3><p>O portal não estima barco, tarifa nem ponto de embarque. Uma fonte oficial ou da cooperativa, com prazo, pode ser registrada na operação. Até lá, confirme no dia.</p><a class="para-text-link" href="/cuia-rotas">Abrir Cuia Rotas ↗</a></div></div>
-}
-else
-{
-  <div class="para-table-wrap"><table><thead><tr><th>Serviço</th><th>Valor</th><th>Vigência</th><th>Fonte</th></tr></thead><tbody>
-  @foreach (var fare in Model)
-  {
-    <tr><td>@fare.ServiceName</td><td>@fare.Amount.ToString("C", new System.Globalization.CultureInfo("pt-BR"))</td><td>@fare.ValidFrom.ToString("dd/MM/yyyy") – @fare.ValidUntil.ToString("dd/MM/yyyy")<br /><small>@fare.Conditions</small></td><td><a href="@fare.SourceUrl" rel="noopener noreferrer">@fare.SourceName ↗</a><br /><small>@fare.Confidence</small></td></tr>
-  }
-  </tbody></table></div>
-}
+@model BelemRestaurantes.Web.Models.CrossingsViewModel
+<section class="editorial-hero para-container"><span class="para-eyebrow">TRAVESSIAS E PASSEIOS</span><h1>Entre rios, ilhas e sabores.</h1><p>Escolha uma experiência, organize suas paradas e descubra o que precisa confirmar antes de sair. A viagem começa com uma boa ideia.</p><a class="para-button" href="#crossing-trails">Encontrar meu passeio</a></section>
+<section class="para-container para-section" id="crossing-trails"><h2>Um roteiro para cada ritmo</h2><p>Guias editoriais com referências culturais e gastronômicas. Mosqueiro e Icoaraci têm propostas de acesso terrestre; Combu e Cotijuba pedem planejamento fluvial.</p>
+@if(Model.Trails.Count>0){@await Html.PartialAsync("_TrailCards",Model.Trails)}else{<p>Não há roteiro publicado neste momento. Explore <a href="/pratos">os sabores do Pará</a> e <a href="/descobrir">lugares publicados</a> para começar seu passeio.</p>}
+</section>
+<section class="para-container para-section"><h2>Antes de colocar o pé na estrada — ou no barco</h2><div class="editorial-grid"><article class="editorial-card"><h3>Escolha suas paradas</h3><p>Abra um roteiro e guarde suas etapas em Meu passeio. Você pode mudar a ordem ou remover o que não combinar com o seu dia.</p><a href="/meu-passeio">Organizar meu passeio ↗</a></article><article class="editorial-card"><h3>Combine ida e volta</h3><p>Para barcos, confirme operador, ponto de embarque e retorno. Em destinos terrestres, escolha o meio de transporte adequado ao seu grupo.</p><a href="/cuia-rotas">Planejar chegada a um restaurante ↗</a></article><article class="editorial-card"><h3>Confirme a experiência</h3><p>Consulte as fontes do roteiro, o agendamento e as condições de acesso. Duração editorial é uma ideia de ritmo, sem garantia de funcionamento ou conexão.</p><a href="/cuia-ia">Conversar com a Cuia ↗</a></article></div></section>
+<section class="para-container para-section" id="crossing-operations"><h2>Informações operacionais com fonte vigente</h2>
+@if(Model.Fares.Count==0){<div class="editorial-note"><h3>Planeje o passeio; confirme o transporte</h3><p>Ainda não há tarifa de barco com fonte vigente no portal. Os roteiros acima continuam disponíveis; confirme valores e saídas diretamente com o operador.</p></div>}
+else{<div class="para-table-wrap"><table><caption>Tarifas cadastradas com referência e prazo</caption><thead><tr><th>Serviço</th><th>Valor</th><th>Vigência</th><th>Fonte</th></tr></thead><tbody>@foreach(var fare in Model.Fares){<tr><td>@fare.ServiceName</td><td>@fare.Amount.ToString("C",new System.Globalization.CultureInfo("pt-BR"))</td><td>@fare.ValidFrom.ToString("dd/MM/yyyy") – @fare.ValidUntil.ToString("dd/MM/yyyy")<p>@fare.Conditions</p></td><td><a href="@fare.SourceUrl" target="_blank" rel="noopener noreferrer">@fare.SourceName ↗</a></td></tr>}</tbody></table></div>}
 </section>

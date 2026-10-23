@@ -61,7 +61,8 @@ public sealed record AiCompletionRequest(
     string UserPayload,
     string Operation,
     int MaxOutputTokens = 512,
-    double Temperature = 0.1)
+    double Temperature = 0.1,
+    bool JsonOutput = true)
 {
     public static AiCompletionRequest ForClassification(string operation, string payload, int maxTokens = 256) =>
         new(

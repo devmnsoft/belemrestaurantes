@@ -1,8 +1,11 @@
 {
+  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "BelemRestaurantes.Web": {
       "commandName": "Project",
+      "dotnetRunMessages": true,
       "launchBrowser": true,
+      "launchUrl": "https://localhost:63859/",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

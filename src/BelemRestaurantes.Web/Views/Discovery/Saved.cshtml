@@ -1,0 +1,18 @@
+@model IReadOnlyList<BelemRestaurantes.Application.Models.RestaurantView>
+@using System.Text.Json
+@{ ViewData["Title"] = "Meu passeio pelo Pará"; }
+<section class="para-container para-section discovery-page" lang="pt-BR" data-discovery-saved>
+  <nav class="para-breadcrumb" aria-label="Você está aqui"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/descobrir">Descobrir</a><span aria-hidden="true">/</span><span>Meu passeio</span></nav>
+  <span class="para-eyebrow">IDEIAS QUE MERECEM UM ENCONTRO</span><h1>Meu passeio pelo Pará</h1>
+  <p>Escolha lugares, mude a ordem e planeje a chegada de cada trecho. A sequência é sua; horários, disponibilidade e tempo entre paradas precisam de confirmação.</p>
+  <p>Os lugares e a ordem ficam apenas neste navegador. Não são sincronizados entre aparelhos. Você pode remover cada item ou apagar tudo.</p>
+  <div class="discovery-actions"><a class="para-button" href="/descobrir">Encontrar mais ideias</a><button type="button" class="para-text-button" data-discovery-clear>Apagar lugares e passeio deste navegador</button></div>
+  <p id="discovery-status" role="status" aria-live="polite"></p><ol id="discovery-saved-list" class="discovery-saved-list"></ol>
+  <button type="button" class="para-text-button" data-discovery-retry hidden>Tentar carregar fichas novamente</button>
+  <noscript><p>Guardar e ordenar neste dispositivo precisa de JavaScript. As páginas de descoberta e as fichas continuam disponíveis pelos links acima.</p></noscript>
+  @if(Model.Count > 0){<section class="discovery-section"><h2>Aproveite os favoritos da sua conta</h2><p>Adicionar ao passeio cria uma seleção local; não altera seus favoritos da conta.</p><button type="button" class="para-button" data-discovery-import>Adicionar favoritos ao passeio</button><script type="application/json" id="discovery-account-favorites">@Html.Raw(JsonSerializer.Serialize(Model.Select(p=>new {id=p.Id,name=p.Name,city=p.City})))</script></section>}
+  <p><a href="/account/favorites">Ver favoritos da conta ↗</a></p>
+  <section class="discovery-section"><h2>Planos de chegada já salvos</h2><ul id="discovery-visit-plans"></ul><p>Esses planos vêm do Cuia Rotas. Eles não incluem sua origem.</p></section>
+  <section class="discovery-next"><h2>Continue explorando</h2><a href="/pratos">Escolher um prato ↗</a><a href="/cuia-ia">Pedir uma ideia à Cuia ↗</a><a href="/travessias">Conferir travessias ↗</a></section>
+  @await Component.InvokeAsync("TrailPreview")
+</section>

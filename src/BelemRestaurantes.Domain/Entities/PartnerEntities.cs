@@ -217,6 +217,12 @@ public sealed class GastronomicTrail
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public List<TrailStop> Stops { get; set; } = [];
+    public string? EditorialJson { get; set; }
+    public string EditorialState { get; set; } = "legacy";
+    public DateTime? ReviewedAt { get; set; }
+    public int EditorialVersion { get; set; } = 1;
+    public TrailEditorial? Editorial => string.IsNullOrWhiteSpace(EditorialJson) ? null : System.Text.Json.JsonSerializer.Deserialize<TrailEditorial>(EditorialJson);
+
 }
 
 public sealed class TrailStop

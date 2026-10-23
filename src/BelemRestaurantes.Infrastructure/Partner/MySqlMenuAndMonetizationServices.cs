@@ -268,20 +268,13 @@ public sealed class MySqlMonetizationService(
     }
 }
 
-public sealed class MySqlMobilityTrailService(MySqlConnectionFactory connectionFactory) : IMobilityTrailService
+public sealed partial class MySqlMobilityTrailService(MySqlConnectionFactory connectionFactory) : IMobilityTrailService, IEditorialTrails
 {
     public async Task<IReadOnlyList<GastronomicTrail>> ListTrailsAsync(CancellationToken ct)
     {
         await using var connection = await connectionFactory.OpenAsync(ct);
-        const string sql = "SELECT * FROM gastronomic_trails WHERE is_active = TRUE ORDER BY region ASC, title ASC;";
+        const string sql = "SELECT * FROM gastronomic_trails WHERE (editorial_json IS NOT NULL OR EXISTS(SELECT 1 FROM trail_stops ts WHERE ts.trail_id=gastronomic_trails.id)) AND is_active = TRUE AND (editorial_json IS NULL OR editorial_state='published') ORDER BY editorial_json IS NULL, region ASC, title ASC;";
         var list = (await connection.QueryAsync<GastronomicTrail>(new CommandDefinition(sql, cancellationToken: ct))).ToList();
-
-        if (list.Count == 0)
-        {
-            // Seed inicial dos principais roteiros paraenses
-            await SeedInitialTrailsAsync(connection, ct);
-            list = (await connection.QueryAsync<GastronomicTrail>(new CommandDefinition(sql, cancellationToken: ct))).ToList();
-        }
 
         return list;
     }
@@ -289,7 +282,7 @@ public sealed class MySqlMobilityTrailService(MySqlConnectionFactory connectionF
     public async Task<GastronomicTrail?> GetTrailBySlugAsync(string slug, CancellationToken ct)
     {
         await using var connection = await connectionFactory.OpenAsync(ct);
-        const string trailSql = "SELECT * FROM gastronomic_trails WHERE slug = @slug AND is_active = TRUE;";
+        const string trailSql = "SELECT * FROM gastronomic_trails WHERE slug = @slug AND is_active = TRUE AND (editorial_json IS NULL OR editorial_state='published');";
         var trail = await connection.QueryFirstOrDefaultAsync<GastronomicTrail>(new CommandDefinition(trailSql, new { slug }, cancellationToken: ct));
         if (trail == null) return null;
 
@@ -297,7 +290,7 @@ public sealed class MySqlMobilityTrailService(MySqlConnectionFactory connectionF
             SELECT s.*, r.name as RestaurantName, r.address as RestaurantAddress, r.category as RestaurantCategory, r.photo_url as RestaurantPhotoUrl
             FROM trail_stops s
             JOIN restaurants r ON r.id = s.restaurant_id
-            WHERE s.trail_id = @Id
+            WHERE s.trail_id = @Id AND r.status='published'
             ORDER BY s.stop_order ASC;";
 
         trail.Stops = (await connection.QueryAsync<TrailStop>(new CommandDefinition(stopsSql, new { trail.Id }, cancellationToken: ct))).ToList();
@@ -311,23 +304,7 @@ public sealed class MySqlMobilityTrailService(MySqlConnectionFactory connectionF
         var r = await connection.QueryFirstOrDefaultAsync<(string? address, string? neighborhood, string city)>(new CommandDefinition(sql, new { restaurantId }, cancellationToken: ct));
         if (r.address == null) return null;
 
-        var neighborhood = r.neighborhood ?? "Centro";
-        return r.city.Equals("Belém", StringComparison.OrdinalIgnoreCase)
-            ? $"Transporte Público Metropolitano de Belém: Linhas diretas via Av. Presidente Vargas, Almirante Barroso e Doca. Paradas regulares com integração de ônibus urbanos (Tarifa padrão vigente municipal) atendendo o bairro {neighborhood}."
-            : $"Localizado em {r.city} ({neighborhood}). Acesso facilitado pelas vias principais do município, linhas intermunicipais e transporte local.";
+        return $"Confirme o deslocamento até {r.city} no Cuia Rotas. Não há linha, tarifa ou horário de transporte confirmado por esta ficha.";
     }
 
-    private static async Task SeedInitialTrailsAsync(System.Data.Common.DbConnection connection, CancellationToken ct)
-    {
-        const string seedSql = @"
-            INSERT IGNORE INTO gastronomic_trails (slug, title, region, description, estimated_duration_hours, transport_tips, is_active)
-            VALUES
-            ('belem-historico', 'Circuito Belém Histórico & Ver-o-Peso', 'Belém', 'Mergulhe no berço da gastronomia paraense: do peixe frito com açaí no Mercado de Ferro ao tacacá da tarde na Praça Batista Campos e jantar na Estação das Docas.', 6, 'Linhas circulares Presidente Vargas e Doca; travessias a pé no centro histórico.', TRUE),
-            ('ilha-do-combu', 'Rota Fluvial & Chocolate da Ilha do Combu', 'Ilha do Combu', 'Experiência gastronômica ribeirinha acessível por barcos a partir da Praça Princesa Isabel. Restaurantes sobre palafitas, peixes grelhados e cacau artesanal amazônico.', 5, 'Barcos regulares no Terminal Hidroviário Princesa Isabel (Guamá). Tarifa de travessia acessível.', TRUE),
-            ('polo-icoaraci', 'Orla de Icoaraci & Tradição da Cerâmica', 'Icoaraci', 'Passeio pela famosa Vila Sorriso: culinária praiana paraense, caldeiradas na orla do Cruzeiro e visita às olarias de cerâmica marajoara e tapajônica.', 4, 'Linhas de ônibus Icoaraci-Presidente Vargas, Icoaraci-Almirante Barroso e linhas expressas do BRT.', TRUE),
-            ('salinopolis-mar', 'Rota dos Sabores Atlânticos de Salinas', 'Salinópolis', 'O melhor dos frutos do mar paraenses: caranguejada, peixe na brasa na Praia do Atalaia e restaurantes típicos do litoral paraense.', 8, 'Acesso rodoviário via PA-124 e PA-444; transporte local por vans e táxis credenciados.', TRUE),
-            ('santarem-alter-do-chao', 'Sabor Tapajônico & Piracaia de Alter do Chão', 'Santarém', 'Descubra a culinária do Rio Tapajós: pirarucu defumado, tambaqui no tucupi e o tradicional ritual da piracaia (peixe assado na praia de água doce).', 6, 'Linhas regulares de ônibus e vans entre o centro de Santarém e a vila de Alter do Chão.', TRUE);";
-
-        await connection.ExecuteAsync(new CommandDefinition(seedSql, cancellationToken: ct));
-    }
 }

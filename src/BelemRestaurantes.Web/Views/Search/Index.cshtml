@@ -10,9 +10,7 @@
     string PageUrl(int page) => "/busca" + Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?> {
         ["q"]=term,["city"]=query.City,["category"]=query.Category,["neighborhood"]=query.Neighborhood,
         ["sort"]=query.SafeSort,["photosOnly"]=query.PhotosOnly.ToString(),["page"]=page.ToString(),
-        ["lat"]=query.HasLocation?query.Latitude?.ToString(CultureInfo.InvariantCulture):null,
-        ["lng"]=query.HasLocation?query.Longitude?.ToString(CultureInfo.InvariantCulture):null,
-        ["radius"]=query.SafeRadiusKm.ToString(CultureInfo.InvariantCulture),
+        ["radius"]=query.HasLocation?query.SafeRadiusKm.ToString(CultureInfo.InvariantCulture):null,
         ["tier"]=query.SafeTier
     });
 }
@@ -24,8 +22,10 @@
 </div></section>
 <div class="para-container">@await Html.PartialAsync("_CategoryShortcuts",query.Category ?? "")</div>
 <section class="para-container para-explore-layout">
-  <aside class="para-filter-panel" aria-label="@T["SearchFilters"]">
-    <details class="para-filter-disclosure" open><summary>@T["SearchFilters"]</summary><form action="/busca" method="get" id="catalog-filters">
+  <button type="button" class="para-button para-filter-open" aria-controls="search-filter-panel" aria-expanded="false" data-filter-open>@T["SearchFilters"]</button>
+  <aside class="para-filter-panel" id="search-filter-panel" aria-label="@T["SearchFilters"]">
+    <div class="para-filter-toolbar"><strong>@T["SearchFilters"]</strong><button type="button" data-filter-close>Fechar</button></div>
+    <form action="/busca" method="get" id="catalog-filters">
       <div class="para-filter-heading"><h2>@T["SearchYourWay"]</h2><a href="/busca">@T["AtlasClear"]</a></div>
       <label for="searchQuery">@T["SearchQueryLabel"]</label><input id="searchQuery" name="q" type="search" value="@term" placeholder="@T["AtlasSearchPlaceholder"]" maxlength="160" />
       <label for="searchCity">@T["AtlasDestinationLabel"]</label><select id="searchCity" name="city"><option value="">@T["AtlasAllPara"]</option>
@@ -36,25 +36,37 @@
       <label for="searchNeighborhood">@T["SearchNeighbourhood"]</label><select id="searchNeighborhood" name="neighborhood"><option value="">@T["SearchAllNeighbourhoods"]</option>@foreach (var neighborhood in filters?.Neighborhoods ?? []) { <option value="@neighborhood" selected="@(neighborhood==query.Neighborhood)">@neighborhood</option> }</select>
       <label for="searchSort">@T["SearchSort"]</label><select id="searchSort" name="sort"><option value="name" selected="@(query.SafeSort=="name")">@T["SearchSortName"]</option><option value="recent" selected="@(query.SafeSort=="recent")">@T["SearchSortRecent"]</option><option value="city" selected="@(query.SafeSort=="city")">@T["SearchSortCity"]</option>@if(query.HasLocation) { <option value="nearby" selected="@(query.SafeSort=="nearby")">@T["SearchSortNearby"]</option> }</select>
       <label for="searchTier">Confiança</label><select id="searchTier" name="tier"><option value="">Guia e ficha</option><option value="guia" selected="@(query.SafeTier=="guia")">Só camada Guia</option><option value="ficha" selected="@(query.SafeTier=="ficha")">Só fichas</option></select>
-      <label class="para-filter-check"><input type="checkbox" name="photosOnly" value="true" checked="@query.PhotosOnly" /> @T["SearchWithPhoto"]</label>
+      <label class="para-filter-check"><input type="checkbox" id="searchPhotos" name="photosOnly" value="true" checked="@query.PhotosOnly" /> @T["SearchWithPhoto"]</label>
       @if (query.HasLocation)
       {
-        <input type="hidden" name="lat" value="@query.Latitude?.ToString(CultureInfo.InvariantCulture)" /><input type="hidden" name="lng" value="@query.Longitude?.ToString(CultureInfo.InvariantCulture)" />
         <label for="searchRadius">@T["SearchDistance"]</label><select id="searchRadius" name="radius">@foreach(var radius in new[] { 2, 5, 10, 25, 50, 100 }) { <option value="@radius" selected="@(radius==query.SafeRadiusKm)">@radius km</option> }</select>
       }
-      <button type="submit" class="para-button">@T["SearchSubmit"] ↗</button>
-    </form></details>
+      <div class="para-filter-actions"><button type="submit" class="para-button">@T["SearchSubmit"] ↗</button><a href="/busca">@T["AtlasClear"]</a><button type="button" data-filter-close>Fechar</button></div>
+    </form>
   </aside>
+  <form id="nearby-form" method="post" action="/busca/perto" hidden>@Html.AntiForgeryToken()<input name="lat" /><input name="lng" /><input name="radius" value="10" /></form>
   <div class="para-results">
     <div class="para-results-bar"><div><span class="para-eyebrow">@T["SearchResultsEyebrow"]</span><h2>@T["SearchResultCount",Model.TotalCount]</h2><p>@(query.City ?? T["AtlasAllPara"].Value) · @T["SearchPageCount",Model.Page,Math.Max(1,Model.TotalPages)]</p></div><div class="para-view-toggle" role="group" aria-label="@T["SearchView"]"><button type="button" data-catalog-view="grid" aria-pressed="true" aria-label="@T["SearchGrid"]">▦</button><button type="button" data-catalog-view="list" aria-pressed="false" aria-label="@T["SearchList"]">☷</button></div></div>
     @if (!string.IsNullOrWhiteSpace(term) || query.HasLocation || query.PhotosOnly)
     { <div class="para-active-filters">@if(!string.IsNullOrWhiteSpace(term)){<span>@T["SearchTerm"]: @term</span>}@if(query.HasLocation){<span>@T["SearchWithin",query.SafeRadiusKm]</span>}@if(query.PhotosOnly){<span>@T["SearchWithPhoto"]</span>}</div> }
+<div id="search-related">
+@if(!string.IsNullOrWhiteSpace(term)){
+@await Component.InvokeAsync("SearchDiscoveries",new{query=term})
+<section class="para-container search-evidence" data-search-evidence data-query="@term" data-city="@query.City">
+<h2>Referências para sua pesquisa</h2><p role="status" aria-live="polite" data-search-status>Consultando o acervo e as fontes externas configuradas…</p><div data-search-sources></div><noscript><a href="/referencias?q=@Uri.EscapeDataString(term)">Consultar referências salvas</a></noscript>
+</section>}
+</div>
+
     @if (Model.Items.Count == 0)
     { <div class="para-empty para-search-empty"><span class="para-category-icon para-gold">@await Html.PartialAsync("_ParaIcon", "cuia")</span><div><h3>@T["SearchEmptyTitle"]</h3><p>@T["SearchEmptyText"]</p><a href="/busca" class="para-button">@T["AtlasSeeAll"]</a><a href="/sugerir" class="para-text-link">@T["Suggest"] ↗</a></div></div> }
     else
     { <div class="para-restaurant-grid" id="catalog-results">@foreach(var restaurant in Model.Items) { @await Html.PartialAsync("_RestaurantCard",restaurant) }</div> }
+    @if(Model.Items.Count==0 && string.IsNullOrWhiteSpace(term)){@await Component.InvokeAsync("TrailPreview")}
     @if(Model.TotalPages>1)
     { <nav class="para-pagination" aria-label="@T["SearchPagination"]">@if(Model.Page>1){<a href="@PageUrl(Model.Page-1)">← @T["SearchPrevious"]</a>}<span aria-current="page">@Model.Page / @Model.TotalPages</span>@if(Model.Page<Model.TotalPages){<a href="@PageUrl(Model.Page+1)">@T["SearchNext"] →</a>}</nav> }
   </div>
 </section>
-@section Scripts { <script src="~/js/catalog.js" asp-append-version="true" defer></script> }
+@await Component.InvokeAsync("SearchTopics")
+@section Scripts { <script src="~/js/federated-search.js" asp-append-version="true" defer></script> <script src="~/js/catalog.js" asp-append-version="true" defer></script> }
+
+@section Styles { <link rel="stylesheet" href="~/css/search57.css" asp-append-version="true" /> }

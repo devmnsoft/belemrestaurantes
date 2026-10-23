@@ -3,19 +3,27 @@
 <section class="para-container para-auth">
 @await Html.PartialAsync("_AuthStory")
 <div class="para-auth-content">
-  <h1>@T["Register"]</h1><p>@T["NoCpf"]</p>
+  <h1>@T["Register"]</h1><p>Crie sua conta pessoal. CPF e e-mail ajudam a evitar duplicidades; não são exibidos publicamente.</p>
   <form method="post" action="/account/register" class="panel">
     @Html.AntiForgeryToken()
-    <label>@T["FullName"]<input asp-for="FullName" autocomplete="name" required maxlength="160" minlength="2" /></label>
-    <label>@T["Email"]<input asp-for="Email" type="email" autocomplete="email" required maxlength="200" /></label>
-    <label>@T["Password"]<input name="Password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></label>
-    <label>@T["ConfirmPassword"]<input name="ConfirmPassword" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></label>
-    <p class="muted">@T["PasswordRules"]</p>
+    <div asp-validation-summary="All" class="registration-errors" role="alert" tabindex="-1" data-registration-errors></div>
+    <label>@T["FullName"]<input asp-for="FullName" autocomplete="name" required maxlength="160" minlength="2" /><span asp-validation-for="FullName" class="field-error"></span></label>
+    <label>@T["Email"]<input asp-for="Email" type="email" autocomplete="email" required maxlength="200" /><span asp-validation-for="Email" class="field-error"></span></label>
+    <label>CPF do titular<input asp-for="Cpf" inputmode="numeric" autocomplete="off" required maxlength="14" aria-describedby="document-help" /><span asp-validation-for="Cpf" class="field-error"></span></label>
+    <p id="document-help">Validamos o formato do documento. Isso não confirma identidade nem concede acesso administrativo.</p>
+    <details><summary>Represento uma empresa (opcional)</summary><p>Seu CPF identifica você; o CNPJ identifica a organização. Declarar uma empresa não concede acesso às suas fichas.</p>
+    <label>Razão social<input asp-for="OrganizationName" maxlength="160" autocomplete="organization" /><span asp-validation-for="OrganizationName" class="field-error"></span></label>
+    <label>CNPJ numérico ou alfanumérico<input asp-for="Cnpj" maxlength="18" autocomplete="off" /><span asp-validation-for="Cnpj" class="field-error"></span></label></details>
+    <label>@T["Password"]<input id="Password" name="Password" aria-describedby="password-rules" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /><span asp-validation-for="Password" class="field-error"></span></label>
+    <label>@T["ConfirmPassword"]<input id="ConfirmPassword" name="ConfirmPassword" aria-describedby="password-rules" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /><span asp-validation-for="ConfirmPassword" class="field-error"></span></label>
+    <p id="password-rules">Use de 12 a 256 caracteres, com maiúscula, minúscula, número e símbolo. Evite termos comuns como senha, admin, password e nomes do portal.</p>
     <div class="honeypot" aria-hidden="true"><label>Website<input name="Website" tabindex="-1" autocomplete="off" /></label></div>
-    <label class="check-label"><input asp-for="AcceptTerms" type="checkbox" required /> @T["AcceptTerms"]</label>
+    <label class="check-label"><input asp-for="AcceptTerms" type="checkbox" required /> @T["AcceptTerms"]<span asp-validation-for="AcceptTerms" class="field-error"></span></label>
     <p><a href="/account/terms" target="_blank" rel="noopener">@T["Terms"]</a> · <a href="/account/privacy" target="_blank" rel="noopener">@T["Privacy"]</a></p>
-    <div asp-validation-summary="All" role="alert"></div>
+
     <button type="submit">@T["Register"]</button><a href="/account/login">@T["SignIn"]</a>
   </form>
 </div>
 </section>
+
+@section Scripts { <script src="~/js/registration.js" asp-append-version="true" defer></script> }

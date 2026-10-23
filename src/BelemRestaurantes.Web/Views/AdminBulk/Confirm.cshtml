@@ -7,6 +7,7 @@
 @if(!string.IsNullOrWhiteSpace(Model.Reason)){<p><strong>Motivo informado:</strong> @Model.Reason</p>}
 <p class="review-notice">A confirmação vence em 15 minutos. A validação será repetida ao confirmar; cadastros alterados, incompletos ou já decididos podem ser ignorados.</p>
 <ol class="review-confirm-list">@foreach(var row in Model.Items){<li><strong>@row.Name</strong><span>@row.City · Cadastro #@row.Id</span><span>@(row.BlockReason??"Dados básicos disponíveis para revisão.")</span></li>}</ol>
+<p>Se a conexão for interrompida, <a href="/admin/moderacao/lote/@Model.Id">consulte o resultado deste lote</a> antes de confirmar novamente.</p>
 <form method="post" action="/admin/moderacao/confirmar" class="review-action-panel">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id"/><input type="hidden" name="returnUrl" value="@returnUrl"/><label class="review-filter-selection"><input type="checkbox" name="confirmed" value="true" required/> Conferi os cadastros e confirmo: @ModerationNavigation.OperationLabel(Model.Operation).</label><div class="review-filter-actions"><button class="para-button" type="submit">Confirmar para @Model.Items.Count cadastros</button><a href="@returnUrl">Cancelar</a></div></form>
 </section>
 @section Scripts{<script src="~/js/bulk-moderation.js" asp-append-version="true" defer></script>}

@@ -149,7 +149,7 @@ public sealed class BulkAndVisitTests
     }
     internal static WebApplicationFactory<Program> Factory()=>new WebApplicationFactory<Program>().WithWebHostBuilder(builder=>builder.UseEnvironment("Development")
         .ConfigureAppConfiguration((_,config)=>config.AddInMemoryCollection(new Dictionary<string,string?>{["ConnectionStrings:MySql"]=DatabaseEnvironment.ConnectionString()}))
-        .ConfigureServices(services=>services.AddAuthentication(o=>{o.DefaultAuthenticateScheme="bulk-test";o.DefaultChallengeScheme="bulk-test";}).AddScheme<AuthenticationSchemeOptions,RoleHandler>("bulk-test",_=>{})));
+        .ConfigureServices(services=>services.AddAuthentication(o=>{o.DefaultAuthenticateScheme="bulk-test";o.DefaultChallengeScheme="bulk-test";}).AddScheme<AuthenticationSchemeOptions,RoleHandler>("bulk-test",_=>{}).Services.Configure<AuthenticationOptions>(o=>o.SchemeMap[AdminAuthDefaults.Scheme].HandlerType=typeof(RoleHandler))));
     public sealed class RoleHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,ILoggerFactory logger,UrlEncoder encoder):AuthenticationHandler<AuthenticationSchemeOptions>(options,logger,encoder)
     {
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()

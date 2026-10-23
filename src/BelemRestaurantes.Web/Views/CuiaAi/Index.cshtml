@@ -11,9 +11,12 @@
     var initialCity = ViewData["InitialCity"] as string ?? "";
     string KindLabel(string? kind) => kind switch
     {
-        "servico" => "Resposta feita com um serviço de recomendações, usando só os restaurantes conferidos.",
+        "referencia" => "Resposta baseada nas fontes identificadas.",
+        "esclarecimento" => "Precisamos identificar o lugar correto.",
+        "servico" => "Resposta feita com IA no contexto do portal.",
+        "pesquisa" => "Resposta feita com IA e pesquisa externa. Confira as fontes abaixo.",
         "limite" => "A pergunta saiu do que a Cuia pode responder neste portal.",
-        _ => "Resposta feita com o catálogo do portal."
+        _ => "Resposta feita com o conteúdo local do portal, sem geração por IA."
     };
 }
 <section class="cuia-ai-page" lang="pt-BR">
@@ -91,6 +94,12 @@
             </div>
           </details>
 
+          <div class="cuia-ai-web-option">
+            <label for="ai-search-web"><input id="ai-search-web" type="checkbox" name="searchWeb" value="true" checked="@(ViewData["SearchWeb"] as bool? == true)" aria-describedby="ai-search-web-help" /> Pesquisar também na internet</label>
+            <p id="ai-search-web-help">Ao marcar, sua pergunta será enviada ao serviço de pesquisa. Não inclua dados pessoais. As fontes externas não confirmam o cadastro de um restaurante.</p>
+          </div>
+          <button type="button" class="para-text-button" id="cuia-clear-session">Reiniciar conversa nesta aba</button>
+
           <div class="cuia-ai-suggestions" role="group" aria-label="Exemplos de pergunta">
             <span class="cuia-ai-suggestions-title">Exemplos</span>
             <button type="button" class="cuia-ai-chip" data-prompt="Onde comer peixe?">Onde comer peixe?</button>
@@ -110,28 +119,33 @@
             <li>Pergunte um prato, um bairro, uma ocasião ou um passeio no Pará.</li>
             <li>Escreva no campo e toque em Perguntar à Cuia, ou escolha um exemplo. Cada exemplo faz uma consulta.</li>
             <li>A Cuia mostra restaurantes publicados com informações conferidas, receitas do caderno e, quando couber, uma nota cultural separada do cardápio.</li>
-            <li>Se não houver opção conferida, a resposta diz isso e aponta o catálogo.</li>
+            <li>Ative a pesquisa para descobrir opções fora do catálogo, com fontes e identificação separadas.</li>
             <li>Ver restaurante abre a ficha. Como chegar abre o planejamento no Cuia Rotas.</li>
           </ol>
-          <p class="cuia-ai-session-note">Uma pergunta seguinte sobre os resultados vale só nesta aba. Fechar a página apaga essa lista. A Cuia não guarda a conversa.</p>
+          <p class="cuia-ai-session-note">A pergunta inicial e as duas perguntas mais recentes ficam nesta aba para dar contexto. Você pode apagá-las acima. A pesquisa escolhida vale nesta aba; não inclua dados pessoais.</p>
         </section>
 
+        <button type="button" id="ai-cancel" class="para-save" hidden>Cancelar consulta</button>
         <div id="ai-loading" class="cuia-ai-loading" role="status" aria-live="polite" hidden>
           <div class="cuia-ai-spinner" aria-hidden="true"></div>
-          <p>Estamos buscando opções para você.</p>
+          <p>A Cuia está pesquisando. Aguarde enquanto reunimos as referências.</p>
         </div>
 
         <div id="ai-results" class="cuia-ai-results" role="region" aria-live="polite" aria-label="Resposta da Cuia IA" tabindex="-1" @(Model == null ? "hidden" : "")>
           @if (Model != null)
           {
             <div class="cuia-ai-meta">
-              <span class="cuia-ai-guarantee">@(Model.Recommendations.Count > 0 ? $"Pesquisa concluída. Encontramos {Model.Recommendations.Count} estabelecimentos." : "Não encontramos restaurantes conferidos para essa busca. Veja outras opções no catálogo.")</span>
+              <span class="cuia-ai-guarantee">@(Model.ExternalSuggestions.Count > 0 ? $"Encontramos {Model.ExternalSuggestions.Count} sugestões externas com fontes." : Model.Recommendations.Count > 0 ? $"Encontramos {Model.Recommendations.Count} opções conferidas no portal." : "Explore a resposta e as opções disponíveis abaixo.")</span>
               <span class="cuia-ai-kind">@KindLabel(Model.AnswerKind)</span>
             </div>
+            @await Html.PartialAsync("_CuiaStateNotice", Model)
             <div class="cuia-ai-response-body">
-              <h2>Recomendações da Cuia IA</h2>
+              <h2>Sua resposta</h2>
               @Html.Raw(CuiaMarkdown.ToHtml(Model.AnswerMarkdown))
             </div>
+            @await Html.PartialAsync("_CuiaExternal", Model)
+            @await Html.PartialAsync("_CuiaSources", Model)
+            @if(Model.TrailSuggestions.Count>0){<section class="cuia-ai-section"><h3>Roteiros para continuar explorando</h3><ul>@foreach(var trail in Model.TrailSuggestions){<li><a href="/roteiros/@trail.Slug">@trail.Title</a><p>@trail.Region · etapas editoriais com referências</p></li>}</ul></section>}
             @if (Model.Recommendations.Count > 0)
             {
               <div class="cuia-ai-section">
@@ -153,6 +167,7 @@
                       @if (!string.IsNullOrWhiteSpace(place.Address))
                       { <p class="cuia-ai-reco-address">@place.Address</p> }
                       <div class="cuia-ai-reco-actions">
+                        <button type="button" class="para-save" data-save-kind="catalog" data-save-id="@place.Id" data-save-name="@place.Name" data-save-city="@place.City">Guardar para depois</button>
                         <a href="/estabelecimento/@place.Id" class="para-button">Ver restaurante</a>
                         <a href="/cuia-rotas?restaurantId=@place.Id" class="para-text-link">Como chegar</a>
                       </div>
@@ -200,6 +215,7 @@
               </div>
             }
             <script type="application/json" id="cuia-initial-places">@Html.Raw(JsonSerializer.Serialize(Model.Recommendations.Concat(Model.DirectoryMatches).Select(place => new { id = place.Id, name = place.Name, city = place.City, neighborhood = place.Neighborhood, latitude = place.Latitude, longitude = place.Longitude, address = place.Address })))</script>
+            @if (Model.AnswerKind != "limite") { <script type="application/json" id="cuia-initial-question">@Html.Raw(JsonSerializer.Serialize(initialPrompt))</script> }
           }
         </div>
       </div>
@@ -220,3 +236,5 @@
 @section Scripts {
   <script src="~/js/cuia-ai.js" asp-append-version="true" defer></script>
 }
+
+@await Component.InvokeAsync("SearchTopics")

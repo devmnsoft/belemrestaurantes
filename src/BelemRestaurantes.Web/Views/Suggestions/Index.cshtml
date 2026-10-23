@@ -6,6 +6,7 @@
   <div class="para-suggestion-form">
     @if (TempData["SuggestionReceived"] is true) { <div class="para-success" role="status"><strong>Obrigado pela dica!</strong><p>Sua indicação foi registrada para revisão. Ela aparecerá no guia depois de aprovada.</p></div> }
     <h2>@ViewData["Title"]</h2><p>Não é necessário criar uma conta para indicar.</p>
+    @if (ViewData["ExternalSuggestion"] is true) { <p class="catalog-warning">Esta dica veio de uma pesquisa externa. Revise o nome, o município e a fonte antes de enviar. O envio não publica o lugar automaticamente.</p> }
     <form method="post" action="/sugerir">
       @Html.AntiForgeryToken()<input asp-for="RestaurantId" type="hidden" />
       <div asp-validation-summary="All" class="para-validation" role="alert"></div>

@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>@ViewData["Title"] · Painel MNSOFT</title>
   <link rel="stylesheet" href="~/css/para.css" asp-append-version="true" />
+  <link rel="icon" type="image/svg+xml" href="~/favicon.svg" asp-append-version="true" />
+  <script src="~/js/image-resilience.js" asp-append-version="true" defer></script>
+  <link rel="stylesheet" href="~/css/editorial50.css" asp-append-version="true" />
 </head>
 <body class="para-admin" style="background-color: var(--creme-bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;">
 
@@ -54,12 +57,16 @@
       </div>
       <nav>
         <ul class="admin-nav-v3">
-          <li><a href="/admin/moderacao" class="admin-nav-item-v3">Aprovação em lote</a></li>
+          <li><a href="/admin/referencias">Referências da Cuia</a>
+<a href="/admin/moderacao" class="admin-nav-item-v3">Aprovação em lote</a></li>
           <li><a href="/admin/operacao" class="admin-nav-item-v3">Worker e sincronização</a></li>
           <li><a href="/admin/cobertura" class="admin-nav-item-v3">Cobertura do Pará</a></li>
           <li><a href="/admin/mobilidade" class="admin-nav-item-v3">Mobilidade e funcionamento</a></li>
           <li><a href="/admin/usuarios" class="admin-nav-item-v3">Usuários e papéis</a></li>
           <li><a href="/admin/editorial" class="admin-nav-item-v3">Mesa editorial</a></li>
+          <li><a href="/admin/conteudos-externos" class="admin-nav-item-v3">Matérias e vídeos coletados</a></li>
+          <li><a href="/admin/geocodificacao" class="admin-nav-item-v3">Geocodificação autônoma</a></li>
+          <li><a href="/admin/roteiros" class="admin-nav-item-v3">Roteiros e fontes</a></li>
           <li><a href="/admin/receitas" class="admin-nav-item-v3">Receitas do Pará</a></li>
           <li>
             <a href="/admin/dashboard" class="admin-nav-item-v3">
@@ -165,7 +172,7 @@
             </a>
           </li>
         </ul>
-      </nav>
+      <a href="/admin/pesquisa-culinaria">Pesquisa culinária</a></nav>
 
       <div style="margin-top: 36px; padding: 14px; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); font-size: 1rem; color: #a4b8ad;">
         <strong style="color: var(--tucupi-400);">MNSOFT Soluções</strong><br />
@@ -201,6 +208,7 @@
 
   <script src="~/js/para.js" asp-append-version="true" defer></script>
   <script src="~/js/accessibility.js" asp-append-version="true" defer></script>
+  <script src="~/js/password-controls.js" asp-append-version="true" defer></script>
   @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

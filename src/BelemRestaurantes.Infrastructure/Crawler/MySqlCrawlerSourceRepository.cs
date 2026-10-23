@@ -23,7 +23,7 @@ public sealed class MySqlCrawlerSourceRepository : ICrawlerSourceRepository
         await using var connection = await _factory.OpenAsync(ct);
 
         const string sql = """
-            SELECT id, name, base_url AS BaseUrl, source_type AS SourceType, target_city AS TargetCity,
+            SELECT id, name, base_url AS BaseUrl, source_type AS SourceType, content_only AS ContentOnly, target_city AS TargetCity,
                    default_category AS DefaultCategory, status, robots_txt_status AS RobotsTxtStatus,
                    crawl_delay_seconds AS CrawlDelaySeconds, last_crawled_at AS LastCrawledAt,
                    last_success_at AS LastSuccessAt, last_error AS LastError, etag AS ETag,
@@ -42,7 +42,7 @@ public sealed class MySqlCrawlerSourceRepository : ICrawlerSourceRepository
         await using var connection = await _factory.OpenAsync(ct);
 
         const string sql = """
-            SELECT id, name, base_url AS BaseUrl, source_type AS SourceType, target_city AS TargetCity,
+            SELECT id, name, base_url AS BaseUrl, source_type AS SourceType, content_only AS ContentOnly, target_city AS TargetCity,
                    default_category AS DefaultCategory, status, robots_txt_status AS RobotsTxtStatus,
                    crawl_delay_seconds AS CrawlDelaySeconds, last_crawled_at AS LastCrawledAt,
                    last_success_at AS LastSuccessAt, last_error AS LastError, etag AS ETag,
@@ -59,7 +59,7 @@ public sealed class MySqlCrawlerSourceRepository : ICrawlerSourceRepository
         await using var connection = await _factory.OpenAsync(ct);
 
         const string sql = """
-            SELECT id, name, base_url AS BaseUrl, source_type AS SourceType, target_city AS TargetCity,
+            SELECT id, name, base_url AS BaseUrl, source_type AS SourceType, content_only AS ContentOnly, target_city AS TargetCity,
                    default_category AS DefaultCategory, status, robots_txt_status AS RobotsTxtStatus,
                    crawl_delay_seconds AS CrawlDelaySeconds, last_crawled_at AS LastCrawledAt,
                    last_success_at AS LastSuccessAt, last_error AS LastError, etag AS ETag,
@@ -76,8 +76,8 @@ public sealed class MySqlCrawlerSourceRepository : ICrawlerSourceRepository
         await using var connection = await _factory.OpenAsync(ct);
 
         const string sql = """
-            INSERT INTO crawler_sources (name, base_url, source_type, target_city, default_category, status, crawl_delay_seconds)
-            VALUES (@Name, @BaseUrl, @SourceType, @TargetCity, @DefaultCategory, @Status, @CrawlDelaySeconds);
+            INSERT INTO crawler_sources (name, base_url, source_type, target_city, default_category, status, crawl_delay_seconds,content_only)
+            VALUES (@Name, @BaseUrl, @SourceType, @TargetCity, @DefaultCategory, @Status, @CrawlDelaySeconds,@ContentOnly);
             SELECT LAST_INSERT_ID();
             """;
 
@@ -91,7 +91,8 @@ public sealed class MySqlCrawlerSourceRepository : ICrawlerSourceRepository
                 source.TargetCity,
                 source.DefaultCategory,
                 source.Status,
-                source.CrawlDelaySeconds
+                source.CrawlDelaySeconds,
+                source.ContentOnly
             },
             cancellationToken: ct));
     }

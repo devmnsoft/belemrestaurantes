@@ -76,6 +76,6 @@
     if (submit) submit.disabled = true;
     count.textContent = 'Preparando a revisão. Aguarde antes de enviar novamente.';
   });
-  window.addEventListener('pageshow', () => { restore(); form.removeAttribute('aria-busy'); if (busy) busy.textContent = ''; update(); });
+  window.addEventListener('pageshow', event => { if(event.persisted){location.reload();return;} restore(); form.removeAttribute('aria-busy'); if (busy) busy.textContent = ''; update(); });
   update();
 })();

@@ -18,10 +18,10 @@ public sealed class AiRouter(
     IEnumerable<IAiProvider> providers,
     ICostLedger costLedger,
     IOptionsSnapshotLike options,
-    ILogger<AiRouter> logger) : IAiRouter
+    ILogger<AiRouter> logger, IFreeTierQuota? quota = null, CuiaFreeTierOptions? freeTier = null) : IAiRouter
 {
     private readonly IAiProvider[] _providers = [.. providers];
-    private readonly Dictionary<AiProvider, Health> _health = [];
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<AiProvider, Health> _health = new();
 
     private sealed record Health(int Success, int Failure, long LastCostMicrosUsd, DateTimeOffset? LastUsedAt, bool CircuitOpen, DateTimeOffset? OpenUntil);
 
@@ -80,18 +80,21 @@ public sealed class AiRouter(
                 continue;
             }
 
-            if (!await costLedger.HasBudgetRemaining(
-                    provider.ToString(),
-                    await costLedger.MonthToDateUsdAsync(provider.ToString(), DateTimeOffset.UtcNow, ct),
-                    ct))
+            var freeCall=freeTier?.ConfirmedFreeProviders.Contains(provider.ToString(),StringComparer.OrdinalIgnoreCase)==true;
+            if(freeCall)
             {
-                logger.LogWarning("Orçamento do provedor {Provider} esgotado no mês.", provider);
-                continue;
+                if(quota is null || !await costLedger.CanUseFreeTierAsync(provider.ToString(),ct))continue;
+                if(!await quota.TryReserveAsync("worker_"+provider.ToString().ToLowerInvariant(),
+                    Math.Clamp(freeTier!.WorkerDailyRequestLimit,0,10),Math.Clamp(freeTier.WorkerMonthlyRequestLimit,0,100),ct))continue;
+                // Legacy Cuia counter is now the shared free-account ceiling, not a second independent budget.
+                if(!await quota.TryReserveAsync("cuia_"+provider.ToString().ToLowerInvariant(),
+                    Math.Clamp(freeTier.DailyRequestLimit,0,1000),Math.Clamp(freeTier.MonthlyRequestLimit,0,10000),ct))continue;
             }
+            else if(!await costLedger.HasBudgetRemaining(provider.ToString(),await costLedger.MonthToDateUsdAsync(provider.ToString(),DateTimeOffset.UtcNow,ct),ct))continue;
 
             try
             {
-                var response = await ExecuteAsync(provider, request, ct);
+                var response = await ExecuteAsync(provider, request, ct,freeCall);
 
                 if (response is null || !response.IsValid)
                 {
@@ -127,12 +130,12 @@ public sealed class AiRouter(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Provedor {Provider} falhou em '{Operation}'; tentando fallback.", provider, operation);
-                RegisterFailure(provider, ex.Message);
+                logger.LogWarning("Provedor {Provider} falhou em {Operation} ({ExceptionType}); tentando fallback.",provider,operation,ex.GetType().Name);
+                RegisterFailure(provider, ex.GetType().Name);
                 usedFallback = true;
 
                 await costLedger.RecordAsync(
-                    new AiCostEntry(0, provider.ToString(), operation, 0, 0, 0, false, DateTimeOffset.UtcNow, ex.Message),
+                    new AiCostEntry(0, provider.ToString(), operation, 0, 0, 0, false, DateTimeOffset.UtcNow, ex.GetType().Name),
                     ct);
             }
         }
@@ -141,14 +144,14 @@ public sealed class AiRouter(
         return null;
     }
 
-    private async Task<AiCompletionResponse?> ExecuteAsync(AiProvider provider, AiCompletionRequest request, CancellationToken ct)
+    private async Task<AiCompletionResponse?> ExecuteAsync(AiProvider provider, AiCompletionRequest request, CancellationToken ct,bool freeCall=false)
     {
         var impl = _providers.First(p => p.Provider == provider);
         var response = await impl.CompleteAsync(request, ct);
 
         // Custo é sempre recomputado aqui, a partir do preço do provedor: não
         // confiamos no valor que o serviço externo possa reportar.
-        var cost = impl.Price.EstimateCost(response.InputTokens, response.OutputTokens);
+        var cost = freeCall?0:impl.Price.EstimateCost(response.InputTokens, response.OutputTokens);
         return response with { CostMicrosUsd = cost };
     }
 

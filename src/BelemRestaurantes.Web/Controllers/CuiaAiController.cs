@@ -9,10 +9,11 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace BelemRestaurantes.Web.Controllers;
 
 [AllowAnonymous]
-public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepository restaurantRepo) : Controller
+public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepository restaurantRepo, ISearchArchive? searchArchive = null) : Controller
 {
     [HttpGet("/cuia-ia")]
-    public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] string? city, [FromQuery] string? occasion, [FromQuery] string? dietary, CancellationToken ct)
+    [EnableRateLimiting("cuia")]
+    public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] string? city, [FromQuery] string? occasion, [FromQuery] string? dietary, CancellationToken ct, [FromQuery] bool searchWeb = true)
     {
         ViewData["Title"] = "Cuia IA — Seu guia de sabores do Pará";
         ViewData["MetaDescription"] = "Conte o que você procura. A Cuia ajuda a encontrar restaurantes, pratos e experiências paraenses.";
@@ -21,21 +22,24 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
         ViewData["Cities"] = cities;
         ViewData["InitialPrompt"] = q ?? "";
         ViewData["InitialCity"] = city ?? "";
+        ViewData["SearchWeb"] = searchWeb;
 
         CuiaAiResponse? initialResponse = null;
         if (!string.IsNullOrWhiteSpace(q))
         {
-            initialResponse = await AskMeasured(new CuiaAiQuery(q, city, occasion, dietary), ct);
+            initialResponse = await AskMeasured(new CuiaAiQuery(q, city, occasion, dietary, SearchWeb: searchWeb), ct);
         }
 
         return View(initialResponse);
     }
 
-    public sealed record AskRequest(string Prompt, string? City, string? Occasion, string? Dietary, string? Budget);
+    public sealed record AskRequest(string Prompt, string? City, string? Occasion, string? Dietary, string? Budget, bool SearchWeb = true,
+        IReadOnlyList<string>? PreviousQuestions = null, IReadOnlyList<long>? PlaceIds = null);
 
     [HttpPost("/api/cuia-ia/ask")]
     [ValidateAntiForgeryToken]
     [EnableRateLimiting("cuia")]
+    [RequestSizeLimit(8192)]
     public async Task<IActionResult> Ask([FromBody] AskRequest req, CancellationToken ct)
     {
         if (req == null || string.IsNullOrWhiteSpace(req.Prompt))
@@ -47,13 +51,20 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
         {
             return ApiProblems.Result(HttpContext, StatusCodes.Status400BadRequest, "prompt_too_long", "A consulta pode ter no máximo 500 caracteres.", false);
         }
+        if ((req.PreviousQuestions?.Count ?? 0) > 3 || (req.PlaceIds?.Count ?? 0) > 4 ||
+            (req.PreviousQuestions?.Any(q => q is null || q.Length > 500) ?? false) ||
+            new[] { req.City, req.Occasion, req.Dietary, req.Budget }.Any(s => s?.Length > 100))
+            return ApiProblems.Result(HttpContext, 400, "context_too_long", "Reduza os filtros ou reinicie a conversa nesta aba.", false);
 
         var response = await AskMeasured(new CuiaAiQuery(
             Prompt: req.Prompt,
             City: req.City,
             Occasion: req.Occasion,
             Dietary: req.Dietary,
-            Budget: req.Budget
+            Budget: req.Budget,
+            SearchWeb: req.SearchWeb,
+            PreviousQuestions: req.PreviousQuestions,
+            PlaceIds: req.PlaceIds
         ), ct);
 
         return Ok(response);
@@ -62,11 +73,12 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
     private async Task<CuiaAiResponse> AskMeasured(CuiaAiQuery query, CancellationToken ct)
     {
         var started = System.Diagnostics.Stopwatch.GetTimestamp();
+        if(searchArchive is not null)await SearchTopicRecorder.RecordAsync(HttpContext,searchArchive,query.Prompt,ct);
         try
         {
-            var response = await cuiaAi.AskAsync(query, ct);
+            var response = await cuiaAi.AskAsync(query with { SessionKey = CuiaSessionIdentity.GetOrCreate(HttpContext) }, ct);
             CuiaAskMetrics.Record(response.AnswerKind, System.Diagnostics.Stopwatch.GetElapsedTime(started));
-            return response;
+            return response with{EngineUsed="Cuia",AnswerMarkdown=System.Text.RegularExpressions.Regex.Replace(response.AnswerMarkdown,@"\b(Drael|Gemini|Groq|DeepSeek)\b","Cuia",System.Text.RegularExpressions.RegexOptions.IgnoreCase,TimeSpan.FromMilliseconds(100))};
         }
         catch
         {
@@ -91,7 +103,9 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
         return Ok(new
         {
             status = "ok",
-            providers = status.Providers,
+            service = "Cuia",
+            cloudConfigurationReady = status.Providers.Any(p => p.EnabledForCuia),
+            liveProbePerformed = false,
             promptInjectionGuard = status.PromptInjectionGuard,
             rateLimitPolicy = status.RateLimitPolicy,
             costTracking = "enabled"

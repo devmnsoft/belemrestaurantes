@@ -4,8 +4,16 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.DataProtection;
+using BelemRestaurantes.Web.Diagnostics;
 
+try
+{
 var builder = WebApplication.CreateBuilder(args);
+if (builder.Environment.IsDevelopment())
+{
+    builder.Logging.AddFilter("Microsoft.AspNetCore.Server.Kestrel.BadRequests", LogLevel.Debug);
+    builder.Logging.AddProvider(new DevelopmentDiagnosticsLoggerProvider());
+}
 builder.Services.AddMemoryCache();
 var keysPath = builder.Configuration["DataProtection:KeysPath"]
     ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MNSOFT", "BelemRestaurantes", "keys");
@@ -95,13 +103,13 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(MemberAuth.Policy, p => p.AddAuthenticationSchemes(MemberAuth.Scheme).RequireAuthenticatedUser().RequireClaim("email_verified", "true"));
     options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     options.AddPolicy("RestaurantModerator",
-        p => p.RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.Moderator, AdminRoles.PlatformAdmin));
+        p => p.AddAuthenticationSchemes(AdminAuthDefaults.Scheme).RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.Moderator, AdminRoles.PlatformAdmin));
     options.AddPolicy("PlatformOperator",
-        p => p.RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.Operator, AdminRoles.PlatformAdmin));
-    options.AddPolicy("AdminArea", p => p.RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.Moderator, AdminRoles.Operator, AdminRoles.PlatformAdmin));
+        p => p.AddAuthenticationSchemes(AdminAuthDefaults.Scheme).RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.Operator, AdminRoles.PlatformAdmin));
+    options.AddPolicy("AdminArea", p => p.AddAuthenticationSchemes(AdminAuthDefaults.Scheme).RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.Moderator, AdminRoles.Operator, AdminRoles.PlatformAdmin));
     options.AddPolicy("PlatformAdmin",
-        p => p.RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.PlatformAdmin));
-    options.AddPolicy("ContentEditor",p=>p.RequireAuthenticatedUser().RequireClaim("amr","mfa").RequireRole(AdminRoles.Editor,AdminRoles.Moderator,AdminRoles.PlatformAdmin));
+        p => p.AddAuthenticationSchemes(AdminAuthDefaults.Scheme).RequireAuthenticatedUser().RequireClaim("amr", "mfa").RequireRole(AdminRoles.PlatformAdmin));
+    options.AddPolicy("ContentEditor",p=>p.AddAuthenticationSchemes(AdminAuthDefaults.Scheme).RequireAuthenticatedUser().RequireClaim("amr","mfa").RequireRole(AdminRoles.Editor,AdminRoles.Moderator,AdminRoles.PlatformAdmin));
 });
 
 // JWT provisório removido (Sprint 02): não havia emissor configurado e a
@@ -168,6 +176,7 @@ if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
         app.Logger.LogWarning("Migrações não aplicadas neste processo porque o banco não está acessível ({ErrorNumber}).", ex.Number);
     }
 }
+if(args.Contains("--diagnose-access")){await BelemRestaurantes.Web.AccessDiagnostics.RunAsync(app.Services);return;}
 if (args.Contains("--migrate") || args.Contains("--provision-admin"))
 {
     await BelemRestaurantes.Web.AdminMaintenance.RunAsync(app.Services, args.Contains("--migrate"));
@@ -200,6 +209,7 @@ app.UseStatusCodePages(async statusContext =>
     await ApiProblems.WriteAsync(http, status, code, message, retryable);
 });
 
+app.UseMiddleware<RequestDiagnosticsMiddleware>();
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
@@ -214,6 +224,9 @@ app.Use(async (context, next) =>
     context.Response.Headers["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=(self)";
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
+    // Local HTTP development has no TLS endpoint for subresources in WebKit.
+    if (app.Environment.IsDevelopment())
+        context.Response.Headers["Content-Security-Policy"] = context.Response.Headers["Content-Security-Policy"].ToString().Replace("; upgrade-insecure-requests", "");
     if(context.Request.Path.StartsWithSegments("/cuia-rotas") && builder.Configuration.GetValue<bool>("GoogleMaps:Enabled"))
         context.Response.Headers["Content-Security-Policy"] = context.Response.Headers["Content-Security-Policy"].ToString()
             .Replace("script-src 'self';", "script-src 'self' https://maps.googleapis.com https://maps.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://*.google.com;")
@@ -223,6 +236,24 @@ app.Use(async (context, next) =>
 app.UseStaticFiles();
 app.UseRouting();
 app.UseRateLimiter();
+// Authentication itself reads SQL. Availability failures must not become a logout or bypass.
+app.Use(async (context,next) =>
+{
+    try { await next(); }
+    catch(OperationCanceledException) when(context.RequestAborted.IsCancellationRequested)
+    {
+        app.Logger.LogInformation("Cliente encerrou a requisição {CorrelationId} em {Path}.",context.TraceIdentifier,context.Request.Path.Value);
+        context.Abort();
+    }
+    catch(Exception ex) when(!context.Response.HasStarted && (ex is System.Data.Common.DbException or TimeoutException or OperationCanceledException))
+    {
+        app.Logger.LogWarning("Serviço indisponível ({Type}) em {Path}. CorrelationId {CorrelationId}.",ex.GetType().Name,context.Request.Path.Value,context.TraceIdentifier);
+        context.Response.Headers["X-Correlation-ID"]=context.TraceIdentifier;
+        context.Response.Headers.CacheControl="no-store";context.Response.Headers.RetryAfter="5";
+        if(ApiProblems.IsApi(context.Request))await ApiProblems.WriteAsync(context,503,"service_unavailable","O serviço está temporariamente indisponível. Tente novamente em instantes.",true,context.RequestAborted);
+        else {context.Response.StatusCode=503;context.Response.ContentType="text/plain; charset=utf-8";await context.Response.WriteAsync("O serviço está temporariamente indisponível. Sua solicitação pode ser consultada novamente; não repita uma ação sem conferir seu resultado. Referência: "+context.TraceIdentifier,context.RequestAborted);}
+    }
+});
 app.UseAuthentication();
 app.Use(async(context,next)=>{
     var path = context.Request.Path;
@@ -272,6 +303,9 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
         }));
     }
 }).AllowAnonymous();
+// Missing public assets must return 404 instead of challenging the admin cookie scheme.
+foreach (var assetRoute in new[] { "/images/{**asset}", "/css/{**asset}", "/js/{**asset}", "/favicon.ico", "/favicon.svg" })
+    app.MapMethods(assetRoute, ["GET", "HEAD"], () => Results.NotFound()).AllowAnonymous();
 app.MapControllers().Add(endpoint =>
 {
     if (!endpoint.Metadata.Any(metadata => metadata is EnableRateLimitingAttribute))
@@ -282,4 +316,12 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}").RequireRateLimiting("public");
 
 app.Run();
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"Falha ao iniciar/executar o site: {ex.GetType().Name}. Consulte a exceção e a saída do ASP.NET Core no Visual Studio.");
+    if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        DevelopmentDiagnosticsLoggerProvider.RecordStartupFailure(ex);
+    throw;
+}
 public partial class Program { }

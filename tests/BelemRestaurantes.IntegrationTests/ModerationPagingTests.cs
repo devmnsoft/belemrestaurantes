@@ -50,7 +50,8 @@ public sealed class ModerationPagingTests(ITestOutputHelper output)
             Assert.Empty((await bulk.ListAsync(f with{City="Cidade inexistente"},1,default)).Items);
             Assert.Equal(first.Items.Select(r=>r.Id),(await bulk.ListAsync(f with{Sort="name; DROP TABLE restaurants"},1,default)).Items.Select(r=>r.Id));
             var inboxPage=await inbox.ListPendingAsync(int.MaxValue,30,default,marker);
-            Assert.Equal(2,inboxPage.Page);Assert.Equal(33,inboxPage.TotalCount);Assert.Equal(3,inboxPage.Items.Count);
+            Assert.Equal(2,inboxPage.Page);Assert.Equal(32,inboxPage.TotalCount);Assert.Equal(2,inboxPage.Items.Count);
+            Assert.DoesNotContain(inboxPage.Items,p=>p.Id==ids[2]);
 
             using var client=app.CreateClient(new(){BaseAddress=new("https://localhost"),AllowAutoRedirect=false});
             var html=WebUtility.HtmlDecode(await client.GetStringAsync("/admin/moderacao?Term="+marker+"&page=2&PageSize=30"));

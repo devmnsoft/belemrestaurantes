@@ -71,8 +71,10 @@ public sealed class MemberAccountTests
         Assert.True(await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM audit_events WHERE actor_subject=@id", new { id }) >= 5);
     }
 
-    [Fact]
-    public async Task Public_journey_confirms_email_and_member_cookie_never_authorizes_admin()
+    [Theory]
+    [InlineData("https://example.invalid")]
+    [InlineData("/admin/dashboard")]
+    public async Task Public_journey_confirms_email_and_member_cookie_never_authorizes_admin(string returnUrl)
     {
         using var provider = (ServiceProvider)ServiceContainer.Build();
         await provider.GetRequiredService<MigrationRunner>().ApplyAsync(default);
@@ -81,7 +83,7 @@ public sealed class MemberAccountTests
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
         var email = Guid.NewGuid().ToString("N") + "@example.invalid";
         var password = "Journey1!" + Guid.NewGuid().ToString("N");
-        var response = await Post(client, "/account/register", new() { ["FullName"] = "Public Member", ["Email"] = email, ["Password"] = password, ["ConfirmPassword"] = password, ["AcceptTerms"] = "true" });
+        var response = await Post(client, "/account/register", new() { ["FullName"] = "Public Member", ["Cpf"] = Sprint48IdentityTests.NewCpf(), ["Email"] = email, ["Password"] = password, ["ConfirmPassword"] = password, ["AcceptTerms"] = "true" });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var protector = provider.GetRequiredService<MailPayloadProtector>();
         await using var connection = await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
@@ -91,7 +93,7 @@ public sealed class MemberAccountTests
             catch { return false; }
         }).payload).Link!.Split("#token=")[1];
         Assert.Equal(HttpStatusCode.OK, (await Post(client, "/account/confirm", new() { ["token"] = confirmation })).StatusCode);
-        var login = await Post(client, "/account/login", new() { ["Email"] = email, ["Password"] = password, ["Remember"] = "true", ["ReturnUrl"] = "https://example.invalid" });
+        var login = await Post(client, "/account/login", new() { ["Email"] = email, ["Password"] = password, ["Remember"] = "true", ["ReturnUrl"] = returnUrl });
         Assert.Equal("/account", login.Headers.Location?.ToString());
         Assert.Contains(login.Headers.GetValues("Set-Cookie"), value => value.StartsWith(".BelRest.Member="));
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/account")).StatusCode);
@@ -106,7 +108,7 @@ public sealed class MemberAccountTests
         using var provider = (ServiceProvider)ServiceContainer.Build(); await provider.GetRequiredService<MigrationRunner>().ApplyAsync(default);
         var accounts = provider.GetRequiredService<IMemberAccounts>();
         var email = Guid.NewGuid() + "@example.invalid"; var password = "Valid1!" + Guid.NewGuid().ToString("N");
-        await Assert.ThrowsAsync<ArgumentException>(() => accounts.RegisterAsync(new("Test", email, password, false, "en"), default));
+        await Assert.ThrowsAsync<BelemRestaurantes.Domain.Identity.MemberRegistrationValidationException>(() => accounts.RegisterAsync(new("Test", email, password, false, "en"), default));
         await accounts.RegisterAsync(new("Test", email, password, true, "en"), default);
         await using var connection = await provider.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
         var protector = provider.GetRequiredService<MailPayloadProtector>();

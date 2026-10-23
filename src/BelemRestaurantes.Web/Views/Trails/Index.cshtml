@@ -1,50 +1,6 @@
 @model IReadOnlyList<BelemRestaurantes.Domain.Entities.GastronomicTrail>
-@{
-    ViewData["Title"] = "Roteiros Gastronômicos & Turismo no Pará - Belém Restaurantes";
-}
-
-<div class="container py-4">
-    <div class="text-center max-w-700 mx-auto mb-5">
-        <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2">Mobilidade & Turismo</span>
-        <h1 class="display-5 fw-bold text-forest">Roteiros Gastronômicos do Pará</h1>
-        <p class="text-muted">
-            Descubra os melhores circuitos culinários em Belém, nas ilhas ribeirinhas e pelo interior paraense, com dicas práticas de como chegar, transporte público e paradas imperdíveis.
-        </p>
-    </div>
-
-    @if(Model.Count==0)
-    { <div class="para-empty"><span class="para-category-icon para-blue">@await Html.PartialAsync("_ParaIcon","river")</span><div><h2>O próximo caminho começa com um sabor.</h2><p>Os roteiros estão sendo preparados. Enquanto isso, explore o catálogo e escolha os lugares que quer conhecer.</p><a href="/busca" class="para-button">Explorar restaurantes ↗</a></div></div> }
-    <div class="row g-4">
-        @foreach (var trail in Model)
-        {
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column justify-content-between">
-                    <div>
-                        <div class="p-4 bg-forest text-white position-relative" style="min-height: 140px;">
-                            <span class="badge bg-warning text-dark mb-2">@trail.Region</span>
-                            <h4 class="fw-bold mb-0 text-white">@trail.Title</h4>
-                        </div>
-                        <div class="p-4">
-                            <p class="text-muted small mb-3">@trail.Description</p>
-                            <div class="d-flex align-items-center gap-3 text-muted small mb-3">
-                                <span><i class="bi bi-clock me-1 text-warning"></i>Duração: ~@trail.EstimatedDurationHours h</span>
-                            </div>
-                            @if (!string.IsNullOrEmpty(trail.TransportTips))
-                            {
-                                <div class="bg-light p-3 rounded-3 small text-muted border">
-                                    <strong class="text-forest"><i class="bi bi-bus-front me-1"></i>Como chegar:</strong>
-                                    <div>@trail.TransportTips</div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                    <div class="p-4 pt-0">
-                        <a href="/roteiros/@trail.Slug" class="btn btn-outline-forest w-100 btn-sm">
-                            <i class="bi bi-signpost-split me-1"></i>Ver Roteiro Completo
-                        </a>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-</div>
+@{ViewData["Title"]="Roteiros para descobrir os sabores do Pará";}
+<section class="para-container editorial-hero"><span class="para-eyebrow">CULTURA, GASTRONOMIA E PAISAGEM</span><h1>O próximo passeio tem sabor.</h1><p>Escolha um caminho, conheça suas referências e adapte as etapas ao seu tempo. Estes roteiros são propostas editoriais; horários, reservas e deslocamentos precisam de confirmação.</p><a href="/meu-passeio">Ver meu passeio guardado ↗</a></section>
+<section class="para-container para-section"><h2>Por onde você quer começar?</h2>
+@if(Model.Count>0){@await Html.PartialAsync("_TrailCards",Model)}else{<p>Não há roteiro publicado agora. Comece por <a href="/pratos">um prato do Pará</a>, <a href="/descobrir">uma descoberta</a> ou <a href="/cuia-ia">uma pergunta à Cuia</a>.</p>}
+</section>

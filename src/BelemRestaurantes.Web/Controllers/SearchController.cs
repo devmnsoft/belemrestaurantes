@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using BelemRestaurantes.Application.Abstractions;
@@ -43,6 +44,11 @@ public sealed class SearchController(
         [FromQuery] string? tier = null,
         CancellationToken ct = default)
     {
+        if (lat is null && lng is null && sort == "nearby" && TryReadNearby(Request.Cookies["br_near"], out var cookieLat, out var cookieLng, out var cookieRadius))
+        {
+            lat = cookieLat; lng = cookieLng; radius = cookieRadius;
+        }
+        q = q is null ? null : BelemRestaurantes.Application.Services.CulinaryQuery.Correct(q);
         var searchQuery = new RestaurantSearchQuery(
             Term: q,
             City: city,
@@ -68,6 +74,33 @@ public sealed class SearchController(
         ViewData["Query"] = searchQuery;
 
         return View(result);
+    }
+
+    [HttpPost("busca/perto")]
+    [ValidateAntiForgeryToken]
+    public IActionResult Nearby(double lat, double lng, double radius = 10)
+    {
+        if (!double.IsFinite(lat) || !double.IsFinite(lng) || lat is < -90 or > 90 || lng is < -180 or > 180)
+            return Redirect("/busca");
+        var safeRadius = Math.Clamp(double.IsFinite(radius) ? radius : 10, 1, 100);
+        var coarseLat = Math.Round(lat, 2, MidpointRounding.AwayFromZero);
+        var coarseLng = Math.Round(lng, 2, MidpointRounding.AwayFromZero);
+        Response.Cookies.Append("br_near", string.Create(CultureInfo.InvariantCulture, $"{coarseLat:0.00}|{coarseLng:0.00}|{safeRadius:0}"), new CookieOptions
+        {
+            HttpOnly = true, IsEssential = true, SameSite = SameSiteMode.Lax, Secure = Request.IsHttps, MaxAge = TimeSpan.FromMinutes(30)
+        });
+        return Redirect("/busca?sort=nearby&radius=" + safeRadius.ToString("0", CultureInfo.InvariantCulture));
+    }
+
+    private static bool TryReadNearby(string? cookie, out double lat, out double lng, out double radius)
+    {
+        lat = lng = 0; radius = 10;
+        var parts = cookie?.Split('|');
+        return parts is { Length: 3 }
+            && double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out lat)
+            && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out lng)
+            && double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out radius)
+            && lat is >= -90 and <= 90 && lng is >= -180 and <= 180;
     }
 
     [HttpGet("cidades")]

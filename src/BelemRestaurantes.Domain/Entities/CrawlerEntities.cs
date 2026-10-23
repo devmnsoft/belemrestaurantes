@@ -31,6 +31,7 @@ public sealed class CrawlerSource
     public long Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string BaseUrl { get; set; } = string.Empty;
+    public bool ContentOnly {get;set;}
     public string SourceType { get; set; } = "sitemap_xml";
     public string? TargetCity { get; set; }
     public string? DefaultCategory { get; set; }
@@ -99,9 +100,14 @@ public sealed class ExtractedRestaurantData
     public string? TikTok { get; set; }
     public string? YouTube { get; set; }
     public string? PhotoUrl { get; set; }
+    public List<string> MenuItems {get;set;}=[];
+    public List<string> OpeningHours {get;set;}=[];
     public string? PhotoAttribution { get; set; }
     public string SourceUrl { get; set; } = string.Empty;
     public double ConfidenceScore { get; set; } = 0.8;
+    public bool StructuredIdentity {get;set;}
+    public bool ExplicitCity {get;set;}
+    public bool DeclaredWebsite {get;set;}
     public bool HasConflict { get; set; }
     public string? ConflictDetail { get; set; }
 }

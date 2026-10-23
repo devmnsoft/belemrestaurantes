@@ -1,3 +1,5 @@
+using BelemRestaurantes.Application.Services;
+
 namespace BelemRestaurantes.Application.Models;
 
 /// <summary>Ponto publicado com coordenada. Não inclui cadastro pendente.</summary>
@@ -13,7 +15,7 @@ public sealed class CatalogMapPoint
     public string CatalogTier { get; set; } = "ficha";
 }
 
-/// <summary>O que a ficha pública realmente tem. Ausência fica explícita.</summary>
+/// <summary>O que a ficha pública realmente tem. Ausência de coleta não é ausência definitiva.</summary>
 public sealed record CatalogFactSheet(
     bool HasAddress,
     bool HasCoordinates,
@@ -21,7 +23,20 @@ public sealed record CatalogFactSheet(
     bool HasPhoto,
     bool HasHours,
     bool HasMenu,
-    bool HasOwner);
+    bool HasOwner)
+{
+    public string? Address { get; init; }
+    public string? Phone { get; init; }
+    public string? PhoneSecondary { get; init; }
+    public string? HoursSummary { get; init; }
+    public string HoursState { get; init; } = FieldStates.NotLocated;
+    public string? HoursSource { get; init; }
+    public DateOnly? HoursObservedOn { get; init; }
+    public string CoordinatePrecision { get; init; } = "unknown";
+    public string MenuState { get; init; } = "not_collected";
+    public bool ClaimValidated { get; init; }
+    public IReadOnlyList<string> Dishes { get; init; } = [];
+}
 
 public sealed record PlottedCatalogPoint(CatalogMapPoint Place, double X, double Y);
 

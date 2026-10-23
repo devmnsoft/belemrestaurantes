@@ -112,67 +112,8 @@ if (el('go') && el('query') && el('client-text')) {
   load();
 }
 
-// Cuia IA Sommelier Widget (Estabelecimentos)
+// Shared public page actions. Concierge advice is handled exclusively by cuia-advice.js.
 document.addEventListener('DOMContentLoaded', () => {
-  const sommelierBtn = document.getElementById('btn-ask-sommelier');
-  if (sommelierBtn) {
-    sommelierBtn.addEventListener('click', async () => {
-      const restId = sommelierBtn.dataset.restaurantId;
-      const adviceEl = document.getElementById('ai-restaurant-advice');
-      if (!restId || !adviceEl) return;
-      sommelierBtn.disabled = true;
-      const originalText = sommelierBtn.innerHTML;
-      sommelierBtn.innerHTML = '<span>Consultando Chef Cuia IA... ⏳</span>';
-      try {
-        const res = await fetch(`/api/cuia-ia/dica-restaurante/${encodeURIComponent(restId)}`);
-        if (!res.ok) throw new Error('Não foi possível obter a dica no momento.');
-        const data = await res.json();
-        adviceEl.innerHTML = `
-          <div style="padding:14px;background:rgba(255,255,255,0.08);border-radius:10px;margin-top:10px;">
-            <p style="margin:0 0 8px;font-size:1.05rem;">${escapeHtml(data.advice || '').replace(/\n/g, '<br/>')}</p>
-            <small style="opacity:0.8;color:#ffe2a0;">⚡ Fonte: ${escapeHtml(data.engine || 'Cuia IA')} · Pará à Mesa</small>
-          </div>
-        `;
-        sommelierBtn.innerHTML = '<span>Dica Atualizada ✨</span>';
-      } catch (err) {
-        adviceEl.innerHTML = `<p style="color:#ffb3a0;">${escapeHtml(err.message || 'Erro ao consultar dica.')}</p>`;
-        sommelierBtn.innerHTML = originalText;
-      } finally {
-        sommelierBtn.disabled = false;
-      }
-    });
-  }
-
-  // Cuia IA Chef Widget (Receitas)
-  const recipeChefBtn = document.getElementById('btn-ask-recipe-chef');
-  if (recipeChefBtn) {
-    recipeChefBtn.addEventListener('click', async () => {
-      const slug = recipeChefBtn.dataset.recipeSlug;
-      const adviceEl = document.getElementById('ai-recipe-advice');
-      if (!slug || !adviceEl) return;
-      recipeChefBtn.disabled = true;
-      const originalText = recipeChefBtn.innerHTML;
-      recipeChefBtn.innerHTML = '<span>Consultando Chef Cuia IA... ⏳</span>';
-      try {
-        const res = await fetch(`/api/cuia-ia/dica-receita/${encodeURIComponent(slug)}`);
-        if (!res.ok) throw new Error('Não foi possível obter a dica no momento.');
-        const data = await res.json();
-        adviceEl.innerHTML = `
-          <div style="padding:14px;background:rgba(255,255,255,0.08);border-radius:10px;margin-top:10px;">
-            <p style="margin:0 0 8px;font-size:1.05rem;">${escapeHtml(data.advice || '').replace(/\n/g, '<br/>')}</p>
-            <small style="opacity:0.8;color:#ffe2a0;">⚡ Fonte: ${data.engine} · Caderno do Pará</small>
-          </div>
-        `;
-        recipeChefBtn.innerHTML = '<span>Dica do Chef Pronta ✨</span>';
-      } catch (err) {
-        adviceEl.innerHTML = `<p style="color:#ffb3a0;">${escapeHtml(err.message || 'Erro ao consultar dica.')}</p>`;
-        recipeChefBtn.innerHTML = originalText;
-      } finally {
-        recipeChefBtn.disabled = false;
-      }
-    });
-  }
-
   // Quick Share Button Handler
   document.querySelectorAll('[data-copy-url="true"]').forEach(btn => {
     btn.addEventListener('click', async () => {

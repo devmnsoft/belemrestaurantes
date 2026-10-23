@@ -59,4 +59,7 @@ public interface IEnrichmentService
 
     /// <summary>Enfileira publicados sem foto para busca no Wikimedia Commons.</summary>
     Task<int> EnqueueLicensedPhotoSweepAsync(int limit, CancellationToken ct);
+
+    /// <summary>Enfileira fichas incompletas sem duplicar pendências nem reprocessar o que acabou de concluir.</summary>
+    Task<int> EnqueueIncompleteProfilesAsync(int limit, CancellationToken ct);
 }

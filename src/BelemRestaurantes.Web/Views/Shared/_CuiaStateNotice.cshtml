@@ -1,0 +1,6 @@
+@model BelemRestaurantes.Application.Abstractions.CuiaAiResponse
+@if (Model.AnswerKind is not ("limite" or "esclarecimento") && Model.GenerationStatus is not ("ok" or "reference_answer" or "evidence_limited"))
+{
+  <p class="cuia-local-notice" role="status">@(Model.GenerationStatus == "timeout" ? "A IA demorou mais que o esperado. Você pode reenviar a pergunta; abaixo está a orientação local." : Model.GenerationStatus is "credential_error" or "model_unavailable" ? "O serviço de IA está temporariamente indisponível. A orientação abaixo é local." : Model.GenerationStatus == "session_limit" ? "O limite de IA desta sessão foi atingido. Você pode continuar usando as orientações locais e os serviços do portal." : Model.GenerationStatus == "quota_exhausted" ? "A cota de IA desta consulta foi atingida. A orientação abaixo é local, sem geração por IA." : "A IA não respondeu nesta consulta. A resposta abaixo usa o catálogo e as referências identificadas.")</p>
+}
+
