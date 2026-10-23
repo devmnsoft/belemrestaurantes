@@ -1,0 +1,51 @@
+SPRINT 68 — EVIDÊNCIA AO VIVO (23/10/2026)
+==========================================
+
+O mistério
+----------
+Todo boot do Worker logava "Aplicação de migrações desativada (Database:ApplyMigrations=false)"
+apesar de src\BelemRestaurantes.Worker\appsettings.json E appsettings.Development.json declararem
+"Database": { "ApplyMigrations": true }. Determinístico em todas as gerações anteriores. Consequência
+prática documentada: migrações do banco real só entravam via boot da Web, testes de integração ou as
+flags one-shot do CLI (--geocode-pending / --collect-culinary).
+
+Investigação (23/10, ~12:50–13:15 UTC)
+--------------------------------------
+1. Nova geração (bin recém-compilado com --no-incremental) ainda logava false -> descartada cópia
+   obsoleta de appsettings no bin.
+2. Variáveis de ambiente Database__ApplyMigrations e Database_ApplyMigrations: vazias nos três
+   escopos (processo/usuário/máquina).
+3. Chave lida corretamente no código: configuration.GetValue<bool>("Database:ApplyMigrations", false)
+   em Program.cs (MigrationHostedService); a Web lê a mesma chave e resolve true.
+4. ACERTO — %APPDATA%\Microsoft\UserSecrets\belemrestaurantes-worker\secrets.json continha:
+       "Database:ApplyMigrations": false
+   User-secrets têm precedência ACIMA dos dois appsettings versionados na cadeia de configuração.
+   Histórico: a chave era intencional na configuração local da Sprint 48 (Worker não aplicava
+   migrações na época; LOCAL-WORKER.md a documentava) e ficou stale quando o design mudou
+   (Worker aplica no boot, serializado por GET_LOCK no banco). O cofre da Web não tem a chave;
+   um app console de probe é outra assembly (outro cofre) -> ambas as fontes secundárias resolviam
+   true, o que explica todas as observações até aqui.
+
+Evidência ao vivo (binário novo com o diagnóstico permanente)
+--------------------------------------------------------------
+Passada A — log artifacts/worker-local/20261023-132045-158.log (~13:20:45Z), cofre ainda com a chave:
+  warn: BelemRestaurantes.Worker.ConfigurationDiagnosticsService[0]
+        Database:ApplyMigrations está sendo sobrescrito por fonte de maior precedência
+        (user-secrets, variável de ambiente ou linha de comando): appsettings=True, efetivo=False.
+        Confira 'dotnet user-secrets list --id belemrestaurantes-worker'.
+  info: BelemRestaurantes.Worker.MigrationHostedService[0]
+        Aplicação de migrações desativada (Database:ApplyMigrations=false).
+  -> o novo diagnóstico nomeia a sobreposição já no primeiro boot.
+
+Correção: dotnet user-secrets remove "Database:ApplyMigrations" --id belemrestaurantes-worker
+  - chave verificada ausente do secrets.json após a remoção;
+  - nenhuma outra entrada do cofre alterada; nada versionado carrega o valor.
+
+Passada B — geração final, supervisor 37164 / worker 47376 (log
+artifacts/worker-local/20261023-132131-489.log, boot 13:21:31Z):
+  info: BelemRestaurantes.Worker.MigrationHostedService[0]
+        Migrações verificadas: 0 aplicadas, 50 já em vigor.
+  -> gate habilitado; MigrationRunner executou a verificação completa contra o banco local
+     (os 50 scripts embutidos conferidos; nenhum pendente). Sem aviso de sobreposição.
+  Estado verificado ~13:22Z: processo único (filtro de linha de comando dotnet.exe) e
+  worker_heartbeats state='running' para a instância 47376; geração anterior marcada 'stopped'.

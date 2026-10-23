@@ -1,5 +1,7 @@
 # Belém Restaurantes — O Pará tem sabor
 
+> **Sprint 68 — o Worker aplica migrações de novo:** o "Database:ApplyMigrations=false" de todo boot era uma chave stale no cofre local de user-secrets (fora do repositório) da era em que o Worker não aplicava schema — a sobreposição silenciosa agora tem nome: `ConfigurationDiagnosticsService` avisa no boot quando qualquer fonte de maior precedência diverge dos appsettings, e o runner roda serializado por lock no banco. Consulte [relatório e evidência ao vivo](docs/SPRINT68-REPORT.md).
+>
 > **Sprint 67 — frescor sticky dos espelhos Overpass:** a idade dos dados de cada espelho passa a ser observada por processo (`osm3s.timestamp_osm_base` de toda resposta real); dentro da janela configurada (60 min) um espelho comprovado com dado mais velho que 14 dias não recebe requisição nem consome cadência, e quando todos estão confirmados velhos o ciclo adia a ficha **antes** de reservar cota — zero unidade do teto, zero HTTP. Consulte [relatório e evidência ao vivo](docs/SPRINT67-REPORT.md).
 >
 > **Sprint 66 — cache de consulta:** a resposta real do Nominatim para (endereço, cidade) servida hoje é rejogada dentro do mesmo dia UTC sem consumir o teto diário — chave SHA-256 da consulta exata, só respostas de fato bem-sucedidas (falhas/restrições nunca congelam); endereços duplicados (~3,3 mil fichas pendentes) e o segundo olhar só-do-logradouro custam zero cota após a primeira resposta. Consulte [relatório e evidência ao vivo](docs/SPRINT66-REPORT.md).

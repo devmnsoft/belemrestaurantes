@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\src\BelemRestaurantes.Domain\BelemRestaurantes.Domain.csproj" />
     <ProjectReference Include="..\..\src\BelemRestaurantes.Application\BelemRestaurantes.Application.csproj" />
     <ProjectReference Include="..\..\src\BelemRestaurantes.Infrastructure\BelemRestaurantes.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\BelemRestaurantes.Worker\BelemRestaurantes.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>
