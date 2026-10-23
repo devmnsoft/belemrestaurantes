@@ -1,0 +1,31 @@
+Sprint 74 — evidência ao vivo
+Execução local (Windows, Release --no-incremental, ASPNETCORE_ENVIRONMENT=Development, http://localhost:63861), 23/10/2026 ~22:0x–22:2x UTC.
+Logs do processo em %TEMP%\opencode\belemweb-s74b.log; streams crudos em %TEMP%\opencode\drael-trace-probe-*.txt.
+
+1) SONDAS DIRETAS NA API DRAEL (payload idêntico ao da Cuia, mesma chave do cofre web):
+   sonda 0: 12.951 ms, http=200, finish_reason=stop, rastro "drael":{"used":["web_search"]} presente, fontes reais
+   sonda 3: 17.193 ms, http=200, finish_reason=stop, rastro presente, fontes reais
+   => a API rastreia corretamente e responde; a variância real (12,9–17,2 s) excede o orçamento fixo de 15 s em parte das chamadas.
+   Concorrência: 2 chamadas simultâneas — uma retorna rate_limit_error {"code":"turns_in_flight"}
+   ("this account already has as many answers being written as it may at once") — limite de respostas simultâneas da conta;
+   o cliente já degrada (429 -> quota_exhausted; corpo JSON fora do stream -> invalid_response).
+
+2) CUIA AO VIVO COM O BINÁRIO CORREGIDO (orçamento 20 s, motivo no log):
+   GET /cuia-ia?q=onde comer tacaca em Belem s74c0&searchWeb=true -> HTTP 200 em 12715 ms
+   log: "Cuia culinária: pesquisa provedor brave+drael+public_sites, estado ok, 3 fontes."
+   Fontes renderizadas na página (hrefs reais do corpo HTML):
+     https://revistaquem.globo.com/comida/noticia/2026/02/tacaca-manicoba-e-acai-veja-onde-comer-o-melhor-da-culinaria-paraense-em-belem.ghtml
+     https://www.oliberal.com/belem/onde-tomar-tacaca-veja-6-lugares-imperdiveis-em-belem-1.821837
+     https://www.uol.com.br/nossa/noticias/redacao/2025/10/15/onde-tomar-um-tacaca-melhores-lugares-de-belem-do-para-por-marina-cabral.htm
+   Repetição idêntica da pergunta: HTTP 200 em 290 ms (cache de pesquisa reutilizado).
+   Antecedente (Sprint 73, orçamento 15 s): mesma classe de pergunta terminou com estado "unavailable", 0 fontes, sem motivo visível.
+
+3) CONTADORES DE COTA (external_free_usage, período diário 20261023) medidos ~22:18 UTC:
+   drael_search        5  (22:17:44 -> exatamente 1 unidade por fan-out inédito; repetições em cache não reservam)
+   cuia_drael         20  (00:18:25 -> congelado: geração segue intocada pelas buscas)
+   public_site_search 30  (00:24:59 -> congelado)
+   wikipedia_search   2   (18:16:14 -> congelado na janela desta Sprint)
+
+4) PÓS-DIAGNÓSTICO DA SPRINT 73 (o que estava acontecendo por baixo):
+   O gate terminal (rastro web_search + finish_reason stop) funcionava; o que matava a busca era o CancelAfter(15 s)
+   cortando o stream ao vivo (medição: 17,19 s > 15 s). O FailureCode "timeout" já era produzido mas nenhum log o mostrava.

@@ -37,6 +37,8 @@ public sealed class CuiaAiService(
             {
                 remote=await webSearch.SearchAsync(CulinaryQuery.ResearchQuery(prompt,topic),deadline.Token);
                 remote=remote with{Sources=SearchRanking.Merge(topic,remote.Sources)};
+                if(remote.Sources.Count==0&&remote.FailureCode is not null)logger.LogInformation("Cuia culinária: pesquisa estado {Status}, {Sources} fontes, motivo {Motivo}.",remote.Status,remote.Sources.Count,remote.FailureCode);
+                else logger.LogInformation("Cuia culinária: pesquisa provedor {Provider}, estado {Status}, {Sources} fontes.",remote.Provider??"configured",remote.Status,remote.Sources.Count);
                 await culinary.EnqueueAsync(remote.Sources.Select(s=>s.Url),topic,deadline.Token);
             }
             catch(OperationCanceledException)when(ct.IsCancellationRequested){throw;}
@@ -212,13 +214,15 @@ public sealed class CuiaAiService(
                 // A etapa culinária já executou a pesquisa desta consulta com o termo mais específico;
                 // reutilizar evita pagar cota e tempo de web duas vezes pela mesma pergunta (Sprint 73).
                 search = priorWeb;
-                logger.LogInformation("Cuia pesquisa: reutilizada da etapa culinária, estado {Status}, {Sources} fontes.",search.Status,search.Sources.Count);
+                if(search.Sources.Count==0&&search.FailureCode is not null)logger.LogInformation("Cuia pesquisa: reutilizada da etapa culinária, estado {Status}, {Sources} fontes, motivo {Motivo}.",search.Status,search.Sources.Count,search.FailureCode);
+                else logger.LogInformation("Cuia pesquisa: reutilizada da etapa culinária, estado {Status}, {Sources} fontes.",search.Status,search.Sources.Count);
             }
             else
             {
             var searchQuery = CuiaConversation.SearchQuery(prompt,anchor,detectedCity);
             try {var phase=System.Diagnostics.Stopwatch.GetTimestamp();search = await webSearch!.SearchAsync(searchQuery, ct);
-                logger.LogInformation("Cuia pesquisa: provedor {Provider}, estado {Status}, {Sources} fontes, {ElapsedMs} ms.",search.Provider??"configured",search.Status,search.Sources.Count,(int)System.Diagnostics.Stopwatch.GetElapsedTime(phase).TotalMilliseconds); }
+                if(search.Sources.Count==0&&search.FailureCode is not null)logger.LogInformation("Cuia pesquisa: provedor {Provider}, estado {Status}, {Sources} fontes, motivo {Motivo}, {ElapsedMs} ms.",search.Provider??"configured",search.Status,search.Sources.Count,search.FailureCode,(int)System.Diagnostics.Stopwatch.GetElapsedTime(phase).TotalMilliseconds);
+                else logger.LogInformation("Cuia pesquisa: provedor {Provider}, estado {Status}, {Sources} fontes, {ElapsedMs} ms.",search.Provider??"configured",search.Status,search.Sources.Count,(int)System.Diagnostics.Stopwatch.GetElapsedTime(phase).TotalMilliseconds); }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
             catch (Exception ex)
             {

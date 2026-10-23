@@ -108,7 +108,7 @@ public sealed class CompositeWebSearch(TavilyWebSearch general,PublicKnowledgeWe
             var results=await Task.WhenAll(requests);
             var sources=BelemRestaurantes.Application.Services.SearchRanking.Merge(query,results.SelectMany(r=>r.Sources)).ToArray();
             var failure=results.FirstOrDefault(r=>r.Status!="not_configured"&&r.Status!="empty");
-            var result=new WebSearchResult(sources.Length>0?(sources.All(s=>s.SourceKind=="encyclopedia")?"public_sources":"ok"):failure?.Status??"empty",sources){Provider=string.Join("+",results.Select(r=>r.Provider).Where(p=>p is not null).Distinct())};
+            var result=new WebSearchResult(sources.Length>0?(sources.All(s=>s.SourceKind=="encyclopedia")?"public_sources":"ok"):failure?.Status??"empty",sources){Provider=string.Join("+",results.Select(r=>r.Provider).Where(p=>p is not null).Distinct()),FailureCode=sources.Length==0?failure?.FailureCode:null};
             cache?.Set(key,result,TimeSpan.FromSeconds(result.Sources.Count>0?1200:result.Status=="empty"?120:20));
             return result; // Each adapter independently enforces its configured quotas; no limit is increased.
         }

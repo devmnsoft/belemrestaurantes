@@ -12,6 +12,10 @@ public sealed class DraelOptions
     public bool SearchEnabled{get;set;}
     public int DailyRequestLimit{get;set;}=20;
     public int MonthlyRequestLimit{get;set;}=200;
+    // Busca nativa medida ao vivo entre 12,9 s e 17,2 s nesta conta (Sprint 74); 20 s cobre com folga sem travar a pergunta.
+    public int SearchTimeoutSeconds{get;set;}=20;
+    // Completão simples mediu ~1 s; 24 s mantém folga histórica para sínteses longas.
+    public int CompleteTimeoutSeconds{get;set;}=24;
     public bool Ready=>Enabled&&PlanConfirmed&&!string.IsNullOrWhiteSpace(ApiKey);
 }
 public sealed record DraelReply(string Content,int InputTokens,int OutputTokens,bool Searched,bool Valid);
@@ -27,8 +31,9 @@ public sealed class DraelClient(HttpClient http,DraelOptions options)
         request.Headers.Authorization=new AuthenticationHeaderValue("Bearer",options.ApiKey);
         request.Headers.Add("X-Drael-What-Ran","1");
         request.Content=new StringContent(JsonSerializer.Serialize(payload),Encoding.UTF8,"application/json");
-        // Prazo interativo: a pesquisa com ferramenta nativa mediu ~11 s ao vivo; 15 s cobre com folga sem travar a pergunta inteira (Sprint 73).
-        using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct);timeout.CancelAfter(TimeSpan.FromSeconds(search?15:24));
+        // Prazo interativo configurável (Ai:Drael): com 15 s fixos, a busca nativa (medida entre 12,9 s e 17,2 s ao vivo) era cortada no meio do stream e virava "unavailable" sem motivo visível (Sprint 74).
+        // A conta limita respostas simultâneas; colisão chega como rate_limit_error ("turns_in_flight") e já degrada para quota_exhausted/unavailable abaixo.
+        using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct);timeout.CancelAfter(TimeSpan.FromSeconds(search?Math.Clamp(options.SearchTimeoutSeconds,1,60):Math.Clamp(options.CompleteTimeoutSeconds,1,120)));
         using var response=await http.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,timeout.Token);
         if(!response.IsSuccessStatusCode)throw new AiProviderFailureException(AiProvider.Drael,(int)response.StatusCode);
         await using var stream=await response.Content.ReadAsStreamAsync(timeout.Token);using var reader=new StreamReader(stream);
