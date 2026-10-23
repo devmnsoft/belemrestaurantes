@@ -1,5 +1,7 @@
 # Belém Restaurantes — O Pará tem sabor
 
+> **Sprint 67 — frescor sticky dos espelhos Overpass:** a idade dos dados de cada espelho passa a ser observada por processo (`osm3s.timestamp_osm_base` de toda resposta real); dentro da janela configurada (60 min) um espelho comprovado com dado mais velho que 14 dias não recebe requisição nem consome cadência, e quando todos estão confirmados velhos o ciclo adia a ficha **antes** de reservar cota — zero unidade do teto, zero HTTP. Consulte [relatório e evidência ao vivo](docs/SPRINT67-REPORT.md).
+>
 > **Sprint 66 — cache de consulta:** a resposta real do Nominatim para (endereço, cidade) servida hoje é rejogada dentro do mesmo dia UTC sem consumir o teto diário — chave SHA-256 da consulta exata, só respostas de fato bem-sucedidas (falhas/restrições nunca congelam); endereços duplicados (~3,3 mil fichas pendentes) e o segundo olhar só-do-logradouro custam zero cota após a primeira resposta. Consulte [relatório e evidência ao vivo](docs/SPRINT66-REPORT.md).
 >
 > **Sprint 65 — cache negativo de logradouro:** quando uma busca real de nível de logradouro confirma que um logradouro+cidade não tem candidato no OSM, a conclusão é persistida (`geocoding_street_cache`, janela de 7 dias) e as próximas fichas do mesmo escopo são encerradas como `no_candidates_street` gastando zero unidades do teto diário — sem o cache, cada ficha redescobria a mesma ausência por 1–2 unidades. Consulte [relatório e evidência ao vivo](docs/SPRINT65-REPORT.md).

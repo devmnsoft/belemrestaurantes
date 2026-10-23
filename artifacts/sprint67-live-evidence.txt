@@ -1,0 +1,63 @@
+SPRINT 67 — EVIDÊNCIA AO VIVO (23/10/2026)
+==========================================
+
+Gerações executadas:
+- Janela de observação: supervisor 44312 / worker 39600, ciclo de geocodificação acelerado para
+  2 min via env Worker__Geocoding__IntervalMinutes (apenas neste processo).
+- Geração final: supervisor 50192 / worker 34232, padrões do appsettings.json (ciclo 10 min).
+- Processo único verificado em ambas (filtro de linha de comando dotnet.exe); heartbeat
+  worker_heartbeats: geração anterior marcada `stopped`, atual `running`.
+
+t0 — 2026-10-23 11:04:28.137716 UTC (Worker novo binário ainda parado)
+-----------------------------------------------------------------------
+geocoding_tasks por estado/motivo:
+  pending NULL                   16855
+  pending unsupported_type         182
+  pending overpass_stale_data       87   <- presas na fila desde os dias da Sprint 62
+                                            (relatório 66 citava 68; cresceram com os retries)
+  skipped no_candidates             62
+  pending daily_limit               57
+  completed rooftop                 45   (e demais estados de menor volume)
+geocoding_runs 2026-10-23: granted = 301  (teto diário 300 JÁ ESGOTADO para o dia UTC)
+
+Sonda manual dos três espelhos, mesma máquina, 11:04:59 UTC
+(query mínima [out:json][timeout:5];out 1;, timeout local 25 s):
+  overpass-api.de       -> tempo limite excedido (indisponível no momento)
+  overpass.kumi.systems -> tempo limite excedido (indisponível no momento)
+  overpass.osm.ch       -> respondeu; osm3s.timestamp_osm_base = "117936"
+                           (nem ISO-8601 nem epoch plausível em segundos -> idade ilegível
+                            -> conservadoramente ESTALE pela regra da Sprint 62)
+=> no momento da escrita, nenhum espelho do trio servia dado fresco e legível — o cenário
+   exato que a Sprint 67 ataca.
+
+Ciclos do novo binário (stdout espelhado em artifacts/worker-local/<stamp>.log):
+  ~11:06:45Z "Geocodificação: 0 enfileiradas, 1 processadas, 0 coordenadas aplicadas, 0 rejeitadas, 1 adiadas."
+  ~11:08:45Z (idêntico)
+  ~11:10:13Z (idêntico)
+
+Pós-ciclos — 2026-10-23 11:10:13.993615 UTC
+-------------------------------------------
+geocoding_runs 2026-10-23: requested = 356, granted = 301
+  => todas as tentativas novas de reserva foram rejeitadas pela condição atômica granted<300:
+     ZERO unidade concedida a mais; nenhuma ficha adiada custou cota no período.
+  => daily_limit: 57 -> 60 (+3 = as 3 fichas processadas pelos ciclos acima).
+  => overpass_stale_data segue em 87 (em backoff, sem consumo extra).
+
+Leitura final — 2026-10-23 11:11:08.038504 UTC (geração 50192/34232 já rodando com padrões)
+----------------------------------------------------------------------------------------------
+geocoding_runs 2026-10-23: requested = 357, granted = 301  (invariante mantida)
+pending daily_limit = 61 (+1 nova), overpass_stale_data = 87, unsupported_type = 182.
+
+Leitura honesta do alcance desta evidência
+------------------------------------------
+O curto-circuito zero-custo de S67 (AllMirrorsKnownStale consultado ANTES da reserva) só pode
+acender dentro de um processo após uma resposta real ter confirmado o espelho velho. Com o
+teto de 23/10 esgotado (301/300), nenhum probe financiado foi possível hoje: as observações
+sticky serão gravadas a partir de 00:00 UTC de 24/10 — no máximo 1 probe por espelho (3 no
+total, uma única vez por janela de 60 min) — e todo adiamento overpass_stale_data subsequente
+custa zero unidade do teto e zero requisição. O mecanismo completo (pulo por espelho
+confirmado velho dentro da janela, early-return sem rede quando todos estão confirmados,
+registro por resposta com cura fresca, expiração da janela, janela < 1 min desligando o pulo,
+falha real continuando `unavailable(...)`) está coberto pelos 9 testes
+Sprint67OverpassFreshnessTests aprovados + regressão total das suítes (507 unitários, 238
+integração + 1 ignorado pré-existente).

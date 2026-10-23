@@ -31,6 +31,13 @@ public sealed record OverpassLookupResult(
 public interface IOsmBuildingSource
 {
     Task<OverpassLookupResult> BuildingsNearAsync(double latitude, double longitude, int radiusMeters, CancellationToken ct);
+
+    /// <summary>Sprint 67 — frescor sticky: <c>true</c> quando todos os espelhos configurados tiveram o dado
+    /// mais velho que 14 dias confirmado recentemente, dentro da janela de observação
+    /// (<see cref="OverpassOptions.StaleMirrorWindowMinutes"/>). Enquanto isso vale,
+    /// <see cref="BuildingsNearAsync"/> responde sem requisição de rede e o ciclo pode adiar a ficha
+    /// sem consumir unidade do teto diário.</summary>
+    bool AllMirrorsKnownStale { get; }
 }
 
 /// <summary>Movimento do ciclo: enfileiradas, processadas, coordenadas aplicadas, rejeitadas e adiadas.</summary>

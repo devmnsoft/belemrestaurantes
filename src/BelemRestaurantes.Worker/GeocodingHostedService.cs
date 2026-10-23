@@ -143,11 +143,15 @@ public sealed class GeocodingHostedService(IServiceScopeFactory scopes, IConfigu
                     var anchor = GeocodingRules.FindStreetAnchor(task.Address, pool);
                     if (anchor is not null)
                     {
-                        if (!await queue.TryReserveDailyAsync(options.DailyLimit, ct))
+                        var overpass = services.GetRequiredService<IOsmBuildingSource>();
+                        // Sprint 67 — frescor sticky: espelhos todos confirmados velhos dentro da janela — adia a
+                        // ficha sem consumir unidade do teto nem enviar requisição.
+                        if (overpass.AllMirrorsKnownStale)
+                        { terminal = false; status = "overpass_stale_data"; }
+                        else if (!await queue.TryReserveDailyAsync(options.DailyLimit, ct))
                         { terminal = false; status = "daily_limit"; }
                         else
                         {
-                            var overpass = services.GetRequiredService<IOsmBuildingSource>();
                             var lookup = await overpass.BuildingsNearAsync(anchor.Latitude, anchor.Longitude, options.OverpassRadiusMeters, ct);
                             if (!lookup.SourceAvailable) { terminal = false; status = lookup.FailureReason ?? "overpass_unavailable"; }
                             else
