@@ -1,0 +1,3 @@
+﻿B=[out:json][timeout:20];(nwr["building"](around:80,-1.458131,-48.494855);nwr["shop"="restaurant"](around:80,-1.458131,-48.494855));out center tags;
+
+DOC=[out:json][timeout:20];(node(around:50,-1.47,-48.5);way(around:50,-1.47,-48.5));out 1;

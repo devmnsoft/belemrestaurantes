@@ -1,0 +1,52 @@
+Sprint 66 — evidência ao vivo do cache de consulta Nominatim (2026-10-23, UTC)
+=================================================================================
+
+Contexto
+--------
+Worker supervisionado anterior (binário S65, PID 976) seguiu ativo até 02:17 UTC e,
+no início do dia UTC novo, consumiu 225 unidades processando a fila (aplicou 13
+rooftops por confirmação em espelho antigo — caminho válido da Sprint 62).
+Parado para a compilação da Sprint 66 às 02:17 UTC.
+
+Passada A — ficha 555 (PASSAGEM SANTA MATILDE, Belém; attempts zerado, próxima da fila)
+---------------------------------------------------------------------------------------
+  Base (2026-10-23 UTC): granted = 225
+  dotnet run ... -- --geocode-pending => {"Enqueued":0,"Processed":1,"Placed":0,"Skipped":0,"Deferred":1}
+  (env Worker__Geocoding__BatchSize=1; DailyLimit padrão 300 — o dia ainda tinha 75 unidades)
+  Efeito: Nominatim real (+1) → logradouro encontrado (unsupported_type) → Overpass real (+1,
+  espelho antigo) → adiada overpass_stale_data (attempts 0→1).
+  geocoding_query_cache ganhou a linha da consulta de 555 (payload 180 bytes = pool do logradouro).
+
+Passada B — primeiro elegível da fila (outra ficha, rua morta)
+--------------------------------------------------------------
+  dotnet run ... -- --geocode-pending => {"Enqueued":0,"Processed":1,"Placed":0,"Skipped":1,"Deferred":0}
+  A ficha 555 (next_run=agora) PERDEU para outra linha com backoff já expirado (claim por
+  next_run_at asc). Aquela ficha pagou Nominatim real (+1) vazio + só-logradouro real (+1) vazio
+  e terminou no_candidates_street; as duas consultas vazias foram para o cache (payload "[]").
+  granted: 225 → 229.
+
+Passada C — ficha 555 de novo, FORÇADA à frente (next_run 2019), replay esperado
+-------------------------------------------------------------------------------
+  antesC: granted 229 | hits da linha de 555 = 0
+  dotnet run ... -- --geocode-pending => {"Enqueued":0,"Processed":1,"Placed":0,"Skipped":0,"Deferred":1}
+  aposC:  granted 230  <- +1 unidade (só o Overpass; o Nominatim foi REJOGADO do cache)
+          ficha 555: pending attempts=2 overpass_stale_data
+          geocoding_query_cache: linha de 555 com hits=1
+
+Leitura econômica
+-----------------
+  Mesma ficha, mesma consulta, mesmo dia UTC:
+    Passada A (resposta real):   +2 unidades (Nominatim + Overpass)
+    Passada C (replay):          +1 unidade (Overpass)          <- Nominatim custou zero
+  O ganho cresce sozinho: consultas idênticas de OUTRAS fichas (endereços duplicados — 3.309
+  fichas pendentes em pares exatos, ~2.200 consultas redundantes) e do segundo olhar
+  (mesmo logradouro respondido uma vez serve para todas as fichas da rua) agora custam zero
+  unidade até virar o dia UTC.
+
+Semântica
+---------
+Nada foi inventado: o replay é byte-fiel à consulta exata (chave SHA-256 da própria string que
+o /search recebe), válida apenas no dia UTC em que a resposta real ocorreu. Falhas e
+restrições de robots nunca são armazenadas. Nenhuma coordenada nova nesta evidência (a ficha
+555 segue aguardando espelho fresco do Overpass; com attempts=2, o terceiro adiamento a leva
+a 'failed' terminal, retomável pelo painel).

@@ -1,0 +1,5 @@
+﻿{"RestaurantId":6340,"Reverted":true,"Latitude":-1.4545559,"Longitude":-48.4741902,"Source":"OpenStreetMap via Nominatim (objeto 13072894)"}
+
+{"Enqueued":0,"Processed":10,"Placed":0,"Skipped":10,"Deferred":0}
+
+CAST(latitude AS DOUBLE)	CAST(longitude AS DOUBLE)	coordinate_precision	coordinate_source NULL	NULL	NULL	NULL state	last_status	result_precision	osm_place_id skipped	reverted_by_admin	NULL	NULL

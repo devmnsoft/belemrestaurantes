@@ -24,7 +24,7 @@ public class CuiaExperienceV5Tests
     public void Migrations_AreSequentialAndNonEmpty()
     {
         var scripts = MigrationRunner.LoadScripts();
-        Assert.Equal(33, scripts.Count);
+        Assert.Equal(49, scripts.Count);
 
         for (int i = 0; i < scripts.Count; i++)
         {

@@ -1,0 +1,4 @@
+﻿A build+amenity -> BadRequest elementos=? line 1: parse error: ';' expected - ')' found.
+B build+shop -> BadRequest elementos=? line 1: parse error: ';' expected - ')' found.
+C build+addr -> BadRequest elementos=? line 1: parse error: ';' expected - ')' found.
+D amenity alone -> OK elementos=0 

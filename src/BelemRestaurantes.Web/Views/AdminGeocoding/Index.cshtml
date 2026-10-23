@@ -1,0 +1,217 @@
+@model BelemRestaurantes.Web.Controllers.GeocodingAdminPage
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Geocodificação autônoma - MNSOFT";
+    var estados = new (string Code, string Label)[]
+    {
+        ("", "Todos os estados"),
+        ("pending", "Pendente"),
+        ("running", "Processando"),
+        ("completed", "Completada"),
+        ("failed", "Falhou"),
+        ("skipped", "Rejeitada")
+    };
+    var pagina = Model.Page;
+    string Filtro(int? paginaAlvo = null)
+    {
+        var qs = $"state={Uri.EscapeDataString(Model.State ?? "")}&q={Uri.EscapeDataString(Model.Search ?? "")}";
+        if (paginaAlvo is { } p && p > 1) qs += $"&page={p}";
+        return $"/admin/geocodificacao?{qs}";
+    }
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-forest text-decoration-none">Admin</a></li>
+                    <li class="breadcrumb-item active">Geocodificação autônoma</li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold text-forest mb-0">Geocodificação autônoma (OpenStreetMap)</h1>
+            <p class="text-muted small mb-0">Fichas sem coordenada são localizadas pelo Worker via Nominatim/OSM com regras rígidas. Rejeição é terminal e volta à fila só por ação humana aqui.</p>
+        </div>
+        <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Painel MNSOFT
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2 col-xl"><div class="card border-0 shadow-sm rounded-3 p-3 text-center"><div class="fs-4 fw-bold text-forest">@Model.Summary.Pending</div><div class="small text-muted">Pendente na fila</div></div></div>
+        <div class="col-6 col-md-2 col-xl"><div class="card border-0 shadow-sm rounded-3 p-3 text-center"><div class="fs-4 fw-bold text-forest">@Model.Summary.Running</div><div class="small text-muted">Em processamento</div></div></div>
+        <div class="col-6 col-md-2 col-xl"><div class="card border-0 shadow-sm rounded-3 p-3 text-center"><div class="fs-4 fw-bold text-success">@Model.Summary.Completed</div><div class="small text-muted">Coordenada aplicada</div></div></div>
+        <div class="col-6 col-md-2 col-xl"><div class="card border-0 shadow-sm rounded-3 p-3 text-center"><div class="fs-4 fw-bold text-danger">@Model.Summary.Failed</div><div class="small text-muted">Falhou após 3 tentativas</div></div></div>
+        <div class="col-6 col-md-2 col-xl"><div class="card border-0 shadow-sm rounded-3 p-3 text-center"><div class="fs-4 fw-bold text-warning">@Model.Summary.Skipped</div><div class="small text-muted">Rejeitada com motivo</div></div></div>
+        <div class="col-6 col-md-2 col-xl"><div class="card border-0 shadow-sm rounded-3 p-3 text-center"><div class="fs-4 fw-bold text-forest">@Model.Summary.UsedToday</div><div class="small text-muted">Requisições ao Nominatim hoje</div></div></div>
+        <div class="col-6 col-md-2 col-xl"><div class="card border-0 shadow-sm rounded-3 p-3 text-center"><div class="fs-4 fw-bold text-success">@Model.Summary.RooftopApplied</div><div class="small text-muted">Rooftop nas fichas</div></div></div>
+        <div class="col-6 col-md-2 col-xl"><div class="card border-0 shadow-sm rounded-3 p-3 text-center"><div class="fs-4 fw-bold text-info">@Model.Summary.ApproximateApplied</div><div class="small text-muted">Approximate nas fichas</div></div></div>
+    </div>
+
+    @if (Model.Summary.SkipReasons.Count > 0)
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+            <h2 class="h6 fw-bold text-forest mb-0">Motivos de rejeição nas linhas terminais</h2>
+            <p class="text-muted small mb-2">Devolver um motivo inteiro não consome cota agora: a reserva no Nominatim/Overpass só acontece quando o ciclo consulta.</p>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var motivo in Model.Summary.SkipReasons)
+                {
+                    <div class="border rounded-3 p-2 d-flex align-items-center gap-2 bg-white">
+                        <span class="badge text-bg-warning fw-normal">@motivo.Key</span>
+                        <span class="fw-semibold small">@motivo.Value ficha(s)</span>
+                        <form method="post" action="/admin/geocodificacao/reenfileirar-por-motivo" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="motivo" value="@motivo.Key" />
+                            <button type="submit" class="btn btn-outline-primary btn-sm py-0" title="Devolve à fila as rejeições/falhas terminais com este motivo cuja ficha ainda não tem coordenada"><i class="bi bi-arrow-repeat me-1"></i>Re-enfileirar</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <form method="get" action="/admin/geocodificacao" class="row g-2 align-items-end mb-3">
+            <div class="col-auto">
+                <label class="form-label small mb-1" for="filtro-state">Estado</label>
+                <select id="filtro-state" name="state" class="form-select form-select-sm">
+                    @foreach (var (code, label) in estados)
+                    {
+                        <option value="@code" selected="@(Model.State == code ? true : (bool?)null)">@label</option>
+                    }
+                </select>
+            </div>
+            <div class="col-8 col-md-4">
+                <label class="form-label small mb-1" for="filtro-q">Nome da ficha</label>
+                <input id="filtro-q" name="q" value="@Model.Search" class="form-control form-control-sm" placeholder="Buscar por nome" />
+            </div>
+            <div class="col-auto"><button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filtrar</button></div>
+            <div class="col"><div class="text-end"><button type="button" form="reenfileirar-antigas" class="btn btn-outline-warning btn-sm"><i class="bi bi-arrow-repeat me-1"></i>Re-enfileirar rejeições antigas (7+ dias)</button></div></div>
+        </form>
+        <form id="reenfileirar-antigas" method="post" action="/admin/geocodificacao/reenfileirar-antigas">@Html.AntiForgeryToken()</form>
+
+        @if (Model.Tasks.Count == 0)
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inboxes text-success mb-2" style="font-size: 2.5rem;"></i>
+                <p class="mb-0">Nenhum item da fila corresponde a este filtro.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Ficha</th><th>Estado</th><th>Último motivo</th><th>Tentativas</th><th>Precisão</th><th>Coordenada (ficha)</th><th>Atualizado (UTC)</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.Tasks)
+                        {
+                            var terminais = t.State is "skipped" or "failed";
+                            <tr>
+                                <td>
+                                    <a href="/estabelecimento/@t.RestaurantId" class="text-forest text-decoration-none fw-semibold">@t.Name</a>
+                                    <div class="text-muted small">#@t.RestaurantId @t.City</div>
+                                </td>
+                                <td><span class="badge @t.State switch
+                                {
+                                    "completed" => "bg-success",
+                                    "failed" => "bg-danger",
+                                    "skipped" => "bg-warning text-dark",
+                                    "running" => "bg-primary",
+                                    _ => "bg-secondary"
+                                }">@t.State</span></td>
+                                <td class="small">@t.LastStatus</td>
+                                <td>@t.Attempts</td>
+                                <td class="small">@t.ResultPrecision</td>
+                                <td class="small">
+                                    @if (t.Latitude is { } la && t.Longitude is { } lo)
+                                    {
+                                        var latStr = la.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture);
+                                        var lonStr = lo.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture);
+                                        <a href="https://www.openstreetmap.org/?mlat=@latStr&mlon=@lonStr#map=18/@latStr/@lonStr" target="_blank" rel="noopener" class="text-forest text-decoration-none" title="Conferir este ponto no OpenStreetMap">@latStr, @lonStr <i class="bi bi-box-arrow-up-right" style="font-size:.7rem;"></i></a>
+                                        @if (t.OsmPlaceId is { } pid)
+                                        {
+                                            <div class="text-muted">objeto OSM @pid</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="small">@t.UpdatedAt.ToUniversalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    @if (terminais)
+                                    {
+                                        <form method="post" action="/admin/geocodificacao/@t.RestaurantId/reenfileirar" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-repeat me-1"></i>Re-enfileirar</button>
+                                        </form>
+                                    }
+                                    @if (t.State == "completed")
+                                    {
+                                        <form method="post" action="/admin/geocodificacao/@t.RestaurantId/reverter" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove a coordenada aplicada pelo OpenStreetMap e marca a ficha como rejeição revisada"><i class="bi bi-arrow-counterclockwise me-1"></i>Reverter coordenada</button>
+                                        </form>
+                                        <details class="d-inline ms-1">
+                                            <summary class="btn btn-outline-secondary btn-sm mb-0 ps-2 pe-2" title="Substitui a coordenada por um par conferido por você, com histórico e auditoria"><i class="bi bi-sliders me-1"></i>Ajustar</summary>
+                                            <form method="post" action="/admin/geocodificacao/@t.RestaurantId/ajustar" class="mt-2 border rounded-2 p-2 d-inline-flex flex-wrap gap-1 align-items-center" style="max-width:340px">
+                                                @Html.AntiForgeryToken()
+                                                <input type="text" name="latitude" value="@t.Latitude?.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture)" required aria-label="Latitude" class="form-control form-control-sm" style="width:118px" />
+                                                <input type="text" name="longitude" value="@t.Longitude?.ToString("0.0000000", System.Globalization.CultureInfo.InvariantCulture)" required aria-label="Longitude" class="form-control form-control-sm" style="width:118px" />
+                                                <select name="precision" aria-label="Precisão declarada" class="form-select form-select-sm" style="width:auto">
+                                                    <option value="approximate" selected>approximate</option>
+                                                    <option value="rooftop">rooftop</option>
+                                                </select>
+                                                <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+                                            </form>
+                                        </details>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (Model.Pages > 1)
+        {
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="text-muted small">@Model.Total item(ns) · página @pagina/@Model.Pages</span>
+                <div class="btn-group">
+                    @if (pagina > 1)
+                    {
+                        <a class="btn btn-outline-secondary btn-sm" href="@Filtro(pagina - 1)" aria-label="Página anterior"><i class="bi bi-chevron-left"></i></a>
+                    }
+                    @if (pagina < Model.Pages)
+                    {
+                        <a class="btn btn-outline-secondary btn-sm" href="@Filtro(pagina + 1)" aria-label="Página seguinte"><i class="bi bi-chevron-right"></i></a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <p class="text-muted small mt-3">Fonte: Nominatim/OpenStreetMap (Sprint 58), com fallback Overpass (Sprint 62) e segundo olhar só do logradouro para ruas sem candidato (Sprint 64). Regras rígidas de aceitação, proteção Tier 1 e teto diário compartilhado no banco. Revisão humana das coordenadas aplicadas — reverter ou ajustar com histórico e auditoria — nas Sprints 60 e 61. Distribuição de motivos de rejeição e devolução à fila por motivo na Sprint 63. Detalhes em docs/SPRINT58-REPORT.md a docs/SPRINT64-REPORT.md (repositório).</p>
+</div>

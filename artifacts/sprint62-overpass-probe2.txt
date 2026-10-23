@@ -1,0 +1,3 @@
+﻿overpass.kumi.systems root: 13402 chars em 765ms
+overpass.osm.jp root ERRO: Exceção ao chamar "DownloadString" com "1" argumento(s): "A conexão subjacente estava fechada: Não foi possível estabelecer relação de confiança para o canal seguro de SSL/TLS."
+overpass.osm.ch root: 653 chars em 1136ms

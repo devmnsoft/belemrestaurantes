@@ -1,0 +1,7 @@
+﻿{
+    "supervisorPid":  32384,
+    "dll":  "C:\\MNSOFT\\belemrestaurantes\\src\\BelemRestaurantes.Worker\\bin\\Release\\net10.0\\BelemRestaurantes.Worker.dll",
+    "startedAtUtc":  "2026-10-22T16:50:09.1990779Z",
+    "workerPid":  28896,
+    "state":  "running"
+}

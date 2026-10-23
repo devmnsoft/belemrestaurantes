@@ -1,0 +1,2 @@
+﻿GET /admin/geocodificacao (sem sessao): 302 https://localhost:63859/admin/login?ReturnUrl=%2Fadmin%2Fgeocodificacao
+GET /: 200

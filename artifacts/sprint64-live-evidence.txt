@@ -1,0 +1,23 @@
+Sprint 64 - live evidence (22/10/2026)
+
+1) Ciclo --geocode-pending com env Worker__Geocoding__DailyLimit=340 / BatchSize=4 (arquivos versionados intactos):
+   {"Enqueued":0,"Processed":4,"Placed":0,"Skipped":3,"Deferred":1}
+
+2) Estado por ficha no banco apos o ciclo:
+   564 AVENIDA NSA SRA DE NAZARE, 881    | Belem      -> skipped / no_candidates_street (busca so logradouro tambem vazia)
+   579 RUA PEDRO PORPINO DA SILVA, 1379  | Castanhal  -> skipped / no_candidates_street
+   615 RUA TANCREDO NEVES, SN            | Juruti     -> skipped / no_candidates_street
+   812 AVENIDA DOM ROMUALDO COELHO, SN   | Barcarena  -> pending  / overpass_stale_data (fila de fundo; cadeia Overpass S62 rodou e adiou de novo)
+   555/563/565                            | Belem      -> pending  / overpass_stale_data (intactas; proximos do ciclo)
+
+3) Cota diaria compartilhada (geocoding_runs): antes 318 -> depois 326 (+8 = exatamente
+   2 por ficha: 3x (Nominatim completo + Nominatim so logradouro) + 1x (Nominatim + Overpass)).
+   Orçamento por chamada externa mantido.
+
+4) O "segundo olhar" rodou nas três fichas demo: nessas ruas nem a busca só do logradouro
+   devolveu candidato (ausência real no OSM para estas localidades) -> terminal honesta
+   no_candidates_street, distinta da no_candidates anterior. Nenhuma coordenada foi aplicada.
+
+5) Notas: fichas 564/579/615 voltaram a pending via SQL para a demonstração (mesmo antecedente da
+   Sprint 62); a ação equivalente de operador é o "Re-enfileirar" por motivo do painel (Sprint 63),
+   com auditoria. O espelho Overpass acessível continua antigo -> rejeições de ausência seguem adiadas.

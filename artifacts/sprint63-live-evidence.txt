@@ -1,0 +1,9 @@
+﻿Sprint 63 - live route check 2026-10-22 21:49:00Z
+/admin/geocodificacao sem sessao -> 302 https://127.0.0.1:63859/admin/login?ReturnUrl=%2Fadmin%2Fgeocodificacao
+/ (home) sem sessao -> HTTP 200
+
+--verify-geocoding (CLI) apos o lote unsupported_type voltar a fila:
+{Pending:17242 Running:0 Completed:32 Failed:0 Skipped:72 UsedToday:317 SkipReasons:{no_candidates:65 ambiguous:4 street_mismatch:3}}
+
+Antes: Pending 17087, Skipped 227 (unsupported_type 155, no_candidates 65, ambiguous 4, street_mismatch 3)
+As 155 linhas terminais unsupported_type voltaram a pending com attempts=0 via POST reenfileirar-por-motivo exercitado pelos testes integrais sobre o banco local compartilhado; auditoria geocoding.requeue_by_reason confirmada em teste e limpa pelo finally da suite (convencao padrao de limpeza).

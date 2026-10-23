@@ -1,0 +1,3 @@
+﻿overpass-api.de -> NotAcceptable em 821ms 
+overpass.kumi.systems -> ERRO: Exceção ao chamar "GetResult" com "0" argumento(s): "Uma tarefa foi cancelada."
+overpass.osm.ch -> OK em 1136ms elementos=0

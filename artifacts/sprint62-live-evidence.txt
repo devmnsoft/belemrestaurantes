@@ -1,0 +1,47 @@
+Sprint 62 — evidências da demonstração ao vivo (22/10/2026, ~21:30 UTC)
+
+1) DIAGNÓSTICO DAS INSTÂNCIAS PÚBLICAS DE OVERPASS (mesma máquina do Worker, UA identificada)
+------------------------------------------------------
+overpass-api.de      -> HTTP 406 (nginx) para TODAS as requisições, incluindo query mínima, GET e POST,
+                        com e sem User-Agent identificado. Bloqueio aparente por IP/faixa da máquina.
+overpass.kumi.systems-> responde, mas sob forte carga no período: timeouts de gateway em ~110s.
+                        timestamp_osm_base observado: 2026-07-28 (~86 dias atrás -> espelho antigo).
+overpass.osm.ch      -> responde rápido, MAS snapshot antigo (o way 331449259, encontrado pelo
+                        Nominatim no mesmo endereço, não existe nos dados dele; timestamp ilegível "117921").
+maps.mail.ru         -> endpoint devolvi página HTML do VK (descontinuado para esta finalidade).
+Reprodução: artifacts/sprint62-overprobe.ps1 / sprint62-overprobe2.ps1 / sprint62-delale.ps1.
+
+2) BUG DE SINTAXE ENCONTRADO E CORRIGIDO
+------------------------------------------------------
+As instâncias públicas rejeitam a união Overpass QL escrita em LÍNIA ÚNICA com parse error
+("';' expected - ')' found" / 'print' cannot be subelement of 'union'), aceitando a MESMA consulta
+em formato multilinha (estilo tutorial oficial). Consulta multilinha mínima confirmada OK nas instâncias.
+Reprodução: artifacts/sprint62-unions.ps1 (V1/V2/V4 falham, V3 multilinha OK).
+Correção: OverpassBuildingSource.BuildQuery gera a consulta em formato multilinha.
+
+3) CICLO REAL DO WORKER (dotnet run --geocode-pending, quota de demonstração via env Worker__Geocoding__DailyLimit=320)
+------------------------------------------------------
+Primeira rodada (antes da regra de frescor):
+  {"Enqueued":0,"Processed":4,"Placed":0,"Skipped":4,"Deferred":0}
+  555 PANIFICADORA GIBI  -> skipped/overpass_no_match
+  563 DELALE             -> skipped/overpass_no_match
+  565 CASA DO CEU        -> skipped/overpass_no_match
+  810 DELICIAS RITINHA   -> skipped/no_candidates (sem âncora; motivo original preservado — comportamento correto)
+  => os three rejeitaram sobre o ÚNICO espelho acessível (osm.ch), cujo snapshot é antigo:
+     rejeição terminal baseada em dado velho seria falsa.
+
+Segunda rodada (com a regra "espelho antigo só confirma, não rejeita"):
+  {"Enqueued":0,"Processed":4,"Placed":0,"Skipped":1,"Deferred":3}
+  Estado no banco após o ciclo:
+    555  pending  overpass_stale_data  attempts=1  next_run_at=2026-10-22 21:30:03 (+60min backoff)
+    563  pending  overpass_stale_data  attempts=1  next_run_at=2026-10-22 21:30:05 (+60min backoff)
+    565  pending  overpass_stale_data  attempts=1  next_run_at=2026-10-22 21:30:10 (+60min backoff)
+  As fichas voltam a ser tentadas nos próximos ciclos e serão aplicadas/rejeitadas quando um espelho
+  com dados frescos responder (overpass-api.de ao liberar, ou kumi com snapshot novo).
+
+4) NOTAS
+------------------------------------------------------
+- Nenhuma coordenada real foi aplicada nesta Sprint: nenhum espelho com dados frescos estava
+  acessível durante a janela de teste; o sistema preferiu adiar a inventar (filosofia "nunca inventar dado").
+- A cota diária regular (300) já havia sido consumida pelos ciclos de hoje; a sobra usada na demonstração
+  foi via variável de ambiente (arquivos de configuração não foram tocados).

@@ -48,11 +48,11 @@ public static class InfrastructureServiceCollectionExtensions
 
         // Provedores de IA: configuração com chave por provedor.
         services.AddKeyedSingleton<AiProviderOptions>(GroqKey, (_, _) => BuildProviderOptions(
-            configuration, "Groq", "https://api.groq.com/openai/v1/", "llama-3.3-70b-versatile", 80, 300));
+            configuration, "Groq", "https://api.groq.com/openai/v1/", "openai/gpt-oss-20b", 75, 300));
         services.AddKeyedSingleton<AiProviderOptions>(DeepSeekKey, (_, _) => BuildProviderOptions(
             configuration, "DeepSeek", "https://api.deepseek.com/v1/", "deepseek-chat", 140, 280));
         services.AddKeyedSingleton<AiProviderOptions>(GeminiKey, (_, _) => BuildProviderOptions(
-            configuration, "Gemini", "https://generativelanguage.googleapis.com/v1beta/", "gemini-2.0-flash", 10, 40));
+            configuration, "Gemini", "https://generativelanguage.googleapis.com/v1beta/", "gemini-3.1-flash-lite", 100, 400));
 
         services.AddSingleton<GeminiProvider>(sp => new GeminiProvider(
             sp.GetRequiredService<IHttpClientFactory>().CreateClient("ai"),
@@ -67,6 +67,46 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IAiProvider>(sp => sp.GetRequiredService<GeminiProvider>());
         services.AddSingleton<IAiProvider>(sp => sp.GetRequiredService<GroqProvider>());
         services.AddSingleton<IAiProvider>(sp => sp.GetRequiredService<DeepSeekProvider>());
+        services.AddSingleton(configuration.GetSection("Ai:Drael").Get<DraelOptions>()??new());
+        services.AddHttpClient("drael",client=>{client.Timeout=TimeSpan.FromSeconds(41);client.DefaultRequestHeaders.UserAgent.ParseAdd("BelemRestaurantes/5.3");}).ConfigurePrimaryHttpMessageHandler(()=>new SocketsHttpHandler{AllowAutoRedirect=false,ConnectTimeout=TimeSpan.FromSeconds(4)});
+        services.AddSingleton<DraelClient>(sp=>new(sp.GetRequiredService<IHttpClientFactory>().CreateClient("drael"),sp.GetRequiredService<DraelOptions>()));
+        services.AddSingleton<DraelProvider>();
+        services.AddSingleton<IAiProvider>(sp=>sp.GetRequiredService<DraelProvider>());
+        services.AddScoped<DraelWebSearch>();
+
+        services.AddSingleton(configuration.GetSection("Cuia:FreeTier").Get<CuiaFreeTierOptions>() ?? new());
+        services.AddSingleton<IFreeTierQuota, MySqlFreeTierQuota>();
+        services.AddScoped<IPlaceReferences,MySqlPlaceReferences>();
+        services.AddScoped<IPlaceDossier,MySqlPlaceDossier>();
+        services.AddScoped<ICulinaryResearch,BelemRestaurantes.Infrastructure.Crawler.MySqlCulinaryResearch>();
+        services.AddSingleton(configuration.GetSection("WebSearch:Tavily").Get<TavilyOptions>() ?? new());
+        services.AddHttpClient("websearch", client => client.Timeout = TimeSpan.FromSeconds(7))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        services.AddScoped<TavilyWebSearch>(sp => new TavilyWebSearch(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient("websearch"),
+            sp.GetRequiredService<TavilyOptions>(), sp.GetRequiredService<IFreeTierQuota>()));
+        services.AddSingleton(configuration.GetSection("Crawler:AutoPublication").Get<BelemRestaurantes.Application.Services.AutoPublicationOptions>()??new());
+        services.AddScoped<IAdminPasswordRecovery,Members.MySqlAdminPasswordRecovery>();
+        services.AddScoped<IExternalContent,BelemRestaurantes.Infrastructure.Crawler.MySqlExternalContent>();
+        services.AddScoped<IResearchJobs,BelemRestaurantes.Infrastructure.Crawler.MySqlResearchJobs>();
+        services.AddSingleton(configuration.GetSection("Research").Get<ResearchEvidenceOptions>()??new());
+        services.AddSingleton<ResearchEvidenceCache>();
+        services.AddScoped<IResearchEvidence,ResearchEvidence>();
+        services.AddSingleton<PublicSearchCache>();
+        services.AddSingleton(configuration.GetSection("WebSearch:PublicSources").Get<PublicSourcesOptions>() ?? new());
+        services.AddHttpClient("public-search", client=>{
+            client.Timeout=TimeSpan.FromSeconds(7);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("BelemRestaurantes/5.0 (https://belemrestaurantes.com.br; comercial@belemrestaurantes.com.br)");
+        }).ConfigurePrimaryHttpMessageHandler(()=>new SocketsHttpHandler{AllowAutoRedirect=false,ConnectTimeout=TimeSpan.FromSeconds(3)});
+        services.AddScoped<PublicKnowledgeWebSearch>(sp=>new(sp.GetRequiredService<IHttpClientFactory>().CreateClient("public-search"),sp.GetRequiredService<PublicSourcesOptions>(),sp.GetRequiredService<IFreeTierQuota>(),sp.GetRequiredService<PublicSearchCache>(),sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PublicKnowledgeWebSearch>>()));
+        services.AddSingleton(configuration.GetSection("WebSearch:Brave").Get<BraveSearchOptions>()??new());
+        services.AddScoped<BraveWebSearch>(sp=>new(sp.GetRequiredService<IHttpClientFactory>().CreateClient("websearch"),sp.GetRequiredService<BraveSearchOptions>(),sp.GetRequiredService<IFreeTierQuota>()));
+        services.AddSingleton(configuration.GetSection("WebSearch:PublicSites").Get<PublicSiteSearchOptions>()??new());
+        services.AddScoped<PublicSiteSearch>();
+        services.AddScoped<CompositeWebSearch>();
+        services.AddScoped<ISearchArchive,MySqlSearchArchive>();
+        services.AddScoped<IWebSearch,ArchivedWebSearch>();
+
 
         services.AddSingleton<IOptionsSnapshotLike>(_ => new ProviderChainOptions
         {
@@ -84,6 +124,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<ResilientExecutor>();
 
         services.AddSingleton<Members.MailPayloadProtector>();
+        services.AddSingleton<Members.DocumentIdentityProtector>();
         services.AddSingleton<IPasswordVerifier, Pbkdf2PasswordVerifier>();
         services.AddScoped<IMemberAccounts, Members.MySqlMemberAccounts>();
         services.AddSingleton<Members.ISmtpTransportFactory, Members.DefaultSmtpTransportFactory>();
@@ -131,6 +172,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IMenuService, Partner.MySqlMenuService>();
         services.AddScoped<IMonetizationService, Partner.MySqlMonetizationService>();
         services.AddScoped<IMobilityTrailService, Partner.MySqlMobilityTrailService>();
+        services.AddScoped<IEditorialTrails, Partner.MySqlMobilityTrailService>();
+        services.AddScoped<Partner.EditorialReviewScheduler>();
 
         // Sprint 06 - Busca Gastronômica Inteligente e Autocomplete
         services.AddScoped<ISearchService, Search.MySqlSearchService>();
@@ -143,6 +186,15 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ICrawlerTaskQueue, Crawler.MySqlCrawlerTaskQueue>();
         services.AddScoped<ICrawlerTelemetryRepository, Crawler.MySqlCrawlerTelemetryRepository>();
         services.AddScoped<ICrawlerOrchestrator, Application.Services.CrawlerOrchestrator>();
+
+        // Sprint 58 — Geocodificação de fichas sem coordenada (Nominatim/OpenStreetMap)
+        services.AddSingleton(configuration.GetSection("Nominatim").Get<Crawler.NominatimOptions>() ?? new());
+        services.AddSingleton(configuration.GetSection("Worker:Geocoding").Get<Crawler.GeocodingWorkerOptions>() ?? new());
+        services.AddScoped<INominatimGeocodingSource, Crawler.NominatimGeocodingSource>();
+        // Sprint 62 — Enriquecimento de cobertura: edifícios/restaurantes via Overpass quando o Nominatim só tem logradouro
+        services.AddSingleton(configuration.GetSection("Overpass").Get<Crawler.OverpassOptions>() ?? new());
+        services.AddScoped<IOsmBuildingSource, Crawler.OverpassBuildingSource>();
+        services.AddScoped<IGeocodingQueue, Crawler.MySqlGeocodingQueue>();
 
         // Sprint 09 - Cuia Discovery 360: Cobertura Estadual, Enriquecimento e Motor de Mídia
         services.AddScoped<IGeoMunicipalityRepository, MySql.MySqlGeoMunicipalityRepository>();
@@ -168,7 +220,8 @@ public static class InfrastructureServiceCollectionExtensions
             client.Timeout = googleOptions.Timeout;
             client.DefaultRequestHeaders.UserAgent.ParseAdd("BelemRestaurantes/2.0 (+discovery)");
         });
-        services.AddHttpClient("ai", client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddHttpClient("ai", client => {client.Timeout = TimeSpan.FromSeconds(30);client.DefaultRequestVersion=System.Net.HttpVersion.Version20;client.DefaultVersionPolicy=HttpVersionPolicy.RequestVersionOrLower;})
+            .ConfigurePrimaryHttpMessageHandler(()=>new SocketsHttpHandler{ConnectTimeout=TimeSpan.FromSeconds(5),PooledConnectionLifetime=TimeSpan.FromMinutes(5)});
         services.AddHttpClient("wikimedia", client =>
         {
             client.BaseAddress = new Uri("https://commons.wikimedia.org/");

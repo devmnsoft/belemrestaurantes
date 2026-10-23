@@ -1,0 +1,57 @@
+Sprint 65 — evidência ao vivo do cache negativo de logradouro (2026-10-22, UTC)
+=================================================================================
+
+Contexto
+--------
+Ficha 579 (RUA PEDRO PORPINO DA SILVA, 1379 / Castanhal) já havia sido confirmada
+no dia como no_candidates_street por busca real de logradouro (Sprint 64).
+Havia mais 3 fichas pendentes na MESMA rua/cidade: 8083 (932-A), 21323 (846)
+e 14547 (SN) — mesmas chaves de escopo normalizadas ("rua pedro porpino da silva", "castanhal").
+
+Preparação (SQL)
+----------------
+UPDATE geocoding_tasks SET state='pending', attempts=0, lease_until=NULL,
+next_run_at='2020-01-01 00:00:00' WHERE restaurant_id IN (8083,21323,14547);
+
+Base: geocoding_runs 2026-10-22 -> requested=361 granted=328
+      geocoding_street_cache    -> 0 linhas (vazio)
+
+Execução
+--------
+Worker parado (supervisor local). Execução pontual com override de cota:
+  $env:Worker__Geocoding__DailyLimit="340"; $env:Worker__Geocoding__BatchSize="4"
+  dotnet run --project src/BelemRestaurantes.Worker -c Release --no-build -- --geocode-pending
+
+  => {"Enqueued":0,"Processed":4,"Placed":0,"Skipped":3,"Deferred":1}
+
+Pos-execução (SQL)
+------------------
+fichas_demo:
+  8083   skipped  attempts=1  no_candidates_street
+  14547  skipped  attempts=1  no_candidates_street
+  21323  skipped  attempts=1  no_candidates_street
+
+cota_pos: 2026-10-22 requested=365 granted=332   (delta +4)
+
+cache:
+  street_key="rua pedro porpino da silva"  city_key="castanhal"  learned_at=2026-10-22 20:08:21.994961
+
+quarta_ficha (fila geral, sem relação com a rua demo):
+  813  São Félix do Xingu  AVENIDA RIO XINGU  pending  overpass_stale_data  attempts=1
+
+Leitura econômica do lote (delta +4 unidades = exatamente o esperado)
+---------------------------------------------------------------------
+- 1 ficha pagou a exploração da rua morta: busca completa (1) + só logradouro (1) = 2 unidades
+  e gravou a linha do cache negativo.
+- As outras 2 fichas da mesma rua: HIT no cache -> encerradas em no_candidates_street com
+  ZERO unidades consumidas.
+- Ficha 813 (rua nova): Nominatim (1) + Overpass (1) = 2 unidades, adiada overpass_stale_data.
+- Total: 2 + 2 = 4. SEM o cache o lote custaria 6 unidades (3 ruas-mortas x 2).
+  Poupança imediata no lote: 2 de 8 unidades potenciais das fichas da rua (6 -> 2),
+  ou seja, as próximas fichas desta rua custam 0 até expirar a janela de 7 dias.
+
+Semântica
+---------
+Nenhuma coordenada foi aplicada nem inventada: as três fichas herdam uma conclusão
+negativa verificada por busca real na mesma fonte, mesmo escopo (logradouro, cidade),
+dentro da janela de validade (Worker:Geocoding:StreetNegativeCacheDays, padrão 7).

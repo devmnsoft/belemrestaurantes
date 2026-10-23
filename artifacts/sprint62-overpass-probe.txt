@@ -1,0 +1,1 @@
+﻿overpass.kumi.systems GET OK len=369 :: {   "version": 0.6,   "generator": "Overpass API 0.7.62.11 87bfad18",   "osm3s": {     "timestamp_osm_base": "2026-07-28T02:16:18Z",     "co
