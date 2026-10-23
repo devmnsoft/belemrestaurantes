@@ -40,6 +40,30 @@ public interface IOsmBuildingSource
     bool AllMirrorsKnownStale { get; }
 }
 
+/// <summary>Sprint 69 — última idade de dados observada para um espelho Overpass: exatamente o que o espelho
+/// respondeu em <c>osm3s.timestamp_osm_base</c> (nunca interpretação). <see cref="BaseTimestampUtc"/> nulo é
+/// idade ilegível — formato que nem ISO-8601 nem epoch plausível — e segue a mesma regra conservadora da fonte:
+/// dado antigo.</summary>
+public sealed record MirrorFreshnessSnapshot(string Endpoint, DateTimeOffset? BaseTimestampUtc, DateTimeOffset ObservedAtUtc)
+{
+    /// <summary>Verdadeiro quando a idade observada ausente excede o teto (padrão: os mesmos 14 dias da fonte
+    /// Overpass). Idade ilegível (<c>null</c>) é conservadoramente antiga.</summary>
+    public bool IsDataOld(DateTimeOffset now, int maxDataAgeDays = 14) =>
+        BaseTimestampUtc is null || now - BaseTimestampUtc.Value > TimeSpan.FromDays(maxDataAgeDays);
+}
+
+/// <summary>Sprint 69 — durabilidade do frescor dos espelhos: o Worker grava aqui a cada resposta real (a mesma
+/// informação que alimenta o estado sticky em memória da Sprint 67) e o painel /admin/geocodificacao lê para
+/// mostrar por que fichas seguem adiando em overpass_stale_data.</summary>
+public interface IOverpassMirrorFreshnessStore
+{
+    /// <summary>Registra a última idade observada de um espelho (upsert pela chave endpoint; <c>null</c> = idade ilegível).</summary>
+    Task RecordAsync(string endpoint, DateTimeOffset? baseTimestampUtc, DateTimeOffset observedAtUtc, CancellationToken ct);
+
+    /// <summary>Todas as últimas observações persistidas, ordenadas por endpoint.</summary>
+    Task<IReadOnlyList<MirrorFreshnessSnapshot>> GetLatestAsync(CancellationToken ct);
+}
+
 /// <summary>Movimento do ciclo: enfileiradas, processadas, coordenadas aplicadas, rejeitadas e adiadas.</summary>
 public sealed record GeocodingCycle(int Enqueued, int Processed, int Placed, int Skipped, int Deferred);
 

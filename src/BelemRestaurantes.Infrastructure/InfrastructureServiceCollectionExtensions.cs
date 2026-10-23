@@ -194,6 +194,7 @@ public static class InfrastructureServiceCollectionExtensions
         // Sprint 62 — Enriquecimento de cobertura: edifícios/restaurantes via Overpass quando o Nominatim só tem logradouro
         services.AddSingleton(configuration.GetSection("Overpass").Get<Crawler.OverpassOptions>() ?? new());
         services.AddScoped<IOsmBuildingSource, Crawler.OverpassBuildingSource>();
+        services.AddScoped<IOverpassMirrorFreshnessStore, Crawler.MySqlOverpassMirrorFreshnessStore>();
         services.AddScoped<IGeocodingQueue, Crawler.MySqlGeocodingQueue>();
 
         // Sprint 09 - Cuia Discovery 360: Cobertura Estadual, Enriquecimento e Motor de Mídia

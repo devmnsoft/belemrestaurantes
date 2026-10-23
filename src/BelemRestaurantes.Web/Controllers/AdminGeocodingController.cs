@@ -3,19 +3,24 @@ using System.Security.Claims;
 using BelemRestaurantes.Application.Abstractions;
 using BelemRestaurantes.Domain.Entities;
 using BelemRestaurantes.Domain.Rules;
+using BelemRestaurantes.Infrastructure.Crawler;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace BelemRestaurantes.Web.Controllers;
 
-public sealed record GeocodingAdminPage(GeocodingSummary Summary, IReadOnlyList<GeocodingTaskRow> Tasks, int Total, int Page, int Pages, string? State, string? Search);
+public sealed record GeocodingMirrorRow(string Endpoint, string Host, string BaseDateLabel, string AgeLabel, string ObservedLabel, string Status, string StatusLabel);
+
+public sealed record GeocodingAdminPage(GeocodingSummary Summary, IReadOnlyList<GeocodingTaskRow> Tasks, int Total, int Page, int Pages, string? State, string? Search, IReadOnlyList<GeocodingMirrorRow> Mirrors);
 
 /// <summary>Sprint 59 — acompanhamento da geocodificação autônoma (Sprint 58): contagens, fila com motivos,
 /// e devolução à fila de rejeições/falhas terminais. Sprint 60 — revisão humana: reverte coordenada aplicada
 /// pelo OSM com histórico e auditoria. Sprint 63 — distribuição de motivos de rejeição e devolução à fila
-/// por motivo (quando uma mudança de capacidade torna o caso recuperável). Toda ação humana fica em audit_events.</summary>
+/// por motivo (quando uma mudança de capacidade torna o caso recuperável). Sprint 69 — frescor dos espelhos
+/// Overpass: exatamente o que cada espelho respondeu na última consulta real (osm3s.timestamp_osm_base),
+/// persistido pelo Worker na Sprint 69. Toda ação humana fica em audit_events.</summary>
 [Authorize(Policy="RestaurantModerator"), Route("admin/geocodificacao")]
 [ResponseCache(Location=ResponseCacheLocation.None,NoStore=true)]
-public sealed class AdminGeocodingController(IGeocodingQueue queue, IRestaurantAttributeHistoryRepository history) : Controller
+public sealed class AdminGeocodingController(IGeocodingQueue queue, IRestaurantAttributeHistoryRepository history, OverpassOptions overpass, IOverpassMirrorFreshnessStore mirrors) : Controller
 {
     private const int PageSize = 25;
     private const int StaleDays = 7;
@@ -27,13 +32,53 @@ public sealed class AdminGeocodingController(IGeocodingQueue queue, IRestaurantA
         {
             var summary = await queue.SummaryAsync(ct);
             var (items, total) = await queue.ListTasksAsync(state, q, page, PageSize, ct);
-            return View(new GeocodingAdminPage(summary, items, total, page, Math.Max(1, (int)Math.Ceiling(total / (double)PageSize)), state, q));
+            return View(new GeocodingAdminPage(summary, items, total, page, Math.Max(1, (int)Math.Ceiling(total / (double)PageSize)), state, q, await MirrorRowsAsync(ct)));
         }
         catch (ArgumentException ex)
         {
             TempData["ErrorMessage"] = ex.Message;
             return RedirectToAction(nameof(Index));
         }
+    }
+
+    /// <summary>Sprint 69 — espelhos configurados mesclados com a última observação persistida pelo Worker.
+    /// O painel mostra o fato (data-base respondida pelo espelho e quando foi vista); o veredito
+    /// antigo/fresco segue a mesma regra conservadora da fonte (ausente/ilegível/mais de 14 dias = antigo).</summary>
+    private async Task<IReadOnlyList<GeocodingMirrorRow>> MirrorRowsAsync(CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var stored = await mirrors.GetLatestAsync(ct);
+        var byEndpoint = stored.ToDictionary(r => r.Endpoint, StringComparer.Ordinal);
+        var configured = overpass.Endpoints is null ? [] : overpass.Endpoints
+            .Where(e => !string.IsNullOrWhiteSpace(e))
+            .Select(e => e.TrimEnd('/'))
+            .Distinct()
+            .ToList();
+        return configured.Select(endpoint =>
+        {
+            byEndpoint.TryGetValue(endpoint, out var snap);
+            var host = Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) ? uri.Host : endpoint;
+            if (snap is null)
+                return new GeocodingMirrorRow(endpoint, host, "—", "—", "—", "sem", "sem observação");
+            var (code, label) = snap.BaseTimestampUtc is null
+                ? ("ilegivel", "dado antigo (idade ilegível)")
+                : snap.IsDataOld(now)
+                    ? ("antigo", "dado antigo (acima de 14 dias)")
+                    : ("fresco", "fresco (menos de 14 dias)");
+            var baseLabel = snap.BaseTimestampUtc!.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+            var ageLabel = $"{Math.Max(0, (int)Math.Floor((now - snap.BaseTimestampUtc.Value).TotalDays))} dias";
+            var observedLabel = $"{snap.ObservedAtUtc.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)} UTC · {RelativeAgeLabel(snap.ObservedAtUtc, now)}";
+            return new GeocodingMirrorRow(endpoint, host, baseLabel, ageLabel, observedLabel, code, label);
+        }).ToList();
+    }
+
+    private static string RelativeAgeLabel(DateTimeOffset observedAtUtc, DateTimeOffset now)
+    {
+        var minutes = (int)Math.Max(0, (now - observedAtUtc).TotalMinutes);
+        if (minutes < 90) return $"há {Math.Max(1, minutes)} min";
+        var hours = minutes / 60;
+        if (hours < 48) return $"há {hours} h";
+        return $"há {hours / 24} d";
     }
 
     [HttpPost("{id:long}/reenfileirar"), ValidateAntiForgeryToken]

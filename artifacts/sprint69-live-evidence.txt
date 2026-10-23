@@ -1,0 +1,44 @@
+SPRINT 69 — EVIDÊNCIA AO VIVO (23/10/2026, UTC)
+================================================
+
+Contexto de cota (antes do one-shot, banco local MariaDB 10.11 :3308):
+  SELECT run_day, requested, granted FROM geocoding_runs WHERE run_day=UTC_DATE();
+    2026-10-23 | requested=379 | granted=305   (teto padrão 300 -> esgotado para o ciclo supervisionado)
+  SELECT state, COUNT(*) FROM geocoding_tasks WHERE state IN ('pending','failed','skipped') GROUP BY state;
+    pending=17193 | skipped=108 | due_now=17190
+  SELECT COUNT(*) FROM overpass_mirror_freshness; -> 0 (tabela criada pela migração 051, ainda sem observações reais)
+
+Passada one-shot (processo único, env overrides apenas neste processo):
+  ASPNETCORE_ENVIRONMENT=Development DOTNET_ENVIRONMENT=Development
+  Worker__Geocoding__DailyLimit=400 Worker__Geocoding__BatchSize=3
+  dotnet BelemRestaurantes.Worker.dll --geocode-pending
+  saida: {"Enqueued":0,"Processed":3,"Placed":0,"Skipped":2,"Deferred":1}
+
+Resultado real persistido pela nova escrita do Worker (mesmo fato que alimenta o sticky em memória da S67):
+  SELECT endpoint, base_timestamp, observed_at, created_at FROM overpass_mirror_freshness;
+    https://overpass.osm.ch/api/interpreter | base_timestamp=NULL | observed_at=2026-10-23 14:06:14.187763 | created_at=2026-10-23 14:06:14.198528
+  Interpretacao conservadora (regra de leitura, nao de escrita): base_timestamp NULL = idade ilegivel no espelho
+  (o carimbo do osm.ch continua no formato ja documentado, nao ISO-8601 nem epoch) -> dado antigo.
+  Os espelhos de/kumi nao responderam nesta rodada (timeouts conhecidos), entao nenhuma linha deles existe —
+  o painel mostra o que existe; ausencia de linha = "sem observacao", nunca suposicao.
+
+Fichas tratadas neste one-shot (linhas reais de geocoding_tasks, updated_at nos ultimos minutos):
+    restaurant_id=1055 state=pending  last_status=overpass_stale_data  attempts=1  (adiada: espelho respondeu com dado antigo)
+    restaurant_id=1056 state=skipped  last_status=no_candidates_street attempts=1
+    restaurant_id=1057 state=skipped  last_status=unsupported_type     attempts=1
+
+Rotas do painel (Web publicada localmente em 127.0.0.1:5199, ambiente Development, processo probe encerrado apos o teste):
+  GET /admin/geocodificacao (sem autenticacao) -> STATUS=302 LOCATION=http://127.0.0.1:5199/admin/login?ReturnUrl=%2Fadmin%2Fgeocodificacao
+  A renderizacao autenticada da secao "Espelhos Overpass (frescor dos dados)" esta coberta pelo teste de integracao
+  Sprint69MirrorFreshnessTests.PanelShowsWorkerMirrorObservationsWithConservativeVerdicts (login MFA temporario,
+  linhas reais gravadas pelo store, vereditos fresco/antigo assertados na pagina) — mesmo caminho de codigo desta
+  geracao de binarios.
+
+Geracao final supervisionada (binario com a Sprint 69, sem overrides de ambiente):
+  ./scripts/windows/run-local-worker.ps1 -> supervisor 53764; worker PID 50888; estado=running; processo unico verificado.
+  Log do boot: "Migrações verificadas: 0 aplicadas, 51 já em vigor." (migração 051 aplicada durante os testes de
+  integracao; a verificacao do runner confirma o schema completo no banco local).
+  ConfigurationDiagnosticsService (guard da Sprint 68): somente info, sem warning de sobreposicao.
+  Heartbeat: SELECT instance_id, heartbeat_at, state FROM worker_heartbeats ORDER BY heartbeat_at DESC LIMIT 1;
+    DESKTOP-CK86BSC-50888 | 2026-10-23 14:08:03.464336 | running
+  (geracao anterior DESKTOP-CK86BSC-47376 marcada stopped em 2026-10-23 13:30:19)

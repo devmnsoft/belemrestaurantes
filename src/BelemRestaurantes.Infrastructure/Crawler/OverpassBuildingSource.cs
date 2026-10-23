@@ -36,7 +36,7 @@ public sealed class OverpassOptions
 /// seguro e cadência mínima entre requisições (mesmo tratamento de cortesia dado ao /search do Nominatim
 /// neste projeto). Com failover entre instâncias públicas: cada requisição tenta no máximo todas uma vez,
 /// partindo da última que respondeu. A URL carrega só a consulta escapada.</summary>
-public sealed class OverpassBuildingSource(ISafeHttpClient http, OverpassOptions options, ILogger<OverpassBuildingSource>? logger = null) : IOsmBuildingSource
+public sealed class OverpassBuildingSource(ISafeHttpClient http, OverpassOptions options, ILogger<OverpassBuildingSource>? logger = null, IOverpassMirrorFreshnessStore? store = null) : IOsmBuildingSource
 {
     private static readonly SemaphoreSlim Gate = new(1);
     private static DateTimeOffset nextAllowed;
@@ -155,9 +155,15 @@ public sealed class OverpassBuildingSource(ISafeHttpClient http, OverpassOptions
                 _lastGood = index;
                 var text = page.ContentText ?? string.Empty;
                 // Sprint 67 — toda resposta com idade legível renova a observação (fresca apaga o stale anterior).
-                RecordMirrorObservation(endpoints[index],
-                    ReadBaseTimestamp(text) ?? DateTimeOffset.UtcNow.AddDays(-(MaxDataAgeDays + 1)),
-                    DateTimeOffset.UtcNow);
+                var baseTimestamp = ReadBaseTimestamp(text);
+                RecordMirrorObservation(endpoints[index], baseTimestamp ?? DateTimeOffset.UtcNow.AddDays(-(MaxDataAgeDays + 1)), DateTimeOffset.UtcNow);
+                // Sprint 69 — o mesmo fato vai para o painel: falha de persistência só loga (a busca segue com a resposta).
+                if (store is not null)
+                {
+                    try { await store.RecordAsync(endpoints[index], baseTimestamp, DateTimeOffset.UtcNow, deadline.Token); }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    { logger?.LogWarning("Overpass {Endpoint}: frescor não persistido ({FailureType}); a busca segue.", endpoints[index], ex.GetType().Name); }
+                }
                 return new(true, null, ParseElements(text), IsDataStale(text));
             }
             finally { Gate.Release(); }

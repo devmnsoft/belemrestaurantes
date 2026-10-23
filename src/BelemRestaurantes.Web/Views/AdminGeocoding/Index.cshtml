@@ -86,6 +86,41 @@
         </div>
     }
 
+    @if (Model.Mirrors.Count > 0)
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+            <h2 class="h6 fw-bold text-forest mb-0">Espelhos Overpass (frescor dos dados)</h2>
+            <p class="text-muted small mb-2">Exatamente o que cada espelho respondeu na última consulta real do Worker (osm3s.timestamp_osm_base), sem interpretação: idade ilegível ou acima de 14 dias é conservadoramente "dado antigo". Enquanto os espelhos forem velhos, fichas seguem em <code>overpass_stale_data</code> adiando — e com o frescor sticky da Sprint 67, sem consumir cota.</p>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr><th>Espelho</th><th>Dados base</th><th>Idade</th><th>Última observação</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in Model.Mirrors)
+                        {
+                            <tr>
+                                <td class="small"><span title="@m.Endpoint">@m.Host</span></td>
+                                <td class="small">@m.BaseDateLabel</td>
+                                <td class="small">@m.AgeLabel</td>
+                                <td class="small">@m.ObservedLabel</td>
+                                <td>
+                                    <span class="badge @m.Status switch
+                                    {
+                                        "fresco" => "bg-success",
+                                        "antigo" => "bg-warning text-dark",
+                                        "ilegivel" => "bg-warning text-dark",
+                                        _ => "bg-secondary"
+                                    }">@m.StatusLabel</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
     <div class="card border-0 shadow-sm rounded-4 p-4">
         <form method="get" action="/admin/geocodificacao" class="row g-2 align-items-end mb-3">
             <div class="col-auto">
@@ -213,5 +248,5 @@
         }
     </div>
 
-    <p class="text-muted small mt-3">Fonte: Nominatim/OpenStreetMap (Sprint 58), com fallback Overpass (Sprint 62) e segundo olhar só do logradouro para ruas sem candidato (Sprint 64). Regras rígidas de aceitação, proteção Tier 1 e teto diário compartilhado no banco. Revisão humana das coordenadas aplicadas — reverter ou ajustar com histórico e auditoria — nas Sprints 60 e 61. Distribuição de motivos de rejeição e devolução à fila por motivo na Sprint 63. Detalhes em docs/SPRINT58-REPORT.md a docs/SPRINT64-REPORT.md (repositório).</p>
+    <p class="text-muted small mt-3">Fonte: Nominatim/OpenStreetMap (Sprint 58), com fallback Overpass (Sprint 62) e segundo olhar só do logradouro para ruas sem candidato (Sprint 64). Regras rígidas de aceitação, proteção Tier 1 e teto diário compartilhado no banco. Revisão humana das coordenadas aplicadas — reverter ou ajustar com histórico e auditoria — nas Sprints 60 e 61. Distribuição de motivos de rejeição e devolução à fila por motivo na Sprint 63; cache de consulta e cache negativo de logradouro nas Sprints 66 e 65; frescor sticky dos espelhos e o monitoramento acima na Sprint 69. Detalhes em docs/SPRINT58-REPORT.md a docs/SPRINT69-REPORT.md (repositório).</p>
 </div>
