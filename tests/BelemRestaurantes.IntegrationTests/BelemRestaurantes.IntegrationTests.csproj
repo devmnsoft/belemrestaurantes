@@ -21,6 +21,8 @@
     <ProjectReference Include="..\..\src\BelemRestaurantes.Application\BelemRestaurantes.Application.csproj" />
     <ProjectReference Include="..\..\src\BelemRestaurantes.Infrastructure\BelemRestaurantes.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\BelemRestaurantes.Web\BelemRestaurantes.Web.csproj" />
+    <!-- Sprint 72 — GeocodingHostedService.RunAsync é a mesma entrada do geocode-pending do CLI; o teste de ciclo a chama direto. -->
+    <ProjectReference Include="..\..\src\BelemRestaurantes.Worker\BelemRestaurantes.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>

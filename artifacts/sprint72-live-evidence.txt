@@ -1,0 +1,53 @@
+Sprint 72 — evidência ao vivo (execução local 23/10/2026, máquina America/Fortaleza UTC-3; horários em UTC)
+Nenhum segredo: valores abaixo são endpoints públicos, contadores do banco local e saídas literais de teste/build.
+
+[1] Novos fatos de Sprint 72 (Release), filtro dedicado — veredito final após o ajuste do shift absoluto:
+$ dotnet test tests\BelemRestaurantes.IntegrationTests\BelemRestaurantes.IntegrationTests.csproj -c Release --no-build --filter "FullyQualifiedName~Sprint72StaleMirrorZeroCostCycleTests"
+  Aprovado!  – Com falha:     0, Aprovado:     2, Ignorado:     0, Total:     2, Duração: 2 s - BelemRestaurantes.IntegrationTests.dll (net10.0)
+Os dois fatos afirmam, respectivamente: (a) todos os espelhos confirmados velhos -> 0 requisição Overpass,
+0 chamada Nominatim (replay de cache da Sprint 66), delta exato do contador diário = 0, ficha em
+pending/overpass_stale_data; (b) controle com um espelho desconhecido -> exatamente 1 requisição ao espelho
+desconhecido, 0 aos confirmados, delta exato = +2 (Nominatim sem cache + Overpass), mesmo adiamento.
+Nota de depuração (no relatório): os primeiros runs vermelhos consumiam fichas reais da fila local porque uma
+coorte inteira carregava next_run_at vencida há dias (ex.: 2026-10-22 15:56) e um shift relativo de +1 h não as
+tirava da fila; corrigido com alvo absoluto + restore exato, e o dano colateral revertido
+(DELETE das linhas com last_status='stub_out_of_scope' — status único do stub; veja [5]).
+
+[2] Suítes completas, worker parado:
+Build: $ dotnet build BelemRestaurantes.sln -c Release --no-incremental -> 0 Aviso(s) / 0 Erro(s)
+Unidade: Aprovado! – Com falha: 0, Aprovado: 528, Ignorado: 0, Total: 528, Duração: 35 s
+Integração (reexecução integral final, 2 m 25 s):
+  [xUnit.net 00:02:25.59] BelemRestaurantes.IntegrationTests.AdminLifecycleTests.RequestedPersistentAccountsHaveValidProtectedCredentialsAndPasswordChallenge [SKIP]
+  Aprovado!  – Com falha:     0, Aprovado:   242, Ignorado:     1, Total:   243, Duração: 2 m 25 s - BelemRestaurantes.IntegrationTests.dll (net10.0)
+Registro honesto: a primeira tentativa da suíte completa saiu com exit code 1 sem nenhum teste falho na saída
+(aborto em nível de host); a reexecução integral imediata acima passou verde.
+
+[3] Sonda direta aos três espelhos configurados, ~18:4x UTC de 23/10:
+https://overpass-api.de/api/interpreter       -> ERRO em 720ms  : A solicitação foi anulada: Não foi possível criar um canal seguro para SSL/TLS.
+https://overpass.kumi.systems/api/interpreter -> ERRO em 25792ms: O tempo limite da operação foi atingido.
+https://overpass.osm.ch/api/interpreter       -> HTTP 200 em 1640ms; stamp='117943' ()
+Leitura: de/kumi falham por infraestrutura (não confirmam idade); osm.ch responde com data-base ilegível
+('117943' não é data) -> conservadoramente dado antigo. O atalho AllMirrorsKnownStale continua sem poder
+disparar AO VIVO hoje — condição externa, não defeito de código; a prova em processo controlado é [1].
+
+[4] Candidatos a redundância avaliados na mesma janela, ~15:4x UTC de 23/10 (nenhum utilizável daqui):
+https://overpass.openstreetmap.be/api/interpreter       -> ERRO em 1606ms : O nome remoto não pôde ser resolvido: 'overpass.openstreetmap.be'
+https://overpass.private.coffee/api/interpreter         -> ERRO em 25335ms: O tempo limite da operação foi atingido.
+https://maps.mail.ru/osm/tools/overpass/api/interpreter -> ERRO em 3030ms : O servidor remoto retornou um erro: (504) Tempo Limite de Gateway.
+https://overpass.osm.jp/api/interpreter                 -> ERRO em 1519ms : A conexão subjacente estava fechada: Não foi possível estabelecer relação de confiança para o canal seguro de SSL/TLS.
+Decisão por evidência: OverpassOptions permanece [de, kumi, osm.ch]; reconsiderar quando um candidato responder
+de fato com dado legível (e.g., na janela pós-00:00 UTC de 24/10).
+
+[5] Estado do banco local após a validação (MariaDB 10.11, banco belrestaurante):
+state        n        due_now
+completed    50       0
+pending      17180    17177
+skipped      116      0
+Resíduo de cache de consulta com token S72: 0 linhas
+overpass_mirror_freshness: exatamente 1 linha (https://overpass.osm.ch/api/interpreter) — as linhas de teste .test foram removidas
+Reversão de efeitos colaterais dos runs de depuração: DELETE FROM geocoding_tasks WHERE last_status='stub_out_of_scope' (3 linhas removidas;
+as fichas voltam à fila sozinhas no próximo EnqueueEligible natural do Worker).
+
+[6] O que roda no CI além desta evidência: os dois novos fatos são testes de integração e executam no job 'build'
+(MySQL 8.4 efêmero, fila limpa — o cenário de isolamento degrada graciosamente para no-op, como nos bancos novos).
+Chave transitória ci-log (Sprint 70) mantém contrato: publicada só em falha, apagada ao verde.
