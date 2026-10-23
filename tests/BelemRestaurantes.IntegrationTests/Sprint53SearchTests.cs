@@ -1,4 +1,5 @@
 using BelemRestaurantes.Application.Abstractions;
+using BelemRestaurantes.Application.Models;
 using BelemRestaurantes.Infrastructure.Migrations;
 using BelemRestaurantes.Infrastructure.MySql;
 using Dapper;
@@ -30,9 +31,27 @@ public sealed class Sprint53SearchTests
     [Fact]public async Task ConsecutiveRecipeQuestionsUsePublishedIngredientsWithoutCloudHallucination()
     {
         using var services=(ServiceProvider)ServiceContainer.Build();await services.GetRequiredService<MigrationRunner>().ApplyAsync(default);var cuia=services.GetRequiredService<ICuiaAiService>();
-        var first=await cuia.AskAsync(new("Quais ingredientes compõem o tacacá?",SearchWeb:true),default);
-        Assert.Equal("reference_answer",first.GenerationStatus);Assert.Contains("tucupi",first.AnswerMarkdown,StringComparison.OrdinalIgnoreCase);Assert.DoesNotContain("caldo de peixe",first.AnswerMarkdown,StringComparison.OrdinalIgnoreCase);
-        var second=await cuia.AskAsync(new("E a maniçoba, como é preparada?",SearchWeb:true,PreviousQuestions:["Quais ingredientes compõem o tacacá?"]),default);
-        Assert.Equal("reference_answer",second.GenerationStatus);Assert.Contains("maniva",second.AnswerMarkdown,StringComparison.OrdinalIgnoreCase);Assert.NotEmpty(second.Recipes);
+        var recipes=services.GetRequiredService<IParaRecipes>();
+        await using var db=await services.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
+        var slugs=new[]{("ci-tacaca-referencia","Tacacá de referência",new[]{"tucupi","peixe frito","jambu"}),("ci-manicoba-referencia","Maniçoba de referência",new[]{"maniva","pequi","carne de sol"})};
+        var created=new Dictionary<string,bool>();
+        foreach(var (slug,_,_) in slugs)created[slug]=await recipes.GetAsync(slug,false,default) is null;
+        foreach(var (slug,title,ingredients) in slugs.Where(s => created[s.Item1]))
+            await recipes.SaveAsync(new ParaRecipe{Slug=slug,Title=title,Subtitle="Fixture editorial do teste de referência local.",Ingredients=ingredients,Steps=["Cozinhar os ingredientes indicados.","Servir."],Status="published"},"fixture-admin",default);
+        try
+        {
+            var first=await cuia.AskAsync(new("Quais ingredientes compõem o tacacá?",SearchWeb:true),default);
+            Assert.Equal("reference_answer",first.GenerationStatus);Assert.Contains("tucupi",first.AnswerMarkdown,StringComparison.OrdinalIgnoreCase);Assert.DoesNotContain("caldo de peixe",first.AnswerMarkdown,StringComparison.OrdinalIgnoreCase);
+            var second=await cuia.AskAsync(new("E a maniçoba, como é preparada?",SearchWeb:true,PreviousQuestions:["Quais ingredientes compõem o tacacá?"]),default);
+            Assert.Equal("reference_answer",second.GenerationStatus);Assert.Contains("maniva",second.AnswerMarkdown,StringComparison.OrdinalIgnoreCase);Assert.NotEmpty(second.Recipes);
+        }
+        finally
+        {
+            foreach(var slug in slugs.Where(s => created[s.Item1]).Select(s => s.Item1))
+            {
+                var id=await db.ExecuteScalarAsync<long?>("SELECT id FROM para_recipes WHERE slug=@slug",new{slug});
+                if(id is not null){await db.ExecuteAsync("DELETE FROM para_recipe_versions WHERE recipe_id=@id",new{id});await db.ExecuteAsync("DELETE FROM audit_events WHERE entity_type='recipe' AND entity_id=@id AND actor_subject='fixture-admin'",new{id});await db.ExecuteAsync("DELETE FROM para_recipes WHERE id=@id",new{id});}
+            }
+        }
     }
 }

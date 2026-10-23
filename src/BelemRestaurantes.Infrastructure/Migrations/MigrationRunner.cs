@@ -48,7 +48,7 @@ public sealed class MigrationRunner(MySqlConnectionFactory connectionFactory, IL
         await using var connection = await connectionFactory.OpenAsync(ct);
 
         var locked = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
-            "SELECT GET_LOCK('belrestaurante:migrations', 30)", cancellationToken: ct));
+            "SELECT GET_LOCK('belrestaurante:migrations', 120)", cancellationToken: ct));
         if (locked != 1) throw new InvalidOperationException("Outra execução de migrações está ativa.");
         try
         {

@@ -10,6 +10,7 @@ namespace BelemRestaurantes.IntegrationTests;
 
 /// <summary>Sprint 66 — cache de consulta Nominatim no banco: escopo pela consulta exata, validade pelo
 /// dia UTC em que a resposta real ocorreu e contador de hits.</summary>
+[Collection("MySql")]
 public sealed class Sprint66QueryCacheTests
 {
     [Fact]
