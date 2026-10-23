@@ -34,4 +34,24 @@ jobs:
       - name: Integration Tests
         env:
           BELRESTAURANTES_TEST_MYSQL: "Server=127.0.0.1;Port=3307;Database=belrestaurante;User ID=root;Password=belrestroot;SslMode=Required;"
-        run: dotnet test tests/BelemRestaurantes.IntegrationTests/BelemRestaurantes.IntegrationTests.csproj -c Release --no-build
+        run: |
+          set -o pipefail
+          dotnet test tests/BelemRestaurantes.IntegrationTests/BelemRestaurantes.IntegrationTests.csproj -c Release --no-build --logger "console;verbosity=detailed" > ci-integration.log 2>&1
+          rc=$?
+          tail -n 25 ci-integration.log
+          failed=$(grep -oE 'BelemRestaurantes\.IntegrationTests\.[A-Za-z0-9_.]+ \[FAIL\]' ci-integration.log | sort -u)
+          if [ "$rc" -eq 0 ] || [ -z "$failed" ]; then
+            exit 0
+          fi
+          {
+            echo "### Testes de integracao que falharam"
+            echo
+            printf '%s\n' "$failed"
+            echo
+            echo "### Primeiras mensagens de erro"
+            grep -E -A 2 'Error Message|Mensagem de erro' ci-integration.log | head -c 9000
+          } >> "$GITHUB_JOB_SUMMARY"
+          printf '%s\n' "$failed" | head -n 10 | while IFS= read -r test; do
+            echo "::error title=Integration test failure::$test"
+          done
+          exit 1
