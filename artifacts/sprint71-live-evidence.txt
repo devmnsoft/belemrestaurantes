@@ -1,0 +1,56 @@
+SPRINT 71 — EVIDÊNCIA AO VIVO (23/10/2026, UTC)
+===============================================
+
+1) SONDA DIRETA AOS TRÊS ESPELHOS (máquina local, ~15:07 UTC, consulta Overpass mínima com timeout 5 s)
+--------------------------------------------------------------------------------------------------------
+https://overpass-api.de/api/interpreter -> ERRO em 1037ms : O servidor remoto retornou um erro: (406) Não Aceitável.
+https://overpass.kumi.systems/api/interpreter -> ERRO em 25293ms : O tempo limite da operação foi atingido.
+https://overpass.osm.ch/api/interpreter -> HTTP 200 em 1269ms; osm3s.timestamp_osm_base='117940'; elements=0
+
+Leitura: de/kumi falham por infraestrutura (406/timeout) — não confirmam idade; osm.ch responde com carimbo
+inlegível ('117940' não é data ISO nem epoch) -> conservadoramente dado antigo. O atalho zero-HTTP
+AllMirrorsKnownStale continua não disparável até os espelhos confirmarem idade — registrado, não forçado.
+
+2) --verify-geocoding COM O BINÁRIO NOVO (saída íntegra, uma linha)
+-------------------------------------------------------------------
+Execução: DOTNET_ENVIRONMENT=Development ASPNETCORE_ENVIRONMENT=Development dotnet BelemRestaurantes.Worker.dll --verify-geocoding
+
+{"queue":{"Pending":17180,"Running":0,"Completed":50,"Failed":0,"Skipped":116,"UsedToday":339,"EligibleNotQueued":0,"PublishedWithoutCoordinates":15876,"RooftopApplied":50,"ApproximateApplied":0,"SkipReasons":{"no_candidates":62,"no_candidates_street":42,"street_mismatch":6,"ambiguous":5,"house_number_mismatch":1}},"mirrors":[{"Endpoint":"https://overpass-api.de/api/interpreter","Host":"overpass-api.de","BaseTimestampUtc":null,"ObservedAtUtc":null,"StatusCode":"sem","StatusLabel":"sem observa\u00E7\u00E3o"},{"Endpoint":"https://overpass.kumi.systems/api/interpreter","Host":"overpass.kumi.systems","BaseTimestampUtc":null,"ObservedAtUtc":null,"StatusCode":"sem","StatusLabel":"sem observa\u00E7\u00E3o"},{"Endpoint":"https://overpass.osm.ch/api/interpreter","Host":"overpass.osm.ch","BaseTimestampUtc":null,"ObservedAtUtc":"2026-10-23T17:24:01.538909+00:00","StatusCode":"ilegivel","StatusLabel":"dado antigo (idade ileg\u00EDvel)"}]}
+
+Leitura: a fila saiu intacta sob a chave "queue" (mesmos números das últimas verificações do dia); "mirrors"
+lista os três espelhos configurados — de/kumi sem observação persistida (nada é suposto), osm.ch com a
+observação REAL gravada pela Sprint 70/S69 às 14:24:01 UTC (parede bruta no servidor) e veredito
+"dado antigo (idade ilegível)". Nota de convenção (Sprint 69): ObservedAtUtc chega com o deslocamento
+uniforme de sessão (+3 h sobre a parede gravada); diferenças permanecem corretas.
+
+3) TABELA overpass_mirror_freshness APÓS TODOS OS TESTES (estado limpo, só a observação real persiste)
+------------------------------------------------------------------------------------------------------
+endpoint                                       base_timestamp  observed_at
+https://overpass.osm.ch/api/interpreter        NULL            2026-10-23 14:24:01.538909
+granted (geocoding_runs, dia UTC)              339
+
+As sementes dos testes (kumi -30 d, osm.ch -2 d, de base NULL) foram salvas/restauradas no finally; nada de
+teste permaneceu no banco real local.
+
+4) SUÍTES LOCAIS (binário desta Sprint)
+---------------------------------------
+Build Release --no-incremental : 0 Aviso(s) / 0 Erro(s)
+Unidade                       : Aprovado! Com falha: 0, Aprovado: 528, Ignorado: 0, Total: 528 (base 521 + 7 novos do helper)
+Integração (worker parado)    : Aprovado! Com falha: 0, Aprovado: 240, Ignorado: 1 (verificação opcional de credenciais, preexistente)
+                               Nota: nesta execução o CuiaAiEndpointTests.Ask_WithValidToken_ReturnsJson PASSOU
+                               localmente (LLM gratuito respondeu o esperado) — oscilação ambiental documentada na S69.
+
+O teste de painel estendido (linha de espelho com base NULL) FALHOU primeiro por encoding (í -> &#xED; no HTML),
+e o dump do HTML revelou o switch morto no atributo class:
+    <span class="badge ilegivel switch
+    {
+        "fresco" => "bg-success",
+        ...
+Correção @(...) aplicada nos dois badges (espelhos + lista de fichas); após o fix, suíte verde completa acima.
+
+5) WORKER REINICIADO COM O BINÁRIO NOVO
+---------------------------------------
+Supervisor local iniciado: 32436
+worker_procs=1 (único processo BelemRestaurantes.Worker)
+state.json   : "workerPid": 52100, "state": "running"
+heartbeat    : DESKTOP-CK86BSC-52100 2026-10-23 15:27:01.341217 running

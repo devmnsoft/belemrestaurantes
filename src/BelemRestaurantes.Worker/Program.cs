@@ -68,8 +68,15 @@ public class Program
         if(args.Contains("--verify-geocoding",StringComparer.Ordinal))
         {
             using var scope=host.Services.CreateScope();
-            var summary=scope.ServiceProvider.GetRequiredService<BelemRestaurantes.Application.Abstractions.IGeocodingQueue>().SummaryAsync(default).GetAwaiter().GetResult();
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(summary));return;
+            var sp=scope.ServiceProvider;
+            var summary=sp.GetRequiredService<BelemRestaurantes.Application.Abstractions.IGeocodingQueue>().SummaryAsync(default).GetAwaiter().GetResult();
+            // Sprint 71 — o resumo da fila ganha os espelhos Overpass (mesmo helper e veredito do painel):
+            // { queue: <resumo anterior>, mirrors: [<espelho configurado + última observação + status>] }.
+            var mirrorRows=BelemRestaurantes.Application.Abstractions.MirrorFreshnessViewRow.Merge(
+                sp.GetRequiredService<BelemRestaurantes.Infrastructure.Crawler.OverpassOptions>().Endpoints,
+                sp.GetRequiredService<BelemRestaurantes.Application.Abstractions.IOverpassMirrorFreshnessStore>().GetLatestAsync(default).GetAwaiter().GetResult(),
+                System.DateTimeOffset.UtcNow);
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new{queue=summary,mirrors=mirrorRows}));return;
         }
         if(args.Contains("--revert-geocode",StringComparer.Ordinal))
         {

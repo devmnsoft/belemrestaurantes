@@ -52,6 +52,38 @@ public sealed record MirrorFreshnessSnapshot(string Endpoint, DateTimeOffset? Ba
         BaseTimestampUtc is null || now - BaseTimestampUtc.Value > TimeSpan.FromDays(maxDataAgeDays);
 }
 
+/// <summary>Sprint 71 — mescla os espelhos configurados com as observações persistidas para as superfícies
+/// de exibição (painel /admin/geocodificacao e o CLI --verify-geocoding): fonte única do veredito
+/// conservador (ausente/ilegível/acima de 14 dias = dado antigo). Espelho configurado sem linha persistida
+/// aparece como "sem" — ausência é "não observado", nunca suposição. Linha persistida de espelho que saiu
+/// da configuração não é exibida (permanece na tabela como história).</summary>
+public sealed record MirrorFreshnessViewRow(string Endpoint, string Host, DateTimeOffset? BaseTimestampUtc, DateTimeOffset? ObservedAtUtc, string StatusCode, string StatusLabel)
+{
+    public static IReadOnlyList<MirrorFreshnessViewRow> Merge(IReadOnlyList<string>? configuredEndpoints, IReadOnlyList<MirrorFreshnessSnapshot> stored, DateTimeOffset now)
+    {
+        var byEndpoint = stored.ToDictionary(s => s.Endpoint, StringComparer.Ordinal);
+        var normalized = configuredEndpoints is null ? [] : configuredEndpoints
+            .Where(e => !string.IsNullOrWhiteSpace(e))
+            .Select(e => e.TrimEnd('/'))
+            .Distinct()
+            .ToList();
+        return normalized.Select(endpoint =>
+        {
+            if (!byEndpoint.TryGetValue(endpoint, out var snap))
+                return new MirrorFreshnessViewRow(endpoint, HostOf(endpoint), null, null, "sem", "sem observação");
+            var (code, label) = snap.BaseTimestampUtc is null
+                ? ("ilegivel", "dado antigo (idade ilegível)")
+                : snap.IsDataOld(now)
+                    ? ("antigo", "dado antigo (acima de 14 dias)")
+                    : ("fresco", "fresco (menos de 14 dias)");
+            return new MirrorFreshnessViewRow(endpoint, HostOf(endpoint), snap.BaseTimestampUtc, snap.ObservedAtUtc, code, label);
+        }).ToList();
+    }
+
+    private static string HostOf(string endpoint) =>
+        Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) ? uri.Host : endpoint;
+}
+
 /// <summary>Sprint 69 — durabilidade do frescor dos espelhos: o Worker grava aqui a cada resposta real (a mesma
 /// informação que alimenta o estado sticky em memória da Sprint 67) e o painel /admin/geocodificacao lê para
 /// mostrar por que fichas seguem adiando em overpass_stale_data.</summary>

@@ -56,7 +56,7 @@ CLI pontual de manutenção disponível, sem executar automaticamente ao iniciar
 - `--import-place-reference <arquivo>` e `--approve-place-reference <id>`: operação editorial local auditada. Preferir revisão autenticada pela interface no uso normal. Importar não aprova nem publica.
 - `--probe-free-ai <nome>`: faz chamada real limitada a partir de referência revisada e consome reserva. Não usar como health check periódico.
 - `--geocode-pending`: aplica migrações, executa um ciclo de geocodificação (Nominatim real, com fallback Overpass quando há só logradouro) e imprime `{Enqueued, Processed, Placed, Skipped, Deferred}`.
-- `--verify-geocoding`: somente leitura; imprime a contagem da fila de geocodificação, a reserva diária usada e a distribuição das rejeições terminais por motivo (`SkipReasons`).
+- `--verify-geocoding`: somente leitura; imprime `{ "queue": <contagem da fila de geocodificação, reserva diária usada e distribuição das rejeições terminais por motivo (SkipReasons)>, "mirrors": <espelhos Overpass configurados com última observação persistida e veredito conservador — mesmo helper do painel /admin/geocodificacao (Sprint 71)> }`.
 - `--revert-geocode <id>`: remove a coordenada aplicada pelo OSM/Nominatim (ou já ajustada por revisão administrativa) em uma ficha sem proteção Tier 1, devolve a linha da fila a `skipped/reverted_by_admin` e grava histórico `admin_review` + auditoria `geocoding.revert`. Ator `worker-cli`. Não re-enfileira sozinha.
 
 Scripts de instalação como serviço existentes no projeto exigem configuração apropriada do ambiente e implantação autorizada. Não foram executados nesta Sprint.

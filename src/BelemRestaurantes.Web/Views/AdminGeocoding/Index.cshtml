@@ -105,13 +105,7 @@
                                 <td class="small">@m.AgeLabel</td>
                                 <td class="small">@m.ObservedLabel</td>
                                 <td>
-                                    <span class="badge @m.Status switch
-                                    {
-                                        "fresco" => "bg-success",
-                                        "antigo" => "bg-warning text-dark",
-                                        "ilegivel" => "bg-warning text-dark",
-                                        _ => "bg-secondary"
-                                    }">@m.StatusLabel</span>
+                                    <span class="badge @(m.Status switch { "fresco" => "bg-success", "antigo" => "bg-warning text-dark", "ilegivel" => "bg-warning text-dark", _ => "bg-secondary" })">@m.StatusLabel</span>
                                 </td>
                             </tr>
                         }
@@ -166,14 +160,7 @@
                                     <a href="/estabelecimento/@t.RestaurantId" class="text-forest text-decoration-none fw-semibold">@t.Name</a>
                                     <div class="text-muted small">#@t.RestaurantId @t.City</div>
                                 </td>
-                                <td><span class="badge @t.State switch
-                                {
-                                    "completed" => "bg-success",
-                                    "failed" => "bg-danger",
-                                    "skipped" => "bg-warning text-dark",
-                                    "running" => "bg-primary",
-                                    _ => "bg-secondary"
-                                }">@t.State</span></td>
+                                <td><span class="badge @(t.State switch { "completed" => "bg-success", "failed" => "bg-danger", "skipped" => "bg-warning text-dark", "running" => "bg-primary", _ => "bg-secondary" })">@t.State</span></td>
                                 <td class="small">@t.LastStatus</td>
                                 <td>@t.Attempts</td>
                                 <td class="small">@t.ResultPrecision</td>
@@ -248,5 +235,5 @@
         }
     </div>
 
-    <p class="text-muted small mt-3">Fonte: Nominatim/OpenStreetMap (Sprint 58), com fallback Overpass (Sprint 62) e segundo olhar só do logradouro para ruas sem candidato (Sprint 64). Regras rígidas de aceitação, proteção Tier 1 e teto diário compartilhado no banco. Revisão humana das coordenadas aplicadas — reverter ou ajustar com histórico e auditoria — nas Sprints 60 e 61. Distribuição de motivos de rejeição e devolução à fila por motivo na Sprint 63; cache de consulta e cache negativo de logradouro nas Sprints 66 e 65; frescor sticky dos espelhos e o monitoramento acima na Sprint 69. Detalhes em docs/SPRINT58-REPORT.md a docs/SPRINT69-REPORT.md (repositório).</p>
+    <p class="text-muted small mt-3">Fonte: Nominatim/OpenStreetMap (Sprint 58), com fallback Overpass (Sprint 62) e segundo olhar só do logradouro para ruas sem candidato (Sprint 64). Regras rígidas de aceitação, proteção Tier 1 e teto diário compartilhado no banco. Revisão humana das coordenadas aplicadas — reverter ou ajustar com histórico e auditoria — nas Sprints 60 e 61. Distribuição de motivos de rejeição e devolução à fila por motivo na Sprint 63; cache de consulta e cache negativo de logradouro nas Sprints 66 e 65; frescor sticky dos espelhos e o monitoramento acima nas Sprints 69 e 71 (também no CLI --verify-geocoding). Detalhes em docs/SPRINT58-REPORT.md a docs/SPRINT71-REPORT.md (repositório).</p>
 </div>

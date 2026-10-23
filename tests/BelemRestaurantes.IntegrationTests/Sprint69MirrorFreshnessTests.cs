@@ -26,6 +26,7 @@ public sealed class Sprint69MirrorFreshnessTests
     // Espelhos do conjunto padrão configurado na Web (mesmos que o Worker usa localmente).
     private const string Kumi = "https://overpass.kumi.systems/api/interpreter";
     private const string OsmCh = "https://overpass.osm.ch/api/interpreter";
+    private const string OverpassDe = "https://overpass-api.de/api/interpreter";
 
     private sealed class StoredRow
     {
@@ -137,18 +138,21 @@ public sealed class Sprint69MirrorFreshnessTests
         string userId = "";
         var previousKumi = (StoredRow?)null;
         var previousOsmCh = (StoredRow?)null;
+        var previousDe = (StoredRow?)null;
         var now = DateTimeOffset.UtcNow;
         try
         {
             await using var db0 = await root.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
             previousKumi = await ReadRowAsync(db0, Kumi);
             previousOsmCh = await ReadRowAsync(db0, OsmCh);
+            previousDe = await ReadRowAsync(db0, OverpassDe);
 
             using (var scope = root.CreateScope())
             {
                 var store = scope.ServiceProvider.GetRequiredService<IOverpassMirrorFreshnessStore>();
                 await store.RecordAsync(Kumi, now.AddDays(-30), now.AddMinutes(-5), default);   // dado antigo
                 await store.RecordAsync(OsmCh, now.AddDays(-2), now.AddHours(-1), default);     // fresco
+                await store.RecordAsync(OverpassDe, null, now.AddMinutes(-10), default);        // idade ilegível (base nula)
             }
 
             (var client, userId) = await LoginAsync(factory);
@@ -158,8 +162,12 @@ public sealed class Sprint69MirrorFreshnessTests
                 Assert.Contains("Espelhos Overpass (frescor dos dados)", page);
                 Assert.Contains("overpass.kumi.systems", page);
                 Assert.Contains("overpass.osm.ch", page);
+                Assert.Contains("overpass-api.de", page);
                 Assert.Contains("dado antigo (acima de 14 dias)", page);
                 Assert.Contains("fresco (menos de 14 dias)", page);
+                // Sprint 71 — regressão: linha com idade ilegível (base NULL) renderiza sem quebrar a página.
+                // O encoder HTML do Razor escreve o acento como entidade numérica, por isso a forma codificada.
+                Assert.Contains("dado antigo (idade ileg&#xED;vel)", page);
                 var inv = System.Globalization.CultureInfo.InvariantCulture;
                 // A data-base exibida segue a convenção wall-clock uniforme do repositório; em máquina
                 // fora do UTC o driver pode devolver a leitura com deslocamento de sessão — os dois candidatos.
@@ -174,6 +182,7 @@ public sealed class Sprint69MirrorFreshnessTests
             await using var db = await root.GetRequiredService<MySqlConnectionFactory>().OpenAsync(default);
             await UpsertOrDeleteAsync(db, Kumi, previousKumi);
             await UpsertOrDeleteAsync(db, OsmCh, previousOsmCh);
+            await UpsertOrDeleteAsync(db, OverpassDe, previousDe);
         }
     }
 

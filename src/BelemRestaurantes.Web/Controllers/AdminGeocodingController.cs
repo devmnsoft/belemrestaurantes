@@ -41,35 +41,23 @@ public sealed class AdminGeocodingController(IGeocodingQueue queue, IRestaurantA
         }
     }
 
-    /// <summary>Sprint 69 — espelhos configurados mesclados com a última observação persistida pelo Worker.
-    /// O painel mostra o fato (data-base respondida pelo espelho e quando foi vista); o veredito
-    /// antigo/fresco segue a mesma regra conservadora da fonte (ausente/ilegível/mais de 14 dias = antigo).</summary>
+    /// <summary>Sprint 69/71 — espelhos configurados mesclados com a última observação persistida pelo Worker,
+    /// pelo helper compartilhado <see cref="MirrorFreshnessViewRow"/> (o mesmo que o CLI --verify-geocoding usa):
+    /// fonte única do veredito conservador e proteção contra idade ilegível (base nula) sem quebrar a página.</summary>
     private async Task<IReadOnlyList<GeocodingMirrorRow>> MirrorRowsAsync(CancellationToken ct)
     {
         var now = DateTimeOffset.UtcNow;
         var stored = await mirrors.GetLatestAsync(ct);
-        var byEndpoint = stored.ToDictionary(r => r.Endpoint, StringComparer.Ordinal);
-        var configured = overpass.Endpoints is null ? [] : overpass.Endpoints
-            .Where(e => !string.IsNullOrWhiteSpace(e))
-            .Select(e => e.TrimEnd('/'))
-            .Distinct()
+        return MirrorFreshnessViewRow.Merge(overpass.Endpoints, stored, now)
+            .Select(r => new GeocodingMirrorRow(
+                r.Endpoint,
+                r.Host,
+                r.BaseTimestampUtc?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? (r.ObservedAtUtc is null ? "—" : "ilegível"),
+                r.BaseTimestampUtc is null ? "—" : $"{Math.Max(0, (int)Math.Floor((now - r.BaseTimestampUtc.Value).TotalDays))} dias",
+                r.ObservedAtUtc is null ? "—" : $"{r.ObservedAtUtc.Value.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)} UTC · {RelativeAgeLabel(r.ObservedAtUtc.Value, now)}",
+                r.StatusCode,
+                r.StatusLabel))
             .ToList();
-        return configured.Select(endpoint =>
-        {
-            byEndpoint.TryGetValue(endpoint, out var snap);
-            var host = Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) ? uri.Host : endpoint;
-            if (snap is null)
-                return new GeocodingMirrorRow(endpoint, host, "—", "—", "—", "sem", "sem observação");
-            var (code, label) = snap.BaseTimestampUtc is null
-                ? ("ilegivel", "dado antigo (idade ilegível)")
-                : snap.IsDataOld(now)
-                    ? ("antigo", "dado antigo (acima de 14 dias)")
-                    : ("fresco", "fresco (menos de 14 dias)");
-            var baseLabel = snap.BaseTimestampUtc!.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
-            var ageLabel = $"{Math.Max(0, (int)Math.Floor((now - snap.BaseTimestampUtc.Value).TotalDays))} dias";
-            var observedLabel = $"{snap.ObservedAtUtc.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)} UTC · {RelativeAgeLabel(snap.ObservedAtUtc, now)}";
-            return new GeocodingMirrorRow(endpoint, host, baseLabel, ageLabel, observedLabel, code, label);
-        }).ToList();
     }
 
     private static string RelativeAgeLabel(DateTimeOffset observedAtUtc, DateTimeOffset now)
