@@ -27,7 +27,15 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
         CuiaAiResponse? initialResponse = null;
         if (!string.IsNullOrWhiteSpace(q))
         {
-            initialResponse = await AskMeasured(new CuiaAiQuery(q, city, occasion, dietary, SearchWeb: searchWeb), ct);
+            try
+            {
+                initialResponse = await AskMeasured(new CuiaAiQuery(q, city, occasion, dietary, SearchWeb: searchWeb), ct);
+            }
+            catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                // O cliente abandonou a navegação antes do fim: falha silenciosa e educada em vez de erro 500 (Sprint 73).
+                initialResponse = null;
+            }
         }
 
         return View(initialResponse);
@@ -56,16 +64,25 @@ public sealed class CuiaAiController(ICuiaAiService cuiaAi, IRestaurantReadRepos
             new[] { req.City, req.Occasion, req.Dietary, req.Budget }.Any(s => s?.Length > 100))
             return ApiProblems.Result(HttpContext, 400, "context_too_long", "Reduza os filtros ou reinicie a conversa nesta aba.", false);
 
-        var response = await AskMeasured(new CuiaAiQuery(
-            Prompt: req.Prompt,
-            City: req.City,
-            Occasion: req.Occasion,
-            Dietary: req.Dietary,
-            Budget: req.Budget,
-            SearchWeb: req.SearchWeb,
-            PreviousQuestions: req.PreviousQuestions,
-            PlaceIds: req.PlaceIds
-        ), ct);
+        CuiaAiResponse response;
+        try
+        {
+            response = await AskMeasured(new CuiaAiQuery(
+                Prompt: req.Prompt,
+                City: req.City,
+                Occasion: req.Occasion,
+                Dietary: req.Dietary,
+                Budget: req.Budget,
+                SearchWeb: req.SearchWeb,
+                PreviousQuestions: req.PreviousQuestions,
+                PlaceIds: req.PlaceIds
+            ), ct);
+        }
+        catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested)
+        {
+            // A interrupção veio do cliente (botão cancelar ou espera esgotada no navegador): não é defeito do serviço.
+            return ApiProblems.Result(HttpContext, StatusCodes.Status408RequestTimeout, "timeout", "A consulta demorou mais do que o esperado.", true);
+        }
 
         return Ok(response);
     }

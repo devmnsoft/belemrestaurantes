@@ -62,7 +62,7 @@
   @if (ViewData["MapNext"] is long next)
   { <a class="para-button" href="@Url.Action("Index", new { city=query.City, q=query.Term, category=query.Category, neighborhood=query.Neighborhood, tier=query.Tier, after=next })">Próximos lugares</a> }
   </div>
-  <p><a href="/busca" class="para-text-link">Voltar à busca ↗</a> <a href="/guia" class="para-text-link">Como a camada Guia é decidida ↗</a></p>
+  <p><a href="/busca" class="para-text-link">Voltar à busca ↗</a> <a href="/guia" class="para-text-link">Como a camada Guia é decidida ↗</a> <a href="/dados-abertos" class="para-text-link">Atlas aberto: dados e exportações ↗</a></p>
 </section>
 
 @section Scripts { <script src="~/js/catalog-map.js" asp-append-version="true" defer></script> }

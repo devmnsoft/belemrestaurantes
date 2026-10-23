@@ -24,10 +24,10 @@ public sealed class CuiaAiService(
 {
     private readonly IEnumerable<IAiProvider> _aiProviders = aiProviders;
 
-    private async Task<CuiaAiResponse?> CulinaryAnswerAsync(string prompt,string context,bool searchWeb,CancellationToken ct)
+    private async Task<(CuiaAiResponse? Answer, WebSearchResult? Web)> CulinaryAnswerAsync(string prompt,string context,bool searchWeb,CancellationToken ct)
     {
         var topic=CulinaryQuery.Topic(context);
-        if(topic.Length<3)return null;
+        if(topic.Length<3)return (null,null);
         var records=await culinary!.FindAsync(context,ct);
         var remote=new WebSearchResult("not_requested",[]);
         if(searchWeb && webSearch is not null && (records.Count==0 || prompt.Contains("pesquis",StringComparison.OrdinalIgnoreCase) || prompt.Contains("onde",StringComparison.OrdinalIgnoreCase) || !records.Any(r=>r.Kind=="dish_evidence") && !System.Text.RegularExpressions.Regex.IsMatch(BelemRestaurantes.Domain.Rules.NameNormalizer.Normalize(prompt),"receita|ingrediente|video|custa|compr|barat",System.Text.RegularExpressions.RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100))))
@@ -43,7 +43,7 @@ public sealed class CuiaAiService(
             catch(Exception ex)when(ex is OperationCanceledException or HttpRequestException or InvalidOperationException)
             {logger.LogWarning("Cuia culinária: pesquisa terminou com {Failure}.",ex.GetType().Name);remote=new("unavailable",[]);}
         }
-        if(records.Count==0 && remote.Sources.Count==0)return null;
+        if(records.Count==0 && remote.Sources.Count==0)return (null,remote);
         var text=new StringBuilder();
         var folded=BelemRestaurantes.Domain.Rules.NameNormalizer.Normalize(prompt);
         var recipes=records.Where(r=>r.Kind=="recipe_reference").Take(4).ToArray();
@@ -72,10 +72,10 @@ public sealed class CuiaAiService(
             foreach(var s in remote.Sources.Take(5))text.AppendLine("- ["+s.Title+"]("+s.Url+") — "+s.Snippet);
             text.AppendLine("\nLinks descobertos não confirmam por si só ingredientes, venda ou horário. Páginas elegíveis foram encaminhadas para verificação pelo robô.");
         }
-        return new(text.ToString(),[],[],[],["Tem receita publicada de "+topic+"?","Mostre um vídeo de "+topic,"Onde comprar ingredientes de "+topic+"?"],"Cuia","referencia")
+        return (new(text.ToString(),[],[],[],["Tem receita publicada de "+topic+"?","Mostre um vídeo de "+topic,"Onde comprar ingredientes de "+topic+"?"],"Cuia","referencia")
         {Sources=records.Select(r=>new WebSearchSource(r.Title,r.Url,r.Summary,new DateTimeOffset(DateTime.SpecifyKind(r.ObservedAt,DateTimeKind.Utc))){Publisher=r.Author,SourceKind="culinary_reference",RetrievalStatus="retrieved"})
             .Concat(records.Where(r=>r.VideoUrl is not null).Select(r=>new WebSearchSource("Vídeo: "+r.Title,r.VideoUrl!,"Vídeo vinculado pela página original da receita.",new DateTimeOffset(DateTime.SpecifyKind(r.ObservedAt,DateTimeKind.Utc))){Publisher=r.Author,SourceKind="culinary_video",RetrievalStatus="linked_by_source"}))
-            .Concat(remote.Sources).DistinctBy(r=>r.Url).Take(8).ToArray(),SearchStatus=remote.Status=="not_requested"?"collected_sources":remote.Status,ExternalSearchStatus=remote.Status,GenerationStatus="reference_answer",ResearchQuery=topic};
+            .Concat(remote.Sources).DistinctBy(r=>r.Url).Take(8).ToArray(),SearchStatus=remote.Status=="not_requested"?"collected_sources":remote.Status,ExternalSearchStatus=remote.Status,GenerationStatus="reference_answer",ResearchQuery=topic},remote);
     }
 
     public async Task<CuiaAiResponse> AskAsync(CuiaAiQuery query, CancellationToken ct)
@@ -102,9 +102,11 @@ public sealed class CuiaAiService(
             .Where(q => !IsPromptInjection(q) && !CuiaAnswerRules.ClearlyOutsideScope(q)).ToArray();
         var anchor=CuiaConversation.Anchor(prompt,previousQuestions);
         var contextPrompt=anchor is null?prompt:anchor+" · "+prompt;
+        WebSearchResult? priorWeb=null;
         if(culinary is not null && CulinaryQuery.IsCulinary(contextPrompt))
         {
-            var culinaryAnswer=await CulinaryAnswerAsync(prompt,anchor??prompt,query.SearchWeb,ct);
+            var (culinaryAnswer,priorWebResult)=await CulinaryAnswerAsync(prompt,anchor??prompt,query.SearchWeb,ct);
+            priorWeb=priorWebResult;
             if(culinaryAnswer is not null)return culinaryAnswer;
         }
         var contextPlaces = new List<RestaurantView>();
@@ -205,6 +207,15 @@ public sealed class CuiaAiService(
         var search = new WebSearchResult(liveResearch ? "not_configured" : query.SearchWeb ? "not_requested" : "not_requested", []);
         if (liveResearch)
         {
+            if(priorWeb is not null)
+            {
+                // A etapa culinária já executou a pesquisa desta consulta com o termo mais específico;
+                // reutilizar evita pagar cota e tempo de web duas vezes pela mesma pergunta (Sprint 73).
+                search = priorWeb;
+                logger.LogInformation("Cuia pesquisa: reutilizada da etapa culinária, estado {Status}, {Sources} fontes.",search.Status,search.Sources.Count);
+            }
+            else
+            {
             var searchQuery = CuiaConversation.SearchQuery(prompt,anchor,detectedCity);
             try {var phase=System.Diagnostics.Stopwatch.GetTimestamp();search = await webSearch!.SearchAsync(searchQuery, ct);
                 logger.LogInformation("Cuia pesquisa: provedor {Provider}, estado {Status}, {Sources} fontes, {ElapsedMs} ms.",search.Provider??"configured",search.Status,search.Sources.Count,(int)System.Diagnostics.Stopwatch.GetElapsedTime(phase).TotalMilliseconds); }
@@ -213,6 +224,7 @@ public sealed class CuiaAiService(
             {
                 logger.LogWarning("Pesquisa indisponível ({ExceptionType}).", ex.GetType().Name);
                 search = new("unavailable", []);
+            }
             }
         }
 

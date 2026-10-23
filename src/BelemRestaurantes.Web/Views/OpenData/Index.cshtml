@@ -1,0 +1,47 @@
+@model BelemRestaurantes.Application.Models.OpenDataSummary
+@using System.Globalization
+@{
+    ViewData["Title"] = "Atlas aberto do Pará — dados e exportações";
+    var coverage = Model.PublishedTotal == 0 ? 0m : Math.Round(100m * Model.WithCoordinates / Model.PublishedTotal, 1);
+    var generated = Model.GeneratedAtUtc.ToUniversalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+}
+<section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">DADOS ABERTOS</span><h1>Atlas aberto do Pará</h1><p>O catálogo publicado pelo portal, com números honestos da cobertura, metodologia de verificação e exportações para reuso por pessoas, jornalistas, pesquisadores e aplicativos.</p></div></section>
+<section class="para-container para-section">
+  <div class="atlas-open-data-grid">
+    <article class="atlas-open-data-card"><span>@Model.PublishedTotal.ToString(CultureInfo.InvariantCulture)</span><p>estabelecimentos publicados</p></article>
+    <article class="atlas-open-data-card"><span>@Model.WithCoordinates.ToString(CultureInfo.InvariantCulture)</span><p>com coordenada verificada (@coverage.ToString("0.#", CultureInfo.InvariantCulture))%</p></article>
+    <article class="atlas-open-data-card"><span>@Model.GuideTier.ToString(CultureInfo.InvariantCulture)</span><p>na camada Guia (dados conferidos com fonte)</p></article>
+    <article class="atlas-open-data-card"><span>@generated</span><p>gerado em UTC, atualizado continuamente</p></article>
+  </div>
+
+  <h2>Mais publicados por município</h2>
+  <table class="catalog-table">
+    <thead><tr><th>Município</th><th>Publicados</th></tr></thead>
+    <tbody>
+      @foreach (var city in Model.Cities)
+      {
+        <tr><td>@city.City</td><td>@city.Total.ToString(CultureInfo.InvariantCulture)</td></tr>
+      }
+    </tbody>
+  </table>
+
+  <h2>Como ler estes números</h2>
+  <ol class="cuia-ai-help">
+    <li><strong>Publicados</strong> são cadastros que passaram pela moderação do portal. Pendentes, reprovados e suspensos não aparecem aqui nem nas exportações.</li>
+    <li><strong>Coordenada verificada</strong> significa posição obtida por geocodificação validada contra OpenStreetMap/Nominatim ou origem estruturada, nunca digitada a olho. A fila de geocodificação corre com cota diária e espelhos com verificação de frescor — por isso o percentual cresce aos poucos e de forma auditável.</li>
+    <li><strong>Camada Guia</strong> exige dono informado, horário, cardápio ou foto com licença — os dados conferidos com fonte identificável.</li>
+    <li>Nenhum número é projetado ou arredondado para parecer maior. Sem fonte vigente, o portal não afirma horário, preço nem prato servido.</li>
+  </ol>
+
+  <h2>Exportações</h2>
+  <ul class="catalog-map-list">
+    <li><a href="/api/dados-abertos/geojson"><strong>GeoJSON</strong></a> — estabelecimentos publicados com coordenada, prontos para mapas (Leaflet, QGIS, Kepler.gl).</li>
+    <li><a href="/api/dados-abertos.csv"><strong>CSV completo</strong></a> — todo o catálogo publicado, com os mesmos campos públicos da ficha.</li>
+    <li><a href="/dados-abertos/openstreetmap"><strong>Snapshots OpenStreetMap</strong></a> — extrações brutas da fonte aberta usadas no enriquecimento, com atribuição ODbL.</li>
+  </ul>
+
+  <h2>Licença e uso</h2>
+  <p>Coordenadas e geometrias de origem aberta seguem a <a href="https://www.openstreetmap.org/copyright" rel="license noopener">licença OpenStreetMap/ODbL</a>, com atribuição mantida em cada exportação. Os demais campos descrevem o cadastro conduzido pelo portal e podem ser reutilizados citando esta página como origem; fotos permanecem sob a licença de cada autor, documentada na ficha. Dados sobre estabelecimentos podem mudar sem aviso: confirme funcionamento antes de decidir uma visita.</p>
+
+  <p><a href="/mapa" class="para-text-link">Explorar no mapa interativo ↗</a> <a href="/guia" class="para-text-link">Como a camada Guia é decidida ↗</a> <a href="/busca" class="para-text-link">Buscar no catálogo ↗</a></p>
+</section>

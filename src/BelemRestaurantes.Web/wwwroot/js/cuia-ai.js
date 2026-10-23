@@ -97,8 +97,13 @@
     submitBtn.disabled = true;
     const abort = new AbortController();activeRequest=abort;
     const timer = setTimeout(() => abort.abort(), 75000);
-
+    let slowTimer;
     try {
+      slowTimer = setTimeout(() => {
+        if (id !== requestSequence) return;
+        const text = loadingEl.querySelector('p');
+        if (text) text.textContent = 'Ainda reunindo referências. Com pesquisa na internet a consulta pode levar mais tempo — você pode cancelar quando quiser.';
+      }, 25000);
       const payload = {
         prompt: prompt,
         city: cityInput.value || null,
@@ -131,6 +136,7 @@
       showAskError(err);
     } finally {
       clearTimeout(timer);
+      clearTimeout(slowTimer);
       if(id===requestSequence){busy=false;submitBtn.disabled=false;loadingEl.hidden=true;if(cancelBtn)cancelBtn.hidden=true;resultsEl.removeAttribute('aria-busy');activeRequest=null;}
     }
   }

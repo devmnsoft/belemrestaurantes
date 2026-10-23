@@ -1,0 +1,48 @@
+Sprint 73 — evidência ao vivo
+Execução local (Windows, Release --no-incremental, ASPNETCORE_ENVIRONMENT=Development, http://localhost:63861), 23/10/2026 ~18:50–19:00 UTC.
+Nenhum segredo versionado; logs do processo em %TEMP%\opencode\belemweb-s73e.log.
+
+1) CUIA — antes da correção (binário anterior, mesmo banco/cotas):
+   GET /cuia-ia?q=onde comer tacaca em Belem&searchWeb=true -> HTTP 200 em 14,4 s
+   log: "Cuia pesquisa: provedor brave+drael+public_sites, estado quota_exhausted, 0 fontes, 5028 ms"
+   Duas buscas compostas por pergunta (etapa culinária + caminho principal, chaves de cache diferentes).
+
+2) CUIA — após a correção, mesma URL:
+   GET /cuia-ia?q=onde comer tacaca em Belem&searchWeb=true -> HTTP 200 em 15547 ms
+   log: "Cuia pesquisa: reutilizada da etapa culinária, estado unavailable, 0 fontes"
+   Repetição imediata (mesma pergunta, cache de pesquisa): HTTP 200 em 73 ms.
+   Leitura honesta: com public_site_search 30/30 e Brave sem chave, o único braço ativo foi o Drael —
+   3 chamadas reais de busca nativa registradas no log HTTP (cada uma ~11 s, dentro do novo orçamento de 15 s).
+   O gate terminal exigiu o rastro "web_search" no stream (X-Drael-What-Ran); as respostas de hoje vieram
+   sem ele -> rejeição conservadora "search_not_verified" -> estado "unavailable", 0 fontes, e a resposta
+   saiu pelo fallback determinístico com a mensagem honesta "O serviço de pesquisa externa não respondeu nesta tentativa."
+
+3) CONTADORES DE COTA (external_free_usage, período diário 20261023) medidos depois da janela de sondas 18:5x:
+   cuia_drael          20  (last_used_at 2026-10-23 00:18:25 -> congelado: o teto de GERAÇÃO não foi tocado pelas buscas)
+   cuia_gemini         20  (last_used_at 2026-10-23 15:13:24 -> congelado)
+   public_site_search  30  (last_used_at 2026-10-23 00:24:59 -> congelado, esgotado desde cedo)
+   wikipedia_search    2   (last_used_at 2026-10-23 18:16:14 -> congelado na janela das sondas)
+   drael_search        3   (serviço NOVO desta Sprint: exatamente 1 unidade por fan-out inédito —
+                            3 perguntas com token único + 1 repetição servida de cache gastaram 0 unidade)
+
+4) DESCONEXÃO DE CLIENTE DURANTE O PROCESSAMENTO (reprodução do TaskCanceledException reportado):
+   Sonda A: pergunta inédita, cliente desistiu em 2186 ms (timeout 2 s).
+   Sonda B: curl --max-time 1 em pergunta inédita -> http=000 no cliente em 1014 ms;
+            servidor registrou "HTTP GET terminou com 200 ... 1014 ms" para a mesma correlation.
+   Log COMPLETO do processo após as sondas: 0 ocorrências de "TaskCanceledException",
+   "Unhandled exception" ou "fail:" (antes da correção a TCE subia até o MVC e pintava a página
+   vermelha de desenvolvimento quando a aba era fechada/recarregada).
+
+5) ATLAS ABERTO:
+   GET /dados-abertos            -> HTTP 200; cartões: 16.162 estabelecimentos publicados /
+                                    286 com coordenada verificada / 0 na camada Guia (números reais do banco)
+   GET /api/dados-abertos/geojson-> metadata.published_total=16162, with_coordinates=286,
+                                    license=ODbL-1.0, features=286 (idêntico ao SQL direto executado à parte)
+   GET /api/dados-abertos.csv    -> 1.963.870 bytes; X-Generated-At: Fri, 23 Oct 2026 18:53:35 GMT;
+                                    BOM UTF-8 + cabeçalho estável
+                                    id,name,city,neighborhood,category,address,latitude,longitude,tier,business_status,opening_hours,phone,website
+                                    (BOM/cabeçalho/contagem de linhas assertidos no teste de integração)
+
+6) SONDAS DRAEL (projeto descartável em %TEMP%\opencode\tzprobe, mesma chave do cofre belemrestaurantes-web;
+   base do orçamento escolhido):
+   completão simples: 1,05 s | chamada com busca nativa: 10,8 s -> orçamento fixado em 15 s (folga, sem travar a pergunta)

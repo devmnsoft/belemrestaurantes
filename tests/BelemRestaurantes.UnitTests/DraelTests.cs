@@ -22,6 +22,9 @@ public sealed class DraelTests
     }
     private sealed class Quota:BelemRestaurantes.Application.Abstractions.IFreeTierQuota
     {public Task<bool> TryReserveAsync(string service,int daily,int monthly,CancellationToken ct)=>Task.FromResult(true);}
+    private sealed class CapturingQuota:BelemRestaurantes.Application.Abstractions.IFreeTierQuota
+    {public List<string> Services=new();public bool Grant=true;
+     public Task<bool> TryReserveAsync(string service,int daily,int monthly,CancellationToken ct){Services.Add(service);return Task.FromResult(Grant);}}
     [Fact]public async Task NativeSearchRejectsUnrelatedTitlesAndPrivateUrls()
     {
         var body=System.Text.Json.JsonSerializer.Serialize(new{sources=new[]{new{title="Tacacá em Belém",url="https://example.org/tacaca"},new{title="Aplicativo de sobremesa",url="https://example.org/spam"},new{title="Tacacá em Belém",url="https://127.0.0.1/private"}}});
@@ -36,6 +39,17 @@ public sealed class DraelTests
         var options=new DraelOptions{Enabled=true,SearchEnabled=true,ApiKey="test-only"};var handler=new Handler("");
         var result=await new DraelWebSearch(new DraelClient(new HttpClient(handler),options),options,new Quota()).SearchAsync("tacacá",default);
         Assert.Equal("not_configured",result.Status);Assert.Null(handler.Url);
+    }
+    [Fact]public async Task SearchUsesItsOwnQuotaSoGenerationIsNotStarved()
+    {
+        // A descoberta por busca tem cota própria (drael_search): o teto diário de geração (cuia_drael)
+        // não pode ser consumido pelas pesquisas antes de o modelo responder.
+        var quota=new CapturingQuota{Grant=false};var handler=new Handler("");
+        var options=new DraelOptions{Enabled=true,PlanConfirmed=true,SearchEnabled=true,ApiKey="test-only"};
+        var result=await new DraelWebSearch(new DraelClient(new HttpClient(handler),options),options,quota).SearchAsync("tacacá Belém",default);
+        Assert.Equal("quota_exhausted",result.Status);
+        Assert.Equal(new[]{"drael_search"},quota.Services);
+        Assert.Null(handler.Url);
     }
     [Fact]public async Task SynthesisAcceptsOneEnclosingJsonCodeFence()
     {

@@ -192,20 +192,33 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePages(async statusContext =>
 {
     var http = statusContext.HttpContext;
-    if (!ApiProblems.IsApi(http.Request) || http.Response.HasStarted) return;
-    if (http.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true) return;
+    if (http.Response.HasStarted) return;
     var status = http.Response.StatusCode;
-    var (code, message, retryable) = status switch
+    var (code, title, message, retryable) = status switch
     {
-        StatusCodes.Status400BadRequest => ("antiforgery", "Não foi possível confirmar o envio. Atualize a página e tente novamente.", true),
-        StatusCodes.Status401Unauthorized => ("unauthorized", "Não conseguimos concluir sua pesquisa agora. Tente novamente.", true),
-        StatusCodes.Status403Forbidden => ("forbidden", "Esta consulta não está disponível.", false),
-        StatusCodes.Status404NotFound => ("not_found", "Não conseguimos concluir sua pesquisa agora. Tente novamente.", false),
-        StatusCodes.Status429TooManyRequests => ("rate_limited", "Houve muitas consultas em pouco tempo. Espere alguns minutos e tente novamente.", true),
-        StatusCodes.Status503ServiceUnavailable => ("catalog_unavailable", "O serviço de recomendações está temporariamente indisponível.", true),
-        StatusCodes.Status504GatewayTimeout => ("timeout", "A consulta demorou mais do que o esperado.", true),
-        _ => ("unexpected", "Não conseguimos concluir sua pesquisa agora. Tente novamente.", status >= StatusCodes.Status500InternalServerError)
+        StatusCodes.Status400BadRequest => ("antiforgery", "Envio incompleto", "Não foi possível confirmar o envio. Atualize a página e tente novamente.", true),
+        StatusCodes.Status401Unauthorized => ("unauthorized", "Acesso não confirmado", "Não conseguimos concluir sua consulta agora. Tente novamente.", true),
+        StatusCodes.Status403Forbidden => ("forbidden", "Acesso não disponível", "Esta consulta não está disponível.", false),
+        StatusCodes.Status404NotFound => ("not_found", "Página não encontrada", "Não encontramos esta página. Verifique o endereço ou volte ao início.", false),
+        StatusCodes.Status429TooManyRequests => ("rate_limited", "Muitas consultas", "Houve muitas consultas em pouco tempo. Espere alguns minutos e tente novamente.", true),
+        StatusCodes.Status503ServiceUnavailable => ("catalog_unavailable", "Serviço ocupado", "O serviço está temporariamente indisponível. Tente novamente em instantes.", true),
+        StatusCodes.Status504GatewayTimeout => ("timeout", "Consulta demorada", "A consulta demorou mais do que o esperado. Você pode tentar novamente.", true),
+        _ => ("unexpected", "Não foi possível concluir", "Não conseguimos concluir sua consulta agora. Tente novamente.", status >= StatusCodes.Status500InternalServerError)
     };
+    if (!ApiProblems.IsApi(http.Request))
+    {
+        // Páginas HTML sem tela branca: um 429/503 em navegação inteira agora explica o motivo em português (Sprint 73).
+        if (http.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true) return;
+        var safeTitle = System.Net.WebUtility.HtmlEncode(title);
+        var safeMessage = System.Net.WebUtility.HtmlEncode(message);
+        http.Response.ContentType = "text/html; charset=utf-8";
+        await http.Response.WriteAsync(
+            $"<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>{safeTitle}</title>" +
+            "<style>body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f7f2e7;color:#1c2b24}main{max-width:640px;margin:10vh auto;padding:32px;background:#fff;border-radius:16px;border:1px solid #e5dcc8;text-align:center}h1{font-size:1.4rem;margin:0 0 8px}p{margin:0 0 16px;color:#4a5a50}a{color:#143f32;font-weight:600}</style></head>" +
+            $"<body><main><h1>{safeTitle}</h1><p>{safeMessage}</p><a href=\"/\">Voltar ao início</a></main></body></html>",
+            http.RequestAborted);
+        return;
+    }
     await ApiProblems.WriteAsync(http, status, code, message, retryable);
 });
 
@@ -284,7 +297,7 @@ app.Use(async (context, next) =>
     catch (Exception ex) when (ApiProblems.IsApi(context.Request))
     {
         var failure = ApiProblems.Classify(ex);
-        app.Logger.LogError("Falha na API {ExceptionType} em {Path}. CorrelationId {CorrelationId}.", ex.GetType().Name, context.Request.Path.Value, context.TraceIdentifier);
+        app.Logger.LogError(ex, "Falha na API {ExceptionType} em {Path}. CorrelationId {CorrelationId}.", ex.GetType().Name, context.Request.Path.Value, context.TraceIdentifier);
         await ApiProblems.WriteAsync(context, failure.Status, failure.Code, failure.Message, failure.Retryable, context.RequestAborted);
     }
     finally { actor.Value = null; }

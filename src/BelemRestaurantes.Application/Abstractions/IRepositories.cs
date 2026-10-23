@@ -26,6 +26,14 @@ public interface IRestaurantReadRepository
     Task<MapSummary> GetMapSummaryAsync(CancellationToken ct)
         => Task.FromResult(new MapSummary(0, 0, []));
 
+    /// <summary>Números do catálogo publicado para a página de dados abertos (Sprint 73).</summary>
+    Task<OpenDataSummary> GetOpenDataSummaryAsync(CancellationToken ct)
+        => Task.FromResult(new OpenDataSummary(0, 0, 0, [], DateTimeOffset.MinValue));
+
+    /// <summary>Exportação aberta por paginação de chaves (id crescente), somente publicados.</summary>
+    Task<IReadOnlyList<OpenDataCatalogRow>> GetOpenDataRowsAsync(long afterId, int take, CancellationToken ct)
+        => Task.FromResult<IReadOnlyList<OpenDataCatalogRow>>([]);
+
     Task<CatalogFactSheet?> GetFactSheetAsync(long id, CancellationToken ct)
         => Task.FromResult<CatalogFactSheet?>(null);
 }

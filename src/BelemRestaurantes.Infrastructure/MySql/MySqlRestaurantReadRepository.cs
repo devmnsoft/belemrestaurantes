@@ -181,6 +181,38 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
         return new(rows.Sum(r => r.Total), rows.Sum(r => r.Guides), rows.Select(r => r.City).ToList());
     }
 
+    public async Task<OpenDataSummary> GetOpenDataSummaryAsync(CancellationToken ct)
+    {
+        await using var connection = await factory.OpenAsync(ct);
+        var row = await connection.QueryFirstAsync<(int Total, int Coords, int Guides)>(new CommandDefinition(
+            """
+            SELECT COUNT(*) AS Total,
+                   SUM(CAST((latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180 AND NOT (ABS(latitude) < 0.000001 AND ABS(longitude) < 0.000001)) AS SIGNED)) AS Coords,
+                   SUM(CAST(catalog_tier='guia' AS SIGNED)) AS Guides
+            FROM restaurants WHERE status='published'
+            """, cancellationToken: ct));
+        var cities = (await connection.QueryAsync<(string City, int Total)>(new CommandDefinition(
+            "SELECT city, COUNT(*) AS Total FROM restaurants WHERE status='published' GROUP BY city ORDER BY Total DESC, city LIMIT 15", cancellationToken: ct))).AsList();
+        var generated = await connection.ExecuteScalarAsync<DateTime>(new CommandDefinition("SELECT UTC_TIMESTAMP(6)", cancellationToken: ct));
+        return new(row.Total, row.Coords, row.Guides,
+            cities.Select(c => new OpenDataCityCount(c.City, c.Total)).ToList(),
+            new DateTimeOffset(DateTime.SpecifyKind(generated, DateTimeKind.Utc)));
+    }
+
+    public async Task<IReadOnlyList<OpenDataCatalogRow>> GetOpenDataRowsAsync(long afterId, int take, CancellationToken ct)
+    {
+        var after = Math.Max(0, afterId);
+        var limit = Math.Clamp(take, 1, 2000);
+        await using var connection = await factory.OpenAsync(ct);
+        var rows = (await connection.QueryAsync<OpenDataCatalogRow>(new CommandDefinition(
+            """
+            SELECT id, name, city, neighborhood, category, address, latitude, longitude, catalog_tier, business_status, opening_hours, phone, website
+            FROM restaurants WHERE status='published' AND id > @after
+            ORDER BY id LIMIT @take
+            """, new { after, take = limit }, cancellationToken: ct))).AsList();
+        return rows;
+    }
+
     public async Task<MapPointPage> SearchMapAsync(MapQuery query, CancellationToken ct)
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
