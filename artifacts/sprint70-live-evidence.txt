@@ -1,0 +1,143 @@
+SPRINT 70 — EVIDÊNCIA AO VIVO (23/10/2026, UTC)
+=================================================
+
+PARTE 1 — ci-log provado de ponta a ponta com falha controlada
+--------------------------------------------------------------
+
+Linha do tempo (toda verificável por API anônima no repositório público):
+
+  b2016b4  commit "chore(ci): temporary probe test..." (sonda ref-aware: falha só quando
+           GITHUB_REF=refs/heads/*, i.e., push para branch; passa em tag, PR e local)
+  s70a-warmup  tag de aquecimento em b2016b4 -> check "build" VERDE na run de tag
+               (started 2026-10-23T14:29:10Z, runs/39970018016)
+  main <- b2016b4  push aceito pela proteção de branch (check verde pré-existente no SHA)
+  main run       started 2026-10-23T14:32:21Z (runs/39970481673, job 120471516556)
+               passos: Build OK, Unit OK, Integration Tests = FAILURE
+               PORÉM tag ci-log NÃO publicada -> primeiro achado da Sprint (bug latente):
+               o shell padrão do Actions em Linux é bash -e (errexit); com "dotnet test" vermelho o
+               script morre ANTES do "rc=$?" e o bloco que publica a tag nunca executa.
+               (Logs completos exigem admin no repositório: HTTP 403 anônimo; conclusões dos
+               passos obtidas via /actions/jobs/120471516556.)
+
+  4ac83df  commit "fix(ci): capture integration exit code under errexit so the ci-log tag
+           actually publishes"  ->  "rc=0; dotnet test ... || rc=$?"
+  s70b-warmup  tag de aquecimento em 4ac83df -> check "build" VERDE (~2 min)
+  main <- 4ac83df
+  ~180 s depois  refs/tags/ci-log PUBLICADA (tag anotada object 5ecfbaf..., apontando para
+               4ac83df; tagger github-actions[bot])  <- PROVA DE PONTA A PONTA
+
+Anotação da tag ci-log, capturada verbatim localmente (git tag -n99 ci-log):
+
+  BelemRestaurantes.IntegrationTests.Sprint70CiLogProbeTests.Probe_FailsOnlyOnBranchPush_UntilRemoved [FAIL]
+
+    Error Message:
+     Sprint 70 — sonda controlada para exercitar o pipeline ci-log; removida no commit seguinte.
+    Stack Trace:
+       at BelemRestaurantes.IntegrationTests.Sprint70CiLogProbeTests.Probe_FailsOnlyOnBranchPush_UntilRemoved() in /home/runner/work/belemrestaurantes/belemrestaurantes/tests/BelemRestaurantes.IntegrationTests/Sprint70CiLogProbeTests.cs:line 22
+   --
+    Error Message:
+     Verificação opcional das credenciais iniciais das contas reais não habilitada.
+
+    info: Microsoft.AspNetCore.Mvc.Infrastructure.RedirectResultExecutor[0]
+          Executing RedirectResult, redirecting to /admin/login.
+    info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[0]
+          Executed action BelemRestaurantes.Web.Controllers.AdminAccountController.Logout (BelemRestaurantes.Web) in 1.3573ms
+    info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+          Executed endpoint 'BelemRestaurantes.Web.Controllers.AdminAccountController.Logout (BelemRestaurantes.Web)'.
+    info: BelemRestaurantes.Web.Diagnostics.RequestDiagnosticsMiddleware[0]
+          HTTP POST terminou com 302; cabeçalhos 1275 bytes, cookies 1178 bytes, 7 ms. CorrelationId 0HNPH2K2EL6G4.
+    info: Microsoft.AspNetCore.Hosting.Diagnostics[0]
+          Request finished HTTP/1.1 POST https://localhost/admin/logout - 302 - - 7.6723ms
+    info: Microsoft.AspNetCore.Hosting.Diagnostics[0]
+          Request starting HTTP/1.1 GET https://localhost/admin/editorial - -
+    info: Microsoft.AspNetCore.Authorization.DefaultAuthorizationService[0]
+          Authorization failed. These requirements were not met:
+          DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+          ClaimsAuthorizationRequirement:Claim.Type=amr and Claim.Value is one of the following values: (mfa)
+          RolesAuthorizationRequirement:User.IsInRole must be true for one of the following roles: (content_editor|restaurant_moderator|platform_admin)
+    info: Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationHandler[0]
+          AuthenticationScheme: MNSOSTIdentity was challenged.
+    info: BelemRestaurantes.Web.Diagnostics.RequestDiagnosticsMiddleware[0]
+          HTTP GET terminou com 302; cabeçalhos 218 bytes, cookies 191 bytes, 0 ms. CorrelationId 0HNPH2K2EL6G5.
+    info: Microsoft.AspNetCore.Hosting.Diagnostics[0]
+          Request finished HTTP/1.1 GET https://localhost/admin/editorial - 302 - - 0.2486ms
+    info: Microsoft.Hosting.Lifetime[0]
+          Application is shutting down...
+    Passed BelemRestaurantes.IntegrationTests.AdminLifecycleTests.RealCookieMfaPasswordChangeAndRoleBoundaries(role: "content_editor") [1 s]
+  [xUnit.net 00:00:52.65]     BelemRestaurantes.IntegrationTests.AdminLifecycleTests.RequestedPersistentAccountsHaveValidProtectedCredentialsAndPasswordChallenge [SKIP]
+  [xUnit.net 00:00:52.65]       Verificação opcional das credenciais iniciais das contas reais não habilitada.
+  [xUnit.net 00:00:52.65]   Finished:    BelemRestaurantes.IntegrationTests
+    Skipped BelemRestaurantes.IntegrationTests.AdminLifecycleTests.RequestedPersistentAccountsHaveValidProtectedCredentialsAndPasswordChallenge [1 ms]
+    Error Message:
+     Verificação opcional das credenciais iniciais das contas reais não habilitada.
+
+  Test Run Failed.
+  Total tests: 242
+       Passed: 240
+       Failed: 1
+      Skipped: 1
+   Total time: 53.1686 Seconds
+
+Leitura honesta dos totais CI (MySQL 8.4 docker fresco): a única falha é a sonda; o único skip é a
+verificação opcional de credenciais já documentada como preexistente. Nota cruzada: nesta mesma
+execução o CuiaAiEndpointTests.Ask_WithValidToken_ReturnsJson PASSOU — no banco fresco do CI,
+confirmando a classificação ambiental (LLM gratuito) da falha local registrada na Sprint 69.
+
+PARTE 2 — frescor sticky (Sprint 67) corroborado em processo longevo
+--------------------------------------------------------------------
+
+Baseline antes do lote (MariaDB local :3308):
+  SELECT granted FROM geocoding_runs WHERE run_day=UTC_DATE();            -> 310 (teto padrão 300 esgotado)
+  SELECT endpoint, base_timestamp, observed_at FROM overpass_mirror_freshness;
+    https://overpass.osm.ch/api/interpreter | NULL | 2026-10-23 14:06:14.187763   (Sprint 69)
+
+One-shot longevo (memória de espelhos vazia no início — processo novo), só neste processo:
+  Worker__Geocoding__DailyLimit=500 Worker__Geocoding__BatchSize=20
+  dotnet BelemRestaurantes.Worker.dll --geocode-pending
+  saida:  {"Enqueued":0,"Processed":20,"Placed":5,"Skipped":12,"Deferred":3}
+  duração real medida: 175 s
+
+Fichas tratadas (linhas reais de geocoding_tasks, ordenadas por updated_at):
+  1060 pending  overpass_stale_data                 attempts=1  2026-10-23 14:24:01.599109
+  1061 skipped  no_candidates_street                attempts=1  2026-10-23 14:24:07.449269
+  1062 skipped  no_candidates_street                attempts=1  2026-10-23 14:24:17.370333
+  1063 skipped  no_candidates_street                attempts=1  2026-10-23 14:24:27.833316
+  1064 skipped  no_candidates_street                attempts=1  2026-10-23 14:24:37.827892
+  1065 pending  unavailable(0:http_406|1:http_0)    attempts=1  2026-10-23 14:25:04.617540
+  1066 pending  unavailable(0:http_406|1:http_0)    attempts=1  2026-10-23 14:25:27.833314
+  1067 skipped  unsupported_type                    attempts=1  2026-10-23 14:25:28.440341
+  1068 skipped  street_mismatch                     attempts=1  2026-10-23 14:25:33.426286
+  1069 skipped  unsupported_type                    attempts=1  2026-10-23 14:25:38.797197
+  1070 skipped  street_mismatch                     attempts=1  2026-10-23 14:25:43.501198
+  1071 completed rooftop                            attempts=1  2026-10-23 14:25:48.551872
+  1072 skipped  house_number_mismatch               attempts=1  2026-10-23 14:25:53.519430
+  1073 skipped  unsupported_type                    attempts=1  2026-10-23 14:25:58.850886
+  1074 skipped  unsupported_type                    attempts=1  2026-10-23 14:26:03.533602
+  1075 completed rooftop                            attempts=1  2026-10-23 14:26:08.985972
+  1076 completed rooftop                            attempts=1  2026-10-23 14:26:13.925023
+  1077 completed rooftop                            attempts=1  2026-10-23 14:26:18.652942
+  1078 completed rooftop                            attempts=1  2026-10-23 14:26:23.855029
+  1079 skipped  unsupported_type                    attempts=1  2026-10-23 14:26:29.202624
+
+Estado pós-lote:
+  granted: 310 -> 337 (20 fichas: chamadas reais ao Nominatim + reservas Overpass das 3 consultas;
+  os adiamentos overpass_stale_data em si custam zero unidade — Sprints 65/67)
+  overpass_mirror_freshness:
+    https://overpass.osm.ch/api/interpreter | NULL | 2026-10-23 14:24:01.538909   (UNICA atualização no lote)
+
+Corroboração do sticky, ponto a ponto:
+  1. Ficha 1060 (14:24:01): primeira consulta Overpass do processo -> sondea os três espelhos;
+     osm.ch responde com dado antigo e a linha é gravada às 14:24:01.538909; sem match estrito e
+     com espelho velho, adia em overpass_stale_data (confirma, não rejeita).
+  2. Fichas 1065/1066 (14:25:04 / 14:25:27): consultas seguintes dentro da janela de 60 min ->
+     o motivo "unavailable(0:http_406|1:http_0)" lista APENAS os índices 0 (de) e 1 (kumi): o
+     índice 2 (osm.ch) NÃO aparece porque foi pulado pelo frescor sticky — e a linha do banco
+     permanece em 14:24:01.538909 sem nenhuma atualização posterior (uma sonda fresca teria
+     atualizado o observed_at).
+  3. Leitura honesta do limite: de/kumi falharam com 406/timeout (falha de infraestrutura, não
+     confirmação de idade), então o atalho zero-HTTP AllMirrorsKnownStale (todos confirmados
+     velhos) não pôde disparar hoje; a prova completa dele continua pendente de uma janela com
+     cota renovada (00:00 UTC) e espelhos respondendo — registrado, não forçado.
+
+Bônus operacional do mesmo lote: 5 coordenadas rooftop aplicadas em fichas reais (1071, 1075,
+1076, 1077, 1078) — pipeline saudável de ponta a ponta enquanto a evidência era colhida.
