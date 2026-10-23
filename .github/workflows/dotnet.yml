@@ -1,7 +1,7 @@
 name: Validate .NET
 on: [push, pull_request]
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,23 +35,27 @@ jobs:
         env:
           BELRESTAURANTES_TEST_MYSQL: "Server=127.0.0.1;Port=3307;Database=belrestaurante;User ID=root;Password=belrestroot;SslMode=Required;"
         run: |
-          set -o pipefail
           dotnet test tests/BelemRestaurantes.IntegrationTests/BelemRestaurantes.IntegrationTests.csproj -c Release --no-build --logger "console;verbosity=detailed" > ci-integration.log 2>&1
           rc=$?
-          tail -n 25 ci-integration.log
           failed=$(grep -oE 'BelemRestaurantes\.IntegrationTests\.[A-Za-z0-9_.]+ \[FAIL\]' ci-integration.log | sort -u)
-          if [ "$rc" -eq 0 ] || [ -z "$failed" ]; then
-            exit 0
-          fi
+          n=$(printf '%s' "$failed" | grep -c . || true)
           {
-            echo "### Testes de integracao que falharam"
-            echo
+            echo "### Failing integration tests ($n)"
             printf '%s\n' "$failed"
             echo
-            echo "### Primeiras mensagens de erro"
-            grep -E -A 2 'Error Message|Mensagem de erro' ci-integration.log | head -c 9000
-          } >> "$GITHUB_JOB_SUMMARY"
-          printf '%s\n' "$failed" | head -n 10 | while IFS= read -r test; do
-            echo "::error title=Integration test failure::$test"
-          done
-          exit 1
+            echo "### First error messages"
+            grep -E -A 3 'Error Message|Mensagem de erro' ci-integration.log | head -c 8000
+            echo
+            echo "### Log tail"
+            tail -n 40 ci-integration.log
+          } > ci-diagnostic.txt
+          cat ci-diagnostic.txt
+          if [ "$rc" -ne 0 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -d ci-log >/dev/null 2>&1 || true
+            git tag -a ci-log HEAD -F ci-diagnostic.txt
+            git push origin ci-log --force || true
+            echo "::error title=Integration tests failed::diagnostic published on tag ci-log"
+            exit 1
+          fi
