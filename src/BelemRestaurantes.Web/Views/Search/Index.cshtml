@@ -1,12 +1,32 @@
 @model BelemRestaurantes.Application.Models.PagedResult<BelemRestaurantes.Application.Models.RestaurantView>
 @using BelemRestaurantes.Application.Models
+@using BelemRestaurantes.Application.Services
 @using System.Globalization
+@inject Microsoft.Extensions.Configuration.IConfiguration SeoConfig
 @{
     ViewData["Title"] = T["SearchPageTitle"].Value;
     ViewData["AtlasEditorial"] = true;
     var filters = ViewBag.FilterOptions as BelemRestaurantes.Application.Abstractions.SearchFilterOptions;
     var query = ViewData["Query"] as RestaurantSearchQuery ?? new RestaurantSearchQuery(City: (string?)ViewBag.SelectedCity, Category: (string?)ViewBag.SelectedCategory, Page: Model.Page);
     var term = (string?)ViewBag.SearchTerm ?? query.Term;
+
+    // Sprint 79 — esta view serve /busca e as três páginas de catálogo (/cidade, /localidade,
+    // /categoria). Cada uma delas tem cartão de compartilhamento próprio com a contagem real que o
+    // catálogo respondeu; a URL canônica é o caminho servido sem consulta (paginação → 1ª página).
+    string? ogKind = null;
+    string? ogPlace = null;
+    if (ViewBag.SelectedCity is string selectedCity && !string.IsNullOrWhiteSpace(selectedCity)) { ogKind = "city"; ogPlace = selectedCity; }
+    else if (ViewBag.SelectedNeighborhood is string selectedNeighborhood && !string.IsNullOrWhiteSpace(selectedNeighborhood)) { ogKind = "locality"; ogPlace = selectedNeighborhood; }
+    else if (ViewBag.SelectedCategory is string selectedCategory && !string.IsNullOrWhiteSpace(selectedCategory)) { ogKind = "category"; ogPlace = selectedCategory; }
+    if (ogKind is not null && ogPlace is not null)
+    {
+        ViewData["Title"] = CatalogPageSeo.Title(ogKind, ogPlace);
+        var catalogDescription = CatalogPageSeo.Description(Model.TotalCount, ogKind, ogPlace);
+        ViewData["MetaDescription"] = catalogDescription;
+        ViewData["OgTitle"] = CatalogPageSeo.ShareTitle(ogKind, ogPlace);
+        ViewData["OgDescription"] = catalogDescription;
+        ViewData["OgUrl"] = CatalogPageSeo.OgUrl(SeoConfig["Seo:PublicOrigin"], Context.Request.Path.Value ?? "/busca");
+    }
     string PageUrl(int page) => "/busca" + Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?> {
         ["q"]=term,["city"]=query.City,["category"]=query.Category,["neighborhood"]=query.Neighborhood,
         ["sort"]=query.SafeSort,["photosOnly"]=query.PhotosOnly.ToString(),["page"]=page.ToString(),

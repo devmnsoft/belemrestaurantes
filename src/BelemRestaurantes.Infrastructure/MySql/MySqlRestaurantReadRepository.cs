@@ -72,8 +72,12 @@ public sealed class MySqlRestaurantReadRepository(MySqlConnectionFactory factory
 
         if (!string.IsNullOrWhiteSpace(query.Category))
         {
+            // Sprint 79 — filtro estruturado: o valor procurado é o rótulo guardado no catálogo (o
+            // menu de filtros e as rotas /categoria/{slug} só o oferecem assim). Re-canonicalizar
+            // aqui aplicaria o dicionário da ingestão pela segunda vez, e categorias cujos valores
+            // guardados antecederam mudanças no dicionário zeravam a busca inteira.
             where.Add("category = @category");
-            parameters.Add("category", CategoryRules.Clean(query.Category) ?? query.Category.Trim());
+            parameters.Add("category", query.Category.Trim());
         }
 
         if (query.MinPrice is { } min)
