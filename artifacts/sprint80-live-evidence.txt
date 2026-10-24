@@ -1,0 +1,42 @@
+﻿Sprint 80 - Evidencia ao vivo (instancia local Release http://localhost:63870, origem padrao de producao https://belemrestaurantes.com.br)
+Data-UTC: 2026-10-24 19:32
+Instancia: BelemRestaurantes.Web pid=10340, unica escutando 63870 (IPv4+IPv6)
+
+HOME /
+  content-language: 
+  title: 
+
+HOME ?lang=en
+  content-language: 
+  title: Par&#xE1;, a taste of the Amazon | Belém Restaurantes
+  alternate: pt-br -> https://belemrestaurantes.com.br/
+  alternate: en -> https://belemrestaurantes.com.br/?lang=en
+  alternate: es -> https://belemrestaurantes.com.br/?lang=es
+  alternate: x-default -> https://belemrestaurantes.com.br/
+
+HOME ?lang=es
+  content-language: 
+  title: Par&#xE1;, un viaje de sabores | Belém Restaurantes
+  alternate: pt-br -> https://belemrestaurantes.com.br/
+  alternate: en -> https://belemrestaurantes.com.br/?lang=en
+  alternate: es -> https://belemrestaurantes.com.br/?lang=es
+  alternate: x-default -> https://belemrestaurantes.com.br/
+
+CIDADE /cidade/belem
+  content-language:  | html-lang: pt-BR
+  og:url: https://belemrestaurantes.com.br/cidade/belem
+
+CIDADE /cidade/belem?lang=en
+  content-language:  | html-lang: en
+  og:url: https://belemrestaurantes.com.br/cidade/belem?lang=en
+
+CIDADE /cidade/belem?lang=es
+  content-language:  | html-lang: es
+  og:url: https://belemrestaurantes.com.br/cidade/belem?lang=es
+
+SITEMAP: tem-cidade-belem=True | tem-lang-param=False
+
+Cabecalhos conferidos separadamente (curl -D -):
+GET /cidade/belem -> Content-Language: pt-BR
+GET /cidade/belem?lang=en -> Content-Language: en
+GET /cidade/belem?lang=es -> Content-Language: es

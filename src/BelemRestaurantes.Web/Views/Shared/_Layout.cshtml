@@ -1,8 +1,17 @@
 @using System.Globalization
+@using BelemRestaurantes.Application.Services
 @using BelemRestaurantes.Web.Localization
+@inject Microsoft.Extensions.Configuration.IConfiguration SeoConfig
 @{
     var primaryEditorialLanguage=CultureInfo.CurrentUICulture.TwoLetterISOLanguageName is "pt" or "en" or "es";
     var editorialLanguage=primaryEditorialLanguage?CultureInfo.CurrentUICulture.Name:"en";
+    // Sprint 80 — idiomas com endereço: cada página publica os alternates hreflang (apenas os
+    // idiomas com tradução própria verificada) e o og:url aponta para a própria língua quando a
+    // página não está em português.
+    var seoOrigin = SitemapBuilder.ResolvePublicOrigin(SeoConfig["Seo:PublicOrigin"]);
+    var currentPage = Context.Request.Path.Value ?? "/";
+    var ogUrlValue = ViewData["OgUrl"]?.ToString();
+    var ogUrlForPage = ogUrlValue is not null ? HreflangBuilder.OgUrlForCulture(ogUrlValue, CultureInfo.CurrentUICulture.Name) : null;
 }
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentUICulture.Name">
@@ -12,11 +21,16 @@
   <meta name="description" content="@(ViewData["MetaDescription"] ?? T["Description"].Value)" />
   <title>@(ViewData["Title"] ?? T["Tagline"].Value) | Belém Restaurantes</title>
 
+  @foreach (var alternate in HreflangBuilder.Alternates(seoOrigin, currentPage))
+  {
+      <link rel="alternate" hreflang="@alternate.Tag" href="@alternate.Url" />
+  }
+
   @if (ViewData["OgTitle"] is not null)
   {
       <meta property="og:title" content="@ViewData["OgTitle"]" />
       <meta property="og:description" content="@(ViewData["OgDescription"] ?? T["Description"].Value)" />
-      <meta property="og:url" content="@ViewData["OgUrl"]" />
+      <meta property="og:url" content="@ogUrlForPage" />
       <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
       @if (ViewData["OgImage"] is not null)
       {

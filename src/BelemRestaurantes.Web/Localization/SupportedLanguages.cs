@@ -21,7 +21,9 @@ public static class SupportedLanguages
             SupportedCultures = cultures,
             SupportedUICultures = cultures,
             ApplyCurrentCultureToResponseHeaders = true,
-            RequestCultureProviders = [new CookieRequestCultureProvider(), new LanguageHeaderProvider()]
+            // Sprint 80 — cookie (escolha do usuário) > ?lang=xx (endereço publicado no hreflang)
+            // > Accept-Language (preferência do navegador) > padrão pt-BR.
+            RequestCultureProviders = [new CookieRequestCultureProvider(), new QueryLanguageProvider(), new LanguageHeaderProvider()]
         };
     }
 }
