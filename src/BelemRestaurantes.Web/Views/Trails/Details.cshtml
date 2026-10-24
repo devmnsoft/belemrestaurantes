@@ -1,6 +1,8 @@
 @model BelemRestaurantes.Domain.Entities.GastronomicTrail
 @using System.Text.Json
-@{ViewData["Title"]=Model.Title;var guide=Model.Editorial;}
+@using BelemRestaurantes.Application.Services
+@inject Microsoft.Extensions.Configuration.IConfiguration SeoConfig
+@{var seoOrigin = SitemapBuilder.ResolvePublicOrigin(SeoConfig["Seo:PublicOrigin"]);ViewData["Title"]=Model.Title;ViewData["OgType"]="article";ViewData["OgTitle"]=$"{Model.Title} | Belém Restaurantes";ViewData["OgDescription"]=Model.Description;ViewData["OgUrl"]=string.Concat(seoOrigin,"/roteiros/",Model.Slug);var guide=Model.Editorial;}
 <section class="para-container editorial-hero"><a href="/roteiros">← Todos os roteiros</a><p class="para-eyebrow">@Model.Region</p><h1>@Model.Title</h1><p>@Model.Description</p><p><strong>@Model.EstimatedDurationHours h de passeio · estimativa editorial</strong>, sem incluir previsão de transporte.</p></section>
 @if(guide is not null){
 <section class="para-container para-section" data-trail-page><div class="editorial-note"><h2>Do seu jeito, no seu tempo</h2><p><strong>Para quem:</strong> @guide.Audience</p><p><strong>Começo sugerido:</strong> @guide.Origin</p><p><strong>Acesso:</strong> @(guide.Mode=="river"?"Planejamento fluvial":guide.Mode=="road"?"Planejamento terrestre":"Circuito urbano")</p><p>@guide.BeforeYouGo</p><p>@guide.Accessibility</p><p>Revisão editorial: @Model.ReviewedAt?.ToString("dd/MM/yyyy"). As fontes registram referências do lugar; consulte os canais oficiais para condições atuais.</p>@if(Model.ReviewedAt is {} reviewed&&reviewed<DateTime.UtcNow.AddDays(-90)){<p role="status">Este roteiro está na fila de atualização editorial. Confirme os dados diretamente nas fontes.</p>}</div>

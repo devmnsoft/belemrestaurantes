@@ -1,4 +1,14 @@
 @model BelemRestaurantes.Application.Models.TasteGuidePage
+@using BelemRestaurantes.Application.Services
+@inject Microsoft.Extensions.Configuration.IConfiguration SeoConfig
+@{
+    var seoOrigin = SitemapBuilder.ResolvePublicOrigin(SeoConfig["Seo:PublicOrigin"]);
+    ViewData["Title"] = Model.Entry.Title;
+    ViewData["OgType"] = "article";
+    ViewData["OgTitle"] = $"{Model.Entry.Title} | Belém Restaurantes";
+    ViewData["OgDescription"] = Model.Entry.Summary;
+    ViewData["OgUrl"] = string.Concat(seoOrigin, Model.Entry.Kind == "prato" ? "/pratos/" : "/ocasioes/", Model.Entry.Slug);
+}
 <section class="atlas-page-hero"><div class="para-container"><span class="para-eyebrow">@(Model.Entry.Kind == "prato" ? "PRATO" : "OCASIÃO")</span><h1>@Model.Entry.Title</h1><p>@Model.Entry.Summary</p><p><a href="/pratos">Todos os pratos</a> · <a href="/ocasioes">Ocasiões</a> · <a href="/busca?q=@Uri.EscapeDataString(Model.Entry.Title)">Buscar no catálogo</a></p></div></section>
 <section class="para-container para-section">
   <h2>Camada Guia</h2>

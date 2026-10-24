@@ -1,13 +1,19 @@
 @model BelemRestaurantes.Application.Models.RestaurantView
 @using BelemRestaurantes.Application.Abstractions
+@using BelemRestaurantes.Application.Services
+@using System.Text.Json
+@inject Microsoft.Extensions.Configuration.IConfiguration SeoConfig
 @{
+    var seoOrigin = SitemapBuilder.ResolvePublicOrigin(SeoConfig["Seo:PublicOrigin"]);
     ViewData["Title"] = $"{Model.Name} — Belém Restaurantes";
     ViewData["MetaDescription"] = $"{Model.Name} em {Model.City}. Ficha publicada com o que a fonte informou. Horário, cardápio e foto só aparecem quando existem.";
     ViewData["OgTitle"] = $"{Model.Name} | Belém Restaurantes";
     ViewData["OgDescription"] = $"Cadastro de {Model.Name} em {Model.City}. O que não está na ficha não foi confirmado.";
-    if (!string.IsNullOrEmpty(Model.PhotoUrl))
+    ViewData["OgUrl"] = RestaurantJsonLd.PageUrl(Model.Id, seoOrigin);
+    var ogImage = RestaurantJsonLd.AbsolutePhotoUrl(Model.PhotoUrl, seoOrigin);
+    if (ogImage is not null)
     {
-        ViewData["OgImage"] = Model.PhotoUrl;
+        ViewData["OgImage"] = ogImage;
     }
 
     var cuiaBadges = ViewData["CuiaBadges"] as IReadOnlyList<CuiaBadgeView> ?? [];
@@ -16,6 +22,7 @@
     var recipes=ViewData["Recipes"] as IReadOnlyList<BelemRestaurantes.Application.Models.ParaRecipe>??[];
     var facts=ViewData["FactSheet"] as BelemRestaurantes.Application.Models.CatalogFactSheet;
 }
+<script type="application/ld+json">@Html.Raw(JsonSerializer.Serialize(RestaurantJsonLd.Build(Model, seoOrigin)))</script>
 
 <div class="cuia-container cuia-section">
   <nav class="para-breadcrumb" aria-label="Você está aqui"><a href="/">Início</a><span aria-hidden="true">/</span><a href="/busca">Onde comer</a><span aria-hidden="true">/</span><span>@Model.Name</span></nav>

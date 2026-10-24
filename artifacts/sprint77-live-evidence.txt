@@ -1,0 +1,36 @@
+Sprint 77 - Evidencia ao vivo (portal local, origem padrao https://belemrestaurantes.com.br)
+Data-UTC: 2026-10-24 15:28:02
+Instancia: http://localhost:63870 (Release, bin\Release\net10.0)
+
+== GET /estabelecimento/861 (ACESSO: foto externa + telefone + endereco) ==
+<meta property="og:title" content="ACESSO | Bel&#xE9;m Restaurantes" />
+<meta property="og:description" content="Cadastro de ACESSO em Bel&#xE9;m. O que n&#xE3;o est&#xE1; na ficha n&#xE3;o foi confirmado." />
+<meta property="og:url" content="https://belemrestaurantes.com.br/estabelecimento/861" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/6/61/Acesso_a_rampa_portu%C3%A1ria_pela_avenida_Bel%C3%A9m-Bras%C3%ADlia%2C_no_S%C3%A3o_F%C3%A9lix_Pioneiro.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=original" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ACESSO | Bel&#xE9;m Restaurantes" />
+<meta name="twitter:description" content="Cadastro de ACESSO em Bel&#xE9;m. O que n&#xE3;o est&#xE1; na ficha n&#xE3;o foi confirmado." />
+
+JSON-LD:
+{"@context":"https://schema.org","@type":"Restaurant","name":"ACESSO","url":"https://belemrestaurantes.com.br/estabelecimento/861","image":"https://upload.wikimedia.org/wikipedia/commons/6/61/Acesso_a_rampa_portu%C3%A1ria_pela_avenida_Bel%C3%A9m-Bras%C3%ADlia%2C_no_S%C3%A3o_F%C3%A9lix_Pioneiro.jpg?utm_source=commons.wikimedia.org\u0026utm_campaign=imageinfo\u0026utm_content=original","address":{"@type":"PostalAddress","streetAddress":"AVENIDA PERIMETRAL, SN","addressLocality":"Bel\u00E9m"},"telephone":"8632201133"}
+
+== GET /estabelecimento/30 (Panificadora Sagres: sem foto) ==
+<meta property="og:title" content="Panificadora Sagres | Bel&#xE9;m Restaurantes" />
+<meta property="og:description" content="Cadastro de Panificadora Sagres em Bel&#xE9;m. O que n&#xE3;o est&#xE1; na ficha n&#xE3;o foi confirmado." />
+<meta property="og:url" content="https://belemrestaurantes.com.br/estabelecimento/30" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Panificadora Sagres | Bel&#xE9;m Restaurantes" />
+<meta name="twitter:description" content="Cadastro de Panificadora Sagres em Bel&#xE9;m. O que n&#xE3;o est&#xE1; na ficha n&#xE3;o foi confirmado." />
+
+JSON-LD:
+{"@context":"https://schema.org","@type":"Restaurant","name":"Panificadora Sagres","url":"https://belemrestaurantes.com.br/estabelecimento/30","address":{"@type":"PostalAddress","streetAddress":"Rua dos Caripunas, 1717","addressLocality":"Bel\u00E9m"},"geo":{"@type":"GeoCoordinates","latitude":"-1.462334","longitude":"-48.4873482"}}
+
+== GET /pratos/tacaca ==
+<meta property="og:title" content="Tacac&#xE1; | Bel&#xE9;m Restaurantes" />
+<meta property="og:url" content="https://belemrestaurantes.com.br/pratos/tacaca" />
+
+== GET /roteiros/cidade-velha-sem-pressa ==
+<meta property="og:title" content="Cidade Velha, cultura e uma pausa &#xE0; mesa | Bel&#xE9;m Restaurantes" />
+<meta property="og:url" content="https://belemrestaurantes.com.br/roteiros/cidade-velha-sem-pressa" />
