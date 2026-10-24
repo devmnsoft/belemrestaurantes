@@ -29,6 +29,7 @@ public sealed class PublicSourcesOptions
     public bool Enabled { get; set; }
     public int DailyRequestLimit { get; set; } = 30;
     public int MonthlyRequestLimit { get; set; } = 300;
+    public string QuotaService { get; set; } = "wikipedia_search";
 }
 
 /// <summary>Fixed Wikimedia API only. This is limited public-knowledge search, not a general web engine.</summary>
@@ -56,7 +57,7 @@ public sealed class PublicKnowledgeWebSearch(HttpClient client, PublicSourcesOpt
             await Gate.WaitAsync(timeout.Token);locked=true;
             if(cache.TryGet(key,out cached))return cached! with{Status=cached!.Sources.Count>0?"public_sources_cached":cached.Status};
             var delay=nextAllowed-DateTimeOffset.UtcNow;if(delay>TimeSpan.Zero)await Task.Delay(delay,timeout.Token);
-            if(!await quota.TryReserveAsync("wikipedia_search",Math.Clamp(options.DailyRequestLimit,0,100),Math.Clamp(options.MonthlyRequestLimit,0,1000),timeout.Token))return new("quota_exhausted",[]);
+            if(!await quota.TryReserveAsync(options.QuotaService,Math.Clamp(options.DailyRequestLimit,0,100),Math.Clamp(options.MonthlyRequestLimit,0,1000),timeout.Token))return new("quota_exhausted",[]);
             nextAllowed=DateTimeOffset.UtcNow.AddSeconds(1);
             // No user-controlled host or path and no following redirects: no arbitrary-page fetch or SSRF surface.
             var url="https://pt.wikipedia.org/w/api.php?action=query&format=json&utf8=1&list=search&srnamespace=0&srlimit=3&srprop=snippet&maxlag=5&srsearch="+Uri.EscapeDataString(query);

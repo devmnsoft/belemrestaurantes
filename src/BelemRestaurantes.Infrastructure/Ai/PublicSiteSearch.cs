@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using BelemRestaurantes.Application.Abstractions;
 using BelemRestaurantes.Application.Services;
 namespace BelemRestaurantes.Infrastructure.Ai;
-public sealed class PublicSiteSearchOptions{public bool Enabled{get;set;}public int DailyRequestLimit{get;set;}=30;public int MonthlyRequestLimit{get;set;}=300;}
+public sealed class PublicSiteSearchOptions{public bool Enabled{get;set;}public int DailyRequestLimit{get;set;}=30;public int MonthlyRequestLimit{get;set;}=300;public string QuotaService{get;set;}="public_site_search";}
 public sealed class PublicSiteSearch(ISafeHttpClient http,IRobotsTxtService robots,IFreeTierQuota quota,PublicSiteSearchOptions options,ILogger<PublicSiteSearch>? logger=null):IWebSearch
 {
     // Public search indexes verified at these official regional sources; no API key or paid plan.
@@ -31,7 +31,7 @@ public sealed class PublicSiteSearch(ISafeHttpClient http,IRobotsTxtService robo
                 var url=endpoint+"?per_page=8&search="+Uri.EscapeDataString("\""+phrase+"\"");
                 var access=await robots.CheckAccessAsync(url,"CuiaCrawler",deadline.Token);if(!access.IsAllowed||access.CrawlDelaySeconds>10)return Array.Empty<WebSearchSource>();
                 if(access.CrawlDelaySeconds>0)await Task.Delay(TimeSpan.FromSeconds(access.CrawlDelaySeconds),deadline.Token);
-                if(!await quota.TryReserveAsync("public_site_search",Math.Clamp(options.DailyRequestLimit,0,100),Math.Clamp(options.MonthlyRequestLimit,0,1000),deadline.Token))return [];
+                if(!await quota.TryReserveAsync(options.QuotaService,Math.Clamp(options.DailyRequestLimit,0,100),Math.Clamp(options.MonthlyRequestLimit,0,1000),deadline.Token))return [];
                 var response=await http.DownloadAsync(url,timeoutSeconds:5,ct:deadline.Token);if(!response.Success||response.ContentText is null||response.ContentText.Length>262144){logger?.LogWarning("Índice público {Host}: HTTP {Status} sem resultado utilizável.",new Uri(endpoint).Host,response.StatusCode);return [];}
                 using var doc=JsonDocument.Parse(response.ContentText);if(doc.RootElement.ValueKind!=JsonValueKind.Array)return [];
                 var rows=new List<WebSearchSource>();
@@ -47,7 +47,7 @@ public sealed class PublicSiteSearch(ISafeHttpClient http,IRobotsTxtService robo
                         var pageAccess=await robots.CheckAccessAsync(original,"CuiaCrawler",deadline.Token);
                         if(!pageAccess.IsAllowed||pageAccess.CrawlDelaySeconds>10)continue;
                         if(pageAccess.CrawlDelaySeconds>0)await Task.Delay(TimeSpan.FromSeconds(pageAccess.CrawlDelaySeconds),deadline.Token);
-                        if(!await quota.TryReserveAsync("public_site_search",Math.Clamp(options.DailyRequestLimit,0,100),Math.Clamp(options.MonthlyRequestLimit,0,1000),deadline.Token))continue;
+                        if(!await quota.TryReserveAsync(options.QuotaService,Math.Clamp(options.DailyRequestLimit,0,100),Math.Clamp(options.MonthlyRequestLimit,0,1000),deadline.Token))continue;
                         var page=await http.DownloadAsync(original,timeoutSeconds:5,ct:deadline.Token);
                         if(!page.Success||page.ContentText is null)continue;
                         var visible=ExternalContentRules.Clean(page.ContentText,100000);

@@ -57,7 +57,7 @@ internal static class Sprint48Operations
         var queues=(await db.QueryAsync("SELECT state,COUNT(*) total FROM discovery_jobs GROUP BY state")).ToArray();
         var sources=(await db.QueryAsync("SELECT status,COUNT(*) total FROM crawler_sources GROUP BY status")).ToArray();
         var budget=(await db.QueryAsync("SELECT provider,paused,monthly_limit_micros_usd FROM api_budgets ORDER BY provider")).ToArray();
-        var freeUsage=(await db.QueryAsync("SELECT service,period,requests,last_used_at FROM external_free_usage WHERE service IN ('cuia_gemini','worker_gemini','cuia_groq','worker_groq','cuia_drael','drael_search') ORDER BY service,period")).ToArray();
+        var freeUsage=(await db.QueryAsync("SELECT service,period,requests,last_used_at FROM external_free_usage WHERE service IN ('cuia_gemini','worker_gemini','cuia_groq','worker_groq','cuia_drael','drael_search','worker_drael_search','public_site_search','worker_public_site_search') ORDER BY service,period")).ToArray();
         var identityAudit=await db.QuerySingleAsync("SELECT COUNT(*) accounts,SUM(cpf_digest IS NULL) legacy_without_document FROM member_users");
         var duplicates=await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM (SELECT normalized_email FROM member_users GROUP BY normalized_email HAVING COUNT(*)>1) d");
         Console.WriteLine(JsonSerializer.Serialize(new{at=DateTimeOffset.UtcNow,usesSystemProxy,heartbeats,catalog,quality,targets,queues,sources,budget,freeUsage,identityAudit,duplicateEmails=duplicates},new JsonSerializerOptions{WriteIndented=true}));

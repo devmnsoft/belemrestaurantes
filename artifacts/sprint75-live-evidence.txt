@@ -1,0 +1,36 @@
+Sprint 75 — evidência ao vivo
+Execução local (Windows, Release --no-incremental), 24/10/2026 ~03:3x–06:3x UTC (relógio da máquina em UTC).
+
+1) O SINAL DA MANHÃ (antes da correção):
+   external_free_usage período diário 20261024:
+     drael_search        20/20  last_used 2026-10-24 00:15:10  (pool interativo esgotado pela pesquisa do Worker)
+     public_site_search  30/30  last_used 2026-10-24 00:20:04
+   research_jobs run_day=2026-10-24: 152 completed entre 00:00:50 e 01:32:28 —
+     ok x15 (com fontes reais), quota_exhausted x132, unavailable x4, empty x1.
+   discovery_targets habilitados: 152 (= 1 job/dia por alvo; fila drenada pelo INSERT IGNORE diário).
+   Histórico comparável (mesmo padrão no binário antigo, antes do rename do S73):
+     10/23 cuia_drael 20/20 às 00:18 · public_site_search 30/30 todos os dias de 10/20 a 10/24 (mês: 150/300).
+   Ledger de geração intacto na madrugada (última entrada 10/23 15:13) — só os pools de busca/site foram consumidos.
+
+2) PROVA DA SEPARAÇÃO (binário S75, CLI --probe-public-search — mesmo caminho de DI do ResearchHostedService):
+   dotnet BelemRestaurantes.Worker.dll --probe-public-search --query="Ilha do Combu trilha de acesso"
+   -> exit=0 em 6901 ms; resposta JSON: Status="ok", Provider="brave+drael+public_sites", FailureCode=null,
+      5 fontes reais:
+        rotacombu.com.br — O que fazer na Ilha do Combu: guia completo com passeios e dicas
+        terra.com.br     — Ilha do Combu: natureza, cultura amazônica e gastronomia a 15 minutos de Belém
+        ilhadocombu.tur.br — IlhadoCombu.tur.br - Ilha do Combu
+        essemundoenosso.com.br — Ilha do Combu em Belém do Pará: Como chegar e o que fazer
+        viajaleve.net    — Ilha do Combu, Belém do Pará: Melhores Restaurantes e Atrações
+   Livros-razão imediatamente após o probe:
+     worker_drael_search       20261024 = 1  (last_used 06:21:26)  <- pool novo isolado
+     worker_public_site_search 20261024 = 1  (last_used 06:21:32)  <- pool novo isolado
+     drael_search              20261024 = 20 (last_used 00:15:10)  <- INTATO (idêntico ao pré-probe)
+     public_site_search        20261024 = 30 (last_used 00:20:04)  <- INTATO (idêntico ao pré-probe)
+   => a pesquisa do Worker reserva nos pools worker_* e a Cuia interativa mantém drael_search/public_site_search intocados por construção de nome.
+
+3) OPERAÇÃO:
+   Worker parado para o rebuild (DLL lock); probe rodou como processo único e efêmero antes do restart;
+   Worker reiniciado com o binário S75 (supervisor novo, estado "running", processo único verificado via CIM).
+   Cota Gemini: a suíte de integração local consome o Gemini real via user-secrets (linhas cuia_concierge do dia 24
+   às 06:07–06:12, contagem 11/20) — motivo do falha transitória de Ask_WithValidToken explicada no relatório;
+   o fix de hermeticidade (chaves nulas no factory da classe) elimina esse consumo em execuções futuras.

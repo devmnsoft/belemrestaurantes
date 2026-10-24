@@ -34,7 +34,14 @@ public sealed class CuiaAiEndpointTests : IClassFixture<WebApplicationFactory<Pr
                 c.AddInMemoryCollection(new System.Collections.Generic.Dictionary<string, string?>
                 {
                     ["ConnectionStrings:MySql"] = cs,
-                    ["Discovery:Enabled"] = "false"
+                    ["Discovery:Enabled"] = "false",
+                    // Hermeticidade (Sprint 75): sem isso, os user-secrets locais alimentam o Gemini real e o desfecho do Ask
+                    // depende da cota gratuita do dia — com pool zerado a resposta é determinística, com pool limpo o modelo
+                    // responde à vontade. No CI (sem secrets) já era sempre determinístico; aqui igualamos ao CI.
+                    ["Ai:Gemini:ApiKey"] = null,
+                    ["Ai:Groq:ApiKey"] = null,
+                    ["Ai:DeepSeek:ApiKey"] = null,
+                    ["Ai:Drael:ApiKey"] = null
                 });
             });
         });
