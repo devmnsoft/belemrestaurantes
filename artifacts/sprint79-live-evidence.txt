@@ -1,0 +1,50 @@
+﻿Sprint 79 - Evidencia ao vivo (instancia local Release http://localhost:63870, origem padrao de producao https://belemrestaurantes.com.br)
+Data-UTC: 2026-10-24 18:30
+Instancia: BelemRestaurantes.Web pid=22276, unica escutando 63870 (IPv4+IPv6), binario desta Sprint
+
+URL: /cidade/belem
+  title:      Restaurantes em Bel&#xE9;m | Belém Restaurantes
+  og:url:     https://belemrestaurantes.com.br/cidade/belem
+  og:title:   Restaurantes em Bel&#xE9;m | Bel&#xE9;m Restaurantes
+  og:desc:    2924 restaurantes publicados em Bel&#xE9;m.
+  twitter:    summary
+
+URL: /cidade/belem?page=2
+  title:      Restaurantes em Bel&#xE9;m | Belém Restaurantes
+  og:url:     https://belemrestaurantes.com.br/cidade/belem
+  og:title:   Restaurantes em Bel&#xE9;m | Bel&#xE9;m Restaurantes
+  og:desc:    2924 restaurantes publicados em Bel&#xE9;m.
+  twitter:    summary
+
+URL: /localidade/praia-do-atalaia
+  title:      Restaurantes em Praia do Atalaia | Belém Restaurantes
+  og:url:     https://belemrestaurantes.com.br/localidade/praia-do-atalaia
+  og:title:   Restaurantes em Praia do Atalaia | Bel&#xE9;m Restaurantes
+  og:desc:    4 restaurantes publicados em Praia do Atalaia.
+  twitter:    summary
+
+URL: /categoria/mercearia
+  title:      Mercearia no Par&#xE1; | Belém Restaurantes
+  og:url:     https://belemrestaurantes.com.br/categoria/mercearia
+  og:title:   Mercearia no Par&#xE1; | Bel&#xE9;m Restaurantes
+  og:desc:    4348 estabelecimentos publicados como Mercearia.
+  twitter:    summary
+
+URL: /categoria/loja-de-alimentos
+  title:      Loja de Alimentos no Par&#xE1; | Belém Restaurantes
+  og:url:     https://belemrestaurantes.com.br/categoria/loja-de-alimentos
+  og:title:   Loja de Alimentos no Par&#xE1; | Bel&#xE9;m Restaurantes
+  og:desc:    1208 estabelecimentos publicados como Loja de Alimentos.
+  twitter:    summary
+
+URL: /receitas/acai-tradicional-com-farinha
+  title:      A&#xE7;a&#xED; com farinha &#x2014; Receitas do Par&#xE1; | Belém Restaurantes
+  og:url:     https://belemrestaurantes.com.br/receitas/acai-tradicional-com-farinha
+  og:title:   A&#xE7;a&#xED; com farinha
+  og:desc:    O sabor da fruta, sem complicar.
+  twitter:    summary
+
+Contagens do banco para conferenca (mesmo predicado das paginas):
+belem	2924
+mercearia	4348
+loja de alimentos	1208

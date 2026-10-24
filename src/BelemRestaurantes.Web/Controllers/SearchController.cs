@@ -183,6 +183,15 @@ public sealed class SearchController(
         var result = await restaurantRepository.SearchAsync(searchQuery, ct);
         var filterOptions = await searchService.GetFilterOptionsAsync(ct);
 
+        // Sprint 79 — quando a categoria existe no catálogo, exibe o rótulo guardado e não o slug
+        // decodificado em minúsculas: a busca é insensível a maiúsculas/acentos, então trocar não
+        // muda o resultado, apenas o nome aparece como o próprio catálogo o escreveu.
+        var canonicalLabel = filterOptions.Categories.FirstOrDefault(c => string.Equals(BelemRestaurantes.Domain.Rules.NameNormalizer.Normalize(c), BelemRestaurantes.Domain.Rules.NameNormalizer.Normalize(categoryName), StringComparison.OrdinalIgnoreCase));
+        if (canonicalLabel is not null)
+        {
+            categoryName = canonicalLabel;
+        }
+
         ViewBag.SelectedCategory = categoryName;
         ViewBag.FilterOptions = filterOptions;
 

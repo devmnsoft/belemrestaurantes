@@ -22,7 +22,8 @@
       {
           <meta property="og:image" content="@ViewData["OgImage"]" />
       }
-      <meta name="twitter:card" content="summary_large_image" />
+      <!-- Sprint 79: só prometer imagem grande quando há og:image de fato. -->
+      <meta name="twitter:card" content="@(ViewData["OgImage"] is not null ? "summary_large_image" : "summary")" />
       <meta name="twitter:title" content="@ViewData["OgTitle"]" />
       <meta name="twitter:description" content="@(ViewData["OgDescription"] ?? T["Description"].Value)" />
   }
