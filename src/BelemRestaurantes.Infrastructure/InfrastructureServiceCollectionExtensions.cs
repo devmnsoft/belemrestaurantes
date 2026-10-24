@@ -145,6 +145,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IModerationRepository, MySqlModerationRepository>();
         services.AddScoped<MySqlBulkModeration>();
         services.AddScoped<IParaRecipes,MySqlParaRecipes>();
+        // Sprint 76 — Indexação pública: fonte dinâmica do /sitemap.xml (robots.txt + sitemap do portal)
+        services.AddScoped<ISitemapSource, MySql.MySqlSitemapSource>();
         services.AddScoped<MySqlStatewideDiscoveryPlan>();
         services.AddScoped<MySqlMaintenanceJobs>();
         services.AddScoped<IOperatingHoursRepository,MySqlOperatingHours>();

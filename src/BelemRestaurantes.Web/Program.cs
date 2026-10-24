@@ -15,6 +15,8 @@ if (builder.Environment.IsDevelopment())
     builder.Logging.AddProvider(new DevelopmentDiagnosticsLoggerProvider());
 }
 builder.Services.AddMemoryCache();
+// Sprint 76 — ativa os atributos [ResponseCache] existentes (sitemap, robots, export OSM): o middleware nunca foi registrado (no .NET 10 o nome é AddResponseCaching).
+builder.Services.AddResponseCaching();
 var keysPath = builder.Configuration["DataProtection:KeysPath"]
     ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MNSOFT", "BelemRestaurantes", "keys");
 Directory.CreateDirectory(keysPath);
@@ -246,6 +248,7 @@ app.Use(async (context, next) =>
             .Replace("style-src 'self' 'unsafe-inline';", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;");
     await next();
 });
+app.UseResponseCaching();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseRateLimiter();

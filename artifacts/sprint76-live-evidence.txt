@@ -1,0 +1,55 @@
+Sprint 76 — evidência viva em http://localhost:63861 (instância de teste Web, binário Release do commit em validação)
+gerado-utc: 2026-10-24 12:03:15
+
+=== GET /robots.txt ===
+status: 200
+content-type: text/plain; charset=utf-8
+corpo:
+  User-agent: *
+  Allow: /
+  Disallow: /admin
+  Disallow: /api
+  Disallow: /account
+  Disallow: /partner
+  Disallow: /language
+  Disallow: /dev
+  Sitemap: https://belemrestaurantes.com.br/sitemap.xml
+
+=== GET /sitemap.xml ===
+status: 200
+content-type: application/xml; charset=utf-8
+cache-control: public,max-age=900
+bytes: 1921296
+entradas-total: 16424
+  /estabelecimento = 16162
+  /receitas = 12
+  /roteiros = 12
+  /cidade = 144
+  /localidade = 29
+  /categoria = 26
+  /pratos = 10
+  /ocasioes = 6
+  estaticas-hubs = 23
+
+reconciliacao-banco (mysql direto, mesmo dia): restaurantes publicados=16162 receitas-publicadas=12 roteiros-publicados=12 municipios-slug-distintos=144 localidades-turisticas=29 categorias-distintas=26 pratos-catalogo=10 ocasioes-catalogo=6 rotas-estaticas=23
+
+latencia (curl, corpo de 1,9 MB):
+  1a chamada (fria): ttfb=5,6ms total=7,8ms
+  chamadas seguintes: ttfb=4,8-35ms — middleware de cache de resposta ativo (registrado nesta sprint; antes o [ResponseCache] era inerte)
+
+primeiras-5-entradas:
+  <loc>https://belemrestaurantes.com.br/</loc>
+  <loc>https://belemrestaurantes.com.br/guia</loc>
+  <loc>https://belemrestaurantes.com.br/selo-cuia</loc>
+  <loc>https://belemrestaurantes.com.br/busca</loc>
+  <loc>https://belemrestaurantes.com.br/cidades</loc>
+amostra-estabelecimentos-com-lastmod:
+  <url><loc>https://belemrestaurantes.com.br/estabelecimento/30</loc><lastmod>2026-10-23T23:30:46Z</lastmod></url>
+  <url><loc>https://belemrestaurantes.com.br/estabelecimento/33</loc><lastmod>2026-10-24T02:48:46Z</lastmod></url>
+  <url><loc>https://belemrestaurantes.com.br/estabelecimento/35</loc><lastmod>2026-10-20T16:26:31Z</lastmod></url>
+ultimas-3-entradas:
+  <loc>https://belemrestaurantes.com.br/categoria/sorveteria</loc>
+  <loc>https://belemrestaurantes.com.br/categoria/supermercado</loc>
+  <loc>https://belemrestaurantes.com.br/categoria/tacacá</loc>
+
+nota: Invoke-WebRequest (PowerShell 5.1) reportou 2,6-4,3 s por custo client-side de deserializar o XML de 1,9 MB no .NET Framework; o curl (ttfb) é a medição do servidor.
