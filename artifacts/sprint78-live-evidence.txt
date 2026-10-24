@@ -1,0 +1,38 @@
+Sprint 78 - Evidencia ao vivo (banco local MariaDB :3308, dev)
+Data-UTC: 2026-10-24 17:45
+Fonte oficial validada: https://servicodados.ibge.gov.br/api/v1/localidades/estados/15/municipios (144 municipios, consulta de 24/10/2026)
+
+== ANTES da migracao 052 (snapshot 17:37 UTC) ==
+municipios: 148
+localidades por codigo: 1506304 -> 2 (Vila Historica de Joanes, Praia Grande de Salvaterra)
+                             1506500 -> 2 (Praia do Atalaia, Praia do Farol Velho — zonas de Salinopolis!)
+duplicatas (nome repetido com codigo ausente do registro IBGE):
+  id=17  1506304 Salvaterra            (oficial: 1506302)
+  id=6   1506353 Santa Izabel do Para  (oficial: 1506500)
+  id=5   1506544 Santa Barbara do Para (oficial: 1506351)
+  id=33  1506585 Santa Maria do Para   (oficial: 1506609)
+
+== Execucao da migracao ==
+052 aplicada via MigrationRunner (aplicada pelo teste de integracao Sprint78MunicipalityDedupTests, 17:42:51 UTC)
+schema_migrations: 052 | deduplicacao de municipios por codigo IBGE oficial e atribuicao correta de localidades
+checksum: 6F4A78C2F1319C693649407A1816FD0340FD67F45B64D6788B7117B5F51D9BB0 (reaplicacao no teste 2 = no-op, idempotente)
+
+== DEPOIS da migracao 052 (snapshot 17:44 UTC) ==
+municipios: 144 (exatamente os 144 oficiais do registro IBGE)
+localidades por codigo: 1506302 -> 2 (distritos de Salvaterra, remapeados de 1506304)
+                       1506203 -> 2 (zonas turisticas de Salinopolis, remapeadas de 1506500)
+nenhuma referencia a 1506304 / 1506500 restante; zero localidades orphanadas (JOIN vazio = 0)
+
+== Reconciliacao integral contra o registro IBGE (pos-migracao) ==
+linhas-no-banco: 144
+divergentes (codigo inexistente ou nome divergente do registro oficial): 0
+ausentes-no-banco (municipio oficial sem linha): 0
+=> a tabela geo_municipalities reflete byte a byte (codigo+nome) o registro oficial IBGE do Para.
+
+== Efeito publico ==
+As URLs publicas nao mudam: o sitemap (S76) ja deduplicava por slug (DISTINCT sobre a mesma
+transformacao dos links internos), portanto /cidade/{slug} continua 1 URL por cidade (144).
+O que muda e a integridade interna: o dropdown de municipios do painel /admin/worker deixa de
+listar cada cidade duplicada duas vezes, a inteligencia de descoberta (agrupamento por
+municipality_ibge) para de dividir uma mesma cidade em dois bairros-codigo, e as zonas
+turisticas de Salinopolis deixam de aparecer sob Santa Izabel do Para.

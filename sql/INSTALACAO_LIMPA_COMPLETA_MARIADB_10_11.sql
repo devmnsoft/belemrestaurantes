@@ -1642,7 +1642,37 @@ VALUES
 INSERT INTO schema_migrations(id,name,checksum,applied_at) VALUES('015','cobertura estadual integral 144 municipios do para, telemetria e completude de catalogo','362E83C3E7833150506F4D39CA3D973F7B175673D58F6707564122A7B56E09F5',UTC_TIMESTAMP(6));
 INSERT INTO schema_migration_attempts(id,checksum,started_at,completed_at) VALUES('015','362E83C3E7833150506F4D39CA3D973F7B175673D58F6707564122A7B56E09F5',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6));
 
--- SANIDADE FINAL: deve retornar 15 migrations, 0 tentativas incompletas, e as 3 tabelas abaixo.
+-- ==================================================
+-- MIGRACAO 052: 052_dedup_municipalities_ibge.sql
+-- ==================================================
+-- name: deduplicacao de municipios por codigo IBGE oficial e atribuicao correta de localidades
+-- Requer MySQL 8.0+
+-- Sprint 78. A tabela geo_municipalities carregava 4 linhas duplicadas com codigos IBGE que nao
+-- existem no registro oficial do Para (reconciliado em 24/10/2026 com a API publica do IBGE:
+-- https://servicodados.ibge.gov.br/api/v1/localidades/estados/15/municipios — 144 municipios):
+--   1506304 (Salvaterra)              -> codigo oficial 1506302
+--   1506353 (Santa Izabel do Para)    -> codigo oficial 1506500
+--   1506544 (Santa Barbara do Para)   -> codigo oficial 1506351
+--   1506585 (Santa Maria do Para)     -> codigo oficial 1506609
+-- As duplicatas vieram do seed historico da migracao 013 (editada apos aplicada, entao o ajuste
+-- vive nesta nova migracao — regra de checksum da casa). Adicionalmente, 013/014 amarraram as
+-- zonas turisticas de Salinopolis (codigo oficial 1506203) ao codigo 1506500, que pertence a
+-- Santa Izabel do Para — corrigido abaixo antes de apagar os codigos invalidos.
+-- Idempotente: repetir nao afeta nenhuma linha na segunda execucao.
+
+-- 1. Distritos/zonas de Salvaterra referenciando o codigo invalido 1506304 -> 1506302 (oficial)
+UPDATE geo_districts_localities SET municipality_ibge = 1506302 WHERE municipality_ibge = 1506304;
+
+-- 2. Zonas turisticas de Salinopolis referenciando 1506500 (Santa Izabel do Para) -> 1506203 (Salinopolis oficial)
+UPDATE geo_districts_localities SET municipality_ibge = 1506203 WHERE municipality_ibge = 1506500 AND normalized_name IN ('praia do atalaia', 'praia do farol velho');
+
+-- 3. Exclusao dos municipios duplicados (codigos ausentes do registro oficial IBGE)
+DELETE FROM geo_municipalities WHERE ibge_code IN (1506304, 1506353, 1506544, 1506585);
+
+INSERT INTO schema_migrations(id,name,checksum,applied_at) VALUES('052','deduplicacao de municipios por codigo IBGE oficial e atribuicao correta de localidades','6F4A78C2F1319C693649407A1816FD0340FD67F45B64D6788B7117B5F51D9BB0',UTC_TIMESTAMP(6));
+INSERT INTO schema_migration_attempts(id,checksum,started_at,completed_at) VALUES('052','6F4A78C2F1319C693649407A1816FD0340FD67F45B64D6788B7117B5F51D9BB0',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6));
+
+-- SANIDADE FINAL: deve retornar 52 migrations, 0 tentativas incompletas, e as 3 tabelas abaixo.
 SELECT COUNT(*) AS migrations_aplicadas FROM schema_migrations;
 SELECT COUNT(*) AS migracoes_interrompidas FROM schema_migration_attempts WHERE completed_at IS NULL;
 SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'belrestaurante' AND TABLE_NAME IN ('user_experiences','restaurant_review_replies','gastronomic_trails');
